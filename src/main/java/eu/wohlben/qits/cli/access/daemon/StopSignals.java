@@ -7,14 +7,15 @@ import java.util.List;
 /**
  * SIGTERM and SIGINT ask the daemon to stop, and it then leaves on its own: locks released, a last
  * log line, exit code 0. The JVM's default handlers would instead exit at once from a shutdown
- * hook, in the middle of whatever the loop was doing.
+ * hook, in the middle of whatever the loop was doing. {@code qits events} uses it too: an inline
+ * refresh there must finish its write before the process ends.
  */
-final class StopSignals {
+public final class StopSignals {
 
     private StopSignals() {
     }
 
-    static void install(Runnable stop) {
+    public static void install(Runnable stop) {
         for (String name : List.of("TERM", "INT")) {
             try {
                 Signal.handle(new Signal(name), signal -> stop.run());

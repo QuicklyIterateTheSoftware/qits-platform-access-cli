@@ -3,10 +3,13 @@
 The `qits` command: access to the qits platform from a workstation, with defaults that need no
 setup. A static native binary for Linux and WSL.
 
-This first version has two commands:
+Commands:
 
 - `qits login` signs you in through the browser and stores the session.
 - `qits session-daemon` keeps that session fresh for as long as it runs.
+- `qits projects list`, `qits repositories … list` and `qits release-request … list|create` read
+  from and ask the projects service.
+- `qits events` prints the platform's domain events as they happen.
 
 The binary is called `qits`. qits-bootstrap-cli's binary is `qits-bootstrap`.
 
@@ -115,3 +118,116 @@ Then:
     journalctl --user -u qits-session-daemon -f
 
 Installing it is not part of this version.
+
+## Platform commands
+
+    qits projects list
+    qits repositories --project <project> list
+    qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
+    qits release-request --project <project> --repository <repository> create \
+        --branch <branch> --summary <text> [--priority <priority>]
+    qits events [--filter=<names>]
+
+They call the platform through its edge over HTTPS, with the access token from `qits login` as a
+bearer. The options of `projects`, `repositories` and `release-request` may come before or after
+the subcommand: `qits repositories --project qits list` and `qits repositories list --project qits`
+are the same.
+
+### The session
+
+Each command reads `t.json`. With no file it prints `Not signed in — run `qits login`.` and exits
+with 2.
+
+With `qits session-daemon` running, the commands only read the file. Without it, a command whose
+access token has less than 30 seconds left refreshes it first, the way the daemon does: under
+`t.json.lock`, after reading the file again. If the daemon or another command refreshed in the
+meantime, the command uses that pair, so a refresh token is never spent twice. A refresh the idp
+refuses prints `Session ended — run `qits login`.` and exits with 2.
+
+### Which address
+
+A service lives at `<app>.<env>.<domain>`. The commands take the session's idp address and swap
+its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wohlben.eu` and
+`https://events.dev.wohlben.eu`. To name the address yourself (a base URL, without `/projects` or
+`/events`):
+
+- projects: `--projects-url`, else `QITS_PROJECTS_URL`
+- events: `--events-url`, else `QITS_EVENTS_URL`
+
+### Output, errors and exit codes
+
+`--output table` (the default) prints aligned columns. `--output json` (or `-o json`) prints the
+service's answer, pretty-printed. The default `release-request list` leaves out the released
+requests in both forms (see below).
+
+When the platform refuses:
+
+- HTTP 401: `The platform refused the token (HTTP 401: <error>)`, with the error from the
+  `WWW-Authenticate` header when there is one.
+- HTTP 403: `Your roles do not allow this (HTTP 403)`. These calls need `qits:admin` or
+  `qits:system`.
+- Any other status: the method, the address, the status, and the service's own message.
+
+Exit codes: 0 done; 1 the platform refused, or cannot be reached; 2 the command was used wrongly,
+there is no session, or the session ended.
+
+### qits projects list
+
+Columns: slug, name, id.
+
+### qits repositories --project \<project\> list
+
+`--project` is the project's id, slug or name. The command lists the projects and finds the one
+that matches; a value that matches none, or more than one, stops with a message. Columns: name,
+archetype, component, id.
+
+### qits release-request
+
+`--project` as above. `--repository` is the repository's id or name within that project.
+
+`list` shows the open requests: every state but RELEASED and WITHDRAWN. The service's default
+answer holds the open requests and the last 10 released ones; the command drops the released.
+`--state all` shows every request, and `--state PENDING` (or READY, RELEASED, REJECTED, FAILED,
+CONFLICTED, WITHDRAWN) shows one state. Columns: id (the first 8 characters), state, priority,
+summary, version, updated.
+
+`create` asks for a branch to be released once its builds are green. `--branch` and `--summary`
+are required; `--priority` is LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING (the platform's
+default is MEDIUM). The platform may answer with a new request, with the open request that already
+holds the branch, or (on a project wrapper) with the open request the branch joined. The command
+prints the request that came back, with its sources.
+
+    qits release-request --project qits --repository qits-ci-service list
+    qits release-request --project qits --repository qits-ci-service list --state all -o json
+    qits release-request --project qits --repository qits-ci-service create \
+        --branch feature/log-view --summary "Show the build log live" --priority HIGH
+
+### qits events
+
+    qits events [--filter=<names>] [--events-url <url>]
+
+Prints the domain events of qits-events as they happen, one JSON object per line on stdout, each
+line flushed at once, so `| jq` shows an event when it arrives:
+
+    {"id":"…","name":"BuildSuccessful","occurredAt":"…","payload":{"repoName":"qits-ci-service",…},"description":null,"parentId":null,"environment":"dev"}
+
+`payload` travels as a JSON string; the command reads it into JSON. A payload that is not JSON
+stays a string.
+
+The filter is written as services write their subscriptions: exact event names, comma-separated,
+or `*` for every event. `*` is the default. There are no patterns and no filter by source.
+
+    qits events --filter=BuildSuccessful,BuildFailed
+    qits events --filter=SCMPublishCommit,SCMDeleteBranch
+    qits events --filter=ReleaseRequestChanged | jq -r '.payload'
+
+The stream is live only: it has no replay. Notes go to stderr, one line each with a time.
+
+- A dropped connection or a 5xx is followed by a reconnect, waiting 1, 2, 4 … up to 30 seconds.
+  The note says that events in the gap are missed.
+- A connection that sends nothing for 60 seconds (the service sends a keepalive every 20) counts as
+  dropped. After a suspend a connection can look open on this side and be gone on the other.
+- A 401 or 403 (or any other 4xx) stops the command with exit code 1.
+- SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0.
+- When stdout is closed (`| head -3`), it stops, with exit code 0, at the next event it would
+  print. Keepalives print nothing, so on a quiet stream that can take a while.

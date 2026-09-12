@@ -16,8 +16,22 @@ class AccessCliTest {
 
     @Test
     @Launch("--help")
-    void theHelpNamesBothCommands(LaunchResult result) {
-        assertThat(result.getOutput()).contains("qits").contains("login").contains("session-daemon");
+    void theHelpNamesEveryCommand(LaunchResult result) {
+        assertThat(result.getOutput()).contains("qits").contains("login").contains("session-daemon")
+                .contains("projects").contains("repositories").contains("release-request").contains("events");
+    }
+
+    @Test
+    @Launch({"release-request", "create", "--help"})
+    void createHasItsOptionsAndTheInheritedOnes(LaunchResult result) {
+        assertThat(result.getOutput()).contains("--branch").contains("--summary").contains("--priority")
+                .contains("--project").contains("--repository").contains("--output");
+    }
+
+    @Test
+    @Launch(value = {"projects"}, exitCode = 2)
+    void aGroupWithoutASubcommandIsAUsageError(LaunchResult result) {
+        assertThat(result.getErrorOutput()).contains("Name a command");
     }
 
     @Test
