@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- qits-platform-access-cli: the `qits` command, access to the platform from a workstation.
+
+         PARENTLESS on purpose, like every other qits repo: a clone of this repo alone must build.
+         Versions that must stay in step with the platform (Quarkus, the JDK release) are repeated
+         here deliberately.
+
+         ONE form. `./mvnw package -Dnative -DskipTests` makes the native binary `target/qits`,
+         which is what this program is. There is no jar. `./mvnw clean verify` runs the tests and
+         packages nothing. The three lines that keep it so are the same three as in
+         qits-bootstrap-cli; its pom says how they fit together. -->
+    <groupId>eu.wohlben.qits</groupId>
+    <artifactId>qits-platform-access-cli</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>qits-platform-access-cli</name>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+        <!-- The platform's Quarkus. Moves with the platform, not ahead of it. -->
+        <quarkus.platform.version>3.34.6</quarkus.platform.version>
+
+        <!-- Not in any BOM, so it is pinned here. -->
+        <assertj.version>3.27.4</assertj.version>
+
+        <compiler-plugin.version>3.15.0</compiler-plugin.version>
+        <surefire-plugin.version>3.5.4</surefire-plugin.version>
+
+        <argLine/>
+
+        <!-- No jar, ever. Quarkus' build goal fails when asked for neither a jar nor a binary, so a
+             JVM build skips the goal; the native profile turns it back on. The @QuarkusMainTest
+             still augments the application, so a build-time break fails `clean verify`. -->
+        <quarkus.package.jar.enabled>false</quarkus.package.jar.enabled>
+        <quarkus.build.skip>true</quarkus.build.skip>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>${quarkus.platform.artifact-id}</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <!-- Command mode: picocli parses the arguments, Quarkus owns the lifecycle. -->
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-picocli</artifactId>
+        </dependency>
+        <dependency>
+            <!-- The session file and the idp's token answers. The idp is called with
+                 java.net.http. -->
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jackson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>generate-code</goal>
+                            <goal>generate-code-tests</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler-plugin.version}</version>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- Maven's own classes jar, off: `target/qits` is the only thing a build leaves. -->
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire-plugin.version}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <!-- `./mvnw package -Dnative -DskipTests` builds `target/qits`. It needs a GraalVM on
+                 JAVA_HOME (`sdk env`). -->
+            <id>native</id>
+            <activation>
+                <property>
+                    <name>native</name>
+                </property>
+            </activation>
+            <properties>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+                <quarkus.build.skip>false</quarkus.build.skip>
+
+                <!-- Pkce holds a SecureRandom in a static field. Seeded at build time, every
+                     binary would carry the same seed, so its initializer runs at run time. -->
+                <quarkus.native.additional-build-args>--initialize-at-run-time=eu.wohlben.qits.cli.access.login.Pkce</quarkus.native.additional-build-args>
+            </properties>
+        </profile>
+    </profiles>
+</project>
