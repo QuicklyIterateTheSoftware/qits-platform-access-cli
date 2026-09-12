@@ -306,7 +306,7 @@ the service sends it, one per line; `record` is what the service's query API ret
 Ingest takes records without a sign-in, so a record can say anything, escape sequences included.
 The line form removes every terminal control character from every value: C0 and C1 characters, ESC
 sequences, DEL and the bidirectional controls. A tab or a line break becomes a space. The JSON form
-writes them as escapes (``), so a reader such as `jq` still gets the same text.
+writes them as escapes (`\u001B`), so a reader such as `jq` still gets the same text.
 
 Notes go to stderr, one line each with a time:
 
