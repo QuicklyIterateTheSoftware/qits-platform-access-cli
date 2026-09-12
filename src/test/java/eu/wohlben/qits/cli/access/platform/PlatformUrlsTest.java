@@ -15,6 +15,11 @@ class PlatformUrlsTest {
     void theHostComesFromTheIdpAddress() throws Exception {
         assertThat(PlatformUrls.projects(null, Map.of(), IDP)).isEqualTo("https://projects.dev.wohlben.eu");
         assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.dev.wohlben.eu");
+        assertThat(PlatformUrls.observability(null, Map.of(), IDP)).isEqualTo("https://observability.dev.wohlben.eu");
+        assertThat(PlatformUrls.observability("http://o.example/", Map.of("QITS_OBSERVABILITY_URL", "http://env.example"), IDP))
+                .isEqualTo("http://o.example");
+        assertThat(PlatformUrls.observability(null, Map.of("QITS_OBSERVABILITY_URL", "http://env.example"), IDP))
+                .isEqualTo("http://env.example");
         assertThat(PlatformUrls.projects(null, Map.of(), "http://idp.prod.localhost:8080/idp/"))
                 .isEqualTo("http://projects.prod.localhost:8080");
     }

@@ -10,6 +10,8 @@ Commands:
 - `qits projects list`, `qits repositories … list` and `qits release-request … list|create` read
   from and ask the projects service.
 - `qits events` prints the platform's domain events as they happen.
+- `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
+  filtered by the service.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in.
 
@@ -129,6 +131,7 @@ Installing it is not part of this version.
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
     qits events [--filter=<names>]
+    qits observe --filter <conditions> [--filter <conditions> …] [-o json]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories` and `release-request` may come before or after
@@ -149,12 +152,14 @@ refuses prints `Session ended — run `qits login`.` and exits with 2.
 ### Which address
 
 A service lives at `<app>.<env>.<domain>`. The commands take the session's idp address and swap
-its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wohlben.eu` and
-`https://events.dev.wohlben.eu`. To name the address yourself (a base URL, without `/projects` or
-`/events`):
+its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wohlben.eu`,
+`https://events.dev.wohlben.eu` and `https://observability.dev.wohlben.eu`. To name the address
+yourself (a base URL, without `/projects`, `/events` or `/observability`):
 
 - projects: `--projects-url`, else `QITS_PROJECTS_URL`
 - events: `--events-url`, else `QITS_EVENTS_URL`
+- observability: `--observability-url`, else `QITS_OBSERVABILITY_URL`. The stream is a WebSocket,
+  so `https` becomes `wss` and `http` becomes `ws`.
 
 ### Output, errors and exit codes
 
@@ -233,6 +238,91 @@ The stream is live only: it has no replay. Notes go to stderr, one line each wit
 - SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0.
 - When stdout is closed (`| head -3`), it stops, with exit code 0, at the next event it would
   print. Keepalives print nothing, so on a quiet stream that can take a while.
+
+### qits observe
+
+    qits observe --filter <conditions> [--filter <conditions> …] [-o json] [--observability-url <url>]
+
+Prints what qits-observability takes in, as it arrives: logs, spans (with their events, such as
+`exception`) and metrics. Domain events stay on `qits events`. The command sends its filters over a
+WebSocket, `wss://observability.<env>.<domain>/observability/stream`; the service checks each record
+and sends only the ones that match. It needs the role `qits:admin`.
+
+    qits observe --filter 'kind=log level>=ERROR' \
+                 --filter 'trace=4bf92f3577b34da6a3ce929d0e0e4736' \
+                 --filter 'kind=span event=exception'
+
+One `--filter` is one group. The conditions of a group are separated by spaces, and all of them
+must hold. A record that fits any group is printed. At least one `--filter` is required;
+`--filter '*'` streams every record.
+
+| written | means |
+|---|---|
+| `F=V` | the field is V (matches case: `status=ERROR`, not `status=error`) |
+| `F^=V` | the field starts with V (matches case) |
+| `F~V` | the field contains V (any case) |
+| `F?` | the field is there and not empty |
+| `!F` | the field is not there |
+| `level>=V` | the severity is V or higher: TRACE, DEBUG, INFO, WARN (or WARNING), ERROR, FATAL, or a number 1-24 |
+
+| field | applies to | is |
+|---|---|---|
+| `kind` | all | `log`, `span` or `metric` |
+| `service` | all | the resource's `service.name` |
+| `trace`, `span` | log, span | the trace id and the span id, lowercase hex (the command lowercases what you give) |
+| `level` | log | the severity; takes `>=` only |
+| `body` | log | the message |
+| `name` | span, metric | the span's or the metric's name |
+| `status` | span | `OK`, `ERROR` or `UNSET` |
+| `event` | span | the name of any of the span's events, for example `exception` |
+| `attr.<key>` | all | the record's own attribute `<key>` |
+| `resource.<key>` | all | the resource attribute `<key>` |
+
+Everything after `attr.` or `resource.` is the key, dots included: `attr.exception.type`. A span's
+exception is an event of the span, not an attribute of it, so `attr.exception.type?` matches logs
+and `event=exception` matches spans. A field that a record does not have fails every condition but
+`!F`. Quote a value that holds spaces: `body~"connection refused"`; inside the quotes, `\"` is a
+quote and `\\` a backslash. A condition the command cannot read stops it with exit code 2, and the
+message names that condition. Nothing is sent before every condition reads.
+
+    qits observe --filter '*'
+    qits observe --filter 'service^=qits-ci kind=log body~"connection refused"'
+    qits observe --filter 'resource.service.version=2026.912.1 status=ERROR'
+    qits observe --filter 'kind=log level>=WARN' -o json | jq -r .record.body
+
+The default output is one line per record, flushed at once:
+
+    12:03:11.123 log    qits-ci ERROR connection refused  [4bf92f35]
+    12:03:11.140 span   qits-ci ERROR GET /ci/api/builds  [4bf92f35]
+    12:03:12.000 metric qits-ci 42 ms http.server.duration
+
+That is the local time (the record's own, else when the service received it), the kind, the
+service, the level (log), the status (span) or the value and its unit (metric), the body (log) or
+the name (span, metric), and the first 8 characters of the trace id. `-o json` prints each frame as
+the service sends it, one per line; `record` is what the service's query API returns for that kind:
+
+    {"kind":"log","receivedAtMillis":1757685791123,"source":"_service/qits-ci","record":{…}}
+
+Ingest takes records without a sign-in, so a record can say anything, escape sequences included.
+The line form removes every terminal control character from every value: C0 and C1 characters, ESC
+sequences, DEL and the bidirectional controls. A tab or a line break becomes a space. The JSON form
+writes them as escapes (``), so a reader such as `jq` still gets the same text.
+
+Notes go to stderr, one line each with a time:
+
+- `{"dropped": N}` from the service: it dropped N records, because this side read too slowly. The
+  note also gives the total since the command started.
+- `{"error": …}` before the first record is the service's answer to the filters (it sends no other
+  answer): the command stops with exit code 2 and the service's reason. After a record, an error is
+  only a note.
+- A dropped socket or a 5xx is followed by a reconnect, waiting 1, 2, 4 … up to 30 seconds, and the
+  filters are sent again. The note says that records in the gap are missed: the stream has no
+  replay. An access token about to expire is refreshed before each connection.
+- The command pings every 20 seconds, and the service every 30. A socket that sends nothing (no
+  frame, ping or pong) for 60 seconds counts as dropped.
+- A 401 (`The platform refused the token`), a 403 (`Your roles do not allow this`) or any other 4xx
+  on the upgrade stops the command with exit code 1.
+- SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0. So does a closed stdout, at the next record.
 
 ## Git pushes from this workstation
 

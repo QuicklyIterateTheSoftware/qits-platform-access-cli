@@ -9,10 +9,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.WebSocket;
+import java.net.http.WebSocketHandshakeException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -145,6 +151,85 @@ public final class PlatformClient {
             } catch (RuntimeException ignored) {
                 // The client is already shut down; nothing is left to release.
             }
+        }
+    }
+
+    /**
+     * Starts a WebSocket's opening handshake, with the access token as a bearer, and returns at
+     * once, so the caller can {@link Socket#abort()} a handshake that hangs. {@link Socket#await()}
+     * waits for the answer. Reading the token may refresh the session first.
+     */
+    public Socket openSocket(URI uri, WebSocket.Listener listener) throws CliFailure, InterruptedException {
+        String bearer = "Bearer " + tokens.session().accessToken();
+        // A client per connection, like openStream, so that stopping can abort exactly this one.
+        HttpClient http = newClient();
+        CompletableFuture<WebSocket> opening;
+        try {
+            opening = http.newWebSocketBuilder()
+                    .connectTimeout(REQUEST_TIMEOUT)
+                    .header("Authorization", bearer)
+                    .buildAsync(uri, listener);
+        } catch (IllegalArgumentException notUsable) {
+            http.shutdownNow();
+            throw new CliFailure("'" + uri + "' is not a usable WebSocket address.", CliFailure.USAGE);
+        }
+        return new Socket(uri, http, opening);
+    }
+
+    /** A WebSocket being opened, then open. {@link #abort()} may be called from any thread. */
+    public static final class Socket {
+        private final URI uri;
+        private final HttpClient http;
+        private final CompletableFuture<WebSocket> opening;
+
+        Socket(URI uri, HttpClient http, CompletableFuture<WebSocket> opening) {
+            this.uri = uri;
+            this.http = http;
+            this.opening = opening;
+        }
+
+        /**
+         * The open socket, once the platform accepted the upgrade. A refusal is a {@link
+         * CliFailure}: retryable for a 5xx or a network error, final for any other status.
+         */
+        public WebSocket await() throws CliFailure, InterruptedException {
+            try {
+                return opening.get();
+            } catch (CancellationException aborted) {
+                throw CliFailure.retryable("the connection to " + uri + " was aborted");
+            } catch (ExecutionException failed) {
+                Throwable cause = failed.getCause();
+                while (cause instanceof CompletionException && cause.getCause() != null) {
+                    cause = cause.getCause();
+                }
+                if (cause instanceof WebSocketHandshakeException handshake && handshake.getResponse() != null) {
+                    HttpResponse<?> response = handshake.getResponse();
+                    int status = response.statusCode();
+                    String body = response.body() instanceof String text ? text : "";
+                    CliFailure refusal = refusal("GET", uri, status, response.headers(), body);
+                    if (status >= 500) {
+                        throw CliFailure.retryable(refusal.getMessage());
+                    }
+                    if (status < 300) {
+                        throw new CliFailure(refusal.getMessage() + ", not a WebSocket upgrade", CliFailure.FAILED);
+                    }
+                    throw refusal;
+                }
+                throw CliFailure.retryable("Cannot reach " + uri + ": " + describe(cause == null ? failed : cause));
+            }
+        }
+
+        public void abort() {
+            opening.cancel(false);
+            try {
+                WebSocket open = opening.getNow(null);
+                if (open != null) {
+                    open.abort();
+                }
+            } catch (CancellationException | CompletionException notOpen) {
+                // Nothing was open; shutting the client down below ends the handshake.
+            }
+            http.shutdownNow();
         }
     }
 

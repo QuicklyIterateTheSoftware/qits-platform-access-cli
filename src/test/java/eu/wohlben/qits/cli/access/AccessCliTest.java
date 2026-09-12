@@ -19,7 +19,20 @@ class AccessCliTest {
     void theHelpNamesEveryCommand(LaunchResult result) {
         assertThat(result.getOutput()).contains("qits").contains("login").contains("session-daemon")
                 .contains("projects").contains("repositories").contains("release-request").contains("events")
-                .contains("git-login").contains("git-credential");
+                .contains("observe").contains("git-login").contains("git-credential");
+    }
+
+    @Test
+    @Launch({"observe", "--help"})
+    void observeHasItsOptions(LaunchResult result) {
+        assertThat(result.getOutput()).contains("--filter").contains("--observability-url").contains("--output")
+                .contains("level>=V").contains("attr.<key>");
+    }
+
+    @Test
+    @Launch(value = {"observe"}, exitCode = 2)
+    void observeWithoutAFilterIsAUsageError(LaunchResult result) {
+        assertThat(result.getErrorOutput()).contains("--filter");
     }
 
     @Test

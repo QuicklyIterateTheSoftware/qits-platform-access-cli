@@ -6,7 +6,8 @@ The `qits` command: access to the qits platform from a Linux or WSL workstation.
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
 that session fresh), `qits projects|repositories|release-request` (the projects service),
-`qits events` (the live event stream), and `qits git-login` / `qits git-credential` (Git pushes to
+`qits events` (the live event stream), `qits observe` (the live, server-filtered telemetry stream
+of qits-observability, over a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`). The README says how
 each behaves.
 
@@ -20,6 +21,8 @@ each behaves.
                the HTTP client and its error messages, and which address a service has (PlatformUrls)
     projects/  qits projects, repositories and release-request
     events/    qits events: the SSE parser and the reconnecting stream
+    observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
+               and SafeText (terminal control characters out of every streamed value)
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
 
@@ -52,6 +55,15 @@ each behaves.
   channel and loses a rotated token. `stop()` wakes the sleeper instead. `qits events` stops the
   same way, and aborts its open connection (`HttpClient.shutdownNow`), never the thread.
   `EventStream` waits through its `Sleeper`; only its idle watchdog reads `System.nanoTime`.
+  `qits observe` does the same: `stop()` aborts the socket and puts a stop mark on the loop's queue.
+- **Streamed telemetry is untrusted text.** Ingest takes records without a sign-in, so anyone who
+  reaches it writes what `qits observe` shows. Every streamed value goes through `SafeText.line`
+  (the line form) or `SafeText.JSON` (the JSON form), notices and close reasons included. A new
+  field in the output goes through them too.
+- **The observe wire protocol is `qits-observe-plan.md`** in the superproject, shared with
+  qits-observability, which is built from the same text. Change it there first, and on both sides.
+  The server sends no acknowledgement for a subscribe frame, so an `{"error": …}` before the first
+  record is taken as its answer.
 - Do not configure the idp from its discovery document: it names the idp's internal issuer.
 - The PKCE and token code, `GitOrigin` and `LoopbackCallback` were copied from qits-bootstrap-cli.
   Do not share a jar with it.
@@ -67,7 +79,7 @@ each behaves.
 There is no jar; the pom keeps it so the same way qits-bootstrap-cli's does. Run `clean verify`
 before a native build, never after: `clean` removes the binary. `.sdkmanrc` pins 25.0.2-graalce.
 
-Native rules: HTTP with `java.net.http`, never `java.awt` (the browser is `wslview`/`xdg-open`). A
+Native rules: HTTP and WebSocket with `java.net.http`, never `java.awt` (the browser is `wslview`/`xdg-open`). A
 class with a `SecureRandom` in a static field is initialised at run time (`Pkce`, in the native
 profile). Records Jackson reads or writes carry `@RegisterForReflection`. A change to any of these
 is proven with the native binary, not with the tests.
@@ -79,7 +91,9 @@ a real idp: `FakeIdp` is an idp in the test's own process (`com.sun.net.httpserv
 `FakeTime` is the clock and the sleeper. The lock tests start a second JVM (`LockHolder`), because
 an fcntl lock works between processes and a test in one JVM would only prove the in-process gate.
 `FakePlatform` is the edge and the services: canned JSON by method and path, and an SSE route whose
-connections follow scripts. `PlatformCommandsTest` runs picocli in the test's process with its own
+connections follow scripts. `FakeSocketServer` is a WebSocket server on a plain `ServerSocket` (the
+RFC 6455 handshake; text, ping, pong and close frames), one script per connection; it needs only the
+JDK, so a native proof can run it from `target/test-classes`. `PlatformCommandsTest` runs picocli in the test's process with its own
 `CliContext` (environment, stdout, stderr, clock), so a command test needs no second process.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
