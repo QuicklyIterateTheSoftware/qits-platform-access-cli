@@ -2,6 +2,8 @@ package eu.wohlben.qits.cli.access;
 
 import eu.wohlben.qits.cli.access.daemon.SessionDaemonCommand;
 import eu.wohlben.qits.cli.access.events.EventsCommand;
+import eu.wohlben.qits.cli.access.git.GitCredentialCommand;
+import eu.wohlben.qits.cli.access.git.GitLoginCommand;
 import eu.wohlben.qits.cli.access.login.LoginCommand;
 import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
@@ -15,7 +17,8 @@ import picocli.CommandLine;
         name = "qits",
         mixinStandardHelpOptions = true,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, ProjectsCommand.class,
-                RepositoriesCommand.class, ReleaseRequestCommand.class, EventsCommand.class},
+                RepositoriesCommand.class, ReleaseRequestCommand.class, EventsCommand.class,
+                GitLoginCommand.class, GitCredentialCommand.class},
         description = "Access to the qits platform from this workstation.")
 public class AccessCli implements Runnable {
 

@@ -17,14 +17,14 @@ import java.util.concurrent.TimeUnit;
  * after it is taken to be opening the page, and is not waited for. Not {@code java.awt}: its
  * native-image support pulls in a desktop toolkit to open one URL.
  */
-final class Browser {
+public final class Browser {
 
     private static final long BOUND_SECONDS = 3;
 
     private Browser() {
     }
 
-    static void open(String url, Map<String, String> env) {
+    public static void open(String url, Map<String, String> env) {
         for (String opener : openers(env)) {
             try {
                 Process process = new ProcessBuilder(opener, url)

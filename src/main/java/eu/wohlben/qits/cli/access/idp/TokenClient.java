@@ -34,45 +34,70 @@ public final class TokenClient {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private final String idpUrl;
+    private final String clientId;
 
     public TokenClient(String idpUrl) {
+        this(idpUrl, CLIENT_ID);
+    }
+
+    /** For another public client of the same idp, such as {@code qits-git-workstation}. */
+    public TokenClient(String idpUrl, String clientId) {
         this.idpUrl = IdpUrl.trim(idpUrl);
+        this.clientId = clientId;
     }
 
     public String idpUrl() {
         return idpUrl;
     }
 
-    /** The page that shows the person the code to paste. */
+    /** {@code qits-cli}'s redirect target: the idp's page that shows the person the code to paste. */
     public String redirectUri() {
         return idpUrl + "/connect/cli";
     }
 
     public String authorizeUrl(String codeChallenge) {
+        return authorizeUrl(codeChallenge, redirectUri(), Map.of());
+    }
+
+    /** {@code extra} goes after the standard parameters, in its own order. */
+    public String authorizeUrl(String codeChallenge, String redirectUri, Map<String, String> extra) {
         Map<String, String> query = new LinkedHashMap<>();
         query.put("response_type", "code");
-        query.put("client_id", CLIENT_ID);
-        query.put("redirect_uri", redirectUri());
+        query.put("client_id", clientId);
+        query.put("redirect_uri", redirectUri);
         query.put("code_challenge", codeChallenge);
         query.put("code_challenge_method", "S256");
+        query.putAll(extra);
         return idpUrl + "/authorize?" + form(query);
     }
 
     public TokenResponse exchange(String code, String verifier) throws IdpException {
+        return exchange(code, verifier, redirectUri());
+    }
+
+    public TokenResponse exchange(String code, String verifier, String redirectUri) throws IdpException {
         Map<String, String> body = new LinkedHashMap<>();
         body.put("grant_type", "authorization_code");
-        body.put("client_id", CLIENT_ID);
+        body.put("client_id", clientId);
         body.put("code", code);
-        body.put("redirect_uri", redirectUri());
+        body.put("redirect_uri", redirectUri);
         body.put("code_verifier", verifier);
         return post(body);
     }
 
     public TokenResponse refresh(String refreshToken) throws IdpException {
+        return refresh(refreshToken, null);
+    }
+
+    /** @param audience the audience the new access token is for, or null for the client's default */
+    public TokenResponse refresh(String refreshToken, String audience) throws IdpException {
         Map<String, String> body = new LinkedHashMap<>();
         body.put("grant_type", "refresh_token");
-        body.put("client_id", CLIENT_ID);
+        body.put("client_id", clientId);
         body.put("refresh_token", refreshToken);
+        if (audience != null && !audience.isBlank()) {
+            body.put("audience", audience);
+        }
         return post(body);
     }
 

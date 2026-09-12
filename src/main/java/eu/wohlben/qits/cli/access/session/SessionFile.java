@@ -6,15 +6,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -77,13 +71,13 @@ public final class SessionFile {
 
     /** The write lock. Waits while another process holds it. */
     public ExclusiveLock lockForWrite() throws IOException, InterruptedException {
-        ensureDirectory();
+        PrivateFiles.ensureDirectory(directory);
         return ExclusiveLock.acquire(writeLockPath());
     }
 
     /** The daemon's lifetime lock; empty when another daemon holds it. */
     public Optional<ExclusiveLock> tryLockForDaemon() throws IOException {
-        ensureDirectory();
+        PrivateFiles.ensureDirectory(directory);
         return ExclusiveLock.tryAcquire(daemonLockPath());
     }
 
@@ -110,34 +104,9 @@ public final class SessionFile {
         return Optional.of(session);
     }
 
-    /**
-     * Replaces the file atomically: a temporary file in the same directory, fsync, rename, then
-     * fsync of the directory so the rename itself survives a crash. The caller holds the write
-     * lock.
-     */
+    /** Replaces the file atomically (see {@link PrivateFiles}). The caller holds the write lock. */
     public void write(Session session) throws IOException {
-        ensureDirectory();
-        byte[] bytes = JSON.writeValueAsBytes(session);
-        Path temporary = Files.createTempFile(directory, FILE_NAME + ".", ".tmp",
-                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
-        try {
-            try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.WRITE,
-                    StandardOpenOption.TRUNCATE_EXISTING)) {
-                ByteBuffer buffer = ByteBuffer.wrap(bytes);
-                while (buffer.hasRemaining()) {
-                    channel.write(buffer);
-                }
-                channel.force(true);
-            }
-            try {
-                Files.move(temporary, path(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException e) {
-                throw new IOException("cannot replace " + path() + " atomically", e);
-            }
-        } finally {
-            Files.deleteIfExists(temporary);
-        }
-        syncDirectory();
+        PrivateFiles.writeAtomically(directory, FILE_NAME, JSON.writeValueAsBytes(session));
     }
 
     /**
@@ -172,23 +141,6 @@ public final class SessionFile {
         @Override
         public String toString() {
             return exists ? "Fingerprint[size=" + size + ", mtime=" + mtimeMillis + "]" : "Fingerprint[absent]";
-        }
-    }
-
-    private void ensureDirectory() throws IOException {
-        if (!Files.isDirectory(directory)) {
-            Files.createDirectories(directory,
-                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
-        }
-        // createDirectories applies the umask, and an existing directory may be wider.
-        Files.setPosixFilePermissions(directory, PosixFilePermissions.fromString("rwx------"));
-    }
-
-    private void syncDirectory() {
-        try (FileChannel dir = FileChannel.open(directory, StandardOpenOption.READ)) {
-            dir.force(true);
-        } catch (IOException ignored) {
-            // Not every file system lets a directory be opened for this. The rename is done.
         }
     }
 

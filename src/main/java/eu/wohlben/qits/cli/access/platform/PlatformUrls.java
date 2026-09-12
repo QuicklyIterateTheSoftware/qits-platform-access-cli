@@ -28,6 +28,28 @@ public final class PlatformUrls {
         return resolve("events", "--events-url", "QITS_EVENTS_URL", flag, env, idpUrl);
     }
 
+    /** The git host's origin, which Git pushes to through the edge. */
+    public static String gitHost(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);
+    }
+
+    /** The environment label of the idp's host: {@code dev} in {@code idp.dev.wohlben.eu}. */
+    public static String environment(String idpUrl) throws CliFailure {
+        String host = null;
+        try {
+            host = URI.create(idpUrl == null ? "" : idpUrl.strip()).getHost();
+        } catch (IllegalArgumentException notAUrl) {
+            // Refused below.
+        }
+        String rest = host != null && host.startsWith("idp.") ? host.substring("idp.".length()) : "";
+        int dot = rest.indexOf('.');
+        if (dot <= 0) {
+            throw new CliFailure("Cannot tell the platform's environment from the idp address " + idpUrl
+                    + ". Pass --audience (for example --audience dev-qits-githost).", CliFailure.USAGE);
+        }
+        return rest.substring(0, dot);
+    }
+
     static String resolve(String app, String flagName, String variable, String flag, Map<String, String> env,
                           String idpUrl) throws CliFailure {
         if (!blank(flag)) {

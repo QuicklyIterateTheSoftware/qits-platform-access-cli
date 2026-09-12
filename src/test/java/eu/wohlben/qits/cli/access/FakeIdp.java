@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * An idp in the test's own process, answering {@code /idp/token} the way the real one does:
  * PKCE-checked codes, refresh tokens that rotate, and a spent refresh token that revokes its whole
- * family.
+ * family. It serves both public clients, {@code qits-cli} and {@code qits-git-workstation}.
  * <p>
  * Every token it issues starts with {@link #SECRET}, so a test can prove that none reached the
  * output.
@@ -32,9 +32,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class FakeIdp implements AutoCloseable {
 
     public static final String SECRET = "SECRET-";
+    private static final Set<String> CLIENTS = Set.of("qits-cli", "qits-git-workstation");
+
+    private record Approval(String challenge, String redirectUri) {
+    }
 
     private final HttpServer server;
-    private final Map<String, String> codeChallenges = new ConcurrentHashMap<>();
+    private final Map<String, Approval> approvals = new ConcurrentHashMap<>();
     private final Set<String> liveRefresh = ConcurrentHashMap.newKeySet();
     private final Set<String> spentRefresh = ConcurrentHashMap.newKeySet();
     private final Deque<Integer> forcedStatus = new ConcurrentLinkedDeque<>();
@@ -54,9 +58,14 @@ public final class FakeIdp implements AutoCloseable {
         return "http://127.0.0.1:" + server.getAddress().getPort() + "/idp";
     }
 
-    /** The idp approves this code for this PKCE challenge, as after a sign-in. */
+    /** The idp approves this code for this PKCE challenge, as after a `qits login` sign-in. */
     public void approve(String code, String challenge) {
-        codeChallenges.put(code, challenge);
+        approve(code, challenge, url() + "/connect/cli");
+    }
+
+    /** The same, for a client whose redirect is its own (a loopback address). */
+    public void approve(String code, String challenge, String redirectUri) {
+        approvals.put(code, new Approval(challenge, redirectUri));
     }
 
     /** A live refresh token, as a past login left it. */
@@ -87,16 +96,16 @@ public final class FakeIdp implements AutoCloseable {
             respond(exchange, forced, "{\"error\":\"temporarily_unavailable\"}");
             return;
         }
-        if (!"qits-cli".equals(form.get("client_id")) || exchange.getRequestHeaders().containsKey("Authorization")
+        if (!CLIENTS.contains(form.get("client_id")) || exchange.getRequestHeaders().containsKey("Authorization")
                 || form.containsKey("client_secret")) {
             respond(exchange, 400, "{\"error\":\"invalid_request\",\"error_description\":\"a public client must not use Authorization\"}");
             return;
         }
         switch (String.valueOf(form.get("grant_type"))) {
             case "authorization_code" -> {
-                String challenge = codeChallenges.remove(String.valueOf(form.get("code")));
-                boolean redirectOk = (url() + "/connect/cli").equals(form.get("redirect_uri"));
-                if (challenge == null || !redirectOk || !challenge.equals(s256(form.get("code_verifier")))) {
+                Approval approval = approvals.remove(String.valueOf(form.get("code")));
+                if (approval == null || !approval.redirectUri().equals(form.get("redirect_uri"))
+                        || !approval.challenge().equals(s256(form.get("code_verifier")))) {
                     respond(exchange, 400, "{\"error\":\"invalid_grant\",\"error_description\":"
                             + "\"authorization code is invalid, expired, or already used\"}");
                     return;

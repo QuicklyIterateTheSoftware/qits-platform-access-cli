@@ -18,7 +18,15 @@ class AccessCliTest {
     @Launch("--help")
     void theHelpNamesEveryCommand(LaunchResult result) {
         assertThat(result.getOutput()).contains("qits").contains("login").contains("session-daemon")
-                .contains("projects").contains("repositories").contains("release-request").contains("events");
+                .contains("projects").contains("repositories").contains("release-request").contains("events")
+                .contains("git-login").contains("git-credential");
+    }
+
+    @Test
+    @Launch({"git-login", "--help"})
+    void gitLoginHasItsOptions(LaunchResult result) {
+        assertThat(result.getOutput()).contains("--idp-url").contains("--git-host").contains("--audience")
+                .contains("--timeout").contains("--no-browser").contains("--configure");
     }
 
     @Test

@@ -30,6 +30,13 @@ public record Pkce(String verifier, String challenge) {
         }
     }
 
+    /** A one-time {@code state} for a redirect sign-in: the answer must carry it back. */
+    public static String state() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
     @Override
     public String toString() {
         return "Pkce[challenge=" + challenge + "]";

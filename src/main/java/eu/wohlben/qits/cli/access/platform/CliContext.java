@@ -7,6 +7,7 @@ import eu.wohlben.qits.cli.access.session.SessionFile;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -16,12 +17,14 @@ import java.util.function.Function;
 
 /**
  * What a platform command takes from the world. The real one is {@link #system()}; a test gives
- * its own, so it can set the environment and read the output without starting a process.
+ * its own, so it can set the environment, feed stdin and read the output without starting a
+ * process.
  *
  * @param onStop installs what SIGTERM and SIGINT do
  */
 public record CliContext(
         Map<String, String> env,
+        InputStream in,
         PrintStream out,
         PrintStream err,
         Clock clock,
@@ -31,7 +34,7 @@ public record CliContext(
 
     /** UTF-8 whatever the locale says, so a dash in a message stays a dash. */
     public static CliContext system() {
-        return new CliContext(System.getenv(),
+        return new CliContext(System.getenv(), System.in,
                 new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8),
                 new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8),
                 Clock.systemUTC(), Sleeper.real(), TokenClient::new, StopSignals::install);

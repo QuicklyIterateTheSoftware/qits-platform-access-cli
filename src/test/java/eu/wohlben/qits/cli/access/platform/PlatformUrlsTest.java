@@ -28,6 +28,17 @@ class PlatformUrlsTest {
     }
 
     @Test
+    void theGitHostAndTheEnvironmentComeFromTheIdpToo() throws Exception {
+        assertThat(PlatformUrls.gitHost(null, Map.of(), IDP)).isEqualTo("https://githost.dev.wohlben.eu");
+        assertThat(PlatformUrls.gitHost(null, Map.of("QITS_GIT_HOST_URL", "http://githost.prod.localhost:8080"), IDP))
+                .isEqualTo("http://githost.prod.localhost:8080");
+        assertThat(PlatformUrls.environment(IDP)).isEqualTo("dev");
+        assertThat(PlatformUrls.environment("http://idp.prod.localhost:8080/idp")).isEqualTo("prod");
+        assertThatThrownBy(() -> PlatformUrls.environment("http://127.0.0.1:4000/idp")).hasMessageContaining("--audience");
+        assertThatThrownBy(() -> PlatformUrls.environment("https://idp.localhost/idp")).hasMessageContaining("--audience");
+    }
+
+    @Test
     void anIdpNotCalledIdpNamesTheWayOut() {
         assertThatThrownBy(() -> PlatformUrls.projects(null, Map.of(), "http://127.0.0.1:4000/idp"))
                 .isInstanceOf(CliFailure.class)

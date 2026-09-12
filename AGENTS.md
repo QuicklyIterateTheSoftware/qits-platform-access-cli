@@ -5,8 +5,10 @@
 The `qits` command: access to the qits platform from a Linux or WSL workstation. A Quarkus
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
-that session fresh), `qits projects|repositories|release-request` (the projects service) and
-`qits events` (the live event stream). The README says how each behaves.
+that session fresh), `qits projects|repositories|release-request` (the projects service),
+`qits events` (the live event stream), and `qits git-login` / `qits git-credential` (Git pushes to
+`refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`). The README says how
+each behaves.
 
 ## Layout
 
@@ -18,6 +20,8 @@ that session fresh), `qits projects|repositories|release-request` (the projects 
                the HTTP client and its error messages, and which address a service has (PlatformUrls)
     projects/  qits projects, repositories and release-request
     events/    qits events: the SSE parser and the reconnecting stream
+    git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
+               protocol, the per-host Git setup
 
 ## Conventions
 
@@ -27,10 +31,15 @@ that session fresh), `qits projects|repositories|release-request` (the projects 
   `Session`, `TokenResponse` and `Pkce` override `toString` for that reason. An error from the idp
   names its status, `error` and `error_description`, never the request form. A Jackson error on a
   session or token body is replaced, because its message can quote the body.
+  **The one exception is `qits git-credential get`**: it prints the git access token on stdout,
+  because that is Git's credential helper protocol. Nothing else prints one, and stderr and logs
+  never carry one, that command's included.
 - **Every refresh and every write of `t.json` happens under the write lock**, and the file is read
   again under it. Refresh tokens rotate; a spent one presented again revokes the whole session.
-  `SessionRefresh` is the only code that spends a refresh token; the daemon and the platform
-  commands both call it. Do not copy it.
+  `SessionRefresh` is the only code that spends a `t.json` refresh token; the daemon and the
+  platform commands both call it. Do not copy it. `git.json` follows the same rules under
+  `git.json.lock` (`GitAccess`); its tokens are another client's (`qits-git-workstation`), so the
+  two files never share a token. Both are written through `PrivateFiles`.
 - **One place decides a service's address**: `PlatformUrls`. A later in-platform mode (internal
   names, a token from the container) goes there, not into the commands.
 - **Platform answers are read as Jackson trees** (`JsonNode`), not records: the services add fields
@@ -44,7 +53,11 @@ that session fresh), `qits projects|repositories|release-request` (the projects 
   same way, and aborts its open connection (`HttpClient.shutdownNow`), never the thread.
   `EventStream` waits through its `Sleeper`; only its idle watchdog reads `System.nanoTime`.
 - Do not configure the idp from its discovery document: it names the idp's internal issuer.
-- The PKCE and token code was copied from qits-bootstrap-cli. Do not share a jar with it.
+- The PKCE and token code, `GitOrigin` and `LoopbackCallback` were copied from qits-bootstrap-cli.
+  Do not share a jar with it.
+- **Git setup is per host.** `qits git-login` sets `credential.<git host>.helper` and never
+  `credential.helper`: the person's global helper serves GitHub and must stay. A test that runs
+  `git config --global` sets `GIT_CONFIG_GLOBAL` to a scratch file first.
 
 ## Build forms
 

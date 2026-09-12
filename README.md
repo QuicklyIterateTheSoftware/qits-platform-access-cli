@@ -10,6 +10,8 @@ Commands:
 - `qits projects list`, `qits repositories … list` and `qits release-request … list|create` read
   from and ask the projects service.
 - `qits events` prints the platform's domain events as they happen.
+- `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
+  `qits git-credential` is the Git credential helper that uses that sign-in.
 
 The binary is called `qits`. qits-bootstrap-cli's binary is `qits-bootstrap`.
 
@@ -231,3 +233,64 @@ The stream is live only: it has no replay. Notes go to stderr, one line each wit
 - SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0.
 - When stdout is closed (`| head -3`), it stops, with exit code 0, at the next event it would
   print. Keepalives print nothing, so on a quiet stream that can take a while.
+
+## Git pushes from this workstation
+
+    qits git-login [--idp-url <url>] [--git-host <url>] [--audience <audience>]
+                   [--timeout <seconds>] [--no-browser] [--configure]
+    qits git-credential <get|store|erase>      Git runs this; a person does not
+
+`qits git-login` signs this workstation in for Git pushes to the platform's git host. The sign-in
+may push branches under `refs/heads/external/` and nothing else; the git host checks that. It needs
+no keyring: the sign-in is a file, like the session of `qits login`.
+
+1. It prints the sign-in address and tries to open it (`wslview` on WSL, then `xdg-open`).
+   `--no-browser` only prints it.
+2. You sign in. The browser comes back to a one-time address on this machine
+   (`http://127.0.0.1:<port>/callback`), and the command takes the answer from there. It waits
+   `--timeout` seconds (default 300). An answer for another sign-in (its `state` differs) is
+   refused.
+3. The sign-in goes to `$XDG_CONFIG_HOME/qits/git.json` (0600, in the 0700 directory), under the
+   git host's address. The command prints how long it lasts and the Git setup.
+
+Which platform:
+
+- idp: `--idp-url`, else `QITS_IDP_URL`, else the idp of the `qits login` session, else as
+  `qits login` finds it.
+- git host: `--git-host`, else `QITS_GIT_HOST_URL`, else the idp's host with `idp` swapped for
+  `githost` (`https://githost.dev.wohlben.eu`).
+- audience: `--audience`, else `<env>-qits-githost`, where `<env>` is the idp host's second label
+  (`dev` in `idp.dev.wohlben.eu`).
+
+The OAuth client is `qits-git-workstation` (PKCE, no secret), not the `qits-cli` of `qits login`.
+
+### Git setup, for this host only
+
+Git asks `qits git-credential` for the git host and for no other host, so a global helper (for
+example Git Credential Manager for GitHub) stays as it is. The empty value first clears the helper
+list for this host:
+
+    git config --global --replace-all credential.https://githost.dev.wohlben.eu.helper ''
+    git config --global --add credential.https://githost.dev.wohlben.eu.helper '!/home/you/.local/bin/qits git-credential'
+
+`qits git-login` prints these two lines with the git host and its own path. `--configure` runs them.
+Running them again changes nothing.
+
+### qits git-credential
+
+Git sends the token as HTTP Basic `oauth2:<access token>`; the edge checks it and forwards it to the
+git host.
+
+- `get`: for a git host with a sign-in, prints `username=oauth2` and the access token as
+  `password`. An access token with more than 60 seconds left is used as it is. Otherwise it is
+  refreshed first, under `git.json.lock` and after reading the file again (another Git process may
+  have refreshed it), and the new pair is written before the token is printed. A host without a
+  sign-in gets no answer, and Git asks its other helpers.
+- `store`: ignored. Only `qits git-login` stores a sign-in.
+- `erase`: Git erases after any refused request. Only the cached access token goes; the sign-in
+  stays, so a passing 401 does not cost a new browser sign-in.
+- A refresh the idp refuses prints `Git sign-in ended — run `qits git-login`.` on stderr and
+  nothing on stdout.
+
+`git-credential get` is the one place `qits` prints a token, because that is how Git's helper
+protocol works. stderr never carries one.

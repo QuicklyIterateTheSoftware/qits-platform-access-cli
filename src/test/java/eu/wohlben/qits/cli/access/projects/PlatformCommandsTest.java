@@ -113,7 +113,8 @@ class PlatformCommandsTest {
     private Result run(String... args) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-        CliContext context = new CliContext(Map.copyOf(env), new PrintStream(out, true, StandardCharsets.UTF_8),
+        CliContext context = new CliContext(Map.copyOf(env), java.io.InputStream.nullInputStream(),
+                new PrintStream(out, true, StandardCharsets.UTF_8),
                 new PrintStream(err, true, StandardCharsets.UTF_8), time, time, TokenClient::new, stop -> { });
         CommandLine cli = new CommandLine(new AccessCli(), new CommandLine.IFactory() {
             @Override
