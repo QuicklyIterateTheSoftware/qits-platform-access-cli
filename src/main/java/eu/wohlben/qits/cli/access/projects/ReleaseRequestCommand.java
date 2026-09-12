@@ -12,16 +12,27 @@ import picocli.CommandLine;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
-        subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class},
-        description = "The release requests of one repository.")
+        subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
+                ReleaseRequestCommand.JoinCommand.class},
+        description = {"The release requests of one repository.",
+                "list shows them, create asks for a branch to be released, and join adds a branch to an open request."})
 public class ReleaseRequestCommand implements Runnable {
 
     /** The one state the default list leaves out: the service adds the last 10 of them. */
     static final String RELEASED = "RELEASED";
+
+    /** The states that take no more branches. */
+    static final Set<String> SETTLED = Set.of(RELEASED, "WITHDRAWN");
+
+    /** The list query for every request, of every state. */
+    static final String ALL = "all";
 
     @CommandLine.Mixin
     ProjectsOptions options;
@@ -47,11 +58,12 @@ public class ReleaseRequestCommand implements Runnable {
         String wantedProject = RepositoriesCommand.required(project, RepositoriesCommand.NAME_THE_PROJECT);
         String wantedRepository = RepositoriesCommand.required(repository, "Name the repository: --repository <id or name>.");
         ProjectsApi api = ProjectsApi.connect(context, options.projectsUrl);
-        JsonNode repo = api.repository(api.project(wantedProject), wantedRepository);
-        return new Target(api, text(repo, "id"), text(repo, "name"));
+        JsonNode found = api.project(wantedProject);
+        JsonNode repo = api.repository(found, wantedRepository);
+        return new Target(api, ProjectsApi.projectLabel(found), text(repo, "id"), text(repo, "name"));
     }
 
-    private record Target(ProjectsApi api, String repoId, String repoName) {
+    private record Target(ProjectsApi api, String projectLabel, String repoId, String repoName) {
     }
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
@@ -151,6 +163,97 @@ public class ReleaseRequestCommand implements Runnable {
             }
             printRequest(context.out(), answer.path("request"));
             return 0;
+        }
+    }
+
+    @CommandLine.Command(name = "join", mixinStandardHelpOptions = true,
+            description = {"Add a branch to an open release request.",
+                    "The platform folds the request again with the branch and, if that makes a new commit, "
+                            + "builds that commit. A branch already on the request adds nothing; with --priority "
+                            + "it states that priority again. A RELEASED or WITHDRAWN request takes no more "
+                            + "branches. It prints the request that came back."})
+    public static class JoinCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
+                description = "The request: its id, or enough of its start to name one (list shows 8 characters).")
+        String request;
+
+        @CommandLine.Option(names = "--branch", paramLabel = "<branch>", required = true,
+                description = "The branch to add.")
+        String branch;
+
+        @CommandLine.Option(names = "--priority", paramLabel = "<priority>",
+                description = "LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: MEDIUM for a new branch; "
+                        + "a branch already on the request keeps its priority.")
+        String priority;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (request.isBlank() || branch.isBlank()) {
+                throw new CliFailure("--request and --branch must not be empty.", CliFailure.USAGE);
+            }
+            Target target = parent.target(context);
+            JsonNode found = find(target, request.strip());
+            JsonNode answer;
+            try {
+                answer = target.api().joinReleaseRequest(target.repoId(), text(found, "id"), branch.strip(), priority);
+            } catch (CliFailure refused) {
+                throw explain(refused, found);
+            }
+            if (json) {
+                ProjectsApi.printJson(context.out(), answer);
+                return 0;
+            }
+            printRequest(context.out(), answer.path("request"));
+            return 0;
+        }
+
+        /**
+         * The repository's request whose id starts with {@code wanted}; a full id fits only its own
+         * request. It reads every request, of every state. The service finds a request by its id
+         * alone, so this lookup is also what keeps a branch off another repository's request.
+         */
+        private static JsonNode find(Target target, String wanted) throws CliFailure, InterruptedException {
+            String start = wanted.toLowerCase(Locale.ROOT);
+            List<JsonNode> matches = new ArrayList<>();
+            target.api().releaseRequests(target.repoId(), ALL).path("requests").forEach(r -> {
+                if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
+                    matches.add(r);
+                }
+            });
+            if (matches.isEmpty()) {
+                throw new CliFailure("Repository " + target.repoName() + " has no release request whose id starts with '"
+                        + wanted + "'. `qits release-request --project " + target.projectLabel() + " --repository "
+                        + target.repoName() + " list --state all` shows them.", CliFailure.USAGE);
+            }
+            if (matches.size() > 1) {
+                throw new CliFailure("'" + wanted + "' is the start of more than one release request of "
+                        + target.repoName() + ": "
+                        + matches.stream().map(r -> text(r, "id") + " (" + text(r, "state") + ")")
+                                .collect(Collectors.joining(", "))
+                        + ". Give more of the id.", CliFailure.USAGE);
+            }
+            return matches.getFirst();
+        }
+
+        /** The two refusals a join can expect get a sentence that says what to do next. */
+        private static CliFailure explain(CliFailure refused, JsonNode found) {
+            if (refused.status() == 409) {
+                // The state from the list, unless the request settled after that read.
+                String listed = text(found, "state").toUpperCase(Locale.ROOT);
+                String state = SETTLED.contains(listed) ? listed : "RELEASED or WITHDRAWN";
+                return new CliFailure("Release request " + text(found, "id") + " is " + state
+                        + " and takes no more branches (HTTP 409). Open a new one with `qits release-request create`.",
+                        CliFailure.FAILED);
+            }
+            if (refused.status() == 404) {
+                return new CliFailure("No such request or branch. " + refused.getMessage(), CliFailure.FAILED);
+            }
+            return refused;
         }
     }
 

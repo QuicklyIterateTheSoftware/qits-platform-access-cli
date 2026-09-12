@@ -13,20 +13,27 @@ public final class CliFailure extends Exception {
 
     private final int exitCode;
     private final boolean retryable;
+    private final int status;
 
     public CliFailure(String message, int exitCode) {
-        this(message, exitCode, false);
+        this(message, exitCode, false, 0);
     }
 
-    private CliFailure(String message, int exitCode, boolean retryable) {
+    private CliFailure(String message, int exitCode, boolean retryable, int status) {
         super(message, null, false, false);
         this.exitCode = exitCode;
         this.retryable = retryable;
+        this.status = status;
     }
 
     /** A connection error or a 5xx: a stream tries again, a one-shot command gives up. */
     public static CliFailure retryable(String message) {
-        return new CliFailure(message, FAILED, true);
+        return new CliFailure(message, FAILED, true, 0);
+    }
+
+    /** The platform answered with this HTTP status. A command may say more about a status it expects. */
+    public static CliFailure refused(String message, int status) {
+        return new CliFailure(message, FAILED, false, status);
     }
 
     public int exitCode() {
@@ -35,5 +42,10 @@ public final class CliFailure extends Exception {
 
     public boolean retryable() {
         return retryable;
+    }
+
+    /** The HTTP status of a refusal; 0 when the failure is not one. */
+    public int status() {
+        return status;
     }
 }

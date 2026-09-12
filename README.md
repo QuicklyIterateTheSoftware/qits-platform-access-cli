@@ -7,8 +7,8 @@ Commands:
 
 - `qits login` signs you in through the browser and stores the session.
 - `qits session-daemon` keeps that session fresh for as long as it runs.
-- `qits projects list`, `qits repositories … list` and `qits release-request … list|create` read
-  from and ask the projects service.
+- `qits projects list`, `qits repositories … list` and `qits release-request … list|create|join`
+  read from and ask the projects service.
 - `qits events` prints the platform's domain events as they happen.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service.
@@ -130,6 +130,8 @@ Installing it is not part of this version.
     qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
+    qits release-request --project <project> --repository <repository> join \
+        --request <id> --branch <branch> [--priority <priority>]
     qits events [--filter=<names>]
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
 
@@ -204,10 +206,26 @@ default is MEDIUM). The platform may answer with a new request, with the open re
 holds the branch, or (on a project wrapper) with the open request the branch joined. The command
 prints the request that came back, with its sources.
 
+`join` adds a branch to an open request. `--request` is the request's id, or enough of its start to
+name one: the 8 characters `list` shows are enough. The command looks among all the repository's
+requests, of every state; a start that fits none, or more than one, stops with exit code 2 and
+names what it found. `--branch` is required; `--priority` is as for `create`. The platform folds the
+request again with the branch and, if that makes a new commit, its builds run on that commit. The
+command prints the request that came back, with its sources, like `create`.
+
+- A branch already on the request adds nothing. With `--priority` it states that priority again;
+  without, the branch keeps the priority it has.
+- A RELEASED or WITHDRAWN request takes no more branches (HTTP 409, exit code 1). Open a new one
+  with `create`.
+- HTTP 404 means the platform has no such request (exit code 1). A branch the git host does not
+  have is not a 404: the fold fails, and the request's detail says why.
+
     qits release-request --project qits --repository qits-ci-service list
     qits release-request --project qits --repository qits-ci-service list --state all -o json
     qits release-request --project qits --repository qits-ci-service create \
         --branch feature/log-view --summary "Show the build log live" --priority HIGH
+    qits release-request --project qits --repository qits-ci-service join \
+        --request 4f2a91c0 --branch feature/log-search
 
 ### qits events
 

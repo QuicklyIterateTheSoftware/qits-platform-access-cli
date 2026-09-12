@@ -46,6 +46,8 @@ class PlatformClientTest {
                 .startsWith("Your roles do not allow this (HTTP 403)");
         assertThat(PlatformClient.refusal("POST", URL, 409, headers(Map.of()), "{\"message\":\"stale\"}").getMessage())
                 .isEqualTo("POST " + URL + " answered HTTP 409: stale");
+        assertThat(PlatformClient.refusal("POST", URL, 409, headers(Map.of()), "").status()).isEqualTo(409);
+        assertThat(PlatformClient.refusal("GET", URL, 403, headers(Map.of()), "").status()).isEqualTo(403);
         assertThat(PlatformClient.refusal("GET", URL, 302, headers(Map.of("Location", List.of("https://idp/login"))), "").getMessage())
                 .contains("HTTP 302").contains("a redirect to https://idp/login");
     }

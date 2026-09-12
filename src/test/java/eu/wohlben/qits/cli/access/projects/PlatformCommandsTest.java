@@ -284,6 +284,124 @@ class PlatformCommandsTest {
         assertThat(run("release-request", "create", "--project", "qits", "--repository", CI).exit()).isEqualTo(2);
     }
 
+    // --- joining a branch to a request ---
+
+    private static final String PENDING_ID = "11111111-2222-3333-4444-555555555555";
+    private static final String RELEASED_ID = "22222222-2222-3333-4444-555555555555";
+
+    private static String sourcesOf(String id) {
+        return REQUESTS + "/" + id + "/sources";
+    }
+
+    /** The pending request, answered with a second branch on it. */
+    private void answerJoin() {
+        platform.answer("POST", sourcesOf(PENDING_ID), """
+                {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGHER","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":null,
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null},
+                             {"kind":"BRANCH","name":"feature/search","ref":"refs/heads/feature/search","implicit":false,"priority":"HIGHER","addedBy":"wohlben"}]}}
+                """.formatted(PENDING_ID, CI));
+    }
+
+    @Test
+    void joinFindsTheRequestByTheStartOfItsIdAndSendsTheBranchAndPriority() throws Exception {
+        answerJoin();
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "1111", "--branch", "feature/search", "--priority", "higher");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
+        JsonNode sent = JSON.readTree(platform.requests("POST", sourcesOf(PENDING_ID)).getFirst().body());
+        assertThat(sent).isEqualTo(JSON.readTree("{\"branch\":\"feature/search\",\"priority\":\"HIGHER\"}"));
+        assertThat(r.out()).startsWith("Release request " + PENDING_ID + "\n")
+                .contains("  state       PENDING")
+                .contains("  priority    HIGHER")
+                .contains("  merged sha  abc123")
+                .contains("Sources:");
+        assertThat(r.out().lines().toList()).contains(
+                "  KIND    NAME            REF                        HOW    PRIORITY  ADDED BY",
+                "  BRANCH  main            refs/heads/main            named  MEDIUM    -",
+                "  BRANCH  feature/search  refs/heads/feature/search  named  HIGHER    wohlben");
+    }
+
+    @Test
+    void joinWithoutAPriorityLeavesTheStoredOneAloneAndTakesItsOptionsAfterTheSubcommand() throws Exception {
+        answerJoin();
+
+        Result r = run("release-request", "join", "--request", PENDING_ID, "--branch", "feature/search",
+                "--project", "qits", "--repository", CI, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", sourcesOf(PENDING_ID)).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"branch\":\"feature/search\"}"));
+        assertThat(JSON.readTree(r.out()).path("request").path("sources")).extracting(s -> s.path("name").asText())
+                .containsExactly("main", "feature/search");
+        assertThat(run("release-request", "join", "--project", "qits", "--repository", CI, "--branch", "x").exit())
+                .isEqualTo(2);
+        assertThat(run("release-request", "join", "--project", "qits", "--repository", CI, "--request", "1111").exit())
+                .isEqualTo(2);
+    }
+
+    @Test
+    void aRequestStartThatFitsNoneSaysWhereToLook() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "9999", "--branch", "feature/search");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Repository qits-ci-service has no release request whose id starts with '9999'.")
+                .contains("`qits release-request --project qits --repository qits-ci-service list --state all` shows them.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
+    @Test
+    void aRequestStartThatFitsTwoAsksForMore() {
+        platform.answer("GET", REQUESTS, """
+                {"requests":[
+                  {"id":"abcd0001-0000-4000-8000-000000000000","state":"PENDING"},
+                  {"id":"abcd0002-0000-4000-8000-000000000000","state":"READY"},
+                  {"id":"ef000003-0000-4000-8000-000000000000","state":"PENDING"}]}
+                """);
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "ABCD", "--branch", "feature/search");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("'ABCD' is the start of more than one release request of qits-ci-service: "
+                + "abcd0001-0000-4000-8000-000000000000 (PENDING), abcd0002-0000-4000-8000-000000000000 (READY). "
+                + "Give more of the id.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
+    @Test
+    void aReleasedRequestTakesNoMoreBranches() {
+        platform.answer("POST", sourcesOf(RELEASED_ID), 409,
+                "{\"message\":\"Release request " + RELEASED_ID + " is already RELEASED\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "2222", "--branch", "feature/search");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("Release request " + RELEASED_ID + " is RELEASED and takes no more branches (HTTP 409). "
+                + "Open a new one with `qits release-request create`.");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void a404SaysThereIsNoSuchRequestOrBranch() {
+        platform.answer("POST", sourcesOf(PENDING_ID), 404,
+                "{\"message\":\"Release request not found: " + PENDING_ID + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "11111111", "--branch", "feature/search");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("No such request or branch. POST " + platform.url() + sourcesOf(PENDING_ID)
+                + " answered HTTP 404: Release request not found: " + PENDING_ID);
+    }
+
     // --- refusals ---
 
     @Test

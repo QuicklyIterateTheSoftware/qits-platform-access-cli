@@ -65,10 +65,29 @@ public final class ProjectsApi {
         ObjectNode body = JSON.createObjectNode();
         body.put("branch", branch);
         body.put("summary", summary);
+        putPriority(body, priority);
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests"), body);
+    }
+
+    /**
+     * {@code {"request":{…}}}: the request with the branch on it. A branch already on the request
+     * adds nothing; a priority with it states that priority again, and none leaves it as it is.
+     * No requester: the service takes the token's.
+     */
+    public JsonNode joinReleaseRequest(String repoId, String requestId, String branch, String priority)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("branch", branch);
+        putPriority(body, priority);
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/sources"), body);
+    }
+
+    /** A priority only when one is given, so the service's rule for none applies. */
+    private static void putPriority(ObjectNode body, String priority) {
         if (priority != null && !priority.isBlank()) {
             body.put("priority", priority.strip().toUpperCase(Locale.ROOT));
         }
-        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests"), body);
     }
 
     /**

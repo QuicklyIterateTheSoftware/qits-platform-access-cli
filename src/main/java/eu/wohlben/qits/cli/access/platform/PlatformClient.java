@@ -240,11 +240,11 @@ public final class PlatformClient {
                     .filter(s -> !s.isEmpty())
                     .findFirst()
                     .orElse("");
-            return new CliFailure("The platform refused the token (HTTP 401" + (detail.isEmpty() ? "" : ": " + detail)
-                    + "). If this goes on, run `qits login`.", CliFailure.FAILED);
+            return CliFailure.refused("The platform refused the token (HTTP 401" + (detail.isEmpty() ? "" : ": " + detail)
+                    + "). If this goes on, run `qits login`.", status);
         }
         if (status == 403) {
-            return new CliFailure("Your roles do not allow this (HTTP 403): " + method + " " + uri, CliFailure.FAILED);
+            return CliFailure.refused("Your roles do not allow this (HTTP 403): " + method + " " + uri, status);
         }
         StringBuilder message = new StringBuilder(method + " " + uri + " answered HTTP " + status);
         String serviceMessage = serviceMessage(body);
@@ -254,7 +254,7 @@ public final class PlatformClient {
         if (status >= 300 && status < 400) {
             headers.firstValue("Location").ifPresent(l -> message.append(" (a redirect to ").append(l).append(")"));
         }
-        return new CliFailure(message.toString(), CliFailure.FAILED);
+        return CliFailure.refused(message.toString(), status);
     }
 
     /** {@code error} and {@code error_description} of a bearer challenge; never anything else. */
