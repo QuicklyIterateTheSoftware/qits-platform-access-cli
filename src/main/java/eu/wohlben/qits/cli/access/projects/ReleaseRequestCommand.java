@@ -8,6 +8,7 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
+import eu.wohlben.qits.cli.access.platform.Table;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -33,8 +34,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. "
                         + "Fix the branch and push; do not open a new request.",
                 "- When a red build was the platform's fault and not the code's (a flaked container, a registry "
-                        + "that was down), retry that run in qits-ci: it builds the same commit again. Do not open "
-                        + "a new request.",
+                        + "that was down), retry that run with `qits ci retry <run id>`: it builds the same commit "
+                        + "again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new "
+                        + "request.",
                 "- --project and --repository may come before or after the command."})
 public class ReleaseRequestCommand implements Runnable {
 

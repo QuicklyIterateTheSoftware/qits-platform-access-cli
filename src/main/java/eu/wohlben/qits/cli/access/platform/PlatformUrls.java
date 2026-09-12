@@ -32,6 +32,10 @@ public final class PlatformUrls {
         return resolve("observability", "--observability-url", "QITS_OBSERVABILITY_URL", flag, env, idpUrl);
     }
 
+    public static String ci(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        return resolve("ci", "--ci-url", "QITS_CI_URL", flag, env, idpUrl);
+    }
+
     /** The git host's origin, which Git pushes to through the edge. */
     public static String gitHost(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);

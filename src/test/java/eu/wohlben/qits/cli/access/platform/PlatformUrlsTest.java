@@ -16,6 +16,9 @@ class PlatformUrlsTest {
         assertThat(PlatformUrls.projects(null, Map.of(), IDP)).isEqualTo("https://projects.dev.wohlben.eu");
         assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.dev.wohlben.eu");
         assertThat(PlatformUrls.observability(null, Map.of(), IDP)).isEqualTo("https://observability.dev.wohlben.eu");
+        assertThat(PlatformUrls.ci(null, Map.of(), IDP)).isEqualTo("https://ci.dev.wohlben.eu");
+        assertThat(PlatformUrls.ci(null, Map.of("QITS_CI_URL", "http://ci.prod.localhost:8080/"), IDP))
+                .isEqualTo("http://ci.prod.localhost:8080");
         assertThat(PlatformUrls.observability("http://o.example/", Map.of("QITS_OBSERVABILITY_URL", "http://env.example"), IDP))
                 .isEqualTo("http://o.example");
         assertThat(PlatformUrls.observability(null, Map.of("QITS_OBSERVABILITY_URL", "http://env.example"), IDP))

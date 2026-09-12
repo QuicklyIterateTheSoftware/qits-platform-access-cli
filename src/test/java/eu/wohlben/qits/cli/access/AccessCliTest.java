@@ -60,6 +60,21 @@ class AccessCliTest {
     }
 
     @Test
+    @Launch({"ci", "--help"})
+    void ciNamesItsCommands(LaunchResult result) {
+        assertThat(result.getOutput()).contains("runs").contains("run").contains("retry")
+                .contains("release/<request id>");
+    }
+
+    @Test
+    @Launch({"ci", "runs", "--help"})
+    void ciRunsHasItsOptionsAndTheInheritedOnes(LaunchResult result) {
+        assertThat(result.getOutput()).contains("--branch").contains("--status").contains("--release-request")
+                .contains("--limit").contains("--project").contains("--repository").contains("--ci-url")
+                .contains("--projects-url").contains("--output");
+    }
+
+    @Test
     @Launch(value = {"projects"}, exitCode = 2)
     void aGroupWithoutASubcommandIsAUsageError(LaunchResult result) {
         assertThat(result.getErrorOutput()).contains("Name a command");

@@ -9,6 +9,8 @@ Commands:
 - `qits session-daemon` keeps that session fresh for as long as it runs.
 - `qits projects list`, `qits repositories … list` and `qits release-request … list|create|join`
   read from and ask the projects service.
+- `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
+  and runs a finished run again.
 - `qits events` prints the platform's domain events as they happen.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service.
@@ -144,6 +146,10 @@ Installing it is not part of this version.
         --branch <branch> --summary <text> [--priority <priority>]
     qits release-request --project <project> --repository <repository> join \
         --request <id> --branch <branch> [--priority <priority>]
+    qits ci runs --project <project> --repository <repository> [--branch <branch>] \
+        [--status <STATUS>] [--release-request <id>] [--limit <n>]
+    qits ci run <run id> [--logs] [--project <project> --repository <repository>]
+    qits ci retry <run id> [--project <project> --repository <repository>]
     qits events [--filter=<names>]
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
 
@@ -167,10 +173,12 @@ refuses prints `Session ended — run `qits login`.` and exits with 2.
 
 A service lives at `<app>.<env>.<domain>`. The commands take the session's idp address and swap
 its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wohlben.eu`,
-`https://events.dev.wohlben.eu` and `https://observability.dev.wohlben.eu`. To name the address
-yourself (a base URL, without `/projects`, `/events` or `/observability`):
+`https://ci.dev.wohlben.eu`, `https://events.dev.wohlben.eu` and
+`https://observability.dev.wohlben.eu`. To name the address yourself (a base URL, without
+`/projects`, `/ci`, `/events` or `/observability`):
 
 - projects: `--projects-url`, else `QITS_PROJECTS_URL`
+- ci: `--ci-url`, else `QITS_CI_URL`
 - events: `--events-url`, else `QITS_EVENTS_URL`
 - observability: `--observability-url`, else `QITS_OBSERVABILITY_URL`. The stream is a WebSocket,
   so `https` becomes `wss` and `http` becomes `ws`.
@@ -238,6 +246,43 @@ command prints the request that came back, with its sources, like `create`.
         --branch feature/log-view --summary "Show the build log live" --priority HIGH
     qits release-request --project qits --repository qits-ci-service join \
         --request 4f2a91c0 --branch feature/log-search
+
+A red gating build that was the platform's fault and not the code's (a flaked container, a registry
+that was down) is retried with `qits ci retry`, not with a new request.
+
+### qits ci
+
+The builds of qits-ci. `--project` and `--repository` are as for `release-request`, and may come
+before or after the command. Reading runs needs the role `qits:admin` or `qits:system`; `retry`
+needs `qits:admin`.
+
+`runs` lists a repository's runs, newest first. Columns: id (the first 8 characters), status,
+branch, commit, release request, created, and how long the run took (so far, while it runs). The
+service filters by repository and count only. So `--branch`, `--status` and `--release-request` are
+applied here, over all of the repository's runs, and `--limit` (default 20) after them. Without a
+filter, `--limit` goes to the service.
+
+A release request's gating runs build its backing branch `release/<request id>` and carry the
+request's id. `--release-request` takes that id, or its start (the 8 characters
+`qits release-request list` shows).
+
+`run` shows one run: what it built, its status, trigger and times, and its steps with their exit
+codes. `--logs` adds each step's output. The service keeps the end of each step's output, and for a
+running step, what it has printed so far; there is no live stream, so run the command again to
+follow a run. The output is written by the code the run builds, so the command takes terminal
+control characters out of every line, as `qits observe` does, and `-o json` writes them as escapes.
+The exit code says whether the read worked, not whether the run passed.
+
+`retry` runs a finished run again: the same commit, pipeline and release request. It prints the new
+run's id and how to follow it. A run that has not finished yet answers HTTP 409, and an unknown run
+HTTP 404; both exit with 1.
+
+`run` and `retry` take the whole run id. With `--project` and `--repository` they also take the
+start of it, looked up among that repository's runs.
+
+    qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0
+    qits ci run 5f2c0a9e --project qits --repository qits-ci-service --logs
+    qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
 ### qits events
 

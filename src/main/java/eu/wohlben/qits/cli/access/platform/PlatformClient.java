@@ -1,9 +1,11 @@
 package eu.wohlben.qits.cli.access.platform;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
@@ -34,6 +36,8 @@ public final class PlatformClient {
 
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+    /** A refusal's message is at the start of its body; an HTML page from a proxy is not read whole. */
+    static final int REFUSAL_BODY_LIMIT = 64 * 1024;
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final Pattern AUTH_PARAM = Pattern.compile("(error|error_description)=\"([^\"]*)\"");
@@ -60,30 +64,42 @@ public final class PlatformClient {
                 .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)));
     }
 
+    /** A POST whose address says it all (a retry), with no body. */
+    public JsonNode post(URI uri) throws CliFailure, InterruptedException {
+        return send("POST", uri, HttpRequest.newBuilder(uri).POST(HttpRequest.BodyPublishers.noBody()));
+    }
+
+    /**
+     * The body is parsed as it arrives, not first held as one string: a CI run's answer carries
+     * the output of its steps. A refusal's body is read only as far as its message needs.
+     */
     private JsonNode send(String method, URI uri, HttpRequest.Builder builder) throws CliFailure, InterruptedException {
         HttpRequest request = builder
                 .timeout(REQUEST_TIMEOUT)
                 .header("Accept", "application/json")
                 .header("Authorization", "Bearer " + tokens.session().accessToken())
                 .build();
-        HttpResponse<String> response;
         try (HttpClient http = newClient()) {
-            response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            int status = response.statusCode();
+            try (InputStream body = response.body()) {
+                if (status < 200 || status >= 300) {
+                    String text = new String(body.readNBytes(REFUSAL_BODY_LIMIT), StandardCharsets.UTF_8);
+                    throw refusal(method, uri, status, response.headers(), text);
+                }
+                JsonNode node;
+                try {
+                    node = JSON.readTree(body);
+                } catch (JsonProcessingException notJson) {
+                    node = null;
+                }
+                if (node == null || node.isMissingNode()) {
+                    throw new CliFailure(method + " " + uri + " answered with a body that is not JSON.", CliFailure.FAILED);
+                }
+                return node;
+            }
         } catch (IOException e) {
             throw CliFailure.retryable("Cannot reach " + uri + ": " + describe(e));
-        }
-        int status = response.statusCode();
-        if (status < 200 || status >= 300) {
-            throw refusal(method, uri, status, response.headers(), response.body());
-        }
-        try {
-            JsonNode node = JSON.readTree(response.body());
-            if (node == null || node.isMissingNode()) {
-                throw new IOException("empty");
-            }
-            return node;
-        } catch (IOException e) {
-            throw new CliFailure(method + " " + uri + " answered with a body that is not JSON.", CliFailure.FAILED);
         }
     }
 

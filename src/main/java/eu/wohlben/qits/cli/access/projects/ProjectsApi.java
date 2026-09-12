@@ -149,7 +149,7 @@ public final class ProjectsApi {
         return value == null || value.isNull() || value.isMissingNode() ? "" : value.asText();
     }
 
-    static String projectLabel(JsonNode project) {
+    public static String projectLabel(JsonNode project) {
         String slug = text(project, "slug");
         return slug.isEmpty() ? text(project, "name") : slug;
     }

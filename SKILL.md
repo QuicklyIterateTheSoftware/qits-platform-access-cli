@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, release requests, domain events, live telemetry, and Git pushes to the platform's git host."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, release requests, CI runs and their logs, domain events, live telemetry, and Git pushes to the platform's git host."
 ---
 
 # qits
@@ -153,7 +153,7 @@ A request folds main and its branches into one commit, and the builds of that co
 ### Notes
 
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.
-- When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run in qits-ci: it builds the same commit again. Do not open a new request.
+- When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request.
 - --project and --repository may come before or after the command.
 
 ## qits release-request list
@@ -259,6 +259,132 @@ qits release-request --project qits --repository qits-ci-service join --request 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
+
+## qits ci
+
+The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, and retry runs a finished run again.
+
+A release request's gating runs build its backing branch release/<request id> and carry the request's id. Statuses: QUEUED and RUNNING (not finished), SUCCESS, FAILED (the code's verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code).
+
+### Notes
+
+- Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.
+- To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.
+- --project, --repository, --output and the two -url options may come before or after the command.
+
+## qits ci runs
+
+List a repository's CI runs, newest first.
+
+Columns: the run's id (its first 8 characters, enough for `run` and `retry` with --project and --repository), status, branch, commit, the release request, when it was created, and how long it took (so far, while it runs).
+
+```
+qits ci runs [--branch <branch>] [--ci-url <url>] [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>] [--release-request <id>] [--repository <repository>] [--status <STATUS>]
+```
+
+| Name | What it does |
+|---|---|
+| `--branch <branch>` | Only the runs of this branch: main, release/<request id>, or a version for a release run. |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.dev.wohlben.eu/idp gives https://ci.dev.wohlben.eu). |
+| `--limit <n>` | At most this many runs, the newest. Default: 20. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
+| `--release-request <id>` | Only the runs of this release request: its id, or the start of it. |
+| `--repository <repository>` | The repository: its id or name. |
+| `--status <STATUS>` | Only the runs in this status: QUEUED, RUNNING, SUCCESS, FAILED, CANCELLED, TIMED_OUT or CONFIG_ERROR. |
+
+### Examples
+
+```
+qits ci runs --project qits --repository qits-ci-service
+qits ci runs --project qits --repository qits-ci-service --status FAILED --limit 5
+qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0
+qits ci runs --project qits --repository qits-ci-service --branch main -o json
+```
+
+- A release request's gating runs: --release-request with the request's id, or the 8 characters `qits release-request list` shows. They build the branch release/<request id>.
+- The service filters by repository and count only. --branch, --status and --release-request are applied here, over all of the repository's runs, and --limit after them.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits ci run
+
+Show one CI run: what it built, its status, and its steps with their exit codes.
+
+--logs also prints each step's output, the first step first. The service keeps the end of each step's output. A running step shows what it has printed so far. Terminal control characters are taken out.
+
+```
+qits ci run [--ci-url <url>] [--logs] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <run id>
+```
+
+| Name | What it does |
+|---|---|
+| `<run id>` | The run: its id, or its start when --project and --repository name its repository. |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.dev.wohlben.eu/idp gives https://ci.dev.wohlben.eu). |
+| `--logs` | Also print each step's output, with terminal control characters taken out. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits ci run 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 --logs
+qits ci run 5f2c0a9e --project qits --repository qits-ci-service
+qits ci run 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 -o json | jq -r .status
+```
+
+- <run id> is the run's whole id, or its start when --project and --repository name the repository.
+- The exit code says whether the read worked, not whether the run passed. Read the status.
+- -o json prints the service's answer, the logs included.
+
+### Exit codes
+
+- `0` Done, whatever the run's status.
+- `1` The platform refused (for example no such run, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
+
+## qits ci retry
+
+Run a finished CI run again: the same commit, the same pipeline, the same release request.
+
+For a red run that was the platform's fault, not the code's: a flaked container, a registry that was down, a step that ran out of time on a busy host. The new run is queued; the command prints its id and how to follow it. Its verdict counts for the release request like the first run's would have.
+
+```
+qits ci retry [--ci-url <url>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <run id>
+```
+
+| Name | What it does |
+|---|---|
+| `<run id>` | The run to retry: its id, or its start when --project and --repository name its repository. |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.dev.wohlben.eu/idp gives https://ci.dev.wohlben.eu). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits ci retry 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17
+qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
+```
+
+- Only a finished run can be retried. One that is queued or running answers HTTP 409: wait for it.
+- A retry builds the same commit. To fix the code, push the branch instead: the release request folds again and builds the new commit.
+- Needs the role qits:admin.
+
+### Exit codes
+
+- `0` The new run is queued.
+- `1` The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
+- `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
 ## qits events
 

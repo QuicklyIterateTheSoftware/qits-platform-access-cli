@@ -1,4 +1,4 @@
-package eu.wohlben.qits.cli.access.projects;
+package eu.wohlben.qits.cli.access.platform;
 
 import eu.wohlben.qits.cli.access.session.Times;
 
@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Aligned columns for a person to read. Two spaces between columns; the last is not padded. */
-final class Table {
+public final class Table {
 
     private Table() {
     }
 
-    static void print(PrintStream out, String indent, List<String> headers, List<List<String>> rows) {
+    public static void print(PrintStream out, String indent, List<String> headers, List<List<String>> rows) {
         List<List<String>> all = new ArrayList<>();
         if (headers != null) {
             all.add(headers);
@@ -40,7 +40,7 @@ final class Table {
     }
 
     /** One line, at most {@code max} characters; a dash for nothing. */
-    static String cell(String value, int max) {
+    public static String cell(String value, int max) {
         String flat = value == null ? "" : value.replaceAll("\\s+", " ").strip();
         if (flat.isEmpty()) {
             return "-";
@@ -49,7 +49,7 @@ final class Table {
     }
 
     /** A service time in the local zone; the text as it came when it is not a time. */
-    static String time(String value) {
+    public static String time(String value) {
         if (value == null || value.isBlank()) {
             return "-";
         }
