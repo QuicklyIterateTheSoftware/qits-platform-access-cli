@@ -22,9 +22,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
-                ReleaseRequestCommand.JoinCommand.class},
+                ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class},
         description = {"The release requests of one repository: the one way to release it. list shows them, create "
-                        + "asks for a branch to be released, and join adds a branch to an open request.",
+                        + "asks for a branch to be released, join adds a branch to an open request, and withdraw "
+                        + "ends a request that must not ship.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
                         + "States: PENDING (waiting for its builds), READY, RELEASED, REJECTED (a gating build was "
                         + "red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), "
@@ -36,7 +37,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- When a red build was the platform's fault and not the code's (a flaked container, a registry "
                         + "that was down), retry that run with `qits ci retry <run id>`: it builds the same commit "
                         + "again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new "
-                        + "request.",
+                        + "request, and do not withdraw this one.",
+                "- `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any "
+                        + "more. WITHDRAWN is final.",
                 "- --project and --repository may come before or after the command."})
 public class ReleaseRequestCommand implements Runnable {
 
@@ -79,6 +82,40 @@ public class ReleaseRequestCommand implements Runnable {
     }
 
     private record Target(ProjectsApi api, String projectLabel, String repoId, String repoName) {
+    }
+
+    /**
+     * The repository's request whose id starts with {@code wanted}; a full id fits only its own
+     * request. It reads every request, of every state. The service finds a request by its id alone,
+     * so this lookup is also what keeps a command off another repository's request.
+     */
+    private static JsonNode find(Target target, String wanted) throws CliFailure, InterruptedException {
+        String start = wanted.toLowerCase(Locale.ROOT);
+        List<JsonNode> matches = new ArrayList<>();
+        target.api().releaseRequests(target.repoId(), ALL).path("requests").forEach(r -> {
+            if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
+                matches.add(r);
+            }
+        });
+        if (matches.isEmpty()) {
+            throw new CliFailure("Repository " + target.repoName() + " has no release request whose id starts with '"
+                    + wanted + "'. `qits release-request --project " + target.projectLabel() + " --repository "
+                    + target.repoName() + " list --state all` shows them.", CliFailure.USAGE);
+        }
+        if (matches.size() > 1) {
+            throw new CliFailure("'" + wanted + "' is the start of more than one release request of "
+                    + target.repoName() + ": "
+                    + matches.stream().map(r -> text(r, "id") + " (" + text(r, "state") + ")")
+                            .collect(Collectors.joining(", "))
+                    + ". Give more of the id.", CliFailure.USAGE);
+        }
+        return matches.getFirst();
+    }
+
+    /** The state the list showed, when it is a settled one; else both, as the request may have settled since. */
+    private static String settledState(JsonNode found) {
+        String listed = text(found, "state").toUpperCase(Locale.ROOT);
+        return SETTLED.contains(listed) ? listed : "RELEASED or WITHDRAWN";
     }
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
@@ -261,46 +298,84 @@ public class ReleaseRequestCommand implements Runnable {
             return 0;
         }
 
-        /**
-         * The repository's request whose id starts with {@code wanted}; a full id fits only its own
-         * request. It reads every request, of every state. The service finds a request by its id
-         * alone, so this lookup is also what keeps a branch off another repository's request.
-         */
-        private static JsonNode find(Target target, String wanted) throws CliFailure, InterruptedException {
-            String start = wanted.toLowerCase(Locale.ROOT);
-            List<JsonNode> matches = new ArrayList<>();
-            target.api().releaseRequests(target.repoId(), ALL).path("requests").forEach(r -> {
-                if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
-                    matches.add(r);
-                }
-            });
-            if (matches.isEmpty()) {
-                throw new CliFailure("Repository " + target.repoName() + " has no release request whose id starts with '"
-                        + wanted + "'. `qits release-request --project " + target.projectLabel() + " --repository "
-                        + target.repoName() + " list --state all` shows them.", CliFailure.USAGE);
-            }
-            if (matches.size() > 1) {
-                throw new CliFailure("'" + wanted + "' is the start of more than one release request of "
-                        + target.repoName() + ": "
-                        + matches.stream().map(r -> text(r, "id") + " (" + text(r, "state") + ")")
-                                .collect(Collectors.joining(", "))
-                        + ". Give more of the id.", CliFailure.USAGE);
-            }
-            return matches.getFirst();
-        }
-
         /** The two refusals a join can expect get a sentence that says what to do next. */
         private static CliFailure explain(CliFailure refused, JsonNode found) {
             if (refused.status() == 409) {
-                // The state from the list, unless the request settled after that read.
-                String listed = text(found, "state").toUpperCase(Locale.ROOT);
-                String state = SETTLED.contains(listed) ? listed : "RELEASED or WITHDRAWN";
-                return new CliFailure("Release request " + text(found, "id") + " is " + state
+                return new CliFailure("Release request " + text(found, "id") + " is " + settledState(found)
                         + " and takes no more branches (HTTP 409). Open a new one with `qits release-request create`.",
                         CliFailure.FAILED);
             }
             if (refused.status() == 404) {
                 return new CliFailure("No such request or branch. " + refused.getMessage(), CliFailure.FAILED);
+            }
+            return refused;
+        }
+    }
+
+    @CommandLine.Command(name = "withdraw", mixinStandardHelpOptions = true,
+            description = {"Withdraw an open release request, so it does not ship.",
+                    "WITHDRAWN is final: the request is not built or released again, and its branches are free. "
+                            + "The next `create` for one of them opens a new request. It prints the request that "
+                            + "came back."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0",
+                    "  qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0 "
+                            + "--reason \"The log view moves to qits-observability\"",
+                    "",
+                    "- Only for a request that must not ship. A gating build that was red because of the platform, "
+                            + "not the code, runs again with `qits ci retry <run id>`. A REJECTED or CONFLICTED request "
+                            + "comes back by itself when one of its branches gets a new push.",
+                    "- Without --reason the platform writes who withdrew it.",
+                    "- A RELEASED or WITHDRAWN request cannot be withdrawn (HTTP 409)."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED,
+                    "2:Used wrongly (for example a --request that fits no request, or more than one), not signed in, "
+                            + "or the session ended."})
+    public static class WithdrawCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
+                description = "The request: its id, or enough of its start to name one (list shows 8 characters).")
+        String request;
+
+        @CommandLine.Option(names = "--reason", paramLabel = "<text>",
+                description = "Why it must not ship, in a sentence. The request shows it as its detail. "
+                        + "Default: the platform writes who withdrew it.")
+        String reason;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (request.isBlank()) {
+                throw new CliFailure("--request must not be empty.", CliFailure.USAGE);
+            }
+            Target target = parent.target(context);
+            JsonNode found = find(target, request.strip());
+            JsonNode answer;
+            try {
+                answer = target.api().withdrawReleaseRequest(target.repoId(), text(found, "id"), reason);
+            } catch (CliFailure refused) {
+                throw explain(refused, found);
+            }
+            if (json) {
+                ProjectsApi.printJson(context.out(), answer);
+                return 0;
+            }
+            printRequest(context.out(), answer.path("request"));
+            return 0;
+        }
+
+        /** The two refusals a withdraw can expect get a sentence of their own. */
+        private static CliFailure explain(CliFailure refused, JsonNode found) {
+            if (refused.status() == 409) {
+                return new CliFailure("Release request " + text(found, "id") + " is " + settledState(found)
+                        + " already and cannot be withdrawn (HTTP 409).", CliFailure.FAILED);
+            }
+            if (refused.status() == 404) {
+                return new CliFailure("No such request. " + refused.getMessage(), CliFailure.FAILED);
             }
             return refused;
         }

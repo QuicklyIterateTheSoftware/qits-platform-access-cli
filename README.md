@@ -7,7 +7,7 @@ Commands:
 
 - `qits login` signs you in through the browser and stores the session.
 - `qits session-daemon` keeps that session fresh for as long as it runs.
-- `qits projects list`, `qits repositories … list` and `qits release-request … list|create|join`
+- `qits projects list`, `qits repositories … list` and `qits release-request … list|create|join|withdraw`
   read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again.
@@ -213,6 +213,8 @@ Installing it is not part of this version.
         --branch <branch> --summary <text> [--priority <priority>]
     qits release-request --project <project> --repository <repository> join \
         --request <id> --branch <branch> [--priority <priority>]
+    qits release-request --project <project> --repository <repository> withdraw \
+        --request <id> [--reason <text>]
     qits ci runs --project <project> --repository <repository> [--branch <branch>] \
         [--status <STATUS>] [--release-request <id>] [--limit <n>]
     qits ci run <run id> [--logs] [--project <project> --repository <repository>]
@@ -307,15 +309,27 @@ command prints the request that came back, with its sources, like `create`.
 - HTTP 404 means the platform has no such request (exit code 1). A branch the git host does not
   have is not a 404: the fold fails, and the request's detail says why.
 
+`withdraw` withdraws an open request, so it does not ship. `--request` is found as for `join`.
+`--reason` is a sentence the request then shows as its detail; without it, the platform writes who
+withdrew it. WITHDRAWN is final: the request is not built or released again, and the next `create`
+for one of its branches opens a new request. The command prints the request that came back, like
+`create`.
+
+- A RELEASED or WITHDRAWN request cannot be withdrawn (HTTP 409, exit code 1).
+- HTTP 404 means the platform has no such request (exit code 1).
+
     qits release-request --project qits --repository qits-ci-service list
     qits release-request --project qits --repository qits-ci-service list --state all -o json
     qits release-request --project qits --repository qits-ci-service create \
         --branch feature/log-view --summary "Show the build log live" --priority HIGH
     qits release-request --project qits --repository qits-ci-service join \
         --request 4f2a91c0 --branch feature/log-search
+    qits release-request --project qits --repository qits-ci-service withdraw \
+        --request 4f2a91c0 --reason "The log view moves to qits-observability"
 
 A red gating build that was the platform's fault and not the code's (a flaked container, a registry
-that was down) is retried with `qits ci retry`, not with a new request.
+that was down) is retried with `qits ci retry`, not with a new request and not with `withdraw`.
+`withdraw` is only for a request that must not ship.
 
 ### qits ci
 

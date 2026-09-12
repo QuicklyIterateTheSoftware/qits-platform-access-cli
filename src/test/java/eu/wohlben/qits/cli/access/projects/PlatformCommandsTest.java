@@ -402,6 +402,92 @@ class PlatformCommandsTest {
                 + " answered HTTP 404: Release request not found: " + PENDING_ID);
     }
 
+    // --- withdrawing a request ---
+
+    private static String withdrawOf(String id) {
+        return REQUESTS + "/" + id + "/withdraw";
+    }
+
+    /** The pending request, answered as withdrawn with the given detail. */
+    private void answerWithdraw(String detail) {
+        platform.answer("POST", withdrawOf(PENDING_ID), """
+                {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"WITHDRAWN","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":"%s",
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
+                """.formatted(PENDING_ID, CI, detail));
+    }
+
+    @Test
+    void withdrawFindsTheRequestByTheStartOfItsIdAndSendsTheReason() throws Exception {
+        answerWithdraw("The log view moves to qits-observability");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "withdraw",
+                "--request", "1111", "--reason", "  The log view moves to qits-observability ");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
+        assertThat(JSON.readTree(platform.requests("POST", withdrawOf(PENDING_ID)).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"reason\":\"The log view moves to qits-observability\"}"));
+        assertThat(r.out()).startsWith("Release request " + PENDING_ID + "\n")
+                .contains("  state       WITHDRAWN")
+                .contains("  detail      The log view moves to qits-observability")
+                .contains("Sources:");
+    }
+
+    @Test
+    void withdrawWithoutAReasonSendsAnEmptyBodyAndTakesItsOptionsAfterTheSubcommand() throws Exception {
+        answerWithdraw("Withdrawn by wohlben");
+
+        Result r = run("release-request", "withdraw", "--request", PENDING_ID,
+                "--project", "qits", "--repository", CI, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", withdrawOf(PENDING_ID)).getFirst().body()))
+                .isEqualTo(JSON.readTree("{}"));
+        assertThat(JSON.readTree(r.out()).path("request").path("state").asText()).isEqualTo("WITHDRAWN");
+        assertThat(JSON.readTree(r.out()).path("request").path("detail").asText()).isEqualTo("Withdrawn by wohlben");
+        assertThat(run("release-request", "withdraw", "--project", "qits", "--repository", CI).exit()).isEqualTo(2);
+    }
+
+    @Test
+    void withdrawOfAStartThatFitsNoneSendsNothing() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "withdraw",
+                "--request", "9999");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Repository qits-ci-service has no release request whose id starts with '9999'.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
+    @Test
+    void aReleasedRequestCannotBeWithdrawn() {
+        platform.answer("POST", withdrawOf(RELEASED_ID), 409,
+                "{\"message\":\"Release request " + RELEASED_ID + " is already RELEASED\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "withdraw",
+                "--request", "2222");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("Release request " + RELEASED_ID + " is RELEASED already and cannot be "
+                + "withdrawn (HTTP 409).");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void a404OnWithdrawSaysThereIsNoSuchRequest() {
+        platform.answer("POST", withdrawOf(PENDING_ID), 404,
+                "{\"message\":\"Release request not found: " + PENDING_ID + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "withdraw",
+                "--request", "11111111");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("No such request. POST " + platform.url() + withdrawOf(PENDING_ID)
+                + " answered HTTP 404: Release request not found: " + PENDING_ID);
+    }
+
     // --- refusals ---
 
     @Test

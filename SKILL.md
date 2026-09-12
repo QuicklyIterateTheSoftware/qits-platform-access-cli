@@ -146,14 +146,15 @@ qits repositories list --project qits -o json
 
 ## qits release-request
 
-The release requests of one repository: the one way to release it. list shows them, create asks for a branch to be released, and join adds a branch to an open request.
+The release requests of one repository: the one way to release it. list shows them, create asks for a branch to be released, join adds a branch to an open request, and withdraw ends a request that must not ship.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED, REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN.
 
 ### Notes
 
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.
-- When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request.
+- When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request, and do not withdraw this one.
+- `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any more. WITHDRAWN is final.
 - --project and --repository may come before or after the command.
 
 ## qits release-request list
@@ -253,6 +254,42 @@ qits release-request --project qits --repository qits-ci-service join --request 
 
 - Safe to repeat: a branch already on the request adds nothing. With --priority it states that priority again; without, the branch keeps its priority.
 - A RELEASED or WITHDRAWN request takes no more branches (HTTP 409): open a new one with `create`.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
+
+## qits release-request withdraw
+
+Withdraw an open release request, so it does not ship.
+
+WITHDRAWN is final: the request is not built or released again, and its branches are free. The next `create` for one of them opens a new request. It prints the request that came back.
+
+```
+qits release-request withdraw --request <id> [--output table|json] [--project <project>] [--projects-url <url>] [--reason <text>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--request <id>` | Required. The request: its id, or enough of its start to name one (list shows 8 characters). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--reason <text>` | Why it must not ship, in a sentence. The request shows it as its detail. Default: the platform writes who withdrew it. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0
+qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0 --reason "The log view moves to qits-observability"
+```
+
+- Only for a request that must not ship. A gating build that was red because of the platform, not the code, runs again with `qits ci retry <run id>`. A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push.
+- Without --reason the platform writes who withdrew it.
+- A RELEASED or WITHDRAWN request cannot be withdrawn (HTTP 409).
 
 ### Exit codes
 

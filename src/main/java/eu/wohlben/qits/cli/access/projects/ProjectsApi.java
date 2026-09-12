@@ -83,6 +83,20 @@ public final class ProjectsApi {
                 + segment(requestId) + "/sources"), body);
     }
 
+    /**
+     * {@code {"request":{…}}}: the request, now WITHDRAWN. A reason only when one is given; without
+     * one the service writes its own, which names the caller.
+     */
+    public JsonNode withdrawReleaseRequest(String repoId, String requestId, String reason)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        if (reason != null && !reason.isBlank()) {
+            body.put("reason", reason.strip());
+        }
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/withdraw"), body);
+    }
+
     /** A priority only when one is given, so the service's rule for none applies. */
     private static void putPriority(ObjectNode body, String priority) {
         if (priority != null && !priority.isBlank()) {
