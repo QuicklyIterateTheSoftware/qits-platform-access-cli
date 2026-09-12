@@ -41,18 +41,28 @@ steps:
       # Unset: a qits-ci too old to inject it. Empty: the builder is switched off. Either way this
       # recipe stops here and says so.
       : "${BUILDKIT_HOST:?the platform builder is off or not injected; this recipe builds only through it}"
-      : "${QITS_BUILD_REGISTRY:?}"
+      : "${QITS_MAVEN_REGISTRY_URL:?}"
 
-      # The toolchain image qits-ci-daemon's pipelines push. It is not built here: docker/Dockerfile
-      # says why. If the tag is missing, buildctl fails naming it.
-      builder="$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/graalvmce-musl-builder:jdk-25"
+      # The musl toolchain is a stage of docker/Dockerfile, which says why. Its two tarballs come from
+      # the platform's Maven store. The builder fetches an ADD in its own network, where the
+      # Dockerfile's default host does not resolve, so the in-network root replaces that host. The
+      # store path stays the Dockerfile's, so a toolchain bump is one file. qits-ci-daemon's recipes
+      # do the same.
+      maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
+      musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
+      zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)
+      : "${musl_url:?docker/Dockerfile declares no ARG MUSL_URL}"
+      : "${zlib_url:?docker/Dockerfile declares no ARG ZLIB_URL}"
+      musl_url="$maven_root${musl_url#*/artifacts/maven/maven}"
+      zlib_url="$maven_root${zlib_url#*/artifacts/maven/maven}"
 
       # ci-event-release.yml runs this same call, argument for argument. The builder's cache is
       # shared, so a release after a green fold is cache hits, not a second native compile.
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
         --opt target=binary \
-        --opt build-arg:BUILDER_IMAGE="$builder" \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
         --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
         --output type=local,dest=out
 

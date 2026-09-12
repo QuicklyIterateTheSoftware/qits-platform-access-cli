@@ -97,7 +97,10 @@ The released binary is static (musl) and the host build is not: only `docker/Doc
 two recipes in `.config/qits/` build that Dockerfile on the platform's BuildKit, and the release
 recipe publishes `out/qits` as the daemon binary `qits-platform-access-cli` (README, Releases).
 Keep their `buildctl` calls identical, argument for argument: the builder's cache is shared, and
-that is what makes a release after a green fold cache hits.
+that is what makes a release after a green fold cache hits. The musl toolchain is a stage of that
+Dockerfile, copied from qits-ci-daemon's `docker/Dockerfile.musl-builder`: no registry tag, so a cold
+platform needs no other repository's run. Keep the copy identical to that file. The recipes pass the
+tarballs' in-network URLs; off the platform, pass the build args the Dockerfile's header names.
 
 Native rules: HTTP and WebSocket with `java.net.http`, never `java.awt` (the browser is `wslview`/`xdg-open`). A
 class with a `SecureRandom` in a static field is initialised at run time (`Pkce`, in the native

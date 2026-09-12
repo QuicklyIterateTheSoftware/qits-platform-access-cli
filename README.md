@@ -75,9 +75,10 @@ The tests need no docker and no platform. Copy `target/qits` to a directory on y
 example `~/.local/bin`.
 
 The host build is glibc-linked. The released binary is static (musl), so it also runs on alpine.
-`docker/Dockerfile` builds it inside the musl toolchain image `qits/graalvmce-musl-builder:jdk-25`,
-which qits-ci-daemon makes: in that repository, `docker build -t qits/graalvmce-musl-builder:jdk-25
--f docker/Dockerfile.musl-builder docker/`. The build fails unless `ldd` finds the binary static;
+`docker/Dockerfile` builds it on a musl toolchain it builds first, as a stage: a copy of
+qits-ci-daemon's `docker/Dockerfile.musl-builder`. Off the platform, pass the upstream tarballs and
+base image, or `--build-arg BUILDER_IMAGE=` a toolchain image built from that file; the Dockerfile's
+header gives both commands. The build fails unless `ldd` finds the binary static;
 `file out/qits` says `statically linked`. A second target, `--target sbom`, exports the release's
 CycloneDX document from the same build.
 
@@ -94,8 +95,8 @@ shaped like qits-artifacts-cli's:
   `{type: daemon, name: qits-platform-access-cli}`, so qits-ci announces the release. A version that
   exists already (HTTP 409) fails the release: a version is never published twice.
 
-The toolchain image is not built here. The recipes use the `graalvmce-musl-builder:jdk-25` tag that
-qits-ci-daemon's pipelines push.
+The recipes need no toolchain image in the registry: `docker/Dockerfile` builds the musl toolchain
+as a stage, from two tarballs in the platform's Maven store, which the bootstrap seeds.
 
 ## Using qits from an agent
 

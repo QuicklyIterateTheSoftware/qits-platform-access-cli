@@ -30,7 +30,7 @@ steps:
       set -eu
 
       : "${BUILDKIT_HOST:?the platform builder is off or not injected; this recipe builds only through it}"
-      : "${QITS_BUILD_REGISTRY:?}"
+      : "${QITS_MAVEN_REGISTRY_URL:?}"
 
       # The payload arrives verbatim in $QITS_EVENT_PAYLOAD. The version is a path segment below, so
       # it is checked before anything is built.
@@ -45,20 +45,30 @@ steps:
       git fetch "$QITS_CI_REPOSITORY_URL" "refs/tags/$version:refs/tags/$version"
       git checkout --detach "$version"
 
-      builder="$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/graalvmce-musl-builder:jdk-25"
+      # The toolchain tarballs' in-network addresses, read from the tag's docker/Dockerfile.
+      # ci-event-release-request.yml says why.
+      maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
+      musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
+      zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)
+      : "${musl_url:?docker/Dockerfile declares no ARG MUSL_URL}"
+      : "${zlib_url:?docker/Dockerfile declares no ARG ZLIB_URL}"
+      musl_url="$maven_root${musl_url#*/artifacts/maven/maven}"
+      zlib_url="$maven_root${zlib_url#*/artifacts/maven/maven}"
 
       # The QA pipeline's build, argument for argument, then the sbom stage of the same build (cache
       # hits, not a second compile).
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
         --opt target=binary \
-        --opt build-arg:BUILDER_IMAGE="$builder" \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
         --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
         --output type=local,dest=out
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
         --opt target=sbom \
-        --opt build-arg:BUILDER_IMAGE="$builder" \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
         --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
         --output type=local,dest=out
 
