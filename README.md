@@ -29,20 +29,32 @@ name and the released version, the way qits-ci-daemon and qits-artifacts-cli are
 It is one file with no dependencies, so it runs as it is on any x86-64 Linux, WSL and alpine
 included:
 
-    curl -fsSL -u '<client id>:<secret>' -o qits \
-      https://registry.dev.wohlben.eu/artifacts/daemons/qits-platform-access-cli/<version> \
+    curl -fsSL -H "Authorization: Bearer <token>" -o qits \
+      https://registry.<env>.<domain>/artifacts/daemons/qits-platform-access-cli/<version> \
       && chmod +x qits
 
-- **The edge asks for a credential.** Every read through the edge authenticates (since 2026-08-14),
-  on the registry host too, so `-u` carries a commissioned client pair, such as a workstation's.
-  Without one the edge answers 401. Inside the platform network the store's own address needs none:
-  `http://qits-platform-artifacts:8080/artifacts/daemons/qits-platform-access-cli/<version>`.
-- **There is no `latest` address.** A version is published once and never changes, and the store
-  keeps no moving pointer. The newest version is `latestVersion` in the store's list of daemons:
+**The download needs your own token.** The edge guards the registry host like every other host
+and answers 401 without one. Use your own sign-in, never a machine client's id and secret.
 
-      curl -fsSL -u '<client id>:<secret>' \
-        https://registry.dev.wohlben.eu/artifacts/api/repositories/daemons/daemons \
+- **The first time**, without `qits`: sign in to the platform in the browser, then open the address
+  in the same browser. The edge session is your token, and the browser saves the file. Then
+  `chmod +x qits`.
+- **After that**, `qits` holds your token. `qits login` writes it to `t.json`, and
+  `qits session-daemon` keeps it fresh (or run any `qits` command first: it refreshes a token that
+  is about to expire). Use it as `<token>`:
+
+      token=$(jq -r .accessToken "${XDG_CONFIG_HOME:-$HOME/.config}/qits/t.json")
+
+- **There is no `latest` address.** A version is published once and never changes, and the store
+  keeps no moving pointer. The newest version is `latestVersion` in the store's list of daemons (in
+  the browser, open the same address):
+
+      curl -fsSL -H "Authorization: Bearer <token>" \
+        https://registry.<env>.<domain>/artifacts/api/repositories/daemons/daemons \
         | jq -r '.daemons[] | select(.name == "qits-platform-access-cli") | .latestVersion'
+
+- Inside the platform network, the store's own address needs no token:
+  `http://qits-platform-artifacts:8080/artifacts/daemons/qits-platform-access-cli/<version>`.
 
 - The answer carries `Docker-Content-Digest: sha256:…`, the digest the release log prints.
 - The store keeps the last two versions of every daemon. An older one goes after 90 days in which
