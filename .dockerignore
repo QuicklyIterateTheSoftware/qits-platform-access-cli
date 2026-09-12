@@ -1,0 +1,7 @@
+# What docker/Dockerfile's `COPY . .` must not take in: host builds (a stale target/ could shadow the
+# binary this build makes), the Git metadata nothing reads, and the build's own output. out/ would
+# change the context between the binary and the sbom exports and cost a second native compile.
+target/
+**/target/
+.git
+out/

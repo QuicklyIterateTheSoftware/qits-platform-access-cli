@@ -86,9 +86,18 @@ each behaves.
 
     sdk env && ./mvnw package -Dnative -DskipTests   the binary: target/qits
     ./mvnw clean verify                              the tests; packages nothing
+    docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
+                                                     the released form: static musl, out/qits
 
 There is no jar; the pom keeps it so the same way qits-bootstrap-cli's does. Run `clean verify`
 before a native build, never after: `clean` removes the binary. `.sdkmanrc` pins 25.0.2-graalce.
+
+The released binary is static (musl) and the host build is not: only `docker/Dockerfile` adds
+`--static --libc=musl`, with `additional-build-args-append`, so the pom's own build args stay. The
+two recipes in `.config/qits/` build that Dockerfile on the platform's BuildKit, and the release
+recipe publishes `out/qits` as the daemon binary `qits-platform-access-cli` (README, Releases).
+Keep their `buildctl` calls identical, argument for argument: the builder's cache is shared, and
+that is what makes a release after a green fold cache hits.
 
 Native rules: HTTP and WebSocket with `java.net.http`, never `java.awt` (the browser is `wslview`/`xdg-open`). A
 class with a `SecureRandom` in a static field is initialised at run time (`Pkce`, in the native

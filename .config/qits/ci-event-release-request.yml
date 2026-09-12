@@ -1,0 +1,63 @@
+# The QA pipeline: it builds a release request's fold, and nothing else builds it.
+#
+# qits-projects keeps a backing branch `release/<request id>` for each open release request and
+# publishes `ReleaseRequestChanged` for every new fold. This file is read at main's head, and only the
+# branch and sha come from the event, so a request cannot change the CI that gates it. Every step
+# gates: the verdict is the ordinary BuildSuccessful/BuildFailed on the merged sha.
+#
+# The shape is qits-artifacts-cli's: the cheap test gate first, then the shipping form.
+# ci-event-release.yml beside this file publishes the released version.
+event: ReleaseRequestChanged
+
+when:
+  # repoName, not repoId: the git host keys repositories by an opaque UUID.
+  - repoName: { exact: qits-platform-access-cli }
+
+checkout:
+  branch: backingBranch
+  sha: mergedSha
+
+steps:
+    # 1. The clone-alone gate: `./mvnw verify` with no docker and no platform (AGENTS.md). It runs
+    #    first, so a broken test costs no native compile.
+  - image: qits/build-images/maven-base:latest
+    timeout-seconds: 1800
+    script: |
+      # The daemon runs this with `bash -c` and no -e. Without it a failed build reports SUCCESS.
+      set -eu
+      # Maven Central through the platform mirror's in-network route. Empty resolves Central directly.
+      export QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}"
+      ./mvnw -B -ntp -s .qits-maven-settings.xml verify
+
+    # 2. The shipping form: the static musl binary, built on the platform's BuildKit, with no socket.
+    #    docker/Dockerfile's RUN checks with `ldd` that it is static. The `--help` run below checks
+    #    that it starts on an alpine image (ci-base is one), which a glibc-linked binary does not.
+  - image: qits/build-images/ci-base:latest
+    build: true
+    timeout-seconds: 3600
+    script: |
+      set -eu
+
+      # Unset: a qits-ci too old to inject it. Empty: the builder is switched off. Either way this
+      # recipe stops here and says so.
+      : "${BUILDKIT_HOST:?the platform builder is off or not injected; this recipe builds only through it}"
+      : "${QITS_BUILD_REGISTRY:?}"
+
+      # The toolchain image qits-ci-daemon's pipelines push. It is not built here: docker/Dockerfile
+      # says why. If the tag is missing, buildctl fails naming it.
+      builder="$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/graalvmce-musl-builder:jdk-25"
+
+      # ci-event-release.yml runs this same call, argument for argument. The builder's cache is
+      # shared, so a release after a green fold is cache hits, not a second native compile.
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=binary \
+        --opt build-arg:BUILDER_IMAGE="$builder" \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --output type=local,dest=out
+
+      chmod +x out/qits
+      # Talks to nothing: `--help` needs no session and no platform.
+      ./out/qits --help >/dev/null
+
+      echo "qits built: $(sha256sum out/qits | cut -d' ' -f1)"

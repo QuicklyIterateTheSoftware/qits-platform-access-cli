@@ -17,3 +17,6 @@ target/
 .cache/
 .m2/
 .local/
+
+# Where docker/Dockerfile's `--output type=local,dest=out` writes the binary and its SBOM
+out/

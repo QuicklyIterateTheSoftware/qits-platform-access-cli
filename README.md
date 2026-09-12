@@ -19,10 +19,41 @@ Commands:
 
 The binary is called `qits`. qits-bootstrap-cli's binary is `qits-bootstrap`.
 
+## Download
+
+Each release publishes the static binary to the platform's artifacts store, under this repository's
+name and the released version, the way qits-ci-daemon and qits-artifacts-cli are published:
+
+    https://registry.<env>.<domain>/artifacts/daemons/qits-platform-access-cli/<version>
+
+It is one file with no dependencies, so it runs as it is on any x86-64 Linux, WSL and alpine
+included:
+
+    curl -fsSL -u '<client id>:<secret>' -o qits \
+      https://registry.dev.wohlben.eu/artifacts/daemons/qits-platform-access-cli/<version> \
+      && chmod +x qits
+
+- **The edge asks for a credential.** Every read through the edge authenticates (since 2026-08-14),
+  on the registry host too, so `-u` carries a commissioned client pair, such as a workstation's.
+  Without one the edge answers 401. Inside the platform network the store's own address needs none:
+  `http://qits-platform-artifacts:8080/artifacts/daemons/qits-platform-access-cli/<version>`.
+- **There is no `latest` address.** A version is published once and never changes, and the store
+  keeps no moving pointer. The newest version is `latestVersion` in the store's list of daemons:
+
+      curl -fsSL -u '<client id>:<secret>' \
+        https://registry.dev.wohlben.eu/artifacts/api/repositories/daemons/daemons \
+        | jq -r '.daemons[] | select(.name == "qits-platform-access-cli") | .latestVersion'
+
+- The answer carries `Docker-Content-Digest: sha256:…`, the digest the release log prints.
+- The store keeps the last two versions of every daemon. An older one goes after 90 days in which
+  nobody downloaded it.
+
 ## Build
 
-    sdk env && ./mvnw package -Dnative -DskipTests   the binary: target/qits
+    sdk env && ./mvnw package -Dnative -DskipTests   the binary for this host: target/qits
     ./mvnw clean verify                              the tests; packages nothing
+    docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
+                                                     the released form, static: out/qits
 
 `.sdkmanrc` names the GraalVM (25.0.2-graalce), so `sdk env` sets `JAVA_HOME`. Without sdkman:
 `JAVA_HOME=$HOME/.sdkman/candidates/java/25.0.2-graalce ./mvnw package -Dnative -DskipTests`.
@@ -30,6 +61,29 @@ There is no jar. Run `clean verify` before a native build, not after: `clean` re
 
 The tests need no docker and no platform. Copy `target/qits` to a directory on your `PATH`, for
 example `~/.local/bin`.
+
+The host build is glibc-linked. The released binary is static (musl), so it also runs on alpine.
+`docker/Dockerfile` builds it inside the musl toolchain image `qits/graalvmce-musl-builder:jdk-25`,
+which qits-ci-daemon makes: in that repository, `docker build -t qits/graalvmce-musl-builder:jdk-25
+-f docker/Dockerfile.musl-builder docker/`. The build fails unless `ldd` finds the binary static;
+`file out/qits` says `statically linked`. A second target, `--target sbom`, exports the release's
+CycloneDX document from the same build.
+
+## Releases
+
+Only through a release request, like every repository here. `.config/qits/` holds the two recipes,
+shaped like qits-artifacts-cli's:
+
+- `ci-event-release-request.yml` gates a request's fold: `./mvnw verify`, then the static binary on
+  the platform's BuildKit, and a `--help` run of it on an alpine image.
+- `ci-event-release.yml` runs on the release tag: the same build and its SBOM, then a PUT of the
+  binary to `/artifacts/daemons/qits-platform-access-cli/<version>` and of the SBOM to
+  `/artifacts/sboms/daemon/qits-platform-access-cli/-/<version>`. It declares the artifact
+  `{type: daemon, name: qits-platform-access-cli}`, so qits-ci announces the release. A version that
+  exists already (HTTP 409) fails the release: a version is never published twice.
+
+The toolchain image is not built here. The recipes use the `graalvmce-musl-builder:jdk-25` tag that
+qits-ci-daemon's pipelines push.
 
 ## Using qits from an agent
 

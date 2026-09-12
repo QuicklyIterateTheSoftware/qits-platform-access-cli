@@ -1,0 +1,101 @@
+# The release pipeline: on this repository's own release tag, build the static `qits` binary and
+# publish it to the artifacts store under the released version, where a workstation downloads it.
+#
+# `SCMRelease` only says "source control has this version". This file emits nothing it listens for.
+#
+# `artifacts:` is a declaration, not a report: qits-ci announces
+# `SoftwareRelease {daemon, qits-platform-access-cli}` on its strength once the run is green, so keep
+# it true. `daemon` is the store's type for "a static binary served as bytes under a name and a
+# version"; it does not claim this program is a daemon. qits-ci-daemon and qits-artifacts-cli ride
+# the same train, and the name is the repository's, as theirs is (the binary is called `qits`).
+event: SCMRelease
+when:
+  - repository: { exact: qits-platform-access-cli }
+# The run is anchored at the tag. With `optional: true`, an SCMRelease that carries no commitSha still
+# gets a run (at main's head), and the tag fetch below supplies the released tree.
+checkout:
+  branch: version       # the tag's name, which `clone --branch` resolves
+  sha: commitSha        # the commit it points at
+  optional: true
+artifacts:
+  - { type: daemon, name: qits-platform-access-cli }
+steps:
+    # ci-base: buildctl for the build, git for the tag, curl for the two PUTs, jq for the JSON.
+    # `build: true` and no socket.
+  - image: qits/build-images/ci-base:latest
+    build: true
+    timeout-seconds: 3600
+    script: |
+      # Without -e a failed build is swallowed, and a green run is what announces the release.
+      set -eu
+
+      : "${BUILDKIT_HOST:?the platform builder is off or not injected; this recipe builds only through it}"
+      : "${QITS_BUILD_REGISTRY:?}"
+
+      # The payload arrives verbatim in $QITS_EVENT_PAYLOAD. The version is a path segment below, so
+      # it is checked before anything is built.
+      version=$(printf '%s' "$QITS_EVENT_PAYLOAD" | jq -er .version)
+      case "$version" in
+        ''|*[!0-9.]*) echo "SCMRelease carries no valid CalVer" >&2; exit 1 ;;
+      esac
+      echo "releasing qits-platform-access-cli $version"
+
+      # The tag is the tree: a later push moves main, never the tag. The clone is shallow and has no
+      # tags, hence the refspec.
+      git fetch "$QITS_CI_REPOSITORY_URL" "refs/tags/$version:refs/tags/$version"
+      git checkout --detach "$version"
+
+      builder="$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/graalvmce-musl-builder:jdk-25"
+
+      # The QA pipeline's build, argument for argument, then the sbom stage of the same build (cache
+      # hits, not a second compile).
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=binary \
+        --opt build-arg:BUILDER_IMAGE="$builder" \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --output type=local,dest=out
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=sbom \
+        --opt build-arg:BUILDER_IMAGE="$builder" \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --output type=local,dest=out
+
+      chmod +x out/qits
+      ./out/qits --help >/dev/null
+
+      # --- the publish ------------------------------------------------------------------------------
+      # The store's in-network origin, taken from the injected Maven root, as qits-ci-daemon's
+      # release does. Not $QITS_REGISTRY: that is the host daemon's address for the registry.
+      artifacts=$(printf '%s' "$QITS_MAVEN_REGISTRY_URL" | sed -E 's#^(https?://[^/]+).*#\1#')
+
+      # No credential: the daemon publish surface is open on qits-net, and a version can be added but
+      # never changed. So 409 (the version exists) fails the release, rather than announcing bytes
+      # this run did not publish.
+      #
+      # Plain curl, as qits-ci-daemon's release does, not qits-publish: qits-ci hands a step
+      # qits-publish only when the deployment pins it (qits.ci.artifacts-cli-version, blank by
+      # default), and this release must not depend on that pin.
+      status=$(curl -sS -o /tmp/daemon-publish.json -w '%{http_code}' -X PUT \
+        -H 'Content-Type: application/octet-stream' \
+        --data-binary @out/qits \
+        "$artifacts/artifacts/daemons/qits-platform-access-cli/$version")
+      case "$status" in
+        201) ;;
+        409)
+          echo "qits-platform-access-cli $version is already published; a version is never republished" >&2
+          cat /tmp/daemon-publish.json >&2
+          exit 1 ;;
+        *)
+          echo "publish answered $status: $(cat /tmp/daemon-publish.json)" >&2
+          exit 1 ;;
+      esac
+      echo "published qits-platform-access-cli $version, $(jq -er .sizeBytes /tmp/daemon-publish.json) bytes, digest $(jq -er .digest /tmp/daemon-publish.json)"
+
+      # --- the SBOM ---------------------------------------------------------------------------------
+      # After the publish and before the step ends green, so no announced version lacks one. The
+      # path is the declared identity: (daemon, qits-platform-access-cli, version).
+      curl -fsS -X PUT -H 'Content-Type: application/vnd.cyclonedx+json' \
+        --data-binary @out/sbom.json \
+        "$artifacts/artifacts/sboms/daemon/qits-platform-access-cli/-/$version"
