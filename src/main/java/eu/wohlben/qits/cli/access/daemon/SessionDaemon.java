@@ -1,10 +1,11 @@
 package eu.wohlben.qits.cli.access.daemon;
 
-import eu.wohlben.qits.cli.access.idp.IdpException;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.session.ExclusiveLock;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.access.session.SessionRefresh;
+import eu.wohlben.qits.cli.access.session.SessionRefresh.Outcome;
 import eu.wohlben.qits.cli.access.session.Times;
 
 import java.io.IOException;
@@ -113,12 +114,23 @@ public final class SessionDaemon {
                 return;
             }
 
-            Outcome outcome = refreshIfDue();
+            Outcome outcome = SessionRefresh.refreshIfDue(store, margin, clock, idpFor);
             switch (outcome) {
-                case Outcome.Refreshed r -> backoff = FIRST_BACKOFF;
-                case Outcome.Reread r -> {
-                    // A login replaced the file, or removed it. The next pass reads it again.
+                case Outcome.Refreshed r -> {
+                    Session next = r.session();
+                    announced = next.accessExpiresAt();
+                    log("refreshed; access token valid until " + Times.local(next.accessExpiresAt())
+                            + ", session ends " + Times.local(next.refreshExpiresAt())
+                            + "; next refresh at " + Times.local(next.accessExpiresAt().minus(margin)));
+                    backoff = FIRST_BACKOFF;
                 }
+                case Outcome.NotDue r -> {
+                    // A login or a platform command replaced the file. The next pass reads it again.
+                }
+                case Outcome.NoSession r -> {
+                    // The file was removed. The next pass says so and waits.
+                }
+                case Outcome.Unreadable u -> log(u.detail());
                 case Outcome.Ended e -> {
                     ended(e.detail());
                     waitForChange(e.seen());
@@ -135,64 +147,6 @@ public final class SessionDaemon {
                     backoff = backoff.multipliedBy(2).compareTo(MAX_BACKOFF) > 0 ? MAX_BACKOFF : backoff.multipliedBy(2);
                 }
             }
-        }
-    }
-
-    /** One refresh, under the write lock, with the file read again first. */
-    private Outcome refreshIfDue() throws InterruptedException {
-        try (ExclusiveLock ignored = store.lockForWrite()) {
-            SessionFile.Fingerprint seen = store.fingerprint();
-            Optional<Session> read = store.read();
-            if (read.isEmpty()) {
-                return new Outcome.Reread();
-            }
-            Session session = read.get();
-            Instant now = clock.instant();
-            if (now.isBefore(session.accessExpiresAt().minus(margin))) {
-                return new Outcome.Reread();
-            }
-            if (!now.isBefore(session.refreshExpiresAt())) {
-                return new Outcome.Ended(seen, "the session end " + Times.local(session.refreshExpiresAt()) + " has passed");
-            }
-            TokenClient.TokenResponse token;
-            try {
-                token = idpFor.apply(session.idpUrl()).refresh(session.refreshToken());
-            } catch (IdpException.Unreachable e) {
-                return new Outcome.Retry(e.getMessage(), session.refreshExpiresAt());
-            } catch (IdpException invalidGrantOrRefused) {
-                // Presenting the same token again cannot help, and could be a replay.
-                return new Outcome.Ended(seen, invalidGrantOrRefused.getMessage());
-            }
-            // Write first. The idp has spent the old refresh token; a crash before this write
-            // loses the session.
-            Session next = Session.from(session.idpUrl(), token, clock.instant());
-            try {
-                store.write(next);
-            } catch (IOException e) {
-                return new Outcome.Ended(seen, "cannot write the new session: " + e.getMessage());
-            }
-            announced = next.accessExpiresAt();
-            log("refreshed; access token valid until " + Times.local(next.accessExpiresAt())
-                    + ", session ends " + Times.local(next.refreshExpiresAt())
-                    + "; next refresh at " + Times.local(next.accessExpiresAt().minus(margin)));
-            return new Outcome.Refreshed();
-        } catch (IOException unreadable) {
-            log(unreadable.getMessage());
-            return new Outcome.Reread();
-        }
-    }
-
-    private sealed interface Outcome {
-        record Refreshed() implements Outcome {
-        }
-
-        record Reread() implements Outcome {
-        }
-
-        record Ended(SessionFile.Fingerprint seen, String detail) implements Outcome {
-        }
-
-        record Retry(String detail, Instant sessionEnd) implements Outcome {
         }
     }
 
