@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.git;
 
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import picocli.CommandLine;
 
@@ -23,9 +24,20 @@ import java.util.Optional;
  */
 @CommandLine.Command(name = "git-credential", mixinStandardHelpOptions = true,
         description = {
-                "Git's credential helper for the platform's git host. Git runs it; a person does not.",
+                "Git's credential helper for the platform's git host. Git runs it; a person does not. "
+                        + "`qits git-login` sets it up.",
                 "get prints the stored sign-in's access token for Git, refreshing it first when needed. "
-                        + "store is ignored. erase drops the cached access token and keeps the sign-in."})
+                        + "store is ignored. erase drops the cached access token and keeps the sign-in."},
+        footerHeading = HelpText.EXAMPLES,
+        footer = {
+                "  git config --global --get-all credential.https://githost.dev.wohlben.eu.helper",
+                "",
+                "The example shows the setup. Do not run `get` yourself: it prints a token on stdout, because that is "
+                        + "Git's helper protocol."},
+        exitCodeListHeading = HelpText.EXIT_CODES,
+        exitCodeList = {"0:Done. For a host without a sign-in it prints nothing, and Git asks its other helpers.",
+                "1:The sign-in file cannot be read or written.",
+                "2:No action named."})
 public class GitCredentialCommand extends PlatformCommand {
 
     @CommandLine.Parameters(index = "0", paramLabel = "<get|store|erase>", description = "What Git asks for.")

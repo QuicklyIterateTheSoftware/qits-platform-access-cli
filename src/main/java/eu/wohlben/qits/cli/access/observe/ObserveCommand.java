@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.access.observe;
 import eu.wohlben.qits.cli.access.platform.AccessTokens;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
@@ -17,7 +18,8 @@ import java.util.Locale;
 @CommandLine.Command(name = "observe", mixinStandardHelpOptions = true,
         description = {
                 "Print what qits-observability takes in (logs, spans with their events, metrics) as it arrives. "
-                        + "The service applies the filters and sends only the records that match.",
+                        + "Use it to watch a service's errors or to follow one trace live. The service applies the "
+                        + "filters and sends only the records that match.",
                 "Each --filter is one group of conditions, separated by spaces, that must all hold. A record that fits "
                         + "any group is printed. Live only: records that arrive while it reconnects are missed. "
                         + "Notes go to stderr. Stops on SIGINT or SIGTERM.",
@@ -26,12 +28,25 @@ import java.util.Locale;
                         + "F~V contains (any case), F? present, !F absent, level>=V severity at or above V "
                         + "(TRACE, DEBUG, INFO, WARN, ERROR, FATAL or 1-24).",
                 "Fields: kind service trace span level body name status event attr.<key> resource.<key>. "
-                        + "attr.<key> is the record's own attribute: a span's exception is on its event, so "
-                        + "attr.exception.type? matches logs, and event=exception matches spans. "
-                        + "Quote a value that holds spaces: body~\"connection refused\".",
+                        + "attr.<key> is the record's own attribute, resource.<key> its resource's. "
+                        + "Quote a value that holds spaces: body~\"connection refused\"."},
+        footerHeading = HelpText.EXAMPLES,
+        footer = {
+                "  qits observe --filter 'kind=log level>=ERROR' --filter 'kind=span event=exception'",
+                "  qits observe --filter 'service^=qits-ci kind=log body~\"connection refused\"'",
+                "  qits observe --filter 'trace=4bf92f3577b34da6a3ce929d0e0e4736'",
+                "  qits observe --filter 'kind=log level>=WARN' -o json | jq -r .record.body",
                 "",
-                "Example: qits observe --filter 'kind=log level>=ERROR' --filter 'kind=span event=exception'",
-                ""})
+                "- A span's exception is an event of the span: event=exception finds it. attr.exception.type? "
+                        + "matches logs only.",
+                "- F=V and F^=V match case: status=ERROR, not status=error. F~V ignores case.",
+                "- level takes >= only (level>=WARN), and only logs have a level.",
+                "- --filter '*' streams every record, which can be a lot."},
+        exitCodeListHeading = HelpText.EXIT_CODES,
+        exitCodeList = {"0:Stopped by SIGINT or SIGTERM, or stdout was closed.",
+                "1:The platform refused the socket (401, 403 or another 4xx).",
+                "2:A --filter cannot be read or the service refused the filters, not signed in, or the session "
+                        + "ended."})
 public class ObserveCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--filter", required = true, paramLabel = "<conditions>",

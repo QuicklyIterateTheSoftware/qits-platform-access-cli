@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.access.projects;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import picocli.CommandLine;
 
@@ -12,7 +13,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "projects", mixinStandardHelpOptions = true,
         subcommands = ProjectsCommand.ListCommand.class,
-        description = "The platform's projects.")
+        description = "The platform's projects. Other commands take a project's id, slug or name as --project.")
 public class ProjectsCommand implements Runnable {
 
     @CommandLine.Mixin
@@ -27,7 +28,11 @@ public class ProjectsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = "List the projects: slug, name and id.")
+            description = "List the projects: slug, name and id.",
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits projects list", "  qits projects list -o json"},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

@@ -25,11 +25,18 @@ each behaves.
                and SafeText (terminal control characters out of every streamed value)
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
+    help/      qits help skill (hidden): the commands' help arranged as SKILL.md
 
 ## Conventions
 
 - **Plain Language everywhere**: comments, commit messages, documentation and every string the
   program prints. A comment says why, not what.
+- **The help texts are the one source of SKILL.md.** A command's `description`, `footer` (examples
+  are the lines with two spaces in front; the other lines are notes) and `exitCodeList` are
+  picocli's own fields; no custom annotations, which would need reflection in the native binary.
+  `SkillDocumentTest` fails when `SKILL.md` differs from the help: write it again with
+  `./mvnw test -Dtest=SkillDocumentTest -Dqits.skill.update=true` and commit it with the change.
+  Keep the help ASCII, and remember that picocli formats it (`%n` is a line break, `%%` a percent).
 - **Never print or log a token** — not with a flag, not in an error, not in a test failure.
   `Session`, `TokenResponse` and `Pkce` override `toString` for that reason. An error from the idp
   names its status, `error` and `error_description`, never the request form. A Jackson error on a

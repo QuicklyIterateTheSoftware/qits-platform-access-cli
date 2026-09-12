@@ -29,6 +29,18 @@ There is no jar. Run `clean verify` before a native build, not after: `clean` re
 The tests need no docker and no platform. Copy `target/qits` to a directory on your `PATH`, for
 example `~/.local/bin`.
 
+## Using qits from an agent
+
+`qits help skill` prints the help of every command as a SKILL.md: when to use qits, the platform
+rules, and each command with its options, examples and exit codes. It is hidden from `qits --help`.
+To give it to Claude Code:
+
+    mkdir -p ~/.claude/skills/qits && qits help skill > ~/.claude/skills/qits/SKILL.md
+
+The repository holds the same file as `SKILL.md`. The help texts are its one source: a test fails
+when the file differs from them, and `./mvnw test -Dtest=SkillDocumentTest -Dqits.skill.update=true`
+writes it again.
+
 ## qits login
 
     qits login [--idp-url <url>] [--no-browser]

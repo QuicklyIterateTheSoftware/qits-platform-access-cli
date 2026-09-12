@@ -5,6 +5,7 @@ import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.login.Browser;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.session.Session;
@@ -18,9 +19,23 @@ import java.util.Optional;
 
 @CommandLine.Command(name = "git-login", mixinStandardHelpOptions = true,
         description = {
-                "Sign this workstation in for Git pushes to the platform's git host, through the browser.",
-                "The sign-in may push branches under refs/heads/external/ only. It is stored in "
-                        + "$XDG_CONFIG_HOME/qits/git.json, and `qits git-credential` hands it to Git."})
+                "Sign this workstation in for Git pushes to the platform's git host, through the browser. Run it "
+                        + "once; afterwards Git gets its token from `qits git-credential`.",
+                "The sign-in may push branches under refs/heads/external/ and nothing else. It is stored in "
+                        + "$XDG_CONFIG_HOME/qits/git.json, apart from the session of `qits login`."},
+        footerHeading = HelpText.EXAMPLES,
+        footer = {
+                "  qits git-login --configure",
+                "  git push <remote> HEAD:refs/heads/external/log-view",
+                "",
+                "- The git host refuses a push to any other ref, main included. A push releases nothing: ask for a "
+                        + "release with `qits release-request`.",
+                "- --configure sets the credential helper for the git host only; a global helper (for example for "
+                        + "GitHub) stays."},
+        exitCodeListHeading = HelpText.EXIT_CODES,
+        exitCodeList = {"0:Signed in.",
+                "1:The sign-in did not complete (the browser did not come back in time, or the idp refused).",
+                "2:Used wrongly, or the idp or the git host cannot be worked out."})
 public class GitLoginCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--idp-url", paramLabel = "<url>",

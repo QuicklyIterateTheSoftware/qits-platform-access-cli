@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.login;
 
 import eu.wohlben.qits.cli.access.idp.IdpUrl;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.session.SessionFile;
 import picocli.CommandLine;
 
@@ -14,13 +15,26 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "login", mixinStandardHelpOptions = true,
         description = {
-                "Sign in through the browser and store the session.",
-                "The session is written to $XDG_CONFIG_HOME/qits/t.json (default ~/.config/qits/t.json)."})
+                "Sign in through the browser and store the session. Run it first, and again when a command says "
+                        + "`Not signed in` or `Session ended`.",
+                "The session goes to $XDG_CONFIG_HOME/qits/t.json (default ~/.config/qits/t.json). The page shows a "
+                        + "code: paste it at `Paste the code:`. The codes of one sign-in last 5 minutes."},
+        footerHeading = HelpText.EXAMPLES,
+        footer = {
+                "  qits login",
+                "  qits login --idp-url https://idp.dev.wohlben.eu/idp",
+                "  qits login --no-browser",
+                "",
+                "Over SSH, use --no-browser and open the printed address on a machine with a browser."},
+        exitCodeListHeading = HelpText.EXIT_CODES,
+        exitCodeList = {"0:Signed in; the session is stored.", "1:The sign-in did not complete.",
+                "2:The idp address cannot be worked out (see --idp-url), or the command was used wrongly."})
 public class LoginCommand implements Callable<Integer> {
 
     @CommandLine.Option(names = "--idp-url", paramLabel = "<url>",
             description = "The idp's public base URL. Default: QITS_IDP_URL, else "
-                    + "https://idp.<QITS_ENV_NAME>.<QITS_DOMAIN>/idp.")
+                    + "https://idp.<QITS_ENV_NAME>.<QITS_DOMAIN>/idp, else (no QITS_DOMAIN) the platform on this "
+                    + "machine, http://idp.<QITS_ENV_NAME or prod>.localhost:8080/idp.")
     String idpUrl;
 
     @CommandLine.Option(names = "--no-browser",

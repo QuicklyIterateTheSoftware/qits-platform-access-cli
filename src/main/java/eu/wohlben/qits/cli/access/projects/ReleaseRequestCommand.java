@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import picocli.CommandLine;
 
@@ -21,8 +22,20 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
                 ReleaseRequestCommand.JoinCommand.class},
-        description = {"The release requests of one repository.",
-                "list shows them, create asks for a branch to be released, and join adds a branch to an open request."})
+        description = {"The release requests of one repository: the one way to release it. list shows them, create "
+                        + "asks for a branch to be released, and join adds a branch to an open request.",
+                "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
+                        + "States: PENDING (waiting for its builds), READY, RELEASED, REJECTED (a gating build was "
+                        + "red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), "
+                        + "WITHDRAWN."},
+        footerHeading = "%nNotes:%n",
+        footer = {
+                "- A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. "
+                        + "Fix the branch and push; do not open a new request.",
+                "- When a red build was the platform's fault and not the code's (a flaked container, a registry "
+                        + "that was down), retry that run in qits-ci: it builds the same commit again. Do not open "
+                        + "a new request.",
+                "- --project and --repository may come before or after the command."})
 public class ReleaseRequestCommand implements Runnable {
 
     /** The one state the default list leaves out: the service adds the last 10 of them. */
@@ -68,7 +81,14 @@ public class ReleaseRequestCommand implements Runnable {
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
             description = {"List the repository's open release requests.",
-                    "Open means every state but RELEASED and WITHDRAWN. --state asks for other ones."})
+                    "Open means every state but RELEASED and WITHDRAWN. --state asks for other ones. The ID column "
+                            + "shows the first 8 characters of the id, which is enough for `join`."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-service list",
+                    "  qits release-request --project qits --repository qits-ci-service list --state all -o json"},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -131,7 +151,21 @@ public class ReleaseRequestCommand implements Runnable {
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"Ask for a branch to be released once its builds are green.",
                     "The platform may answer with a new request, the open request that already holds the branch, "
-                            + "or (on a project wrapper) the open request the branch joined. It prints what came back."})
+                            + "or (on a project wrapper) the open request the branch joined. It prints what came back."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-service create --branch "
+                            + "feature/log-view --summary \"Show the build log live\"",
+                    "  qits release-request --project qits --repository qits-ci-service create --branch main "
+                            + "--summary \"Release main\" --priority HIGH",
+                    "",
+                    "- Asking again for a branch that is on an open request answers that request; it opens no "
+                            + "second one. Check the id that comes back.",
+                    "- On a project wrapper the answer can be a request somebody else opened. Its summary stands, "
+                            + "and a red gate holds every branch on it.",
+                    "- To add another branch to a request you have, use `join`."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class CreateCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -169,9 +203,22 @@ public class ReleaseRequestCommand implements Runnable {
     @CommandLine.Command(name = "join", mixinStandardHelpOptions = true,
             description = {"Add a branch to an open release request.",
                     "The platform folds the request again with the branch and, if that makes a new commit, "
-                            + "builds that commit. A branch already on the request adds nothing; with --priority "
-                            + "it states that priority again. A RELEASED or WITHDRAWN request takes no more "
-                            + "branches. It prints the request that came back."})
+                            + "builds that commit. It prints the request that came back."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 "
+                            + "--branch feature/log-search",
+                    "  qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 "
+                            + "--branch feature/log-search --priority BLOCKING",
+                    "",
+                    "- Safe to repeat: a branch already on the request adds nothing. With --priority it states that "
+                            + "priority again; without, the branch keeps its priority.",
+                    "- A RELEASED or WITHDRAWN request takes no more branches (HTTP 409): open a new one with "
+                            + "`create`."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED,
+                    "2:Used wrongly (for example a --request that fits no request, or more than one), not signed in, "
+                            + "or the session ended."})
     public static class JoinCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

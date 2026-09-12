@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.access.projects;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import picocli.CommandLine;
 
@@ -12,7 +13,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "repositories", mixinStandardHelpOptions = true,
         subcommands = RepositoriesCommand.ListCommand.class,
-        description = "The repositories of one project.")
+        description = "The repositories of one project. Release requests take a repository's id or name as "
+                + "--repository.")
 public class RepositoriesCommand implements Runnable {
 
     @CommandLine.Mixin
@@ -40,7 +42,12 @@ public class RepositoriesCommand implements Runnable {
     static final String NAME_THE_PROJECT = "Name the project: --project <id, slug or name>.";
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = "List the project's repositories: name, archetype, component and id.")
+            description = "List the project's repositories: name, archetype, component and id. --project may come "
+                    + "before or after list.",
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits repositories --project qits list", "  qits repositories list --project qits -o json"},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

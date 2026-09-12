@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.access.events;
 import eu.wohlben.qits.cli.access.platform.AccessTokens;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
@@ -17,10 +18,22 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "events", mixinStandardHelpOptions = true,
         description = {
-                "Print qits-events domain events as they happen, one JSON object per line on stdout.",
-                "Each line is the event with its payload read as JSON. Live only: the stream has no replay, "
-                        + "so events that happen while it reconnects are missed. Notes go to stderr. "
-                        + "Stops on SIGINT or SIGTERM."})
+                "Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait "
+                        + "for something on the platform: a build (BuildSuccessful, BuildFailed) or a release "
+                        + "request (ReleaseRequestChanged).",
+                "Each line is the event with its payload read as JSON. Live only: the stream has no replay, so start "
+                        + "it before the thing you wait for; events that happen while it reconnects are missed. "
+                        + "Notes go to stderr. Stops on SIGINT or SIGTERM."},
+        footerHeading = HelpText.EXAMPLES,
+        footer = {
+                "  qits events --filter=BuildSuccessful,BuildFailed",
+                "  qits events --filter=ReleaseRequestChanged | jq -r '.payload'",
+                "",
+                "--filter takes exact event names. A pattern such as Build* is refused."},
+        exitCodeListHeading = HelpText.EXIT_CODES,
+        exitCodeList = {"0:Stopped by SIGINT or SIGTERM, or stdout was closed.",
+                "1:The platform refused the stream (401, 403 or another 4xx).",
+                "2:Used wrongly (for example a pattern in --filter), not signed in, or the session ended."})
 public class EventsCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--filter", paramLabel = "<names>", defaultValue = "*",
