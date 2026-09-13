@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.tui;
 
 import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.complete.Completions;
 import eu.wohlben.qits.cli.tui.api.Output;
 import eu.wohlben.qits.cli.tui.model.CommandNode;
 import eu.wohlben.qits.cli.tui.model.OptionRow;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * The whole of the TUI's behaviour, with no terminal in it: keys go in, a {@link View} comes out.
@@ -57,6 +59,9 @@ public class TuiApp {
     private static final String CONFIRM_HINT =
             "y run it · n or ␛ do not";
 
+    /** Said while a source is being asked, so a slow call looks like a slow call. */
+    static final String LOADING = "loading…";
+
     /** Said before a browser command runs, because the browser opens somewhere else. */
     static final String OPENS_A_BROWSER = "this opens a browser";
 
@@ -68,6 +73,7 @@ public class TuiApp {
 
     private final CommandRunner runner;
     private final History history;
+    private final Completions completions;
     private Selection selection;
     private Screen screen = Screen.LIST;
     private String header;
@@ -82,16 +88,37 @@ public class TuiApp {
     private StringBuilder typing;
     private boolean hidden;
     private String question;
+    private Completions.Pending pending;
+
+    /**
+     * A line about the open editor — {@code loading…}, or why a source had nothing. Kept apart from
+     * {@link #message}, which every keypress clears: a person typing into the field a failed source
+     * left behind should still be able to read why it is a field.
+     */
+    private String editorNote;
 
     public TuiApp(CommandNode root, String header) {
-        this(root, header, new CommandRunner());
+        this(root, header, new CommandRunner(), null);
     }
 
     public TuiApp(CommandNode root, String header, CommandRunner runner) {
+        this(root, header, runner, null);
+    }
+
+    /**
+     * @param completions where platform-filled values come from, or null when the screen offers
+     *                    only what the command tree itself knows
+     */
+    public TuiApp(CommandNode root, String header, CommandRunner runner, Completions completions) {
         this.selection = new Selection(root);
         this.history = new History(root);
         this.header = header;
         this.runner = runner;
+        this.completions = completions;
+        if (completions != null) {
+            completions.refuseCycles(root);
+            this.selection.orderRowsBy(completions::ordered);
+        }
     }
 
     public CommandRunner runner() {
@@ -135,12 +162,13 @@ public class TuiApp {
     }
 
     public View view() {
+        collectFetch();
         List<View.Row> rows = rows();
         if (selected >= rows.size()) {
             selected = Math.max(0, rows.size() - 1);
         }
         return new View(header, title(), rows, rows.isEmpty() ? -1 : selected, typedText(),
-                selection.commandLine(), message, runner.title(), runner.lines(), hint());
+                selection.commandLine(), note(), runner.title(), runner.lines(), hint());
     }
 
     protected String title() {
@@ -160,6 +188,37 @@ public class TuiApp {
             case CONFIRM -> CONFIRM_HINT;
             case LIST -> filter != null ? FILTER_HINT : runner.running() ? RUNNING_HINT : LIST_HINT;
         };
+    }
+
+    /** The one line under the command line: what the open editor has to say, else the last refusal. */
+    private String note() {
+        if (pending != null && !pending.done()) {
+            return LOADING;
+        }
+        return editorNote != null ? editorNote : message;
+    }
+
+    /**
+     * A finished call put on screen, by the loop that paints and nowhere else. A source that failed
+     * leaves the picker as a field to type into: a dropdown nobody can fill must not be a dead end.
+     */
+    private void collectFetch() {
+        if (pending == null || !pending.done()) {
+            return;
+        }
+        Completions.Pending finished = pending;
+        pending = null;
+        completions.remember(finished);
+        if (screen != Screen.CHOICES || editing == null) {
+            return;
+        }
+        if (finished.choices() == null) {
+            editorNote = finished.failure();
+            openField(orEmpty(selection.value(editing.key())), false);
+            return;
+        }
+        choices.choices(finished.choices());
+        select(0);
     }
 
     /** What is being typed right now, whatever is open, or null when nothing is. */
@@ -205,11 +264,24 @@ public class TuiApp {
             }
             return rows;
         }
-        for (OptionRow row : node.rows()) {
+        for (OptionRow row : orderedRows(node)) {
             rows.add(new View.Row(row.required() ? "*" : " ", row.name(), shownValue(row),
                     String.join(" ", row.choices()), false));
         }
         return rows;
+    }
+
+    /** The rows of a command, with each source's dependencies above the row that needs them. */
+    protected List<OptionRow> orderedRows(CommandNode node) {
+        return completions == null ? node.rows() : completions.ordered(node.rows());
+    }
+
+    /** A selection built elsewhere — from the history — orders its rows the same way. */
+    private Selection ordering(Selection built) {
+        if (completions != null) {
+            built.orderRowsBy(completions::ordered);
+        }
+        return built;
     }
 
     /** Whether a command is shown as decoration: one that belongs in a CI step and nowhere else. */
@@ -260,7 +332,7 @@ public class TuiApp {
         }
         String name = rows.get(index).name();
         if (selection.current().leaf()) {
-            OptionRow row = selection.current().rows().stream()
+            OptionRow row = orderedRows(selection.current()).stream()
                     .filter(r -> r.name().equals(name)).findFirst().orElse(null);
             return row == null ? null : row.key();
         }
@@ -394,7 +466,7 @@ public class TuiApp {
         if (screen == Screen.HISTORY) {
             History.Entry entry = entryAt(selected);
             if (entry != null) {
-                selection = history.selectionOf(entry);
+                selection = ordering(history.selectionOf(entry));
                 screen = Screen.LIST;
                 selected = 0;
                 start();
@@ -438,7 +510,7 @@ public class TuiApp {
         if (entry == null) {
             return;
         }
-        selection = history.selectionOf(entry);
+        selection = ordering(history.selectionOf(entry));
         screen = Screen.LIST;
         selected = 0;
         filter = null;
@@ -454,17 +526,37 @@ public class TuiApp {
      * opens either the searchable list of what it may be, or a field to type into.
      */
     protected void edit(OptionRow row) {
+        editorNote = null;
         if (row.flag()) {
             chose(row, Boolean.parseBoolean(selection.value(row.key())) ? null : "true");
             return;
         }
-        editing = row;
         if (row.hasChoices()) {
+            editing = row;
             screen = Screen.CHOICES;
             choices = new ChoiceList(row.choices().stream().map(ChoiceList.Choice::of).toList());
             select(0);
             return;
         }
+        if (completions != null && row.completed()) {
+            String missing = completions.missingDependency(row, selection.current(), selection.values());
+            if (missing != null) {
+                OptionRow dependency = selection.current().row(missing);
+                message("pick " + (dependency == null ? "--" + missing : dependency.name()) + " first");
+                jumpTo(missing);
+                return;
+            }
+            editing = row;
+            screen = Screen.CHOICES;
+            List<ChoiceList.Choice> known = completions.cached(row, selection.values());
+            choices = new ChoiceList(known == null ? List.of() : known);
+            select(0);
+            if (known == null) {
+                pending = completions.fetch(row, selection.values());
+            }
+            return;
+        }
+        editing = row;
         openField(row.interactive() ? "" : orEmpty(selection.value(row.key())), row.interactive());
     }
 
@@ -476,13 +568,39 @@ public class TuiApp {
         select(0);
     }
 
-    /** A value was taken. Subclasses hook here to drop what depended on the row that changed. */
+    /**
+     * A value was taken. Everything that depended on it is emptied, and everything that depended on
+     * those: a repository of the project you just changed is not a repository of this one.
+     */
     protected void chose(OptionRow row, String value) {
+        String before = selection.value(row.key());
         selection.set(row.key(), value);
+        if (completions == null || java.util.Objects.equals(before, selection.value(row.key()))) {
+            return;
+        }
+        clearDependents(Set.of(row.key()), new java.util.HashSet<>());
+    }
+
+    private void clearDependents(Set<String> changed, Set<String> cleared) {
+        Set<String> next = new java.util.LinkedHashSet<>();
+        for (OptionRow row : selection.current().rows()) {
+            if (cleared.contains(row.key()) || selection.value(row.key()) == null) {
+                continue;
+            }
+            if (completions.dependsOn(row).stream().anyMatch(changed::contains)) {
+                selection.clear(row.key());
+                cleared.add(row.key());
+                next.add(row.key());
+            }
+        }
+        if (!next.isEmpty()) {
+            clearDependents(next, cleared);
+        }
     }
 
     protected void closeEditor() {
         screen = Screen.LIST;
+        editorNote = null;
         editing = null;
         choices = null;
         typing = null;
@@ -594,8 +712,15 @@ public class TuiApp {
         selected = 0;
     }
 
-    /** {@code ⌃L}. */
+    /** {@code ⌃L} in an open dropdown: forget what the source said and ask it again. */
     protected void refetch() {
+        if (screen != Screen.CHOICES || editing == null || completions == null || !editing.completed()) {
+            return;
+        }
+        completions.drop(editing, selection.values());
+        choices.choices(List.of());
+        editorNote = null;
+        pending = completions.fetch(editing, selection.values());
     }
 
     protected int selected() {

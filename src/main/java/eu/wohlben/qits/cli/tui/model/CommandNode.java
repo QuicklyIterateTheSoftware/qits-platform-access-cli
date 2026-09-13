@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.tui.model;
 
+import eu.wohlben.qits.cli.tui.api.Completes;
+import eu.wohlben.qits.cli.tui.api.CompletionSource;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.Output;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -9,7 +11,9 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -96,7 +100,8 @@ public final class CommandNode {
         List<OptionRow> positionals = new ArrayList<>();
         for (PositionalParamSpec positional : spec.positionalParameters()) {
             if (!positional.hidden()) {
-                positionals.add(row(positional, OptionRow.Kind.POSITIONAL, positional.paramLabel()));
+                positionals.add(row(positional, OptionRow.Kind.POSITIONAL, positional.paramLabel(),
+                        completes(spec, null, positional.paramLabel())));
             }
         }
         List<OptionRow> options = new ArrayList<>();
@@ -104,7 +109,8 @@ public final class CommandNode {
             if (option.hidden() || option.usageHelp() || option.versionHelp()) {
                 continue;
             }
-            options.add(row(option, OptionRow.Kind.OPTION, option.longestName()));
+            options.add(row(option, OptionRow.Kind.OPTION, option.longestName(),
+                    completes(spec, option.longestName(), null)));
         }
         options.sort(Comparator.comparing((OptionRow row) -> row.required() ? 0 : 1));
         List<OptionRow> all = new ArrayList<>(positionals);
@@ -112,9 +118,60 @@ public final class CommandNode {
         return all;
     }
 
-    private static OptionRow row(ArgSpec arg, OptionRow.Kind kind, String name) {
+    private static OptionRow row(ArgSpec arg, OptionRow.Kind kind, String name,
+                                 Class<? extends CompletionSource> source) {
         return new OptionRow(kind, name, firstLine(arg.description()), arg.required(), arg.defaultValue(),
-                typeName(arg), isFlag(arg), arg.interactive(), choices(arg), null);
+                typeName(arg), isFlag(arg), arg.interactive(), choices(arg),
+                // A value typed into a hidden field is a secret, and a secret is never looked up.
+                arg.interactive() ? null : source);
+    }
+
+    /**
+     * The {@code @Completes} beside this argument's declaration, or null.
+     * <p>
+     * picocli's model does not carry the field an argument was read from, so the field is found
+     * again — by the option's long name, or by a positional's label. The parent commands are
+     * searched too, because an option declared with {@code ScopeType.INHERIT} appears in this spec
+     * while its field lives on the command above.
+     */
+    private static Class<? extends CompletionSource> completes(CommandSpec spec, String optionName, String label) {
+        for (CommandSpec owner = spec; owner != null; owner = owner.parent()) {
+            Object command = owner.userObject();
+            if (command == null) {
+                continue;
+            }
+            for (Class<?> type = command.getClass(); type != null && type != Object.class;
+                 type = type.getSuperclass()) {
+                for (Field field : declaredFields(type)) {
+                    if (!declares(field, optionName, label)) {
+                        continue;
+                    }
+                    Completes completes = field.getAnnotation(Completes.class);
+                    if (completes != null) {
+                        return completes.value();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean declares(Field field, String optionName, String label) {
+        if (optionName != null) {
+            CommandLine.Option option = field.getAnnotation(CommandLine.Option.class);
+            return option != null && Arrays.asList(option.names()).contains(optionName);
+        }
+        CommandLine.Parameters positional = field.getAnnotation(CommandLine.Parameters.class);
+        return positional != null && positional.paramLabel().equals(label);
+    }
+
+    /** A native image without this class's fields registered simply has no completion here. */
+    private static Field[] declaredFields(Class<?> type) {
+        try {
+            return type.getDeclaredFields();
+        } catch (RuntimeException | LinkageError notInTheImage) {
+            return new Field[0];
+        }
     }
 
     /**

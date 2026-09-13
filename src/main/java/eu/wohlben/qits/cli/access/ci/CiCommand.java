@@ -13,6 +13,11 @@ import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.complete.ProjectSource;
+import eu.wohlben.qits.cli.access.complete.ReleaseRequestSource;
+import eu.wohlben.qits.cli.access.complete.RepositorySource;
+import eu.wohlben.qits.cli.access.complete.RunSource;
+import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -45,10 +50,12 @@ public class CiCommand implements Runnable {
     static final String NAME_THE_PROJECT = "Name the project: --project <id, slug or name>.";
     static final String NAME_THE_REPOSITORY = "Name the repository: --repository <id or name>.";
 
+    @Completes(ProjectSource.class)
     @CommandLine.Option(names = "--project", paramLabel = "<project>", scope = CommandLine.ScopeType.INHERIT,
             description = "The project: its id, slug or name.")
     String project;
 
+    @Completes(RepositorySource.class)
     @CommandLine.Option(names = "--repository", paramLabel = "<repository>", scope = CommandLine.ScopeType.INHERIT,
             description = "The repository: its id or name.")
     String repository;
@@ -191,6 +198,7 @@ public class CiCommand implements Runnable {
                         + "or CONFIG_ERROR.")
         String status;
 
+        @Completes(ReleaseRequestSource.class)
         @CommandLine.Option(names = "--release-request", paramLabel = "<id>",
                 description = "Only the runs of this release request: its id, or the start of it.")
         String releaseRequest;
@@ -282,6 +290,7 @@ public class CiCommand implements Runnable {
         @CommandLine.ParentCommand
         CiCommand parent;
 
+        @Completes(RunSource.class)
         @CommandLine.Parameters(index = "0", paramLabel = "<run id>",
                 description = "The run: its id, or its start when --project and --repository name its repository.")
         String runId;
@@ -343,6 +352,7 @@ public class CiCommand implements Runnable {
         @CommandLine.ParentCommand
         CiCommand parent;
 
+        @Completes(RunSource.class)
         @CommandLine.Parameters(index = "0", paramLabel = "<run id>",
                 description = "The run to retry: its id, or its start when --project and --repository name its "
                         + "repository.")

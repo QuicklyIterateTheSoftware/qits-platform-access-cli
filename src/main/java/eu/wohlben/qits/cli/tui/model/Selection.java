@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * Where a person is in the tree, and what they have chosen there.
@@ -20,8 +21,24 @@ public final class Selection {
     private final List<CommandNode> path = new ArrayList<>();
     private final Map<String, String> values = new LinkedHashMap<>();
 
+    /**
+     * How the rows are ordered — the same ordering the screen lists them in, so the command line
+     * reads in the order a person filled it in. The identity by default: without completion sources
+     * there is nothing to reorder.
+     */
+    private UnaryOperator<List<OptionRow>> order = UnaryOperator.identity();
+
     public Selection(CommandNode root) {
         path.add(root);
+    }
+
+    public void orderRowsBy(UnaryOperator<List<OptionRow>> order) {
+        this.order = order == null ? UnaryOperator.identity() : order;
+    }
+
+    /** The rows of the current command, in the order the screen shows them. */
+    public List<OptionRow> rows() {
+        return order.apply(current().rows());
     }
 
     public CommandNode root() {
@@ -83,7 +100,7 @@ public final class Selection {
 
     /** The first required row with no value, or null when the command can run. */
     public OptionRow firstUnsetRequired() {
-        for (OptionRow row : current().rows()) {
+        for (OptionRow row : rows()) {
             if (row.required() && !values.containsKey(row.key())) {
                 return row;
             }
@@ -131,7 +148,7 @@ public final class Selection {
      */
     public List<String> secrets() {
         List<String> secrets = new ArrayList<>();
-        for (OptionRow row : current().rows()) {
+        for (OptionRow row : rows()) {
             String value = values.get(row.key());
             if (row.interactive() && value != null) {
                 secrets.add(value);
@@ -149,7 +166,7 @@ public final class Selection {
         for (int i = 1; i < path.size(); i++) {
             words.add(path.get(i).name());
         }
-        for (OptionRow row : current().rows()) {
+        for (OptionRow row : rows()) {
             String value = values.get(row.key());
             if (value == null) {
                 continue;

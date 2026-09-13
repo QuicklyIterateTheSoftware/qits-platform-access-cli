@@ -9,6 +9,9 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.Table;
+import eu.wohlben.qits.cli.access.complete.ProjectSource;
+import eu.wohlben.qits.cli.access.complete.RepositorySource;
+import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -55,10 +58,12 @@ public class ReleaseRequestCommand implements Runnable {
     @CommandLine.Mixin
     ProjectsOptions options;
 
+    @Completes(ProjectSource.class)
     @CommandLine.Option(names = "--project", paramLabel = "<project>", scope = CommandLine.ScopeType.INHERIT,
             description = "The project: its id, slug or name.")
     String project;
 
+    @Completes(RepositorySource.class)
     @CommandLine.Option(names = "--repository", paramLabel = "<repository>", scope = CommandLine.ScopeType.INHERIT,
             description = "The repository: its id or name.")
     String repository;

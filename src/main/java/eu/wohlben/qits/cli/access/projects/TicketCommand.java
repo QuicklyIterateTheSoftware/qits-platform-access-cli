@@ -11,6 +11,9 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.Table;
+import eu.wohlben.qits.cli.access.complete.ProjectSource;
+import eu.wohlben.qits.cli.access.complete.TicketSource;
+import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -57,11 +60,13 @@ public class TicketCommand implements Runnable {
     @CommandLine.Mixin
     ProjectsOptions options;
 
+    @Completes(ProjectSource.class)
     @CommandLine.Option(names = "--project", paramLabel = "<project>", scope = CommandLine.ScopeType.INHERIT,
             description = "The project: its id, slug or name.")
     String project;
 
     /** Only so that --ticket may also come before `details`; list and new refuse it. */
+    @Completes(TicketSource.class)
     @CommandLine.Option(names = "--ticket", paramLabel = "<ticket>",
             description = "The ticket, for details: its id, its slug, or the start of its id.")
     String ticket;
@@ -326,6 +331,7 @@ public class TicketCommand implements Runnable {
         @CommandLine.ParentCommand
         TicketCommand parent;
 
+        @Completes(TicketSource.class)
         @CommandLine.Option(names = "--ticket", paramLabel = "<ticket>",
                 description = "The ticket (required, before or after details): its id, its slug, or enough of the "
                         + "start of its id to name one.")
@@ -386,6 +392,7 @@ public class TicketCommand implements Runnable {
         @CommandLine.ParentCommand
         TicketCommand parent;
 
+        @Completes(TicketSource.class)
         @CommandLine.Option(names = "--ticket", paramLabel = "<ticket>",
                 description = "The ticket (required, before or after comment): its id, its slug, or enough of the "
                         + "start of its id to name one.")

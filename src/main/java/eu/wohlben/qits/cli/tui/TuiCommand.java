@@ -6,6 +6,7 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.TokenClaims;
+import eu.wohlben.qits.cli.tui.complete.Completions;
 import eu.wohlben.qits.cli.tui.model.CommandNode;
 import eu.wohlben.qits.cli.tui.run.CommandRunner;
 import eu.wohlben.qits.cli.tui.screen.Frame;
@@ -77,7 +78,7 @@ public class TuiCommand extends PlatformCommand {
                 context.err().println(Frame.tooSmall(width, height));
                 return CliFailure.USAGE;
             }
-            loop(terminal, new TuiApp(root, header));
+            loop(terminal, new TuiApp(root, header, new CommandRunner(), completions()));
             return 0;
         } catch (IOException | RuntimeException noTerminal) {
             // JLine refuses a system terminal in a pipe, a CI step or a `docker build` with an
@@ -86,6 +87,15 @@ public class TuiCommand extends PlatformCommand {
             context.err().println(NO_TERMINAL + " (" + noTerminal.getMessage() + ")");
             return CliFailure.USAGE;
         }
+    }
+
+    /**
+     * The completion sources, found the way every other bean in this program is found. A container
+     * that cannot hand one over is not a reason to refuse the screen: the options it would have
+     * filled are typed instead.
+     */
+    private Completions completions() {
+        return new Completions(type -> jakarta.enterprise.inject.spi.CDI.current().select(type).get());
     }
 
     /**

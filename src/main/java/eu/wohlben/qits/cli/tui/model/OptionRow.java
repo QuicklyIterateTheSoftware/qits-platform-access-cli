@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.tui.model;
 
+import eu.wohlben.qits.cli.tui.api.CompletionSource;
+
 import java.util.List;
 
 /**
@@ -20,7 +22,7 @@ public record OptionRow(
         boolean flag,
         boolean interactive,
         List<String> choices,
-        Class<?> completionSource) {
+        Class<? extends CompletionSource> completionSource) {
 
     public enum Kind {
         /** A named option: {@code --project}. */
