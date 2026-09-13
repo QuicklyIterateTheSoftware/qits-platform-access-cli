@@ -143,6 +143,17 @@ class ScreenTest {
     }
 
     @Test
+    void aCommandLineLongEnoughToFillTheScreenStillLeavesBothBoxes() {
+        press(Key.Kind.ENTER);
+        press(Key.Kind.ENTER);
+        app.selection().set("project", "x".repeat(4000));
+        List<String> lines = lines();
+        assertThat(lines).hasSize(HEIGHT);
+        assertThat(lines).anySatisfy(line -> assertThat(line).contains("↑↓ move"));
+        assertThat(lines).anySatisfy(line -> assertThat(line).contains(" output "));
+    }
+
+    @Test
     void aTallTerminalStillSplitsInHalf() {
         List<String> lines = frame.render(app.view(), 120, 50).stream()
                 .map(AttributedString::toString).toList();
