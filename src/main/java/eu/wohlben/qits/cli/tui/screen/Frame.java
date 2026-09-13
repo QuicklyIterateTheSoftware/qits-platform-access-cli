@@ -38,6 +38,9 @@ public final class Frame {
     /** The upper box cannot be smaller than its two borders, one row and its key line. */
     static final int MIN_UPPER_ROWS = 5;
 
+    /** Two borders and a row: the least a box can be and still be one. */
+    static final int MIN_BOX_ROWS = 3;
+
     /** Where a row's value starts, so the names make a column. */
     static final int NAME_COLUMN = 18;
 
@@ -62,11 +65,18 @@ public final class Frame {
     }
 
     public List<AttributedString> render(View view, int width, int height) {
+        int messageRows = blank(view.message()) ? 0 : 1;
+        // The command line wraps rather than truncates, but it cannot have the whole screen: a
+        // value long enough to fill it would otherwise leave no boxes to put it in.
+        int roomForCommand = Math.max(1, height - 1 - messageRows - MIN_UPPER_ROWS - MIN_BOX_ROWS);
         List<String> commandLines = wrap("$ " + view.commandLine(), width);
-        int betweenBoxes = commandLines.size() + (blank(view.message()) ? 0 : 1);
-        int output = Math.min(Math.max(MIN_OUTPUT_ROWS, height / 2),
-                height - 1 - betweenBoxes - MIN_UPPER_ROWS);
-        int upper = height - 1 - betweenBoxes - output;
+        if (commandLines.size() > roomForCommand) {
+            commandLines = commandLines.subList(0, roomForCommand);
+        }
+        int betweenBoxes = commandLines.size() + messageRows;
+        int output = Math.max(MIN_BOX_ROWS, Math.min(Math.max(MIN_OUTPUT_ROWS, height / 2),
+                height - 1 - betweenBoxes - MIN_UPPER_ROWS));
+        int upper = Math.max(MIN_UPPER_ROWS, height - 1 - betweenBoxes - output);
 
         List<AttributedString> lines = new ArrayList<>(height);
         lines.add(plain(cut(" " + glyphs.of(view.header()), width)));
