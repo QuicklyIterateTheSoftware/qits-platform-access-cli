@@ -229,7 +229,8 @@ secret and the session file is the only credential there is.
 
 ### The smoke run
 
-Repeat it from any workspace container. Recorded on dev, 2026-09-13:
+Repeat it from any workspace container. Recorded on dev, 2026-09-13, from the released binary
+(`2026.913.220350`) inside a workspace container:
 
     $ qits ci runs --project qits --repository qits-platform-access-cli --limit 3
     ID        STATUS   BRANCH                                        COMMIT    REQUEST   CREATED                  TOOK
@@ -251,9 +252,15 @@ Repeat it from any workspace container. Recorded on dev, 2026-09-13:
     no browser in the platform - the workspace credential is already in use
     # exit 2 — unchanged on a workstation
 
-    $ qits tui
+    $ qits tui < /dev/null
+    qits tui needs an interactive terminal. (Unable to create a terminal)
+    # exit 2 — it says so rather than waiting for a key nobody can press
+
+On a container's own terminal the same command paints, and its header says which home it is in:
+
     qits tui · in platform · dev · agent (qits:agent)
-    # the header says which home it is in; `login` and `git-login` are dim and last
+
+with `login` and `git-login` dim and sorted last, the way a CI-only command already is.
 
 ## qits login
 
