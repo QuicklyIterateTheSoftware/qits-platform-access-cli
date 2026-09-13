@@ -5,7 +5,7 @@ description: "Use for any work on the qits platform from a terminal: signing in,
 
 # qits
 
-Each command calls the platform through its edge, with the session of `qits login`, except `qits publish`, which runs in a CI step container with no person and never touches that session. `qits <command> --help` shows a command's options, examples and exit codes.
+Each command calls the platform through its edge, with the session of `qits login`, except `qits artifacts publish`, which runs in a CI step container with no person and never touches that session. `qits <command> --help` shows a command's options, examples and exit codes.
 
 ## Platform rules
 
@@ -675,7 +675,11 @@ The example shows the setup. Do not run `get` yourself: it prints a token on std
 - `1` The sign-in file cannot be read or written.
 - `2` No action named.
 
-## qits publish
+## qits artifacts
+
+The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: an sbom, a docs bundle, a daemon binary, or an npm decision.
+
+## qits artifacts publish
 
 Publish to qits-artifacts from a CI release step: an sbom, a docs bundle, a daemon binary, or an npm publish/replay/skip decision. This is the qits-publish client.
 
@@ -684,7 +688,7 @@ Every publish follows one rule, for every surface: absent, PUT it and say what l
 ### Notes
 
 - This command never signs in and never reads or writes what `qits login` keeps: it runs in a CI step container with no person. `qits login` and `qits git-login` do not apply to it.
-- Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs exactly as `qits publish <command>`: `qits-publish sbom submit ...` behaves as `qits publish sbom submit ...`. A hand-written pipeline may still call it that way.
+- Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as `qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.
 - QITS_ARTIFACTS_URL names the store; every command that talks to it needs the variable set (or derivable from QITS_NPM_REGISTRY_URL or QITS_MAVEN_REGISTRY_URL, with a warning). QITS_DOCS_URL, QITS_NPM_REGISTRY_URL and QITS_NPM_PROXY_URL name the docs root and the two npm registries; a CI step sets what each command needs.
 
 ### Exit codes
@@ -693,16 +697,16 @@ Every publish follows one rule, for every surface: absent, PUT it and say what l
 - `1` Refused, and re-running will not help: invalid arguments, a 4xx, or the coordinate already holds different bytes.
 - `2` Could not ask, or could not be answered: no store configured, an I/O failure, or a 5xx. A step may retry a 2 and must not retry a 1.
 
-## qits publish sbom
+## qits artifacts publish sbom
 
 An SBOM: submit a document that already exists, or build one from a Dockerfile's FROM lines.
 
-## qits publish sbom submit
+## qits artifacts publish sbom submit
 
 Publish a CycloneDX document at (packageType, name, version).
 
 ```
-qits publish sbom submit [--file <path>...] [--name <name>...] [--type <npm|maven|docker|daemon>...] [--version <version>...]
+qits artifacts publish sbom submit [--file <path>...] [--name <name>...] [--type <npm|maven|docker|daemon>...] [--version <version>...]
 ```
 
 | Name | What it does |
@@ -715,7 +719,7 @@ qits publish sbom submit [--file <path>...] [--name <name>...] [--type <npm|mave
 ### Examples
 
 ```
-qits publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 --file sbom.json
+qits artifacts publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 --file sbom.json
 ```
 
 ### Exit codes
@@ -724,14 +728,14 @@ qits publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 
 - `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
 - `2` Could not ask: no store configured, an I/O failure, or a 5xx.
 
-## qits publish sbom from-dockerfile
+## qits artifacts publish sbom from-dockerfile
 
 Build a CycloneDX document from a Dockerfile's FROM lines: one component per distinct upstream image. Publishes nothing itself: write the file with -o, then `sbom submit` it.
 
 null-style variables in a FROM resolve from the file's own ARG default, or from --build-arg, in the precedence a real build has.
 
 ```
-qits publish sbom from-dockerfile [--build-arg <NAME=value>...] [--dockerfile <path>...] [--output <path>...] [--root-name <name>...] [--root-version <version>...]
+qits artifacts publish sbom from-dockerfile [--build-arg <NAME=value>...] [--dockerfile <path>...] [--output <path>...] [--root-name <name>...] [--root-version <version>...]
 ```
 
 | Name | What it does |
@@ -745,8 +749,8 @@ qits publish sbom from-dockerfile [--build-arg <NAME=value>...] [--dockerfile <p
 ### Examples
 
 ```
-qits publish sbom from-dockerfile --root-name qits/qits-ci --root-version 2026.906.1 -o sbom.json
-qits publish sbom from-dockerfile --root-name x --root-version 1 --dockerfile a.Dockerfile --dockerfile b.Dockerfile --build-arg BASE=alpine:3.20 -o sbom.json
+qits artifacts publish sbom from-dockerfile --root-name qits/qits-ci --root-version 2026.906.1 -o sbom.json
+qits artifacts publish sbom from-dockerfile --root-name x --root-version 1 --dockerfile a.Dockerfile --dockerfile b.Dockerfile --build-arg BASE=alpine:3.20 -o sbom.json
 ```
 
 ### Exit codes
@@ -754,18 +758,18 @@ qits publish sbom from-dockerfile --root-name x --root-version 1 --dockerfile a.
 - `0` Wrote the document.
 - `1` Refused: bad arguments, a Dockerfile with no FROM line, or a variable nothing resolves.
 
-## qits publish docs
+## qits artifacts publish docs
 
 A documentation bundle, at (site, version).
 
-## qits publish docs submit
+## qits artifacts publish docs submit
 
 Publish a documentation bundle at (site, version).
 
 The store explodes the archive into per-file blobs and keeps no archive digest, so an occupied version cannot be verified: it is skipped, with a WARN naming the degradation, rather than reported as a plain success.
 
 ```
-qits publish docs submit [--archive <tgz>...] [--meta <key=value>...] [--site <name>...] [--version <version>...]
+qits artifacts publish docs submit [--archive <tgz>...] [--meta <key=value>...] [--site <name>...] [--version <version>...]
 ```
 
 | Name | What it does |
@@ -778,7 +782,7 @@ qits publish docs submit [--archive <tgz>...] [--meta <key=value>...] [--site <n
 ### Examples
 
 ```
-qits publish docs submit --site @apidocs/qits-ci --version 2026.906.1 --archive apidocs.tgz --meta git.commit.hash=deadbeef
+qits artifacts publish docs submit --site @apidocs/qits-ci --version 2026.906.1 --archive apidocs.tgz --meta git.commit.hash=deadbeef
 ```
 
 ### Exit codes
@@ -787,18 +791,18 @@ qits publish docs submit --site @apidocs/qits-ci --version 2026.906.1 --archive 
 - `1` Refused: bad arguments, or a 4xx that is not the store's "already there".
 - `2` Could not ask: no store configured, an I/O failure, or a 5xx.
 
-## qits publish daemon
+## qits artifacts publish daemon
 
 A daemon binary, at (name, version).
 
-## qits publish daemon submit
+## qits artifacts publish daemon submit
 
 Publish a daemon binary at (name, version).
 
 Daemon versions are immutable: a re-publish always answers 409, even for identical bytes. The stored digest decides whether that is a re-fire of a run that already succeeded, or two builds claiming one version.
 
 ```
-qits publish daemon submit [--file <bin>...] [--name <name>...] [--version <version>...]
+qits artifacts publish daemon submit [--file <bin>...] [--name <name>...] [--version <version>...]
 ```
 
 | Name | What it does |
@@ -810,7 +814,7 @@ qits publish daemon submit [--file <bin>...] [--name <name>...] [--version <vers
 ### Examples
 
 ```
-qits publish daemon submit --name qits-platform-access-cli --version 2026.906.1 --file target/qits
+qits artifacts publish daemon submit --name qits-platform-access-cli --version 2026.906.1 --file target/qits
 ```
 
 ### Exit codes
@@ -819,18 +823,18 @@ qits publish daemon submit --name qits-platform-access-cli --version 2026.906.1 
 - `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
 - `2` Could not ask: no store configured, an I/O failure, or a 5xx.
 
-## qits publish npm
+## qits artifacts publish npm
 
 What to do before an npm publish, what to do after it, and the lockfile edit a step container needs. Nothing here runs `npm`; `npm publish` stays in the release step.
 
-## qits publish npm plan
+## qits artifacts publish npm plan
 
 Decide, in one word on stdout, what to do with package@version: publish (the ordinary case), skip (this exact version is already there; versions are immutable), or publish-replay (this version is below the registry's latest, so it must take a throwaway tag rather than move latest backwards).
 
-Only the word goes to stdout; the reasoning goes to stderr, so `plan=$(qits publish npm plan ...)` captures just the word.
+Only the word goes to stdout; the reasoning goes to stderr, so `plan=$(qits artifacts publish npm plan ...)` captures just the word.
 
 ```
-qits publish npm plan [--package <name>...] [--version <version>...]
+qits artifacts publish npm plan [--package <name>...] [--version <version>...]
 ```
 
 | Name | What it does |
@@ -841,7 +845,7 @@ qits publish npm plan [--package <name>...] [--version <version>...]
 ### Examples
 
 ```
-plan=$(qits publish npm plan --package @qits/ui-components --version 2026.906.1)
+plan=$(qits artifacts publish npm plan --package @qits/ui-components --version 2026.906.1)
 ```
 
 ### Exit codes
@@ -850,12 +854,12 @@ plan=$(qits publish npm plan --package @qits/ui-components --version 2026.906.1)
 - `1` Refused: bad arguments, or a 4xx.
 - `2` Could not ask: no registry configured, an I/O failure, or a 5xx; never read as "publish".
 
-## qits publish npm dist-tag
+## qits artifacts publish npm dist-tag
 
 Point a dist-tag at a version. Always run, never guarded behind whether this run's publish happened: moving a tag onto the version it already names costs one request and succeeds.
 
 ```
-qits publish npm dist-tag [--package <name>...] [--tag <tag>...] [--version <version>...]
+qits artifacts publish npm dist-tag [--package <name>...] [--tag <tag>...] [--version <version>...]
 ```
 
 | Name | What it does |
@@ -867,7 +871,7 @@ qits publish npm dist-tag [--package <name>...] [--tag <tag>...] [--version <ver
 ### Examples
 
 ```
-qits publish npm dist-tag --package @qits/ui-components --version 2026.906.1 --tag main
+qits artifacts publish npm dist-tag --package @qits/ui-components --version 2026.906.1 --tag main
 ```
 
 ### Exit codes
@@ -876,14 +880,14 @@ qits publish npm dist-tag --package @qits/ui-components --version 2026.906.1 --t
 - `1` Refused: bad arguments, or a 4xx (for example a backwards move of latest).
 - `2` Could not ask: no registry configured, an I/O failure, or a 5xx.
 
-## qits publish npm rewrite-lockfile-origin
+## qits artifacts publish npm rewrite-lockfile-origin
 
 Repoint every "resolved" URL in a lockfile at the registries this container can reach, keeping the path (and so the integrity hash's meaning) exactly as it was.
 
 An entry under the hosted registry's own path is an @qits tarball and gets the hosted origin; every other entry gets the npmjs proxy's. Running this twice changes nothing the second time.
 
 ```
-qits publish npm rewrite-lockfile-origin [--lockfile <path>...]
+qits artifacts publish npm rewrite-lockfile-origin [--lockfile <path>...]
 ```
 
 | Name | What it does |
@@ -893,7 +897,7 @@ qits publish npm rewrite-lockfile-origin [--lockfile <path>...]
 ### Examples
 
 ```
-qits publish npm rewrite-lockfile-origin --lockfile package-lock.json
+qits artifacts publish npm rewrite-lockfile-origin --lockfile package-lock.json
 ```
 
 ### Exit codes
@@ -902,14 +906,14 @@ qits publish npm rewrite-lockfile-origin --lockfile package-lock.json
 - `1` Refused: bad arguments.
 - `2` Could not ask: the npm registry variables are not set, or the file cannot be read or written.
 
-## qits publish exists
+## qits artifacts publish exists
 
 Ask whether a coordinate is already published: daemon, docs, npm or sbom.
 
 An sbom coordinate has two name parts, written <packageType>/<packageName>, for example docker/qits/qits-ci. A step that read an unreachable store as "absent" would republish on every outage, and one that read it as "present" would skip a publish that never happened, so a third exit code says "could not ask" instead.
 
 ```
-qits publish exists [<type> <name> <version>]
+qits artifacts publish exists [<type> <name> <version>]
 ```
 
 | Name | What it does |
@@ -919,9 +923,9 @@ qits publish exists [<type> <name> <version>]
 ### Examples
 
 ```
-qits publish exists daemon qits-platform-access-cli 2026.906.1
-qits publish exists sbom docker/qits/qits-ci 2026.906.1
-qits publish exists npm @qits/ui-components 2026.906.1
+qits artifacts publish exists daemon qits-platform-access-cli 2026.906.1
+qits artifacts publish exists sbom docker/qits/qits-ci 2026.906.1
+qits artifacts publish exists npm @qits/ui-components 2026.906.1
 ```
 
 ### Exit codes

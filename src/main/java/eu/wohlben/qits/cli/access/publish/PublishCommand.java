@@ -3,9 +3,9 @@ package eu.wohlben.qits.cli.access.publish;
 import picocli.CommandLine;
 
 /**
- * {@code qits publish} — the platform's publish client for qits-artifacts, folded into {@code qits}
- * from its own repository, qits-artifacts-cli. A CI release step calls one of these once per
- * coordinate; nothing here orchestrates a release or decides what runs in what order.
+ * {@code qits artifacts publish} — the platform's publish client for qits-artifacts, folded into
+ * {@code qits} from its own repository, qits-artifacts-cli. A CI release step calls one of these
+ * once per coordinate; nothing here orchestrates a release or decides what runs in what order.
  */
 @CommandLine.Command(name = "publish", mixinStandardHelpOptions = true,
         subcommands = {SbomCommand.class, DocsCommand.class, DaemonCommand.class, NpmCommand.class,
@@ -22,8 +22,8 @@ import picocli.CommandLine;
                 "- This command never signs in and never reads or writes what `qits login` keeps: it runs in a "
                         + "CI step container with no person. `qits login` and `qits git-login` do not apply to it.",
                 "- Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs "
-                        + "exactly as `qits publish <command>`: `qits-publish sbom submit ...` behaves as "
-                        + "`qits publish sbom submit ...`. A hand-written pipeline may still call it that way.",
+                        + "exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as "
+                        + "`qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.",
                 "- QITS_ARTIFACTS_URL names the store; every command that talks to it needs the variable set (or "
                         + "derivable from QITS_NPM_REGISTRY_URL or QITS_MAVEN_REGISTRY_URL, with a warning). "
                         + "QITS_DOCS_URL, QITS_NPM_REGISTRY_URL and QITS_NPM_PROXY_URL name the docs root and the "

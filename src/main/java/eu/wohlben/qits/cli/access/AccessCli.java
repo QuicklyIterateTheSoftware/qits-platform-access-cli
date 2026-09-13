@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access;
 
+import eu.wohlben.qits.cli.access.artifacts.ArtifactsCommand;
 import eu.wohlben.qits.cli.access.ci.CiCommand;
 import eu.wohlben.qits.cli.access.daemon.SessionDaemonCommand;
 import eu.wohlben.qits.cli.access.events.EventsCommand;
@@ -13,7 +14,6 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.TicketCommand;
-import eu.wohlben.qits.cli.access.publish.PublishCommand;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine;
 
@@ -30,14 +30,14 @@ import picocli.CommandLine;
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, TicketCommand.class, ReleaseRequestCommand.class, CiCommand.class,
                 EventsCommand.class,
-                ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, PublishCommand.class,
+                ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, ArtifactsCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
                         + "tickets, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to "
                         + "the platform's git host, and publishing release artifacts from a CI step.",
                 "Each command calls the platform through its edge, with the session of `qits login`, except "
-                        + "`qits publish`, which runs in a CI step container with no person and never touches that "
+                        + "`qits artifacts publish`, which runs in a CI step container with no person and never touches that "
                         + "session. `qits <command> --help` shows a command's options, examples and exit codes."},
         footerHeading = "%nPlatform rules:%n",
         footer = {

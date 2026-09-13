@@ -5,7 +5,7 @@ import picocli.CommandLine;
 import java.util.ArrayList;
 import java.util.List;
 
-/** {@code qits publish exists} — is a coordinate already published? Three answers, not two. */
+/** {@code qits artifacts publish exists} — is a coordinate already published? Three answers, not two. */
 @CommandLine.Command(name = "exists", mixinStandardHelpOptions = true,
         description = {"Ask whether a coordinate is already published: daemon, docs, npm or sbom.",
                 "An sbom coordinate has two name parts, written <packageType>/<packageName>, for example "
@@ -14,9 +14,9 @@ import java.util.List;
                         + "that never happened, so a third exit code says \"could not ask\" instead."},
         footerHeading = "%nExamples:%n",
         footer = {
-                "  qits publish exists daemon qits-platform-access-cli 2026.906.1",
-                "  qits publish exists sbom docker/qits/qits-ci 2026.906.1",
-                "  qits publish exists npm @qits/ui-components 2026.906.1"},
+                "  qits artifacts publish exists daemon qits-platform-access-cli 2026.906.1",
+                "  qits artifacts publish exists sbom docker/qits/qits-ci 2026.906.1",
+                "  qits artifacts publish exists npm @qits/ui-components 2026.906.1"},
         exitCodeListHeading = "%nExit codes:%n",
         exitCodeList = {
                 "0:Published.",

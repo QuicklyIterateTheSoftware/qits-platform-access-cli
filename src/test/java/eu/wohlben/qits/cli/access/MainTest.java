@@ -5,17 +5,17 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The argv[0] alias: started as {@code qits-publish}, {@code qits} behaves as {@code qits publish}.
- * {@link Main#invokedAs()} itself reads {@code /proc/self/cmdline}, so it is proven by the native
- * smoke test instead (see the release recipe); what a unit test can hold is that {@link
- * Main#effectiveArgs} does the right thing with whatever name that lookup returns.
+ * The argv[0] alias: started as {@code qits-publish}, {@code qits} behaves as {@code qits
+ * artifacts publish}. {@link Main#invokedAs()} itself reads {@code /proc/self/cmdline}, so it is
+ * proven by the native smoke test instead (see the release recipe); what a unit test can hold is
+ * that {@link Main#effectiveArgs} does the right thing with whatever name that lookup returns.
  */
 class MainTest {
 
     @Test
-    void startedAsQitsPublishPrependsPublish() {
+    void startedAsQitsPublishPrependsArtifactsPublish() {
         assertThat(Main.effectiveArgs(new String[] {"sbom", "submit"}, "qits-publish"))
-                .containsExactly("publish", "sbom", "submit");
+                .containsExactly("artifacts", "publish", "sbom", "submit");
     }
 
     @Test
@@ -23,7 +23,7 @@ class MainTest {
         // /proc/self/cmdline carries whatever path was executed — the symlink's own name, or the
         // copy's — and Main only ever compares its final segment, so either shape reaches here as
         // exactly "qits-publish".
-        assertThat(Main.effectiveArgs(new String[0], "qits-publish")).containsExactly("publish");
+        assertThat(Main.effectiveArgs(new String[0], "qits-publish")).containsExactly("artifacts", "publish");
     }
 
     @Test

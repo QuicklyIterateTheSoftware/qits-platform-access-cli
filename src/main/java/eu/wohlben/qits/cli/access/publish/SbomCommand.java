@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** {@code qits publish sbom} — a CycloneDX document, submitted as-is or built from a Dockerfile. */
+/** {@code qits artifacts publish sbom} — a CycloneDX document, submitted as-is or built from a Dockerfile. */
 @CommandLine.Command(name = "sbom", mixinStandardHelpOptions = true,
         subcommands = {SbomCommand.SubmitCommand.class, SbomCommand.FromDockerfileCommand.class},
         description = "An SBOM: submit a document that already exists, or build one from a Dockerfile's FROM "
@@ -31,7 +31,7 @@ public class SbomCommand implements Runnable {
             // collide with it by name, and picocli then recognises neither. -h/--help alone is safe.
             description = "Publish a CycloneDX document at (packageType, name, version).",
             footerHeading = "%nExamples:%n",
-            footer = "  qits publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 "
+            footer = "  qits artifacts publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 "
                     + "--file sbom.json",
             exitCodeListHeading = "%nExit codes:%n",
             exitCodeList = {
@@ -81,9 +81,9 @@ public class SbomCommand implements Runnable {
                             + "from --build-arg, in the precedence a real build has."},
             footerHeading = "%nExamples:%n",
             footer = {
-                    "  qits publish sbom from-dockerfile --root-name qits/qits-ci --root-version 2026.906.1 "
+                    "  qits artifacts publish sbom from-dockerfile --root-name qits/qits-ci --root-version 2026.906.1 "
                             + "-o sbom.json",
-                    "  qits publish sbom from-dockerfile --root-name x --root-version 1 "
+                    "  qits artifacts publish sbom from-dockerfile --root-name x --root-version 1 "
                             + "--dockerfile a.Dockerfile --dockerfile b.Dockerfile "
                             + "--build-arg BASE=alpine:3.20 -o sbom.json"},
             exitCodeListHeading = "%nExit codes:%n",

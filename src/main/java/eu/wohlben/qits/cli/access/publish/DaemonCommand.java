@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** {@code qits publish daemon} — a daemon binary. */
+/** {@code qits artifacts publish daemon} — a daemon binary. */
 @CommandLine.Command(name = "daemon", mixinStandardHelpOptions = true,
         subcommands = DaemonCommand.SubmitCommand.class,
         description = "A daemon binary, at (name, version).")
@@ -29,7 +29,7 @@ public class DaemonCommand implements Runnable {
                             + "bytes. The stored digest decides whether that is a re-fire of a run that already "
                             + "succeeded, or two builds claiming one version."},
             footerHeading = "%nExamples:%n",
-            footer = "  qits publish daemon submit --name qits-platform-access-cli --version 2026.906.1 "
+            footer = "  qits artifacts publish daemon submit --name qits-platform-access-cli --version 2026.906.1 "
                     + "--file target/qits",
             exitCodeListHeading = "%nExit codes:%n",
             exitCodeList = {

@@ -12,9 +12,9 @@ import java.nio.file.Path;
 
 /**
  * The process entry point. Its only job beyond picocli's own is a name check: a binary or a
- * symlink started as {@code qits-publish} behaves as {@code qits publish}, so a hand-written
- * pipeline that still calls it by that name — qits-artifacts-cli's own binary name, before it
- * folded into {@code qits} — keeps working.
+ * symlink started as {@code qits-publish} behaves as {@code qits artifacts publish}, so a
+ * hand-written pipeline that still calls it by that name — qits-artifacts-cli's own binary name,
+ * before it folded into {@code qits} — keeps working.
  */
 @QuarkusMain
 public class Main implements QuarkusApplication {
@@ -32,18 +32,20 @@ public class Main implements QuarkusApplication {
 
     /**
      * {@code args} unchanged, unless {@code invokedAs} is {@value #PUBLISH_ALIAS} — then {@code
-     * publish} goes in front, so every argument reaches {@code qits publish} the way it would have
-     * reached {@code qits-publish} itself. A function of its input, so the name check itself
-     * ({@link #invokedAs()}, which reads {@code /proc}) needs no process trickery to test.
+     * artifacts publish} goes in front, so every argument reaches {@code qits artifacts publish} the
+     * way it would have reached {@code qits-publish} itself. A function of its input, so the name
+     * check itself ({@link #invokedAs()}, which reads {@code /proc}) needs no process trickery to
+     * test.
      */
     static String[] effectiveArgs(String[] args, String invokedAs) {
         if (!PUBLISH_ALIAS.equals(invokedAs)) {
             return args;
         }
-        String[] withPublish = new String[args.length + 1];
-        withPublish[0] = "publish";
-        System.arraycopy(args, 0, withPublish, 1, args.length);
-        return withPublish;
+        String[] withGroup = new String[args.length + 2];
+        withGroup[0] = "artifacts";
+        withGroup[1] = "publish";
+        System.arraycopy(args, 0, withGroup, 2, args.length);
+        return withGroup;
     }
 
     /**

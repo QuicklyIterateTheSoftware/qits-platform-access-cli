@@ -14,9 +14,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Running {@code qits publish ...} the way a step does: an environment, an argv (without the
- * leading {@code publish} — this harness starts at the {@link PublishCommand} tree itself), and
- * three things to assert on — the exit code, what went to stdout, and what went to stderr.
+ * Running {@code qits artifacts publish ...} the way a step does: an environment, an argv (without
+ * the leading {@code artifacts publish} — this harness starts at the {@link PublishCommand} tree
+ * itself), and three things to assert on — the exit code, what went to stdout, and what went to
+ * stderr.
  */
 final class Harness {
 
