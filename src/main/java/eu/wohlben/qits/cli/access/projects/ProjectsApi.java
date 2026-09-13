@@ -131,6 +131,65 @@ public final class ProjectsApi {
         return client.post(uri("/projects/api/projects/" + segment(projectId) + "/tickets"), body);
     }
 
+    /**
+     * {@code {"comment":{…}}}: the new comment. No author: the service takes it from the caller's
+     * identity, so nobody can comment as somebody else.
+     */
+    public JsonNode createTicketComment(String ticketId, String body) throws CliFailure, InterruptedException {
+        ObjectNode payload = JSON.createObjectNode();
+        payload.put("body", body);
+        return client.post(uri("/projects/api/tickets/" + segment(ticketId) + "/comments"), payload);
+    }
+
+    /** {@code {"entries":[{"epic":{…}}]}}, oldest first. A null status asks for every epic. */
+    public JsonNode epics(String projectId, String status) throws CliFailure, InterruptedException {
+        String query = status == null || status.isBlank() ? "" : "?status=" + URLEncoder.encode(status.strip(), StandardCharsets.UTF_8);
+        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/epics" + query));
+    }
+
+    /** {@code {"epic":{…}}}, with the live workspaces working on it. */
+    public JsonNode epic(String epicId) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/epics/" + segment(epicId)));
+    }
+
+    /** {@code {"entries":[{"feature":{…}}]}}. */
+    public JsonNode epicFeatures(String epicId) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/epics/" + segment(epicId) + "/features"));
+    }
+
+    /** {@code {"entries":[{"task":{…}}]}}. */
+    public JsonNode featureTasks(String featureId) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/features/" + segment(featureId) + "/tasks"));
+    }
+
+    /**
+     * {@code {"epic":{…}}}: the new epic, REFINING. A description only when given. No reporter: the
+     * service takes no field for one — the epic belongs to the project, not to whoever filed it.
+     */
+    public JsonNode createEpic(String projectId, String title, String description) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("title", title);
+        if (description != null) {
+            body.put("description", description);
+        }
+        return client.post(uri("/projects/api/projects/" + segment(projectId) + "/epics"), body);
+    }
+
+    /**
+     * {@code {"epic":{…}}}: the epic, retitled and redescribed. The service REPLACES both fields, so
+     * a caller that means to leave one unchanged must resend its current value; a null description
+     * clears it. Refused (HTTP 409) unless the epic is REFINING: its scope is frozen once features
+     * and tasks are being built.
+     */
+    public JsonNode updateEpic(String epicId, String title, String description) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("title", title);
+        if (description != null) {
+            body.put("description", description);
+        }
+        return client.put(uri("/projects/api/epics/" + segment(epicId)), body);
+    }
+
     /** A priority only when one is given, so the service's rule for none applies. */
     private static void putPriority(ObjectNode body, String priority) {
         if (priority != null && !priority.isBlank()) {
@@ -195,6 +254,12 @@ public final class ProjectsApi {
     public static String text(JsonNode node, String field) {
         JsonNode value = node.get(field);
         return value == null || value.isNull() || value.isMissingNode() ? "" : value.asText();
+    }
+
+    /** The field as text; null when absent or null, so an update can tell "unset" from "blank". */
+    public static String nullableText(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value == null || value.isNull() || value.isMissingNode() ? null : value.asText();
     }
 
     public static String projectLabel(JsonNode project) {

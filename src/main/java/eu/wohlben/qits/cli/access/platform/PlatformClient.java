@@ -69,6 +69,18 @@ public final class PlatformClient {
         return send("POST", uri, HttpRequest.newBuilder(uri).POST(HttpRequest.BodyPublishers.noBody()));
     }
 
+    public JsonNode put(URI uri, JsonNode body) throws CliFailure, InterruptedException {
+        String json;
+        try {
+            json = JSON.writeValueAsString(body);
+        } catch (IOException impossible) {
+            throw new CliFailure("cannot write the request body", CliFailure.FAILED);
+        }
+        return send("PUT", uri, HttpRequest.newBuilder(uri)
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)));
+    }
+
     /**
      * The body is parsed as it arrives, not first held as one string: a CI run's answer carries
      * the output of its steps. A refusal's body is read only as far as its message needs.

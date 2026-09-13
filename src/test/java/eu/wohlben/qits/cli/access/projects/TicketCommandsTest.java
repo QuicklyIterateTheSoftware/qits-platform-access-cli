@@ -104,6 +104,10 @@ class TicketCommandsTest {
                   "type":"BUG","status":"OPEN","assignee":null,"createdBy":"wohlben","description":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z","workspaces":[]}}
                 """.formatted(NEW, QITS));
+        platform.answer("POST", "/projects/api/tickets/" + LOG + "/comments", """
+                {"comment":{"id":"c3","ticketId":"%s","author":"wohlben","body":"I can \\u001b[2Jreproduce it too",
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z"}}
+                """.formatted(LOG));
     }
 
     @AfterEach
@@ -480,5 +484,86 @@ class TicketCommandsTest {
         assertThat(r.exit()).isEqualTo(2);
         assertThat(r.err()).contains("No project has the id, slug or name 'nope'. Projects: qits.");
         assertThat(platform.requests("GET", TICKETS)).isEmpty();
+    }
+
+    // --- comment ---
+
+    @Test
+    void commentSendsTheBodyAndPrintsTheComment() throws Exception {
+        Result r = run("ticket", "--project", "qits", "comment", "--ticket", "AAAA1", "--body",
+                " I can reproduce it too ");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", "/projects/api/tickets/" + LOG + "/comments")
+                .getFirst().body()).path("body").asText()).isEqualTo(" I can reproduce it too");
+        assertThat(r.out()).contains("wohlben").contains("I can reproduce it too")
+                .doesNotContain(String.valueOf(ESC));
+    }
+
+    @Test
+    void commentReadsTheBodyFromAFileAndFromStdin() throws Exception {
+        Path note = home.resolve("note.md");
+        Files.writeString(note, "Confirmed on staging.\n\n", StandardCharsets.UTF_8);
+
+        Result fromFile = run("ticket", "--project", "qits", "comment", "--ticket", "aaaa1111", "--body-file",
+                note.toString());
+        assertThat(fromFile.exit()).as(fromFile.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", "/projects/api/tickets/" + LOG + "/comments")
+                .getFirst().body()).path("body").asText()).isEqualTo("Confirmed on staging.");
+
+        Result fromStdin = runWithInput(new ByteArrayInputStream("From a pipe\n".getBytes(StandardCharsets.UTF_8)),
+                "ticket", "--project", "qits", "comment", "--ticket", "aaaa1111", "--body-file", "-");
+        assertThat(fromStdin.exit()).as(fromStdin.err()).isZero();
+    }
+
+    @Test
+    void commentAsJsonCarriesTheComment() throws Exception {
+        Result r = run("ticket", "--project", "qits", "comment", "--ticket", "aaaa1111", "--body", "Reproduced",
+                "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(r.out()).path("comment").path("id").asText()).isEqualTo("c3");
+    }
+
+    @Test
+    void commentIsUsedWronglyWithoutCallingThePlatform() {
+        Result none = run("ticket", "--project", "qits", "comment", "--ticket", "aaaa1111");
+        assertThat(none.exit()).isEqualTo(2);
+        assertThat(none.err()).contains("Give --body or --body-file.");
+
+        Result both = run("ticket", "--project", "qits", "comment", "--ticket", "aaaa1111", "--body", "a",
+                "--body-file", "-");
+        assertThat(both.exit()).isEqualTo(2);
+        assertThat(both.err()).contains("Give --body or --body-file, not both.");
+
+        Result blank = run("ticket", "--project", "qits", "comment", "--ticket", "aaaa1111", "--body", "  ");
+        assertThat(blank.exit()).isEqualTo(2);
+        assertThat(blank.err()).contains("The comment is empty.");
+
+        Result noTicket = run("ticket", "--project", "qits", "comment", "--body", "a");
+        assertThat(noTicket.exit()).isEqualTo(2);
+        assertThat(noTicket.err()).contains("Name the ticket: --ticket <id, slug or the start of the id>.");
+
+        assertThat(platform.requests).noneMatch(req -> req.path().endsWith("/comments") && req.method().equals("POST"));
+    }
+
+    @Test
+    void commentOnATicketThatFitsNoneSaysWhereToLook() {
+        Result r = run("ticket", "--project", "qits", "comment", "--ticket", "9999", "--body", "a");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Project qits has no ticket with the id or slug '9999'");
+        assertThat(platform.requests).noneMatch(req -> req.path().endsWith("/comments") && req.method().equals("POST"));
+    }
+
+    @Test
+    void commentWithoutTheRoleSaysSo() {
+        platform.answer("POST", "/projects/api/tickets/" + LOG + "/comments", 403, "");
+
+        Result r = run("ticket", "--project", "qits", "comment", "--ticket", "aaaa1111", "--body", "a");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("Your roles do not allow this (HTTP 403): POST " + platform.url()
+                + "/projects/api/tickets/" + LOG + "/comments");
     }
 }

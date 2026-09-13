@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, tickets, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, tickets, epics, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -146,16 +146,16 @@ qits repositories list --project qits -o json
 
 ## qits ticket
 
-The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, and details shows one with its description and comments.
+The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, details shows one with its description and comments, and comment adds one to its thread.
 
 Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work better). Statuses: OPEN (a new ticket starts here) and RESOLVED.
 
 ### Notes
 
-- --project, --output and --projects-url may come before or after the command. So may --ticket, which only `details` takes.
-- Reading tickets needs the role qits:admin or qits:agent. Filing one needs qits:admin.
-- The reporter is the signed-in caller. Nobody can file a ticket as somebody else.
-- Work that needs a plan is an epic, not a ticket. qits does not resolve, edit or comment on a ticket yet.
+- --project, --output and --projects-url may come before or after the command. So may --ticket, which `details` and `comment` take.
+- Reading tickets needs the role qits:admin or qits:agent. Filing one and commenting need qits:admin.
+- The reporter and the comment author are the signed-in caller. Nobody can file a ticket or comment as somebody else.
+- Work that needs a plan is an epic, not a ticket. qits does not resolve or edit a ticket yet.
 
 ## qits ticket list
 
@@ -262,6 +262,191 @@ qits ticket --project qits details --ticket 4f2a91c0 -o json | jq -r .ticket.des
 - `0` Done.
 - `1` The platform refused (for example the ticket was deleted a moment ago, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
+
+## qits ticket comment
+
+Add a comment to a ticket's thread.
+
+You are its author. The comment is Markdown; the command prints it once filed.
+
+```
+qits ticket comment [--body <text>] [--body-file <path>] [--output table|json] [--project <project>] [--projects-url <url>] [--ticket <ticket>]
+```
+
+| Name | What it does |
+|---|---|
+| `--body <text>` | The comment, in Markdown. |
+| `--body-file <path>` | Read the comment from this file (UTF-8), or from stdin for -. Not together with --body. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--ticket <ticket>` | The ticket (required, before or after comment): its id, its slug, or enough of the start of its id to name one. |
+
+### Examples
+
+```
+qits ticket --project qits comment --ticket 4f2a91c0 --body "I can reproduce it."
+qits ticket comment --ticket the-log-view-stops-at-64-kib --project qits --body-file note.md
+cat note.md | qits ticket --project qits comment --ticket 4f2a91c0 --body-file -
+```
+
+- The comment is Markdown. --body-file - reads it from stdin.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example your roles, HTTP 403, or the ticket was deleted a moment ago, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example neither --body nor --body-file given, an empty comment, or a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
+
+## qits epic
+
+The epics of one project: work that needs a plan, broken into features and tasks. list shows them, new files one, and details shows one with its description and, when the platform returns them, its features and their tasks.
+
+Statuses: REFINING (a new epic starts here, its plan still being drafted), IMPLEMENTATION (the plan is frozen and being built), SUPERSEDED and ABANDONED.
+
+### Notes
+
+- --project, --output and --projects-url may come before or after the command. So may --epic, which only `details` takes.
+- Reading epics needs the role qits:admin or qits:agent. Filing one needs qits:admin.
+- A small bug or improvement is a ticket, not an epic. qits does not move an epic to implementation, supersede or abandon it yet.
+
+## qits epic list
+
+List the project's epics, oldest first: id, slug, status, title, and when it last changed.
+
+Without --status it lists every epic. The ID column shows the first 8 characters of the id, which is enough for `details`.
+
+```
+qits epic list [--output table|json] [--project <project>] [--projects-url <url>] [--status <STATUS>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--status <STATUS>` | Only the epics in this status: REFINING, IMPLEMENTATION, SUPERSEDED or ABANDONED. Default: every status. |
+
+### Examples
+
+```
+qits epic --project qits list
+qits epic --project qits list --status REFINING
+qits epic list --project qits -o json
+```
+
+- The service applies --status, and refuses a status it does not know (HTTP 400) rather than answer with no epics.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits epic new
+
+File an epic in the project: work that needs a plan.
+
+The epic starts REFINING, its plan still being drafted. The command prints it the way `details` does.
+
+```
+qits epic new --title <text> [--description <text>] [--description-file <path>] [--output table|json] [--project <project>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--title <text>` | Required. What the epic delivers, in a short line. |
+| `--description <text>` | The long form, in Markdown: the plan, or as much of it as there is so far. |
+| `--description-file <path>` | Read the description from this file (UTF-8), or from stdin for -. Not together with --description. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits epic --project qits new --title "Let an agent dispatch on an epic"
+qits epic --project qits new --title "Live telemetry" --description "Stream logs, spans and metrics as they arrive."
+qits epic new --project qits --title "Live telemetry" --description-file plan.md
+cat plan.md | qits epic --project qits new --title "Live telemetry" --description-file -
+```
+
+- The description is Markdown. --description-file - reads it from stdin.
+
+### Exit codes
+
+- `0` The epic is filed.
+- `1` The platform refused (for example your roles, HTTP 403), or cannot be reached.
+- `2` Used wrongly (for example an empty title, or a description file that cannot be read), not signed in, or the session ended.
+
+## qits epic details
+
+Show one epic: id, slug, status, title, its description, and, when the platform returns them, its features and their tasks.
+
+--epic takes the epic's id, its slug, or the start of its id (list shows 8 characters). Terminal control characters are taken out of the text.
+
+```
+qits epic details [--epic <epic>] [--output table|json] [--project <project>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--epic <epic>` | The epic (required, before or after details): its id, its slug, or enough of the start of its id to name one. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits epic --project qits details --epic 4f2a91c0
+qits epic details --epic live-telemetry --project qits
+qits epic --project qits details --epic 4f2a91c0 -o json | jq -r .epic.description
+```
+
+- -o json prints one object: the epic as the service answers it, and its features, each with its tasks. Control characters are written as escapes.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example the epic was deleted a moment ago, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example an --epic that fits no epic of the project, or more than one), not signed in, or the session ended.
+
+## qits epic update
+
+Edit an epic's title or description.
+
+Give --title, --description or --description-file, or more than one; a field you leave out keeps its current value. Prints the epic afterwards the way `details` does.
+
+```
+qits epic update [--description <text>] [--description-file <path>] [--epic <epic>] [--output table|json] [--project <project>] [--projects-url <url>] [--title <text>]
+```
+
+| Name | What it does |
+|---|---|
+| `--description <text>` | The new description, in Markdown. Default: unchanged. |
+| `--description-file <path>` | Read the new description from this file (UTF-8), or from stdin for -. Not together with --description. Default: unchanged. |
+| `--epic <epic>` | The epic (required, before or after update): its id, its slug, or enough of the start of its id to name one. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--title <text>` | The new title. Default: unchanged. |
+
+### Examples
+
+```
+qits epic --project qits update --epic 4f2a91c0 --title "Live telemetry v2"
+qits epic --project qits update --epic live-telemetry --description "Revised plan."
+qits epic update --project qits --epic 4f2a91c0 --description-file plan.md
+```
+
+- The service allows this only while the epic is REFINING: its scope freezes once implementation starts, and an edit past that point is refused (HTTP 409).
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example the epic's scope is frozen, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example neither --title nor a description given, an empty --title, or an --epic that fits no epic of the project, or more than one), not signed in, or the session ended.
 
 ## qits release-request
 

@@ -34,19 +34,22 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
  * SafeText} before a person sees it, and the JSON form writes control characters as escapes.
  */
 @CommandLine.Command(name = "ticket", mixinStandardHelpOptions = true,
-        subcommands = {TicketCommand.ListCommand.class, TicketCommand.NewCommand.class, TicketCommand.DetailsCommand.class},
+        subcommands = {TicketCommand.ListCommand.class, TicketCommand.NewCommand.class, TicketCommand.DetailsCommand.class,
+                TicketCommand.CommentCommand.class},
         description = {"The tickets of one project: small pieces of work, each a bug or an improvement. list shows "
-                        + "them, new files one, and details shows one with its description and comments.",
+                        + "them, new files one, details shows one with its description and comments, and comment "
+                        + "adds one to its thread.",
                 "Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work "
                         + "better). Statuses: OPEN (a new ticket starts here) and RESOLVED."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --project, --output and --projects-url may come before or after the command. So may --ticket, "
-                        + "which only `details` takes.",
-                "- Reading tickets needs the role qits:admin or qits:agent. Filing one needs qits:admin.",
-                "- The reporter is the signed-in caller. Nobody can file a ticket as somebody else.",
-                "- Work that needs a plan is an epic, not a ticket. qits does not resolve, edit or comment on a ticket "
-                        + "yet."})
+                        + "which `details` and `comment` take.",
+                "- Reading tickets needs the role qits:admin or qits:agent. Filing one and commenting need "
+                        + "qits:admin.",
+                "- The reporter and the comment author are the signed-in caller. Nobody can file a ticket or "
+                        + "comment as somebody else.",
+                "- Work that needs a plan is an epic, not a ticket. qits does not resolve or edit a ticket yet."})
 public class TicketCommand implements Runnable {
 
     static final String NAME_THE_TICKET = "Name the ticket: --ticket <id, slug or the start of the id>.";
@@ -359,6 +362,109 @@ public class TicketCommand implements Runnable {
             printTicket(context.out(), found, thread);
             return 0;
         }
+    }
+
+    @CommandLine.Command(name = "comment", mixinStandardHelpOptions = true,
+            description = {"Add a comment to a ticket's thread.",
+                    "You are its author. The comment is Markdown; the command prints it once filed."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits ticket --project qits comment --ticket 4f2a91c0 --body \"I can reproduce it.\"",
+                    "  qits ticket comment --ticket the-log-view-stops-at-64-kib --project qits --body-file note.md",
+                    "  cat note.md | qits ticket --project qits comment --ticket 4f2a91c0 --body-file -",
+                    "",
+                    "- The comment is Markdown. --body-file - reads it from stdin."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE,
+                    "1:The platform refused (for example your roles, HTTP 403, or the ticket was deleted a moment "
+                            + "ago, HTTP 404), or cannot be reached.",
+                    "2:Used wrongly (for example neither --body nor --body-file given, an empty comment, or a "
+                            + "--ticket that fits no ticket of the project, or more than one), not signed in, or "
+                            + "the session ended."})
+    public static class CommentCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        TicketCommand parent;
+
+        @CommandLine.Option(names = "--ticket", paramLabel = "<ticket>",
+                description = "The ticket (required, before or after comment): its id, its slug, or enough of the "
+                        + "start of its id to name one.")
+        String ticket;
+
+        @CommandLine.Option(names = "--body", paramLabel = "<text>",
+                description = "The comment, in Markdown.")
+        String body;
+
+        @CommandLine.Option(names = "--body-file", paramLabel = "<path>",
+                description = "Read the comment from this file (UTF-8), or from stdin for -. Not together with "
+                        + "--body.")
+        String bodyFile;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            String wanted = RepositoriesCommand.required(ticket != null ? ticket : parent.ticket, NAME_THE_TICKET);
+            String commentBody = body(context);
+            Scope scope = parent.scope(context);
+            String id = text(find(scope, wanted), "id");
+            JsonNode answer;
+            try {
+                answer = scope.api().createTicketComment(id, commentBody);
+            } catch (CliFailure refused) {
+                if (refused.status() == 404) {
+                    throw new CliFailure("No such ticket: " + id + " (HTTP 404). It may have been deleted a moment ago.",
+                            CliFailure.FAILED);
+                }
+                throw refused;
+            }
+            if (json) {
+                printJson(context.out(), answer);
+                return 0;
+            }
+            printComment(context.out(), answer.path("comment"));
+            return 0;
+        }
+
+        /** The text of --body or --body-file, without trailing blanks; never blank. */
+        private String body(CliContext context) throws CliFailure {
+            if (body != null && bodyFile != null) {
+                throw new CliFailure("Give --body or --body-file, not both.", CliFailure.USAGE);
+            }
+            if (body == null && bodyFile == null) {
+                throw new CliFailure("Give --body or --body-file.", CliFailure.USAGE);
+            }
+            String text = bodyFile != null ? (bodyFile.equals("-") ? stdin(context) : file(bodyFile)) : body;
+            if (text == null || text.isBlank()) {
+                throw new CliFailure("The comment is empty.", CliFailure.USAGE);
+            }
+            return text.stripTrailing();
+        }
+
+        private static String stdin(CliContext context) throws CliFailure {
+            try {
+                return new String(context.in().readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new CliFailure("Cannot read the comment from stdin: " + e.getMessage(), CliFailure.USAGE);
+            }
+        }
+
+        private static String file(String path) throws CliFailure {
+            try {
+                return Files.readString(Path.of(path), StandardCharsets.UTF_8);
+            } catch (NoSuchFileException e) {
+                throw new CliFailure("There is no file " + path + " (--body-file).", CliFailure.USAGE);
+            } catch (CharacterCodingException e) {
+                throw new CliFailure("The file " + path + " is not UTF-8 text (--body-file).", CliFailure.USAGE);
+            } catch (IOException | InvalidPathException e) {
+                throw new CliFailure("Cannot read " + path + " (--body-file): " + e.getMessage(), CliFailure.USAGE);
+            }
+        }
+    }
+
+    /** One comment, on its own: when it was written, by whom, and its body. */
+    static void printComment(PrintStream out, JsonNode comment) {
+        out.println(Table.time(text(comment, "createdAt")) + "  " + cell(text(comment, "author"), 80));
+        lines(out, "  ", text(comment, "body"));
     }
 
     static void printTickets(PrintStream out, List<JsonNode> tickets) {
