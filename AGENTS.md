@@ -5,7 +5,7 @@
 The `qits` command: access to the qits platform from a Linux or WSL workstation. A Quarkus
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
-that session fresh), `qits projects|repositories|release-request` (the projects service),
+that session fresh), `qits projects|repositories|ticket|release-request` (the projects service),
 `qits ci runs|run|retry` (qits-ci's runs, a run's step logs, a retry), `qits events` (the live event
 stream), `qits observe` (the live, server-filtered telemetry stream
 of qits-observability, over a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
@@ -21,7 +21,7 @@ each behaves.
     platform/  what every platform command shares: the context, the token (with inline refresh),
                the HTTP client and its error messages, which address a service has (PlatformUrls),
                and the aligned table (Table)
-    projects/  qits projects, repositories and release-request
+    projects/  qits projects, repositories, ticket and release-request
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
     events/    qits events: the SSE parser and the reconnecting stream
     observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
@@ -70,7 +70,8 @@ each behaves.
   reaches it writes what `qits observe` shows. Every streamed value goes through `SafeText.line`
   (the line form) or `SafeText.JSON` (the JSON form), notices and close reasons included. A new
   field in the output goes through them too. A CI step's output is untrusted in the same way (the
-  code the run builds writes it), so `qits ci` puts every value through `SafeText` as well.
+  code the run builds writes it), so `qits ci` puts every value through `SafeText` as well. So does
+  `qits ticket`: people and agents write a ticket's title, description and comments.
 - **The observe wire protocol is `qits-observe-plan.md`** in the superproject, shared with
   qits-observability, which is built from the same text. Change it there first, and on both sides.
   The server sends no acknowledgement for a subscribe frame, so an `{"error": …}` before the first

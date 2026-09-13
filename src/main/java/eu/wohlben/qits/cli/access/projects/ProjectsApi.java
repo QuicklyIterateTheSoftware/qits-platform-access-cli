@@ -97,6 +97,40 @@ public final class ProjectsApi {
                 + segment(requestId) + "/withdraw"), body);
     }
 
+    /** {@code {"entries":[{"ticket":{…}}]}}, oldest first. A null status asks for every ticket. */
+    public JsonNode tickets(String projectId, String status) throws CliFailure, InterruptedException {
+        String query = status == null || status.isBlank() ? "" : "?status=" + URLEncoder.encode(status.strip(), StandardCharsets.UTF_8);
+        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/tickets" + query));
+    }
+
+    /** {@code {"ticket":{…}}}, with the live workspaces that work on it. */
+    public JsonNode ticket(String ticketId) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/tickets/" + segment(ticketId)));
+    }
+
+    /** {@code {"entries":[{"comment":{…}}]}}, oldest first. */
+    public JsonNode ticketComments(String ticketId) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/tickets/" + segment(ticketId) + "/comments"));
+    }
+
+    /**
+     * {@code {"ticket":{…}}}: the new ticket, OPEN. A description and an assignee only when given.
+     * No reporter: the service takes the token's.
+     */
+    public JsonNode createTicket(String projectId, String title, String type, String description, String assignee)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("title", title);
+        body.put("type", type);
+        if (description != null) {
+            body.put("description", description);
+        }
+        if (assignee != null && !assignee.isBlank()) {
+            body.put("assignee", assignee.strip());
+        }
+        return client.post(uri("/projects/api/projects/" + segment(projectId) + "/tickets"), body);
+    }
+
     /** A priority only when one is given, so the service's rule for none applies. */
     private static void putPriority(ObjectNode body, String priority) {
         if (priority != null && !priority.isBlank()) {

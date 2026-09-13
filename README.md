@@ -7,8 +7,8 @@ Commands:
 
 - `qits login` signs you in through the browser and stores the session.
 - `qits session-daemon` keeps that session fresh for as long as it runs.
-- `qits projects list`, `qits repositories … list` and `qits release-request … list|create|join|withdraw`
-  read from and ask the projects service.
+- `qits projects list`, `qits repositories … list`, `qits ticket … list|new|details` and
+  `qits release-request … list|create|join|withdraw` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again.
 - `qits events` prints the platform's domain events as they happen.
@@ -208,6 +208,10 @@ Installing it is not part of this version.
 
     qits projects list
     qits repositories --project <project> list
+    qits ticket --project <project> list [--status <STATUS>] [--type <TYPE>]
+    qits ticket --project <project> new --title <text> --type <TYPE> \
+        [--description <text> | --description-file <path|->] [--assignee <name>]
+    qits ticket --project <project> details --ticket <id, slug or start of the id>
     qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
@@ -223,8 +227,8 @@ Installing it is not part of this version.
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
-bearer. The options of `projects`, `repositories` and `release-request` may come before or after
-the subcommand: `qits repositories --project qits list` and `qits repositories list --project qits`
+bearer. The options of `projects`, `repositories`, `ticket` and `release-request` may come before or
+after the subcommand: `qits repositories --project qits list` and `qits repositories list --project qits`
 are the same.
 
 ### The session
@@ -278,6 +282,41 @@ Columns: slug, name, id.
 `--project` is the project's id, slug or name. The command lists the projects and finds the one
 that matches; a value that matches none, or more than one, stops with a message. Columns: name,
 archetype, component, id.
+
+### qits ticket
+
+A ticket is a small piece of work in a project: a `BUG` (something behaves other than it should) or
+an `IMPROVEMENT` (something works and could work better). It is `OPEN` or `RESOLVED`. Work that
+needs a plan is an epic, not a ticket. `--project` is as above. Reading tickets needs the role
+`qits:admin` or `qits:agent`; filing one needs `qits:admin`.
+
+`list` shows the project's tickets, oldest first. Columns: id (the first 8 characters), type,
+status, title, and the assignee when a ticket has one. `--status OPEN` (or `RESOLVED`) goes to the
+service, which refuses a status it does not know (HTTP 400, exit code 1) rather than answer with no
+tickets. The service has no type filter, so `--type BUG` (or `IMPROVEMENT`) is applied here, in both
+output forms.
+
+`new` files a ticket; it starts `OPEN`. `--title` and `--type` are required: the platform takes no
+ticket that is neither a bug nor an improvement. The description is Markdown, from `--description`
+or from a file with `--description-file` (`-` is stdin), not both; trailing blank lines are left
+out. `--assignee` names who takes it. The service stamps the reporter from your token. The command
+prints the new ticket the way `details` does.
+
+`details` shows one ticket: id, slug, type, status, title, assignee, who created it, the times, the
+live workspaces on it, its description and its comments, the oldest first. `--ticket` is the ticket's
+id, its slug, or the start of its id; the command looks among the project's tickets, and a value that
+fits none, or more than one, stops with exit code 2. `--ticket` may also come before `details`.
+`-o json` prints `{"ticket": …, "comments": […]}`.
+
+A ticket's text is written by people and agents, so, as for `qits ci`, the table form takes terminal
+control characters out of every value, and `-o json` writes them as escapes.
+
+    qits ticket --project qits list --status OPEN --type BUG
+    qits ticket --project qits new --type BUG --title "The log view stops at 64 KiB" \
+        --description-file report.md
+    qits ticket --project qits details --ticket 4f2a91c0
+
+Resolving, editing and commenting on a ticket are not in `qits` yet.
 
 ### qits release-request
 

@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, release requests, CI runs and their logs, domain events, live telemetry, and Git pushes to the platform's git host."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, tickets, release requests, CI runs and their logs, domain events, live telemetry, and Git pushes to the platform's git host."
 ---
 
 # qits
@@ -143,6 +143,125 @@ qits repositories list --project qits -o json
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits ticket
+
+The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, and details shows one with its description and comments.
+
+Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work better). Statuses: OPEN (a new ticket starts here) and RESOLVED.
+
+### Notes
+
+- --project, --output and --projects-url may come before or after the command. So may --ticket, which only `details` takes.
+- Reading tickets needs the role qits:admin or qits:agent. Filing one needs qits:admin.
+- The reporter is the signed-in caller. Nobody can file a ticket as somebody else.
+- Work that needs a plan is an epic, not a ticket. qits does not resolve, edit or comment on a ticket yet.
+
+## qits ticket list
+
+List the project's tickets, oldest first: id, type, status, title, and the assignee when a ticket has one.
+
+Without --status and --type it lists every ticket. The ID column shows the first 8 characters of the id, which is enough for `details`.
+
+```
+qits ticket list [--output table|json] [--project <project>] [--projects-url <url>] [--status <STATUS>] [--type <TYPE>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--status <STATUS>` | Only the tickets in this status: OPEN or RESOLVED. Default: every status. |
+| `--type <TYPE>` | Only the tickets of this type: BUG or IMPROVEMENT. Default: every type. |
+
+### Examples
+
+```
+qits ticket --project qits list
+qits ticket --project qits list --status OPEN --type BUG
+qits ticket list --project qits -o json
+```
+
+- The service applies --status, and refuses a status it does not know (HTTP 400) rather than answer with no tickets. --type is applied here, in both output forms.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits ticket new
+
+File a ticket in the project: a bug or an improvement.
+
+The ticket starts OPEN, and you are its reporter. The command prints the new ticket the way `details` does.
+
+```
+qits ticket new --title <text> --type <TYPE> [--assignee <name>] [--description <text>] [--description-file <path>] [--output table|json] [--project <project>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--title <text>` | Required. What is wrong or could be better, in a short line. |
+| `--type <TYPE>` | Required. BUG or IMPROVEMENT. |
+| `--assignee <name>` | Who takes it, as a name. Default: nobody. |
+| `--description <text>` | The long form, in Markdown: what happens, what should happen, how to see it. |
+| `--description-file <path>` | Read the description from this file (UTF-8), or from stdin for -. Not together with --description. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits ticket --project qits new --type BUG --title "The log view stops at 64 KiB"
+qits ticket --project qits new --type IMPROVEMENT --title "Filter runs by author" --description "The runs list needs an author filter."
+qits ticket new --project qits --type BUG --title "Login loops" --description-file report.md
+cat report.md | qits ticket --project qits new --type BUG --title "Login loops" --description-file -
+```
+
+- --type is required: the platform takes no ticket that is neither a bug nor an improvement.
+- The description is Markdown. --description-file - reads it from stdin.
+
+### Exit codes
+
+- `0` The ticket is filed.
+- `1` The platform refused (for example a type it does not know, HTTP 400, or your roles, HTTP 403), or cannot be reached.
+- `2` Used wrongly (for example an empty title, or a description file that cannot be read), not signed in, or the session ended.
+
+## qits ticket details
+
+Show one ticket: id, slug, type, status, title, assignee, who created it and when, its description, and its comments, the oldest first.
+
+--ticket takes the ticket's id, its slug, or the start of its id (list shows 8 characters). Terminal control characters are taken out of the text.
+
+```
+qits ticket details [--output table|json] [--project <project>] [--projects-url <url>] [--ticket <ticket>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--ticket <ticket>` | The ticket (required, before or after details): its id, its slug, or enough of the start of its id to name one. |
+
+### Examples
+
+```
+qits ticket --project qits details --ticket 4f2a91c0
+qits ticket details --ticket the-log-view-stops-at-64-kib --project qits
+qits ticket --project qits details --ticket 4f2a91c0 -o json | jq -r .ticket.description
+```
+
+- -o json prints one object: the ticket as the service answers it, and its comments as a list. Control characters are written as escapes.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example the ticket was deleted a moment ago, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
 
 ## qits release-request
 

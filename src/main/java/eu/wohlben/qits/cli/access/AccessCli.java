@@ -12,6 +12,7 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
+import eu.wohlben.qits.cli.access.projects.TicketCommand;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine;
 
@@ -26,11 +27,12 @@ import picocli.CommandLine;
         name = "qits",
         mixinStandardHelpOptions = true,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, ProjectsCommand.class,
-                RepositoriesCommand.class, ReleaseRequestCommand.class, CiCommand.class, EventsCommand.class,
+                RepositoriesCommand.class, TicketCommand.class, ReleaseRequestCommand.class, CiCommand.class,
+                EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
-                        + "release requests, CI runs and their logs, domain events, live telemetry, and Git pushes to "
+                        + "tickets, release requests, CI runs and their logs, domain events, live telemetry, and Git pushes to "
                         + "the platform's git host.",
                 "Each command calls the platform through its edge, with the session of `qits login`. "
                         + "`qits <command> --help` shows a command's options, examples and exit codes."},
