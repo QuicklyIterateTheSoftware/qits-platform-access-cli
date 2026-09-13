@@ -22,6 +22,47 @@ Commands:
 The binary is called `qits`. qits-bootstrap-cli's binary is `qits-bootstrap`. Started under the
 name `qits-publish`, it behaves as `qits artifacts publish` — see below.
 
+## Install
+
+`install.sh`, at the root of this repository, puts `qits` on a stable path and points Git at it.
+There is no public download of the script on its own: reading a raw file from the platform's git
+host needs a credential, same as any other read, so get it from a checkout of this repository (one
+you already have, or `git clone` the wrapper that holds it) and run it from there:
+
+    ./install.sh
+
+It does four things:
+
+1. Signs you in through the idp — the same browser-and-pasted-code exchange as `qits login` — and
+   holds the access token in a shell variable only. It is never written to disk or printed.
+2. Finds the latest released version in qits-artifacts and downloads it with that token.
+3. Installs it as `qits` in the install directory (`~/.local/bin` by default), replacing any file
+   there of the same name, and checks that it runs.
+4. Sets Git's credential helper for the platform's git host to the installed binary, the way
+   `qits git-login --configure` does (see below): it replaces any earlier helper for that host,
+   including one pointing at a build output such as `target/qits`, and leaves every other host's
+   helper (GitHub's, for example) alone.
+
+Environment overrides:
+
+- `QITS_IDP_URL` — the idp's base URL. Default `https://idp.dev.wohlben.eu/idp`.
+- `QITS_ARTIFACTS_URL` — the artifacts store's base URL. Default: derived from the idp URL, the
+  same way `qits` derives every other service's address (swap the idp host's first label).
+- `QITS_GIT_HOST_URL` — the git host's base URL. Default: derived the same way.
+- `QITS_INSTALL_DIR` — where to install. Default `~/.local/bin`.
+
+If the install directory is not on `PATH`, the script says so and prints the line to add:
+
+    echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.bashrc
+
+(zsh users: the same line in `~/.zshrc`). Open a new shell afterwards.
+
+It needs bash, curl, and one of `jq` or `python3` to read JSON answers (`jq` is used when present).
+
+`scripts/test-install.sh` runs the script offline against stub servers standing in for the idp and
+qits-artifacts, and checks the binary lands, the PATH hint appears, Git is set up correctly, and the
+token never appears in what the script prints. Run it with `./scripts/test-install.sh`.
+
 ## Download
 
 Each release publishes the static binary to the platform's artifacts store, under this repository's
