@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** {@code qits publish npm} — the reasoning around an npm publish, without running npm itself. */
+/** {@code qits artifacts publish npm} — the reasoning around an npm publish, without running npm itself. */
 @CommandLine.Command(name = "npm", mixinStandardHelpOptions = true,
         subcommands = {NpmCommand.PlanCommand.class, NpmCommand.DistTagCommand.class,
                 NpmCommand.RewriteLockfileOriginCommand.class},
@@ -31,9 +31,9 @@ public class NpmCommand implements Runnable {
                     + "immutable), or publish-replay (this version is below the registry's latest, so it "
                     + "must take a throwaway tag rather than move latest backwards).",
                     "Only the word goes to stdout; the reasoning goes to stderr, so "
-                            + "`plan=$(qits publish npm plan ...)` captures just the word."},
+                            + "`plan=$(qits artifacts publish npm plan ...)` captures just the word."},
             footerHeading = "%nExamples:%n",
-            footer = "  plan=$(qits publish npm plan --package @qits/ui-components --version 2026.906.1)",
+            footer = "  plan=$(qits artifacts publish npm plan --package @qits/ui-components --version 2026.906.1)",
             exitCodeListHeading = "%nExit codes:%n",
             exitCodeList = {
                     "0:Decided (the word is on stdout).",
@@ -71,7 +71,7 @@ public class NpmCommand implements Runnable {
                     + "run's publish happened: moving a tag onto the version it already names costs one "
                     + "request and succeeds.",
             footerHeading = "%nExamples:%n",
-            footer = "  qits publish npm dist-tag --package @qits/ui-components --version 2026.906.1 "
+            footer = "  qits artifacts publish npm dist-tag --package @qits/ui-components --version 2026.906.1 "
                     + "--tag main",
             exitCodeListHeading = "%nExit codes:%n",
             exitCodeList = {
@@ -115,7 +115,7 @@ public class NpmCommand implements Runnable {
                             + "hosted origin; every other entry gets the npmjs proxy's. Running this twice "
                             + "changes nothing the second time."},
             footerHeading = "%nExamples:%n",
-            footer = "  qits publish npm rewrite-lockfile-origin --lockfile package-lock.json",
+            footer = "  qits artifacts publish npm rewrite-lockfile-origin --lockfile package-lock.json",
             exitCodeListHeading = "%nExit codes:%n",
             exitCodeList = {
                     "0:Rewritten, or already correct.",

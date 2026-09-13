@@ -28,11 +28,12 @@ each behaves.
                and SafeText (terminal control characters out of every streamed value)
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
-    publish/   qits publish: the qits-publish client, folded in from qits-artifacts-cli. Store,
-               Publisher, Npm, DockerfileSbom, Http, Json, Sha256, VersionOrder, Env, Console,
-               CliException and ExitCode are that repository's classes, kept as they were; the
-               picocli commands and PublishArgs (the argument-grammar checks Args used to do) are
-               new. Touches no session file — see Conventions.
+    artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
+    publish/   qits artifacts publish: the qits-publish client, folded in from qits-artifacts-cli.
+               Store, Publisher, Npm, DockerfileSbom, Http, Json, Sha256, VersionOrder, Env,
+               Console, CliException and ExitCode are that repository's classes, kept as they
+               were; the picocli commands and PublishArgs (the argument-grammar checks Args used
+               to do) are new. Touches no session file — see Conventions.
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
 
 ## Conventions
@@ -87,9 +88,9 @@ each behaves.
 - **Git setup is per host.** `qits git-login` sets `credential.<git host>.helper` and never
   `credential.helper`: the person's global helper serves GitHub and must stay. A test that runs
   `git config --global` sets `GIT_CONFIG_GLOBAL` to a scratch file first.
-- **`qits publish` never touches `t.json`, `git.json` or their locks.** It runs in a CI step
-  container with no person signed in, so its commands read only `CliContext.env()`, `.out()` and
-  `.err()` — never `.sessionFile()` or `.tokens()`. If a change to `publish/` needs either, that
+- **`qits artifacts publish` never touches `t.json`, `git.json` or their locks.** It runs in a CI
+  step container with no person signed in, so its commands read only `CliContext.env()`, `.out()`
+  and `.err()` — never `.sessionFile()` or `.tokens()`. If a change to `publish/` needs either, that
   change belongs somewhere else.
 - **A `publish/` command that has its own `--version` flag must not use
   `mixinStandardHelpOptions`.** The mixin's `-V`/`--version` (the binary's own version) collides by

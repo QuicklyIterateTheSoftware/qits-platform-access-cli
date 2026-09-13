@@ -16,11 +16,11 @@ Commands:
   filtered by the service.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in.
-- `qits publish` publishes a release artifact to qits-artifacts from a CI step: an sbom, a docs
-  bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
+- `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
+  a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
 
 The binary is called `qits`. qits-bootstrap-cli's binary is `qits-bootstrap`. Started under the
-name `qits-publish`, it behaves as `qits publish` — see below.
+name `qits-publish`, it behaves as `qits artifacts publish` — see below.
 
 ## Download
 
@@ -583,11 +583,11 @@ git host.
 `git-credential get` is the one place `qits` prints a token, because that is how Git's helper
 protocol works. stderr never carries one.
 
-## qits publish
+## qits artifacts publish
 
-`qits publish` is the platform's publish client for qits-artifacts: what a CI release step calls to
-put an sbom, a docs bundle, a daemon binary, or an npm decision where it belongs. It is
-qits-artifacts-cli's own `qits-publish`, folded into `qits`.
+`qits artifacts` is the platform's artifacts store, qits-artifacts. `qits artifacts publish` is its
+publish client: what a CI release step calls to put an sbom, a docs bundle, a daemon binary, or an
+npm decision where it belongs. It is qits-artifacts-cli's own `qits-publish`, folded into `qits`.
 
 **It never signs in, and it never touches the session `qits login` keeps.** It runs inside a CI step
 container, with no person, on a bare alpine image (the binary is static). `qits login`,
@@ -595,18 +595,18 @@ container, with no person, on a bare alpine image (the binary is static). `qits 
 
 Commands:
 
-    qits publish sbom submit --type <npm|maven|docker|daemon> --name <n> --version <v> --file <path>
-    qits publish sbom from-dockerfile --root-name <n> --root-version <v> \
+    qits artifacts publish sbom submit --type <npm|maven|docker|daemon> --name <n> --version <v> --file <path>
+    qits artifacts publish sbom from-dockerfile --root-name <n> --root-version <v> \
                       [--dockerfile <path>]... [--build-arg NAME=value]... -o <out.json>
-    qits publish docs submit --site <name> --version <v> --archive <tgz> [--meta key=value]...
-    qits publish daemon submit --name <n> --version <v> --file <bin>
-    qits publish exists <daemon|docs|npm|sbom> <name> <version>
-    qits publish npm plan --package <n> --version <v>
-    qits publish npm dist-tag --package <n> --version <v> --tag <t>
-    qits publish npm rewrite-lockfile-origin [--lockfile package-lock.json]
+    qits artifacts publish docs submit --site <name> --version <v> --archive <tgz> [--meta key=value]...
+    qits artifacts publish daemon submit --name <n> --version <v> --file <bin>
+    qits artifacts publish exists <daemon|docs|npm|sbom> <name> <version>
+    qits artifacts publish npm plan --package <n> --version <v>
+    qits artifacts publish npm dist-tag --package <n> --version <v> --tag <t>
+    qits artifacts publish npm rewrite-lockfile-origin [--lockfile package-lock.json]
 
-`qits publish <command> --help` shows a command's options, examples and exit codes; `qits help
-skill` includes them all.
+`qits artifacts publish <command> --help` shows a command's options, examples and exit codes;
+`qits help skill` includes them all.
 
 **Environment**: `QITS_ARTIFACTS_URL` (the store's origin; required by everything that talks to it),
 `QITS_DOCS_URL` (the docs root, including its `docs` repository segment; derived from the origin
@@ -614,10 +614,10 @@ when unset), `QITS_NPM_REGISTRY_URL` (the hosted npm registry, the `@qits` scope
 `QITS_NPM_PROXY_URL` (the npmjs pull-through cache). A CI step sets what each command needs.
 
 **Credentials**: none, by design. qits-artifacts' sbom, docs, daemon and npm routes take no
-credential in either direction, so `qits publish` sends none — the same posture as `npm publish`,
-`mvn deploy` and `docker push`. `QITS_COMMISSIONED_CLIENT_ID`/`_SECRET`, when a step container
-carries them, are a build-secret pair for resolving dependencies inside an image build, never an
-HTTP credential, and `qits publish` does not read them.
+credential in either direction, so `qits artifacts publish` sends none — the same posture as
+`npm publish`, `mvn deploy` and `docker push`. `QITS_COMMISSIONED_CLIENT_ID`/`_SECRET`, when a step
+container carries them, are a build-secret pair for resolving dependencies inside an image build,
+never an HTTP credential, and `qits artifacts publish` does not read them.
 
 **The one idempotency policy**, unchanged from `qits-publish` and identical across every surface:
 absent, PUT it and say what landed; occupied with the same bytes, say so and succeed (a retried or
@@ -633,7 +633,8 @@ failure, or a 5xx. A step may retry a `2` and must not retry a `1`.
 ### Started as `qits-publish`
 
 A binary or a symlink started under the name `qits-publish` — its own name, before it folded into
-`qits` — behaves exactly as `qits publish`: `qits-publish sbom submit ...` is `qits publish sbom
-submit ...`, argument for argument. `qits publish`'s own release still publishes the binary as
-`qits-platform-access-cli`; a step that still says `qits-publish` needs only that name on its
-`PATH`, as a copy or a symlink of `qits`. New pipelines should call `qits publish` directly.
+`qits` — behaves exactly as `qits artifacts publish`: `qits-publish sbom submit ...` is
+`qits artifacts publish sbom submit ...`, argument for argument. `qits artifacts publish`'s own
+release still publishes the binary as `qits-platform-access-cli`; a step that still says
+`qits-publish` needs only that name on its `PATH`, as a copy or a symlink of `qits`. New pipelines
+should call `qits artifacts publish` directly.

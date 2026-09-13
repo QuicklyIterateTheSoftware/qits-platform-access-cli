@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** {@code qits publish docs} — a documentation bundle. */
+/** {@code qits artifacts publish docs} — a documentation bundle. */
 @CommandLine.Command(name = "docs", mixinStandardHelpOptions = true,
         subcommands = DocsCommand.SubmitCommand.class,
         description = "A documentation bundle, at (site, version).")
@@ -29,7 +29,7 @@ public class DocsCommand implements Runnable {
                             + "occupied version cannot be verified: it is skipped, with a WARN naming the "
                             + "degradation, rather than reported as a plain success."},
             footerHeading = "%nExamples:%n",
-            footer = "  qits publish docs submit --site @apidocs/qits-ci --version 2026.906.1 "
+            footer = "  qits artifacts publish docs submit --site @apidocs/qits-ci --version 2026.906.1 "
                     + "--archive apidocs.tgz --meta git.commit.hash=deadbeef",
             exitCodeListHeading = "%nExit codes:%n",
             exitCodeList = {

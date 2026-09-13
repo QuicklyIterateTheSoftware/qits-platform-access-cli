@@ -5,7 +5,7 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 
 /**
- * What every {@code qits publish} command shares: an environment, a console, and the translation
+ * What every {@code qits artifacts publish} command shares: an environment, a console, and the translation
  * from the ported publish policy's own refusal to the exit code and message qits-publish always
  * gave.
  * <p>
@@ -24,7 +24,7 @@ abstract class AbstractPublishCommand extends PlatformCommand {
             return run(env, console);
         } catch (CliException e) {
             // The client's own prefix, kept so a step's log reads the same whether it called
-            // `qits-publish` or `qits publish`.
+            // `qits-publish` or `qits artifacts publish`.
             throw new CliFailure("qits-publish: " + e.getMessage(), e.code());
         }
     }
