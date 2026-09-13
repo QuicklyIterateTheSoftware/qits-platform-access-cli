@@ -16,7 +16,7 @@
          qits-bootstrap-cli; its pom says how they fit together. -->
     <groupId>eu.wohlben.qits</groupId>
     <artifactId>qits-platform-access-cli</artifactId>
-    <version>2026.913.220350</version>
+    <version>2026.913.221058</version>
     <name>qits-platform-access-cli</name>
 
     <properties>
