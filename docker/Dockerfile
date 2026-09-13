@@ -104,6 +104,16 @@ RUN ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
       -Dcyclonedx.skipNotDeployed=false \
  && ldd target/qits 2>&1 | grep -qE "statically linked|not a dynamic executable"
 
+# `qits tui` in the binary, which is the only place JLine's provider choice can be proven: the tests
+# run on a JVM, where every provider works. Started with no terminal — which is what a RUN is — it
+# must say so and exit 2. The failure this catches is a binary that waits for a key nobody can
+# press, so it runs under a timeout: a build that hangs here would otherwise hang forever.
+RUN set -eu; \
+    out=$(timeout 60 ./target/qits tui < /dev/null 2>&1 || echo "exit=$?"); \
+    printf '%s\n' "$out"; \
+    printf '%s' "$out" | grep -q "needs an interactive terminal"; \
+    printf '%s' "$out" | grep -q "exit=2"
+
 # The CycloneDX document, for the release step's SBOM PUT. Before `binary`, so that stays the default.
 FROM scratch AS sbom
 COPY --from=build /qits-build/target/sbom.json /sbom.json

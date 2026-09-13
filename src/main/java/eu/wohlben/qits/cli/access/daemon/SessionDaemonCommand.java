@@ -3,6 +3,8 @@ package eu.wohlben.qits.cli.access.daemon;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.FileDescriptor;
@@ -13,6 +15,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 
+@TuiCommand(interaction = Interaction.STREAMING)
 @CommandLine.Command(name = "session-daemon", mixinStandardHelpOptions = true,
         description = {
                 "Keep the session from `qits login` fresh for as long as this runs. Start it once per workstation "

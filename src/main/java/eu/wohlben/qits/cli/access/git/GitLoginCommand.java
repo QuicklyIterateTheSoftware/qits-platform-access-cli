@@ -9,6 +9,8 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.session.Session;
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@TuiCommand(interaction = Interaction.BROWSER)
 @CommandLine.Command(name = "git-login", mixinStandardHelpOptions = true,
         description = {
                 "Sign this workstation in for Git pushes to the platform's git host, through the browser. Run it "

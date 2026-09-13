@@ -1118,3 +1118,29 @@ qits artifacts publish exists npm @qits/ui-components 2026.906.1
 - `0` Published.
 - `1` Not published, or the arguments are wrong.
 - `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+
+## qits tui
+
+Pick a command instead of remembering it: an interactive screen over every qits command.
+
+The upper half is the picker: the commands, then the options of the one chosen, with the values the platform can offer. The command being built is shown between the halves, so the screen also teaches the command line. The lower half is the output of what was run.
+
+```
+qits tui
+```
+
+### Examples
+
+```
+qits tui
+```
+
+- Keys: arrows or k/j move, Enter chooses, Esc goes back, / filters, Ctrl-R runs, Ctrl-C stops a run, Ctrl-P shows this session's history, q quits.
+- Needs an interactive terminal of at least 80x24. In a pipe or a CI step it says so and exits 2.
+- It runs a command by starting this same binary again, so a run behaves exactly as it does when typed.
+
+### Exit codes
+
+- `0` Done.
+- `1` Unused.
+- `2` There is no interactive terminal, or it is smaller than 80x24.

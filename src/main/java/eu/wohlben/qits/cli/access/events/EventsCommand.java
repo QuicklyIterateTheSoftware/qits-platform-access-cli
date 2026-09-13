@@ -7,6 +7,8 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.net.URI;
@@ -16,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@TuiCommand(interaction = Interaction.STREAMING)
 @CommandLine.Command(name = "events", mixinStandardHelpOptions = true,
         description = {
                 "Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait "

@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.access.publish;
 
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 /**
@@ -7,6 +9,7 @@ import picocli.CommandLine;
  * {@code qits} from its own repository, qits-artifacts-cli. A CI release step calls one of these
  * once per coordinate; nothing here orchestrates a release or decides what runs in what order.
  */
+@TuiCommand(interaction = Interaction.CI_ONLY)
 @CommandLine.Command(name = "publish", mixinStandardHelpOptions = true,
         subcommands = {SbomCommand.class, DocsCommand.class, DaemonCommand.class, NpmCommand.class,
                 ExistsCommand.class},

@@ -29,6 +29,10 @@
         <!-- The platform's Quarkus. Moves with the platform, not ahead of it. -->
         <quarkus.platform.version>3.34.6</quarkus.platform.version>
 
+        <!-- The terminal `qits tui` paints on. `jline-terminal`, not the aggregate `jline`: see
+             the dependency below. Not in any BOM, so it is pinned here. -->
+        <jline.version>3.30.16</jline.version>
+
         <!-- Not in any BOM, so it is pinned here. -->
         <assertj.version>3.27.4</assertj.version>
 
@@ -67,6 +71,25 @@
                  java.net.http. -->
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jackson</artifactId>
+        </dependency>
+
+        <dependency>
+            <!-- `qits tui`: the terminal, raw mode and Display.
+
+                 The aggregate `jline` artifact carries every provider: jni, ffm, jansi and jna. A
+                 native image has to analyse all of them, and two cannot be analysed on this
+                 GraalVM — jni's initializer unpacks libjlinenative.so at class-init time, and the
+                 ffm provider's downcall handles stop the analysis dead. The exec provider needs
+                 neither: it shells /bin/stty, which a program that already shells git can do.
+                 qits-bootstrap-cli learnt this first; its pom says the same.
+
+                 `jline-terminal` holds the exec and dumb providers, Display and AttributedString —
+                 everything the TUI uses — and ships the native-image reflection and resource config
+                 the exec provider needs. Its `jline-native` dependency comes along and is never
+                 called; the native profile keeps its initializer off the build. -->
+            <groupId>org.jline</groupId>
+            <artifactId>jline-terminal</artifactId>
+            <version>${jline.version}</version>
         </dependency>
 
         <dependency>
@@ -143,8 +166,12 @@
                 <quarkus.build.skip>false</quarkus.build.skip>
 
                 <!-- Pkce holds a SecureRandom in a static field. Seeded at build time, every
-                     binary would carry the same seed, so its initializer runs at run time. -->
-                <quarkus.native.additional-build-args>--initialize-at-run-time=eu.wohlben.qits.cli.access.login.Pkce</quarkus.native.additional-build-args>
+                     binary would carry the same seed, so its initializer runs at run time.
+
+                     org.jline.nativ is never called — the exec provider shells /bin/stty — but its
+                     initializer unpacks libjlinenative.so into /tmp. Run at build time it fails the
+                     build; run at run time it is never reached. -->
+                <quarkus.native.additional-build-args>--initialize-at-run-time=eu.wohlben.qits.cli.access.login.Pkce,--initialize-at-run-time=org.jline.nativ</quarkus.native.additional-build-args>
             </properties>
         </profile>
     </profiles>

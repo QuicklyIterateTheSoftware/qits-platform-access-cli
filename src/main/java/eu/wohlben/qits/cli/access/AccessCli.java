@@ -15,6 +15,7 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.TicketCommand;
+import eu.wohlben.qits.cli.tui.TuiCommand;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine;
 
@@ -32,7 +33,7 @@ import picocli.CommandLine;
                 RepositoriesCommand.class, TicketCommand.class, EpicCommand.class, ReleaseRequestCommand.class,
                 CiCommand.class, EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, ArtifactsCommand.class,
-                HelpCommand.class},
+                TuiCommand.class, HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
                         + "tickets, epics, release requests, CI runs and their logs, domain events, live telemetry, Git "
