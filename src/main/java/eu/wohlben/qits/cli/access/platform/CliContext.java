@@ -4,6 +4,10 @@ import eu.wohlben.qits.cli.access.daemon.Sleeper;
 import eu.wohlben.qits.cli.access.daemon.StopSignals;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.session.AgentCredential;
+import eu.wohlben.qits.cli.session.Credential;
+import eu.wohlben.qits.cli.session.Mode;
+import eu.wohlben.qits.cli.session.PlatformEndpoints;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -46,5 +50,33 @@ public record CliContext(
 
     public AccessTokens tokens() {
         return new AccessTokens(sessionFile(), clock, idpFor);
+    }
+
+    /**
+     * What this process calls the platform with: the session file outside, the workspace
+     * credential inside. The two are never mixed — in-platform never opens the session file, and a
+     * workstation never mints with a client secret.
+     */
+    public Credential credential() {
+        return mode().inPlatform() ? AgentCredential.of(env, clock) : tokens();
+    }
+
+    /**
+     * The session's idp address, which is where a workstation's service addresses come from. Null
+     * inside the platform, where they come from the wire aliases instead and there is no session to
+     * read.
+     */
+    public String idpUrl() throws CliFailure, InterruptedException {
+        return mode().inPlatform() ? null : tokens().session().idpUrl();
+    }
+
+    /** Which of the CLI's two homes this is. Decided from the environment, which does not change. */
+    public Mode mode() {
+        return Mode.of(env);
+    }
+
+    /** Where the services are in this home. {@code idpUrl} is the session's, and null inside. */
+    public PlatformEndpoints endpoints(String idpUrl) {
+        return new PlatformEndpoints(mode(), env, idpUrl);
     }
 }

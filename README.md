@@ -18,6 +18,8 @@ Commands:
   `qits git-credential` is the Git credential helper that uses that sign-in.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
+- `qits tui` opens an interactive screen over all of the above: pick a command instead of
+  remembering it, and see it run in the lower half — see below.
 
 The binary is called `qits`. qits-bootstrap-cli's binary is `qits-bootstrap`. Started under the
 name `qits-publish`, it behaves as `qits artifacts publish` — see below.
@@ -153,6 +155,105 @@ To give it to Claude Code:
 The repository holds the same file as `SKILL.md`. The help texts are its one source: a test fails
 when the file differs from them, and `./mvnw test -Dtest=SkillDocumentTest -Dqits.skill.update=true`
 writes it again.
+
+## qits tui
+
+    qits tui
+
+An interactive screen over every command above. The upper half is the picker — the commands, then
+the options of the one you chose, required first and marked `*`; the line between the halves is the
+command your choices have built, so the screen also teaches the command line; the lower half is what
+the last run printed.
+
+     qits tui · dev.wohlben.eu · signed in as jan
+     ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────┐
+     │ * --project        qits                                                     │
+     │ * --repository     ▸ qits-ci-service                                        │
+     │   --status         (any)            RUNNING FAILED SUCCESS                  │
+     │   --limit          20                                                       │
+     │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                     │
+     └─────────────────────────────────────────────────────────────────────────────┘
+     $ qits ci runs --project qits --repository qits-ci-service
+     ┌ output ─────────────────────────────────────────────────────────── exit 0 ──┐
+     │ ID        STATUS   BRANCH   COMMIT    REQUEST   CREATED                     │
+     │ 473131bb  SUCCESS  main     767cd203  -         2026-09-13 19:50:50 GMT     │
+     └─────────────────────────────────────────────────────────────────────────────┘
+
+| key | does |
+|---|---|
+| `↑` `↓` (also `k` `j`) | move in the list |
+| `⏎` | drill into a command, or edit the selected option |
+| `␛` / `←` | back one segment |
+| `/` | filter the list by typing; `␛` clears it |
+| `⌃R` | run the command as shown |
+| `⌃C` | stop a running command; it does not quit the screen |
+| `⌃L` | in an open dropdown: forget what the platform said and ask again |
+| `⌃P` | history: the commands run this session; `⏎` re-runs one, `e` puts it back in the picker |
+| `q` | quit |
+
+`--project`, `--repository`, `--release-request`, `--ticket` and a run's id are lists the platform
+fills in: pick a project and the repository list is that project's. An option with nothing to offer
+is a field to type into, and so is one whose source could not answer — the screen says why and stays
+usable. Nothing it fetches is written to disk, and a value typed into a hidden field is never
+echoed, never remembered and never put on the child's command line.
+
+It needs an interactive terminal of at least 80×24; in a pipe or a CI step it says so and exits 2.
+A command is run by starting this same binary again, so a run behaves exactly as it does when typed.
+
+The screen holds no knowledge of any command: it reads picocli's own model, the same one that makes
+`--help` and `SKILL.md`. A command says the little that model cannot with
+`@TuiCommand(interaction, output)` — whether it streams, opens a browser, or only means anything in
+a CI step — and an option says where its values come from with `@Completes(SomeSource.class)`. A
+command that says neither still appears and still runs.
+
+## qits from inside the platform
+
+The same binary, in a workspace container on the platform, is a second home and not a second
+program. There is no browser and nobody to sign in; there is the commissioned client the container
+was injected with (`QITS_COMMISSIONED_CLIENT_ID` / `QITS_COMMISSIONED_CLIENT_SECRET`). Both set is
+the signal, decided once at startup:
+
+- the credential is minted at the internal idp with `client_credentials`, **once per process** — the
+  answer's `aud` claim carries every audience the client holds — and kept in memory only. It is
+  never written to `t.json` and never under the agent's config folder;
+- the public vhosts do not resolve inside, so a service is dialled by its wire alias:
+  `http://dev-qits-projects:8080` for an environment service, `http://qits-platform-idp:8080` for a
+  platform one. `QITS_URL_<APP>` overrides any of them;
+- the credential is `qits:agent`. Every read door answers and an operator write answers `403`, which
+  is correct behaviour and is worded as such;
+- it is granted most audiences but not all, and a command against one outside the grant says so in a
+  sentence instead of failing at the socket.
+
+A workstation is untouched by any of this: without the pair, nothing ever mints with a client
+secret and the session file is the only credential there is.
+
+### The smoke run
+
+Repeat it from any workspace container. Recorded on dev, 2026-09-13:
+
+    $ qits ci runs --project qits --repository qits-platform-access-cli --limit 3
+    ID        STATUS   BRANCH                                        COMMIT    REQUEST   CREATED                  TOOK
+    473131bb  SUCCESS  2026.913.195048                               767cd203  -         2026-09-13 19:50:50 GMT  2m40s
+    f4f1ec8d  SUCCESS  release/33f56c22-24f8-42b9-9305-1d0d73d3a3b5  d47a2770  33f56c22  2026-09-13 19:46:08 GMT  3m52s
+    b6824390  SUCCESS  2026.913.185314                               109ec668  -         2026-09-13 18:53:16 GMT  2m42s
+    # exit 0 — no `qits login`, and no session file anywhere
+
+    $ qits ci retry 00000000-0000-0000-0000-000000000000
+    403 - this credential is qits:agent, which reads but does not write
+    Your roles do not allow this (HTTP 403): POST http://dev-qits-ci:8080/ci/api/runs/00000000-0000-0000-0000-000000000000/retry
+    # exit 1 — a write door, answered as what it is
+
+    $ qits observe --filter=service=qits-ci
+    the workspace credential is not granted dev-qits-observability
+    # exit 2 — the one audience this client is refused
+
+    $ qits login
+    no browser in the platform - the workspace credential is already in use
+    # exit 2 — unchanged on a workstation
+
+    $ qits tui
+    qits tui · in platform · dev · agent (qits:agent)
+    # the header says which home it is in; `login` and `git-login` are dim and last
 
 ## qits login
 

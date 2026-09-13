@@ -82,6 +82,12 @@ public class TuiApp {
     private String message;
     private boolean running = true;
 
+    /**
+     * Whether this screen is in a container on the platform. Not a command-specific fact: it says
+     * which commands can work here at all, the way {@code CI_ONLY} already does.
+     */
+    private boolean inPlatform;
+
     /** The row an open editor belongs to, and what that editor holds. */
     private OptionRow editing;
     private ChoiceList choices;
@@ -119,6 +125,12 @@ public class TuiApp {
             completions.refuseCycles(root);
             this.selection.orderRowsBy(completions::ordered);
         }
+    }
+
+    /** Say that this is a container, so the commands that need a browser are shown as decoration. */
+    public TuiApp inPlatform(boolean inPlatform) {
+        this.inPlatform = inPlatform;
+        return this;
     }
 
     public CommandRunner runner() {
@@ -192,7 +204,10 @@ public class TuiApp {
 
     /** The one line under the command line: what the open editor has to say, else the last refusal. */
     private String note() {
-        if (pending != null && !pending.done()) {
+        // A call is still in flight until the paint that collects it has cleared it. Asking
+        // `done()` here instead would let a paint say the list has arrived while it still shows
+        // nothing, and a key pressed in that moment would take a choice that is not there.
+        if (pending != null) {
             return LOADING;
         }
         return editorNote != null ? editorNote : message;
@@ -284,9 +299,13 @@ public class TuiApp {
         return built;
     }
 
-    /** Whether a command is shown as decoration: one that belongs in a CI step and nowhere else. */
+    /**
+     * Whether a command is shown as decoration: one that belongs in a CI step and nowhere else, and
+     * — in a container — one that would open a browser there is none of.
+     */
     protected boolean dim(CommandNode child) {
-        return child.interaction() == Interaction.CI_ONLY;
+        return child.interaction() == Interaction.CI_ONLY
+                || (inPlatform && child.interaction() == Interaction.BROWSER);
     }
 
     /** What is chosen, else the default, else nothing to say yet. */

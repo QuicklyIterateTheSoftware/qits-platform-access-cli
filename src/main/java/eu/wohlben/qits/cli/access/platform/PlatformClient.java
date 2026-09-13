@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.wohlben.qits.cli.session.Credential;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -42,10 +44,20 @@ public final class PlatformClient {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final Pattern AUTH_PARAM = Pattern.compile("(error|error_description)=\"([^\"]*)\"");
 
-    private final AccessTokens tokens;
+    private final Credential credential;
 
-    public PlatformClient(AccessTokens tokens) {
-        this.tokens = tokens;
+    public PlatformClient(Credential credential) {
+        this.credential = credential;
+    }
+
+    /**
+     * The bearer for this call, and a refusal before it when the credential was never granted the
+     * service being dialled. Inside the platform a service's host name is its audience, which is
+     * what makes that check possible without the caller saying anything.
+     */
+    private String bearer(URI uri) throws CliFailure, InterruptedException {
+        credential.checkAudience(uri.getHost());
+        return "Bearer " + credential.bearer();
     }
 
     public JsonNode get(URI uri) throws CliFailure, InterruptedException {
@@ -89,7 +101,7 @@ public final class PlatformClient {
         HttpRequest request = builder
                 .timeout(REQUEST_TIMEOUT)
                 .header("Accept", "application/json")
-                .header("Authorization", "Bearer " + tokens.session().accessToken())
+                .header("Authorization", bearer(uri))
                 .build();
         try (HttpClient http = newClient()) {
             HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -97,7 +109,7 @@ public final class PlatformClient {
             try (InputStream body = response.body()) {
                 if (status < 200 || status >= 300) {
                     String text = new String(body.readNBytes(REFUSAL_BODY_LIMIT), StandardCharsets.UTF_8);
-                    throw refusal(method, uri, status, response.headers(), text);
+                    throw explained(status, refusal(method, uri, status, response.headers(), text));
                 }
                 JsonNode node;
                 try {
@@ -122,7 +134,7 @@ public final class PlatformClient {
     public Connection openStream(URI uri) throws CliFailure, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(uri)
                 .header("Accept", "text/event-stream")
-                .header("Authorization", "Bearer " + tokens.session().accessToken())
+                .header("Authorization", bearer(uri))
                 .GET()
                 .build();
         // A client per connection, so that stopping can abort exactly this one. No request
@@ -147,7 +159,7 @@ public final class PlatformClient {
                 body = "";
             }
             http.shutdownNow();
-            CliFailure refusal = refusal("GET", uri, status, response.headers(), body);
+            CliFailure refusal = explained(status, refusal("GET", uri, status, response.headers(), body));
             throw status >= 500 ? CliFailure.retryable(refusal.getMessage()) : refusal;
         }
         return new Connection(http, response.body());
@@ -188,7 +200,7 @@ public final class PlatformClient {
      * waits for the answer. Reading the token may refresh the session first.
      */
     public Socket openSocket(URI uri, WebSocket.Listener listener) throws CliFailure, InterruptedException {
-        String bearer = "Bearer " + tokens.session().accessToken();
+        String bearer = bearer(uri);
         // A client per connection, like openStream, so that stopping can abort exactly this one.
         HttpClient http = newClient();
         CompletableFuture<WebSocket> opening;
@@ -259,6 +271,16 @@ public final class PlatformClient {
             }
             http.shutdownNow();
         }
+    }
+
+    /**
+     * A refusal with the credential's own sentence above it, when it has one. The body stays: it is
+     * what the service said, and the line above is only what the caller is holding.
+     */
+    private CliFailure explained(int status, CliFailure refusal) {
+        String said = credential.explain(status);
+        return said == null ? refusal
+                : CliFailure.refused(said + System.lineSeparator() + refusal.getMessage(), status);
     }
 
     static CliFailure refusal(String method, URI uri, int status, HttpHeaders headers, String body) {

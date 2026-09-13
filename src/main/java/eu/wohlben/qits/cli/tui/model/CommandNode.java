@@ -4,7 +4,7 @@ import eu.wohlben.qits.cli.tui.api.Completes;
 import eu.wohlben.qits.cli.tui.api.CompletionSource;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.Output;
-import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.TuiCommands;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
@@ -48,30 +48,8 @@ public final class CommandNode {
 
     /** The whole tree under {@code spec}, subcommands and all. */
     public static CommandNode of(CommandSpec spec) {
-        TuiCommand declared = declaration(spec);
         return new CommandNode(spec.name(), firstLine(spec), children(spec), rows(spec),
-                declared == null ? Interaction.PLAIN : declared.interaction(),
-                declared == null ? Output.TEXT : declared.output());
-    }
-
-    /**
-     * The command's own {@code @TuiCommand}, or null.
-     * <p>
-     * The superclasses are walked because a command is a CDI bean and what the container hands back
-     * may be a generated subclass of the annotated class rather than the class itself.
-     */
-    private static TuiCommand declaration(CommandSpec spec) {
-        Object command = spec.userObject();
-        if (command == null) {
-            return null;
-        }
-        for (Class<?> type = command.getClass(); type != null && type != Object.class; type = type.getSuperclass()) {
-            TuiCommand declared = type.getAnnotation(TuiCommand.class);
-            if (declared != null) {
-                return declared;
-            }
-        }
-        return null;
+                TuiCommands.interactionOf(spec.userObject()), TuiCommands.outputOf(spec.userObject()));
     }
 
     /**

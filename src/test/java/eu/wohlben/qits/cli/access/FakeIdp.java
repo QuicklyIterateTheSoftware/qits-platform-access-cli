@@ -34,6 +34,13 @@ public final class FakeIdp implements AutoCloseable {
     public static final String SECRET = "SECRET-";
     private static final Set<String> CLIENTS = Set.of("qits-cli", "qits-git-workstation");
 
+    /** The commissioned client a workspace container carries, and what it is granted. */
+    public volatile String commissionedId = "dyn-workspace-352";
+    public volatile String commissionedSecret = "a secret";
+    public volatile List<String> grantedAudiences =
+            List.of("qits-platform", "dev-qits-projects", "dev-qits-ci");
+    public volatile long clientCredentialsExpiresIn = 3600;
+
     private record Approval(String challenge, String redirectUri) {
     }
 
@@ -96,6 +103,10 @@ public final class FakeIdp implements AutoCloseable {
             respond(exchange, forced, "{\"error\":\"temporarily_unavailable\"}");
             return;
         }
+        if ("client_credentials".equals(form.get("grant_type"))) {
+            clientCredentials(exchange, form);
+            return;
+        }
         if (!CLIENTS.contains(form.get("client_id")) || exchange.getRequestHeaders().containsKey("Authorization")
                 || form.containsKey("client_secret")) {
             respond(exchange, 400, "{\"error\":\"invalid_request\",\"error_description\":\"a public client must not use Authorization\"}");
@@ -127,6 +138,32 @@ public final class FakeIdp implements AutoCloseable {
             }
             default -> respond(exchange, 400, "{\"error\":\"unsupported_grant_type\"}");
         }
+    }
+
+    /**
+     * The confidential-client grant a workspace container uses. The answer's {@code aud} carries
+     * every audience the client holds, not the one that was asked for — which is how the real idp
+     * behaves, and why the CLI mints once and sends the same bearer everywhere.
+     */
+    private void clientCredentials(HttpExchange exchange, Map<String, String> form) throws IOException {
+        if (!commissionedId.equals(form.get("client_id")) || !commissionedSecret.equals(form.get("client_secret"))) {
+            respond(exchange, 401, "{\"error\":\"invalid_client\"}");
+            return;
+        }
+        String wanted = String.valueOf(form.get("audience"));
+        if (!grantedAudiences.contains(wanted)) {
+            respond(exchange, 400, "{\"error\":\"invalid_target\",\"error_description\":"
+                    + "\"audience is not allowed for this client\"}");
+            return;
+        }
+        String claims = "{\"aud\":["
+                + grantedAudiences.stream().map(a -> "\"" + a + "\"").collect(java.util.stream.Collectors.joining(","))
+                + "],\"groups\":[\"qits:agent\",\"clients/" + commissionedId + "\"],"
+                + "\"preferred_username\":\"" + commissionedId + "\"}";
+        String token = SECRET + "header." + Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(claims.getBytes(StandardCharsets.UTF_8)) + ".signature";
+        respond(exchange, 200, "{\"access_token\":\"" + token + "\",\"token_type\":\"Bearer\",\"expires_in\":"
+                + clientCredentialsExpiresIn + "}");
     }
 
     private String issue() {

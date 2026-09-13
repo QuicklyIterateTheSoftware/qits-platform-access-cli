@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.observe.SafeText;
-import eu.wohlben.qits.cli.access.platform.AccessTokens;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
@@ -96,9 +95,8 @@ public class CiCommand implements Runnable {
     }
 
     private Apis connect(CliContext context) throws CliFailure, InterruptedException {
-        AccessTokens tokens = context.tokens();
-        String idpUrl = tokens.session().idpUrl();
-        PlatformClient client = new PlatformClient(tokens);
+        String idpUrl = context.idpUrl();
+        PlatformClient client = new PlatformClient(context.credential());
         return new Apis(client, idpUrl, new CiApi(client, PlatformUrls.ci(ciUrl, context.env(), idpUrl)));
     }
 

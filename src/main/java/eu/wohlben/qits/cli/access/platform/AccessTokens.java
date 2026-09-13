@@ -5,6 +5,8 @@ import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
 import eu.wohlben.qits.cli.access.session.SessionRefresh;
 import eu.wohlben.qits.cli.access.session.SessionRefresh.Outcome;
+import eu.wohlben.qits.cli.access.session.TokenClaims;
+import eu.wohlben.qits.cli.session.Credential;
 
 import java.io.IOException;
 import java.time.Clock;
@@ -21,7 +23,7 @@ import java.util.function.Function;
  * SessionRefresh}: under the write lock and after a second read, so a refresh the daemon (or
  * another command) made meanwhile is used instead of spending the refresh token twice.
  */
-public final class AccessTokens {
+public final class AccessTokens implements Credential {
 
     /** The daemon's default margin: a token this close to its end may expire on the way. */
     public static final Duration MARGIN = Duration.ofSeconds(30);
@@ -37,6 +39,16 @@ public final class AccessTokens {
         this.store = store;
         this.clock = clock;
         this.idpFor = idpFor;
+    }
+
+    @Override
+    public String bearer() throws CliFailure, InterruptedException {
+        return session().accessToken();
+    }
+
+    @Override
+    public String who() throws CliFailure, InterruptedException {
+        return TokenClaims.of(bearer()).who().map(name -> "signed in as " + name).orElse("signed in");
     }
 
     /** The session, refreshed first when its access token is about to expire. */

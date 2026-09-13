@@ -9,8 +9,13 @@ that session fresh), `qits projects|repositories|ticket|release-request` (the pr
 `qits ci runs|run|retry` (qits-ci's runs, a run's step logs, a retry), `qits events` (the live event
 stream), `qits observe` (the live, server-filtered telemetry stream
 of qits-observability, over a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
-`refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`). The README says how
-each behaves.
+`refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), and `qits tui` (an
+interactive screen over all of them). The README says how each behaves.
+
+It has **two homes**. A workstation, where a person signs in with a browser and the session lives in
+a file, and a workspace container on the platform, where the commissioned client pair the container
+was injected with is the credential and the services are dialled by their wire aliases. The mode is
+decided once at startup and the two are never mixed.
 
 ## Layout
 
@@ -35,6 +40,19 @@ each behaves.
                were; the picocli commands and PublishArgs (the argument-grammar checks Args used
                to do) are new. Touches no session file — see Conventions.
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
+    complete/  the six platform sources behind the TUI's dropdowns (projects, repositories,
+               release requests, tickets, runs, versions), over the credential the commands use
+
+Two packages sit outside `access/`, because neither is about one command:
+
+    ../tui/      `qits tui`: the screen over the whole command tree. api/ is its contract
+                 (@TuiCommand, CompletionSource, @Completes), model/ the tree read from
+                 CommandSpec, screen/ the lines, run/ the fork and the history, complete/ the
+                 resolution and caching of sources. TuiApp is all of the behaviour, with no
+                 terminal in it.
+    ../session/  which of the CLI's two homes this is (Mode), where the services are in it
+                 (PlatformEndpoints), the container's credential (AgentCredential), what a call
+                 is made with either way (Credential), and BrowserGuard.
 
 ## Conventions
 
@@ -59,8 +77,22 @@ each behaves.
   platform commands both call it. Do not copy it. `git.json` follows the same rules under
   `git.json.lock` (`GitAccess`); its tokens are another client's (`qits-git-workstation`), so the
   two files never share a token. Both are written through `PrivateFiles`.
-- **One place decides a service's address**: `PlatformUrls`. A later in-platform mode (internal
-  names, a token from the container) goes there, not into the commands.
+- **One place decides a service's address**: `PlatformEndpoints`. `PlatformUrls` keeps the commands'
+  own flags and `QITS_<APP>_URL` variables and hands the rest to it. The public vhosts on a
+  workstation, the wire aliases inside the platform, `QITS_URL_<APP>` over either. The epic
+  *Remove the platform service concept* deletes the environment prefix and the platform/environment
+  split; that must stay one edit there.
+- **One credential interface**: `Credential`. `AccessTokens` is the workstation's, `AgentCredential`
+  the container's, and `CliContext.credential()` picks by mode. A command never asks which it has.
+  The two are never mixed: in-platform never opens the session file, and a workstation never mints
+  with a client secret (`BothHomesTest`).
+- **The TUI holds no command's name.** Everything it shows it read from picocli's model.
+  `FictionalCommandTest` fails the build if a string literal under `eu.wohlben.qits.cli.tui` names a
+  command. What the model cannot say is said by `@TuiCommand(interaction, output)` on the command
+  and `@Completes(SomeSource.class)` on the option — both optional, both with a working default.
+- **The CLI never sends `X-Qits-User` / `X-Qits-Roles`.** Those are what the gateway asserts about a
+  caller; a client that writes them asserts a role it does not hold. An agent that needs a door its
+  credential cannot open is granted the audience instead.
 - **Platform answers are read as Jackson trees** (`JsonNode`), not records: the services add fields
   and grow their word lists, and a tree needs no reflection in the native binary.
 - **Write first.** Once the idp answers a refresh, the old refresh token is spent: write the new
@@ -123,6 +155,14 @@ Native rules: HTTP and WebSocket with `java.net.http`, never `java.awt` (the bro
 class with a `SecureRandom` in a static field is initialised at run time (`Pkce`, in the native
 profile). Records Jackson reads or writes carry `@RegisterForReflection`. A change to any of these
 is proven with the native binary, not with the tests.
+
+JLine is asked for its `exec` provider by name and the pom depends on `jline-terminal`, never the
+aggregate `jline`: the jni and ffm providers do not survive GraalVM's analysis. `org.jline.nativ` is
+initialised at run time for the same reason. `NativeImageRulesTest` fails the build if a forbidden
+provider reaches the classpath, and `docker/Dockerfile` runs `qits tui` in the built binary with no
+terminal and checks it says so and exits 2 rather than waiting for a key. An enum used as an option
+type needs `@RegisterForReflection` for the TUI to list its constants; without it the option is
+typed rather than picked, never a crash.
 
 ## Tests
 

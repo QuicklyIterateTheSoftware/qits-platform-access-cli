@@ -1,5 +1,8 @@
 package eu.wohlben.qits.cli.access.platform;
 
+import eu.wohlben.qits.cli.session.Mode;
+import eu.wohlben.qits.cli.session.PlatformEndpoints;
+
 import java.net.URI;
 import java.util.Map;
 
@@ -7,13 +10,10 @@ import java.util.Map;
  * Where a platform service is, as a base URL without its path prefix ({@code
  * https://projects.dev.wohlben.eu}). The one place that decides it.
  * <p>
- * Order: the command's flag, else {@code QITS_<APP>_URL}, else derived from the session's idp
- * address. Every service lives at {@code <app>.<env>.<domain>} behind the edge, and the idp at
- * {@code idp.<env>.<domain>}, so the first host label is swapped: {@code
- * https://idp.dev.wohlben.eu/idp} gives {@code https://projects.dev.wohlben.eu}.
- * <p>
- * A later in-platform mode (a container that reaches services on their internal names) belongs
- * here too, as a further branch before the derivation.
+ * Order: the command's flag, else {@code QITS_<APP>_URL}, else whatever {@link PlatformEndpoints}
+ * works out — the public vhost on a workstation, the wire alias inside the platform. The commands
+ * keep their own flags and variables, and the addresses themselves are decided in one class, so the
+ * day the environment prefix goes away is one edit there.
  */
 public final class PlatformUrls {
 
@@ -67,20 +67,9 @@ public final class PlatformUrls {
         if (!blank(configured)) {
             return trim(configured);
         }
-        String refused = "Cannot tell the " + app + " address from the idp address " + idpUrl
-                + ". Pass " + flagName + " or set " + variable + ".";
-        URI idp;
-        try {
-            idp = URI.create(idpUrl == null ? "" : idpUrl.strip());
-        } catch (IllegalArgumentException e) {
-            throw new CliFailure(refused, CliFailure.USAGE);
-        }
-        String host = idp.getHost();
-        if (idp.getScheme() == null || host == null || !host.startsWith("idp.")) {
-            throw new CliFailure(refused, CliFailure.USAGE);
-        }
-        return idp.getScheme() + "://" + app + host.substring("idp".length())
-                + (idp.getPort() == -1 ? "" : ":" + idp.getPort());
+        return new PlatformEndpoints(Mode.of(env), env, idpUrl).base(app,
+                "Cannot tell the " + app + " address from the idp address " + idpUrl
+                        + ". Pass " + flagName + " or set " + variable + ".");
     }
 
     private static String trim(String url) {

@@ -1,7 +1,6 @@
 package eu.wohlben.qits.cli.access.complete;
 
 import eu.wohlben.qits.cli.access.ci.CiApi;
-import eu.wohlben.qits.cli.access.platform.AccessTokens;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
@@ -43,11 +42,8 @@ public abstract class PlatformSource implements CompletionSource {
     }
 
     protected CiApi ci() {
-        return read(() -> {
-            AccessTokens tokens = context().tokens();
-            String idpUrl = tokens.session().idpUrl();
-            return new CiApi(new PlatformClient(tokens), PlatformUrls.ci(null, context().env(), idpUrl));
-        });
+        return read(() -> new CiApi(new PlatformClient(context().credential()),
+                PlatformUrls.ci(null, context().env(), context().idpUrl())));
     }
 
     /** The repository the two chosen values name, with the project already looked up. */

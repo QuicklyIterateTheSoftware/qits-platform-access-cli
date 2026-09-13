@@ -1,6 +1,6 @@
 package eu.wohlben.qits.cli.access.events;
 
-import eu.wohlben.qits.cli.access.platform.AccessTokens;
+import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
@@ -53,17 +53,18 @@ public class EventsCommand extends PlatformCommand {
     @Override
     protected int execute(CliContext context) throws CliFailure, InterruptedException {
         String names = names(filter);
-        AccessTokens tokens = context.tokens();
-        // Fails at once without a session, rather than in the reconnect loop.
-        String idpUrl = tokens.session().idpUrl();
-        String base = PlatformUrls.events(eventsUrl, context.env(), idpUrl);
+        // Fails at once without a credential, rather than in the reconnect loop.
+        Credential credential = context.credential();
+        credential.bearer();
+        String base = PlatformUrls.events(eventsUrl, context.env(), context.idpUrl());
         URI uri;
         try {
             uri = URI.create(base + "/events/api/stream?names=" + names);
         } catch (IllegalArgumentException e) {
             throw new CliFailure("'" + base + "' is not a usable events address.", CliFailure.USAGE);
         }
-        EventStream stream = new EventStream(new PlatformClient(tokens), uri, context.out(), context.err(),
+        credential.checkAudience(uri.getHost());
+        EventStream stream = new EventStream(new PlatformClient(credential), uri, context.out(), context.err(),
                 context.clock(), context.sleeper(), EventStream.IDLE_LIMIT);
         context.onStop().accept(stream::stop);
         return stream.run();

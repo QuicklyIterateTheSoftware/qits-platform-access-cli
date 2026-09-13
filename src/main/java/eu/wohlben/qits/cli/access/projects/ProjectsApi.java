@@ -3,7 +3,6 @@ package eu.wohlben.qits.cli.access.projects;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import eu.wohlben.qits.cli.access.platform.AccessTokens;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
@@ -36,11 +35,10 @@ public final class ProjectsApi {
         this.base = base;
     }
 
-    /** Reads the session (refreshing it if due) and finds the service. */
+    /** Takes this home's credential (refreshing a session if it is due) and finds the service. */
     public static ProjectsApi connect(CliContext context, String projectsUrl) throws CliFailure, InterruptedException {
-        AccessTokens tokens = context.tokens();
-        String idpUrl = tokens.session().idpUrl();
-        return new ProjectsApi(new PlatformClient(tokens), PlatformUrls.projects(projectsUrl, context.env(), idpUrl));
+        return new ProjectsApi(new PlatformClient(context.credential()),
+                PlatformUrls.projects(projectsUrl, context.env(), context.idpUrl()));
     }
 
     /** {@code {"entries":[{"project":{…}}]}}. */

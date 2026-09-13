@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.access;
 
+import eu.wohlben.qits.cli.session.BrowserGuard;
+import eu.wohlben.qits.cli.session.Mode;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
@@ -27,6 +29,11 @@ public class Main implements QuarkusApplication {
 
     @Override
     public int run(String... args) throws Exception {
+        // Inside the platform the commands that want a browser are refused before they start.
+        // Wired here rather than in each of them: the declaration that says a command opens a
+        // browser is the one the screen reads, and one guard cannot disagree with itself.
+        commandLine.setExecutionStrategy(
+                new BrowserGuard(commandLine.getExecutionStrategy(), Mode.of(System.getenv())));
         return commandLine.execute(effectiveArgs(args, invokedAs()));
     }
 

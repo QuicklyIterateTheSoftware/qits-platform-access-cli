@@ -1,6 +1,6 @@
 package eu.wohlben.qits.cli.access.observe;
 
-import eu.wohlben.qits.cli.access.platform.AccessTokens;
+import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
@@ -79,11 +79,12 @@ public class ObserveCommand extends PlatformCommand {
             groups.add(FilterGrammar.parse(filter));
         }
         String frame = FilterGrammar.subscribeFrame(groups);
-        AccessTokens tokens = context.tokens();
-        // Fails at once without a session, rather than in the reconnect loop.
-        String idpUrl = tokens.session().idpUrl();
-        URI uri = socketUri(PlatformUrls.observability(observabilityUrl, context.env(), idpUrl));
-        ObserveStream stream = new ObserveStream(new PlatformClient(tokens), uri, frame, json, ZoneId.systemDefault(),
+        // Fails at once without a credential, rather than in the reconnect loop.
+        Credential credential = context.credential();
+        credential.bearer();
+        URI uri = socketUri(PlatformUrls.observability(observabilityUrl, context.env(), context.idpUrl()));
+        credential.checkAudience(uri.getHost());
+        ObserveStream stream = new ObserveStream(new PlatformClient(credential), uri, frame, json, ZoneId.systemDefault(),
                 context.out(), context.err(), context.clock(), context.sleeper(), ObserveStream.IDLE_LIMIT,
                 ObserveStream.PING_EVERY);
         context.onStop().accept(stream::stop);

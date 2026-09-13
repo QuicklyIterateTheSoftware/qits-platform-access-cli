@@ -4,8 +4,7 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
-import eu.wohlben.qits.cli.access.session.Session;
-import eu.wohlben.qits.cli.access.session.TokenClaims;
+import eu.wohlben.qits.cli.session.PlatformEndpoints;
 import eu.wohlben.qits.cli.tui.complete.Completions;
 import eu.wohlben.qits.cli.tui.model.CommandNode;
 import eu.wohlben.qits.cli.tui.run.CommandRunner;
@@ -21,7 +20,6 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Optional;
 
 /**
  * {@code qits tui}: every command of this CLI, picked instead of remembered.
@@ -78,7 +76,8 @@ public class TuiCommand extends PlatformCommand {
                 context.err().println(Frame.tooSmall(width, height));
                 return CliFailure.USAGE;
             }
-            loop(terminal, new TuiApp(root, header, new CommandRunner(), completions()));
+            loop(terminal, new TuiApp(root, header, new CommandRunner(), completions())
+                    .inPlatform(context.mode().inPlatform()));
             return 0;
         } catch (IOException | RuntimeException noTerminal) {
             // JLine refuses a system terminal in a pipe, a CI step or a `docker build` with an
@@ -146,34 +145,46 @@ public class TuiCommand extends PlatformCommand {
         }
     }
 
-    /** {@code qits tui · dev.wohlben.eu · signed in as jan}, or what there is of it. */
+    /**
+     * Where this is and who is holding it: {@code dev.wohlben.eu · signed in as jan} on a
+     * workstation, {@code in platform · dev · agent (qits:agent)} in a container.
+     * <p>
+     * Neither is worth refusing to paint over. A person browsing the command tree needs no
+     * credential at all, so one that cannot be read becomes a word in the header and nothing more.
+     */
     String header(CliContext context) {
-        Optional<Session> session = readSession(context);
-        String where = session.map(s -> domain(s.idpUrl())).orElse("no session");
-        String who = session.flatMap(s -> TokenClaims.of(s.accessToken()).who())
-                .map(name -> "signed in as " + name)
-                .orElse("not signed in");
-        return "qits tui \u00b7 " + where + " \u00b7 " + who;
+        if (context.mode().inPlatform()) {
+            return "qits tui \u00b7 in platform \u00b7 "
+                    + new PlatformEndpoints(context.mode(), context.env(), null).environment()
+                    + " \u00b7 " + who(context);
+        }
+        return "qits tui \u00b7 " + domain(context) + " \u00b7 " + who(context);
     }
 
-    /** Browsing the tree needs no session, so an unreadable one is nothing to fail over. */
-    private Optional<Session> readSession(CliContext context) {
+    private String who(CliContext context) {
         try {
-            return context.sessionFile().read();
-        } catch (IOException | RuntimeException unreadable) {
-            return Optional.empty();
+            String held = context.credential().who();
+            return held.isBlank() ? "no credential" : held;
+        } catch (CliFailure | RuntimeException noCredential) {
+            return "not signed in";
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return "not signed in";
         }
     }
 
     /** {@code https://idp.dev.wohlben.eu/idp} is {@code dev.wohlben.eu}. */
-    static String domain(String idpUrl) {
+    private String domain(CliContext context) {
         try {
-            String host = URI.create(idpUrl == null ? "" : idpUrl.strip()).getHost();
+            String host = URI.create(String.valueOf(context.idpUrl()).strip()).getHost();
             if (host == null) {
                 return "no session";
             }
             return host.startsWith("idp.") ? host.substring("idp.".length()) : host;
-        } catch (IllegalArgumentException notAUrl) {
+        } catch (CliFailure | RuntimeException noSession) {
+            return "no session";
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
             return "no session";
         }
     }
