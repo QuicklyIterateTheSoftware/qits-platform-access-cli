@@ -227,6 +227,12 @@ the signal, decided once at startup:
 A workstation is untouched by any of this: without the pair, nothing ever mints with a client
 secret and the session file is the only credential there is.
 
+The container is also quiet. The workspace image sets `QUARKUS_ANALYTICS_DISABLED=true` for the
+Maven builds the agent runs there, and this binary is a Quarkus application as well, so that
+variable used to make it print a configuration warning on stdout ahead of every answer — corrupt
+data for `qits ticket list | head` and for anything else that reads the output. The build now
+records the same value, the two agree, and nothing but the command's own answer is printed.
+
 ### The smoke run
 
 Repeat it from any workspace container. Recorded on dev, 2026-09-13, from the released binary

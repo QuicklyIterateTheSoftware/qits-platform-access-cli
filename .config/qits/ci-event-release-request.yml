@@ -70,4 +70,19 @@ steps:
       # Talks to nothing: `--help` needs no session and no platform.
       ./out/qits --help >/dev/null
 
+      # The workspace image this binary is baked into sets QUARKUS_ANALYTICS_DISABLED=true for the
+      # Maven builds around it. The CLI is a Quarkus application too, and a build time fixed
+      # property that disagrees with its environment prints a ConfigRecorder WARN on stdout in
+      # front of the answer — corrupt data for anything that pipes `qits`. application.properties
+      # records the same value so the two agree; this is what proves it stayed that way, in the
+      # shipping form, where a stale build would otherwise only be found in a container.
+      noise=$(QUARKUS_ANALYTICS_DISABLED=true ./out/qits --help 2>&1) || true
+      case "$noise" in
+        *ConfigRecorder*|*"Build time property"*)
+          echo "$noise" >&2
+          echo "the binary prints Quarkus configuration noise under QUARKUS_ANALYTICS_DISABLED" >&2
+          exit 1
+          ;;
+      esac
+
       echo "qits built: $(sha256sum out/qits | cut -d' ' -f1)"
