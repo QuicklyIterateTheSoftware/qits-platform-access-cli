@@ -224,8 +224,26 @@ the signal, decided once at startup:
   `QITS_URL_<APP>` overrides any of them;
 - the credential is `qits:agent`. Every read door answers and an operator write answers `403`, which
   is correct behaviour and is worded as such;
-- it is granted most audiences but not all, and a command against one outside the grant says so in a
-  sentence instead of failing at the socket.
+- **nothing is refused before the call.** The audience a command dials is not this credential's to
+  judge: every qits service accepts `qits-platform` beside its own name
+  (`quarkus.oidc.token.audience=${qits.auth.machine.audience},qits-platform`, in all fourteen
+  services that carry the setting), and the one token this credential mints carries exactly that.
+  A service that really does refuse the token answers `401`, and only then does the CLI add a
+  sentence of its own, naming the audience it asked the idp for.
+
+This used to work the other way round, and it was wrong. The CLI read the minted token's `aud`
+claim and refused any service the claim did not name — a false negative, because the claim names
+each service's own audience and not the fleet-wide one every service also accepts. It cost
+`qits observe` its entire reason for existing in a container: qits-observability grants `qits:agent`
+read access **on purpose** (its `AgentReadAccessTest` asserts that an agent reads the telemetry API
+and opens the live stream), and the CLI was the only thing saying no. Measured from a workspace
+container on 2026-09-14, with the very bearer the CLI would not send:
+
+    $ curl -H "Authorization: Bearer $(qits-token qits-platform)" \
+        http://dev-qits-observability:8080/observability/api/telemetry/sources
+    200
+    $ ... /observability/api/telemetry/errors?limit=3
+    200  {"groups":[],"total":0,…}
 
 A workstation is untouched by any of this: without the pair, nothing ever mints with a client
 secret and the session file is the only credential there is.
@@ -254,8 +272,10 @@ Repeat it from any workspace container. Recorded on dev, 2026-09-13, from the re
     # exit 1 — a write door, answered as what it is
 
     $ qits observe --filter=service=qits-ci
-    the workspace credential is not granted dev-qits-observability
-    # exit 2 — the one audience this client is refused
+    # the stream opens and prints telemetry until stopped
+    # the run recorded here on 2026-09-13 showed this exiting 2 with "the workspace credential is
+    # not granted dev-qits-observability". That was the CLI's own false negative, not the
+    # platform's answer: the service takes this credential and always did (see above).
 
     $ qits login
     no browser in the platform - the workspace credential is already in use

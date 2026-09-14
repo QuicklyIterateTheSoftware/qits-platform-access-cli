@@ -63,7 +63,6 @@ public class EventsCommand extends PlatformCommand {
         } catch (IllegalArgumentException e) {
             throw new CliFailure("'" + base + "' is not a usable events address.", CliFailure.USAGE);
         }
-        credential.checkAudience(uri.getHost());
         EventStream stream = new EventStream(new PlatformClient(credential), uri, context.out(), context.err(),
                 context.clock(), context.sleeper(), EventStream.IDLE_LIMIT);
         context.onStop().accept(stream::stop);

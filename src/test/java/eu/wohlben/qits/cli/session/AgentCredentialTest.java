@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** The workspace credential, against a stubbed idp: one mint, one bearer, and a refused audience. */
+/** The workspace credential, against a stubbed idp: one mint, one bearer, and what it says when refused. */
 class AgentCredentialTest {
 
     private static final Instant T0 = Instant.parse("2026-09-13T10:00:00Z");
@@ -54,8 +54,6 @@ class AgentCredentialTest {
     void oneTokenServesEveryServiceTheClientHolds() throws CliFailure {
         AgentCredential agent = credential("qits-platform");
         String first = agent.bearer();
-        agent.checkAudience("dev-qits-projects");
-        agent.checkAudience("dev-qits-ci");
         assertThat(agent.bearer()).isEqualTo(first);
         assertThat(agent.mints()).as("the aud claim carries the whole grant, so once is enough").isEqualTo(1);
         assertThat(agent.granted()).contains("dev-qits-projects", "dev-qits-ci", "qits-platform");
@@ -74,20 +72,30 @@ class AgentCredentialTest {
         assertThat(agent.mints()).as("under a minute left is a new token").isEqualTo(2);
     }
 
+    /**
+     * This used to be a refusal written before the call, from the {@code aud} claim: a service the
+     * claim did not name was refused outright. It was wrong — every qits service also accepts
+     * {@code qits-platform}, which is what this token carries, so the refusal was a false negative
+     * that cost {@code qits observe} its agent audience entirely (measured on dev 2026-09-14:
+     * qits-observability answered 200 to the very bearer the CLI would not send it). What is left
+     * is a sentence said only <i>after</i> a service has refused, and it names what was asked for.
+     */
     @Test
-    void aServiceOutsideTheGrantIsOnePlainSentence() throws CliFailure {
+    void aServiceThatRefusesTheTokenIsOnePlainSentence() {
         AgentCredential agent = credential("qits-platform");
-        assertThatThrownBy(() -> agent.checkAudience("dev-qits-observability"))
-                .isInstanceOf(CliFailure.class)
-                .hasMessage("the workspace credential is not granted dev-qits-observability")
-                .satisfies(refusal -> assertThat(((CliFailure) refusal).exitCode()).isEqualTo(CliFailure.USAGE));
+        assertThat(agent.explain(401))
+                .isEqualTo("401 - this service did not accept the workspace credential,"
+                        + " which asked the idp for the audience qits-platform");
+        assertThat(agent.explain(403))
+                .isEqualTo("403 - this credential is qits:agent, which reads but does not write");
+        assertThat(agent.explain(404)).isNull();
     }
 
+    /** The sentence names the audience that was actually asked for, not a constant. */
     @Test
-    void anAddressSomebodyPointedAtByHandIsNotJudged() throws CliFailure {
-        AgentCredential agent = credential("qits-platform");
-        agent.checkAudience("127.0.0.1");
-        agent.checkAudience("projects.dev.wohlben.eu");
+    void theSentenceNamesTheAudienceThatWasAskedFor() {
+        assertThat(credential("dev-qits-githost").explain(401))
+                .endsWith("which asked the idp for the audience dev-qits-githost");
     }
 
     @Test

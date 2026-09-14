@@ -51,12 +51,11 @@ public final class PlatformClient {
     }
 
     /**
-     * The bearer for this call, and a refusal before it when the credential was never granted the
-     * service being dialled. Inside the platform a service's host name is its audience, which is
-     * what makes that check possible without the caller saying anything.
+     * The bearer for this call. Nothing is refused here on the strength of the address: whether a
+     * service accepts this token is that service's answer to give, and a 401 comes back with the
+     * credential's own sentence on it ({@link #explained}).
      */
-    private String bearer(URI uri) throws CliFailure, InterruptedException {
-        credential.checkAudience(uri.getHost());
+    private String bearer() throws CliFailure, InterruptedException {
         return "Bearer " + credential.bearer();
     }
 
@@ -101,7 +100,7 @@ public final class PlatformClient {
         HttpRequest request = builder
                 .timeout(REQUEST_TIMEOUT)
                 .header("Accept", "application/json")
-                .header("Authorization", bearer(uri))
+                .header("Authorization", bearer())
                 .build();
         try (HttpClient http = newClient()) {
             HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -134,7 +133,7 @@ public final class PlatformClient {
     public Connection openStream(URI uri) throws CliFailure, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(uri)
                 .header("Accept", "text/event-stream")
-                .header("Authorization", bearer(uri))
+                .header("Authorization", bearer())
                 .GET()
                 .build();
         // A client per connection, so that stopping can abort exactly this one. No request
@@ -200,7 +199,7 @@ public final class PlatformClient {
      * waits for the answer. Reading the token may refresh the session first.
      */
     public Socket openSocket(URI uri, WebSocket.Listener listener) throws CliFailure, InterruptedException {
-        String bearer = bearer(uri);
+        String bearer = bearer();
         // A client per connection, like openStream, so that stopping can abort exactly this one.
         HttpClient http = newClient();
         CompletableFuture<WebSocket> opening;
@@ -213,7 +212,7 @@ public final class PlatformClient {
             http.shutdownNow();
             throw new CliFailure("'" + uri + "' is not a usable WebSocket address.", CliFailure.USAGE);
         }
-        return new Socket(uri, http, opening);
+        return new Socket(uri, http, opening, credential);
     }
 
     /** A WebSocket being opened, then open. {@link #abort()} may be called from any thread. */
@@ -221,16 +220,25 @@ public final class PlatformClient {
         private final URI uri;
         private final HttpClient http;
         private final CompletableFuture<WebSocket> opening;
+        /** Kept so a refused handshake reads the same as a refused request: see {@link #await()}. */
+        private final Credential credential;
 
-        Socket(URI uri, HttpClient http, CompletableFuture<WebSocket> opening) {
+        Socket(URI uri, HttpClient http, CompletableFuture<WebSocket> opening, Credential credential) {
             this.uri = uri;
             this.http = http;
             this.opening = opening;
+            this.credential = credential;
         }
 
         /**
          * The open socket, once the platform accepted the upgrade. A refusal is a {@link
          * CliFailure}: retryable for a 5xx or a network error, final for any other status.
+         * <p>
+         * A 401 or a 403 gets the credential's own sentence above it, the same as a refused
+         * request does. This is the path {@code qits observe} takes, and it is the path that used
+         * to be cut off before it was ever walked: the audience check refused the command outright
+         * rather than letting qits-observability answer. It answers, so the socket is opened and
+         * only a real refusal is worded.
          */
         public WebSocket await() throws CliFailure, InterruptedException {
             try {
@@ -253,7 +261,9 @@ public final class PlatformClient {
                     if (status < 300) {
                         throw new CliFailure(refusal.getMessage() + ", not a WebSocket upgrade", CliFailure.FAILED);
                     }
-                    throw refusal;
+                    String said = credential.explain(status);
+                    throw said == null ? refusal
+                            : CliFailure.refused(said + System.lineSeparator() + refusal.getMessage(), status);
                 }
                 throw CliFailure.retryable("Cannot reach " + uri + ": " + describe(cause == null ? failed : cause));
             }

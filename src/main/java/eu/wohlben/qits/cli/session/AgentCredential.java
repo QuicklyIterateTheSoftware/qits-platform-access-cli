@@ -109,35 +109,38 @@ public final class AgentCredential implements Credential {
     }
 
     /**
-     * Refused only for a service dialled by its own name on the wire, which is what its audience is.
+     * The two refusals an agent meets, worded as sentences. Neither is read before the call: the
+     * service decides, and this only says what the caller was holding when it decided.
      * <p>
-     * Inside the platform a service is a single label — {@code dev-qits-projects} — and a name with
-     * a dot in it is something a person pointed at by hand, with {@code QITS_URL_<APP>} or a
-     * command's own flag. Whatever that is, it is not this credential's grant to judge: the call
-     * goes out and whatever answers, answers.
-     */
-    @Override
-    public synchronized void checkAudience(String wanted) throws CliFailure {
-        bearer();
-        if (wanted == null || wanted.isBlank() || wanted.contains(".") || granted.isEmpty()
-                || granted.contains(wanted)) {
-            return;
-        }
-        throw new CliFailure("the workspace credential is not granted " + wanted, CliFailure.USAGE);
-    }
-
-    /**
-     * The one refusal an agent will meet often. The credential reads across the estate and writes
-     * nowhere, which is the correct answer and not a fault to work around.
+     * <b>403</b> is the one an agent will meet often. The credential reads across the estate and
+     * writes nowhere, which is the correct answer and not a fault to work around. It is <b>not</b>
+     * worked around with {@code X-Qits-User} / {@code X-Qits-Roles}. Those headers are what the
+     * gateway asserts <i>about</i> a caller; a client that writes them asserts a role it does not
+     * hold, which is a privilege escalation with a friendly name. An agent that needs a door this
+     * credential cannot open is granted the audience, not given a header.
      * <p>
-     * <b>Not</b> worked around with {@code X-Qits-User} / {@code X-Qits-Roles}. Those headers are
-     * what the gateway asserts <i>about</i> a caller; a client that writes them asserts a role it
-     * does not hold, which is a privilege escalation with a friendly name. An agent that needs a
-     * door this credential cannot open is granted the audience, not given a header.
+     * <b>401</b> is the one this class used to guess at before dialling, by reading the minted
+     * token's {@code aud} claim and refusing anything not named in it. That guess was wrong, and it
+     * cost a command: every qits service accepts {@code qits-platform} beside its own name
+     * ({@code quarkus.oidc.token.audience=${qits.auth.machine.audience},qits-platform}, in all
+     * fourteen services that carry the setting), and this credential's one token carries exactly
+     * that. The check was
+     * refusing calls the platform would have answered — measured on dev 2026-09-14, where
+     * {@code qits observe} exited 2 saying it was not granted {@code dev-qits-observability} while
+     * that service answered {@code 200} to the very same bearer. So the audience is no longer
+     * judged here; if a service really does refuse the token, it says so with a 401 and this line
+     * names what was sent.
      */
     @Override
     public String explain(int status) {
-        return status == 403 ? "403 - this credential is qits:agent, which reads but does not write" : null;
+        if (status == 403) {
+            return "403 - this credential is qits:agent, which reads but does not write";
+        }
+        if (status == 401) {
+            return "401 - this service did not accept the workspace credential, which asked the idp"
+                    + " for the audience " + audience;
+        }
+        return null;
     }
 
     @Override

@@ -83,7 +83,6 @@ public class ObserveCommand extends PlatformCommand {
         Credential credential = context.credential();
         credential.bearer();
         URI uri = socketUri(PlatformUrls.observability(observabilityUrl, context.env(), context.idpUrl()));
-        credential.checkAudience(uri.getHost());
         ObserveStream stream = new ObserveStream(new PlatformClient(credential), uri, frame, json, ZoneId.systemDefault(),
                 context.out(), context.err(), context.clock(), context.sleeper(), ObserveStream.IDLE_LIMIT,
                 ObserveStream.PING_EVERY);

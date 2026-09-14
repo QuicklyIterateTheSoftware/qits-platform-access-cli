@@ -62,10 +62,45 @@ class InPlatformRefusalsTest {
                 .hasMessageContaining("HTTP 403");
     }
 
+    /**
+     * The defect this replaced: the credential refused a service its {@code aud} claim did not
+     * name, before dialling it. Every qits service also accepts {@code qits-platform} — the one
+     * audience this token carries — so that refusal answered for services that would have said yes.
+     * {@code localhost} stands in for a wire alias here on purpose: a single label, not in the
+     * grant, exactly the shape the old check refused.
+     */
+    @Test
+    void aServiceOutsideTheGrantIsDialledRatherThanRefused() throws Exception {
+        platform.answer("GET", "/observability/api/telemetry/sources", "{\"sources\":[]}");
+        AgentCredential agent = agent();
+        assertThat(agent.granted()).doesNotContain("localhost");
+        assertThat(new PlatformClient(agent).get(byName("/observability/api/telemetry/sources")))
+                .isNotNull();
+        assertThat(platform.requests("GET", "/observability/api/telemetry/sources"))
+                .as("the call went out; the service decides, not the claim").hasSize(1);
+    }
+
+    @Test
+    void aServiceThatRefusesTheTokenSaysSoAboveWhatTheServiceSaid() {
+        platform.answer("GET", "/observability/api/telemetry/sources", 401, "{\"error\":\"unauthorized\"}");
+        PlatformClient client = new PlatformClient(agent());
+        assertThatThrownBy(() -> client.get(byName("/observability/api/telemetry/sources")))
+                .isInstanceOf(CliFailure.class)
+                .hasMessageStartingWith("401 - this service did not accept the workspace credential,"
+                        + " which asked the idp for the audience qits-platform")
+                .hasMessageContaining("HTTP 401");
+    }
+
+    /** The fake binds to the loopback address; this dials the same port by a name with no dot in it. */
+    private URI byName(String path) {
+        return URI.create(platform.url().replace("127.0.0.1", "localhost") + path);
+    }
+
     @Test
     void aWorkstationSessionAddsNothingOfItsOwn() {
         assertThat(new AgentCredential("http://idp", "id", "secret", "a", time).explain(404)).isNull();
         assertThat(((Credential) () -> "token").explain(403)).isNull();
+        assertThat(((Credential) () -> "token").explain(401)).isNull();
     }
 
     @Test
