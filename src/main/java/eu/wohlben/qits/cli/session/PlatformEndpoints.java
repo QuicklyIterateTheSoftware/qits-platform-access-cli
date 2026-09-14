@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.session;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +18,8 @@ import java.util.Set;
  * <p>
  * The rule, not a table: an environment service is {@code http://<env>-qits-<app>:8080} and a
  * platform service is {@code http://qits-platform-<app>:8080}. {@code <env>} comes from {@code
- * QITS_ENV}, else from the host of {@code QITS_WORKSPACE_DAEMON_URL}, else {@code dev}.
+ * QITS_ENV}, else from the host of whichever platform URL the container carries, else
+ * {@code dev}.
  * <p>
  * Keeping it in one class is deliberate: the epic <i>Remove the platform service concept</i> deletes
  * both the environment prefix and the platform/environment split, and that has to be one edit here
@@ -33,6 +35,18 @@ public final class PlatformEndpoints {
 
     static final String ENVIRONMENT = "QITS_ENV";
     static final String DAEMON_URL = "QITS_WORKSPACE_DAEMON_URL";
+    static final String PROJECTS_DAEMON_URL = "QITS_PROJECTS_DAEMON_URL";
+    static final String REPOSITORY_MCP_URL = "QITS_REPOSITORY_MCP_URL";
+
+    /**
+     * The platform URLs a container is injected with, in the order the tier is read off them. Two
+     * kinds of container run this binary and they carry different variables: a workspace container
+     * carries {@code QITS_WORKSPACE_DAEMON_URL}, and a project-agent container — triage, epic
+     * refinement, the composed run for an epic — carries {@code QITS_PROJECTS_DAEMON_URL} instead.
+     * Both carry {@code QITS_REPOSITORY_MCP_URL}, which is why it is last and is the one that
+     * always answers. The order is fixed so the same container always resolves the same tier.
+     */
+    static final List<String> TIER_URLS = List.of(DAEMON_URL, PROJECTS_DAEMON_URL, REPOSITORY_MCP_URL);
 
     /** What a workspace container is told the idp's token endpoint is. */
     static final String TOKEN_URL = "QITS_GIT_AUTH_TOKEN_URL";
@@ -96,17 +110,31 @@ public final class PlatformEndpoints {
 
     /**
      * The environment's label: {@code dev}. Inside, it is the first label of a wire alias —
-     * {@code ws://dev-qits-workspaces:8080/…} is {@code dev}.
+     * {@code ws://dev-qits-workspaces:8080/…} is {@code dev} — read off the first of
+     * {@link #TIER_URLS} the container carries. A value that is not a wire alias is passed over
+     * rather than believed. {@code QITS_ENV} comes before all of them: it stays the one variable an
+     * operator can set to settle the tier explicitly.
      */
     public String environment() {
         String told = env.get(ENVIRONMENT);
         if (told != null && !told.isBlank()) {
             return told.strip();
         }
-        URI daemon = uri(env.get(DAEMON_URL));
-        String host = daemon == null ? null : daemon.getHost();
+        for (String variable : TIER_URLS) {
+            String label = firstLabel(env.get(variable));
+            if (label != null) {
+                return label;
+            }
+        }
+        return DEFAULT_ENVIRONMENT;
+    }
+
+    /** {@code http://dev-qits-projects:8080/projects/mcp} is {@code dev}; anything else is null. */
+    private static String firstLabel(String url) {
+        URI uri = uri(url);
+        String host = uri == null ? null : uri.getHost();
         int dash = host == null ? -1 : host.indexOf('-');
-        return dash > 0 ? host.substring(0, dash) : DEFAULT_ENVIRONMENT;
+        return dash > 0 ? host.substring(0, dash) : null;
     }
 
     /** {@code http://qits-platform-idp:8080/idp/token} is {@code http://qits-platform-idp:8080}. */

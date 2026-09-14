@@ -218,7 +218,10 @@ the signal, decided once at startup:
   never written to `t.json` and never under the agent's config folder;
 - the public vhosts do not resolve inside, so a service is dialled by its wire alias:
   `http://dev-qits-projects:8080` for an environment service, `http://qits-platform-idp:8080` for a
-  platform one. `QITS_URL_<APP>` overrides any of them;
+  platform one. The tier in that name comes from `QITS_ENV`, else from the host of whichever
+  platform URL the container carries — `QITS_WORKSPACE_DAEMON_URL` in a workspace,
+  `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_REPOSITORY_MCP_URL` in both.
+  `QITS_URL_<APP>` overrides any of them;
 - the credential is `qits:agent`. Every read door answers and an operator write answers `403`, which
   is correct behaviour and is worded as such;
 - it is granted most audiences but not all, and a command against one outside the grant says so in a

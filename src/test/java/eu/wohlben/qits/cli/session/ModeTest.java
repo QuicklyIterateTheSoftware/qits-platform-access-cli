@@ -19,6 +19,13 @@ class ModeTest {
             "QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352",
             "QITS_GIT_AUTH_TOKEN_URL", "http://qits-platform-idp:8080/idp/token");
 
+    /** A project-agent container: no workspace daemon, and the two URLs that factory does inject. */
+    private static final Map<String, String> PROJECT_AGENT = Map.of(
+            Mode.CLIENT_ID, "dyn-project-agent-7-k22qd",
+            Mode.CLIENT_SECRET, "a secret",
+            "QITS_PROJECTS_DAEMON_URL", "http://qa-qits-projects:8080/projects/agents/daemon",
+            "QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp");
+
     private static PlatformEndpoints endpoints(Map<String, String> env, String idpUrl) {
         return new PlatformEndpoints(Mode.of(env), env, idpUrl);
     }
@@ -65,6 +72,36 @@ class ModeTest {
         assertThat(endpoints(Map.of(), null).environment()).isEqualTo("dev");
         assertThat(endpoints(Map.of("QITS_WORKSPACE_DAEMON_URL", "ws://staging-qits-projects:8080/x"), null)
                 .environment()).isEqualTo("staging");
+    }
+
+    @Test
+    void aProjectAgentContainerReadsTheTierOffTheUrlsItDoesCarry() throws CliFailure {
+        PlatformEndpoints agent = endpoints(PROJECT_AGENT, null);
+        assertThat(agent.environment()).isEqualTo("qa");
+        assertThat(agent.base("projects")).isEqualTo("http://qa-qits-projects:8080");
+    }
+
+    @Test
+    void theRepositoryMcpUrlAnswersWhenItIsTheOnlyOne() {
+        assertThat(endpoints(Map.of("QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp"), null)
+                .environment()).isEqualTo("qa");
+    }
+
+    @Test
+    void toldStillWinsOverEveryUrl() {
+        Map<String, String> agent = new HashMap<>(PROJECT_AGENT);
+        agent.put("QITS_ENV", "prod");
+        assertThat(endpoints(agent, null).environment()).isEqualTo("prod");
+    }
+
+    @Test
+    void aValueThatIsNotAWireAliasIsPassedOver() {
+        assertThat(endpoints(Map.of("QITS_PROJECTS_DAEMON_URL", "not a url at all"), null)
+                .environment()).as("no throw, and no tier read off it").isEqualTo("dev");
+        Map<String, String> mixed = Map.of(
+                "QITS_PROJECTS_DAEMON_URL", "not a url at all",
+                "QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp");
+        assertThat(endpoints(mixed, null).environment()).isEqualTo("qa");
     }
 
     @Test
