@@ -5,7 +5,8 @@
 # branch and sha come from the event, so a request cannot change the CI that gates it. Every step
 # gates: the verdict is the ordinary BuildSuccessful/BuildFailed on the merged sha.
 #
-# The shape is qits-artifacts-cli's: the cheap test gate first, then the shipping form.
+# The shape came from qits-artifacts-cli, a repository since retired: the cheap test gate first, then
+# the shipping form.
 # ci-event-release.yml beside this file publishes the released version.
 event: ReleaseRequestChanged
 

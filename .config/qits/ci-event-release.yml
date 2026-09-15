@@ -6,8 +6,8 @@
 # `artifacts:` is a declaration, not a report: qits-ci announces
 # `SoftwareRelease {daemon, qits-platform-access-cli}` on its strength once the run is green, so keep
 # it true. `daemon` is the store's type for "a static binary served as bytes under a name and a
-# version"; it does not claim this program is a daemon. qits-ci-daemon and qits-artifacts-cli ride
-# the same train, and the name is the repository's, as theirs is (the binary is called `qits`).
+# version"; it does not claim this program is a daemon. qits-ci-daemon rides the same train, and the
+# name is the repository's, as it is there (the binary is called `qits`).
 event: SCMRelease
 when:
   - repository: { exact: qits-platform-access-cli }

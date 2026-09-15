@@ -34,11 +34,12 @@ decided once at startup and the two are never mixed.
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
-    publish/   qits artifacts publish: the qits-publish client, folded in from qits-artifacts-cli.
-               Store, Publisher, Npm, DockerfileSbom, Http, Json, Sha256, VersionOrder, Env,
-               Console, CliException and ExitCode are that repository's classes, kept as they
-               were; the picocli commands and PublishArgs (the argument-grammar checks Args used
-               to do) are new. Touches no session file — see Conventions.
+    publish/   qits artifacts publish: the qits-publish client, folded in from the retired
+               qits-artifacts-cli. Store, Publisher, Npm, DockerfileSbom, Http, Json, Sha256,
+               VersionOrder, Env, Console, CliException and ExitCode were that repository's
+               classes, kept as they were; the picocli commands and PublishArgs (the
+               argument-grammar checks Args used to do) are new. Touches no session file — see
+               Conventions.
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
     complete/  the six platform sources behind the TUI's dropdowns (projects, repositories,
                release requests, tickets, runs, versions), over the credential the commands use

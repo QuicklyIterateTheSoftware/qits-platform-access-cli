@@ -15,8 +15,8 @@ import java.nio.file.Path;
 /**
  * The process entry point. Its only job beyond picocli's own is a name check: a binary or a
  * symlink started as {@code qits-publish} behaves as {@code qits artifacts publish}, so a
- * hand-written pipeline that still calls it by that name — qits-artifacts-cli's own binary name,
- * before it folded into {@code qits} — keeps working.
+ * hand-written pipeline that still calls it by that name — the binary name of the retired
+ * qits-artifacts-cli, before it folded into {@code qits} — keeps working.
  */
 @QuarkusMain
 public class Main implements QuarkusApplication {

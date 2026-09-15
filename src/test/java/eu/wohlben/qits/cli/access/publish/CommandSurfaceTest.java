@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The argv surface itself: what a mistyped invocation does. Ported from qits-artifacts-cli's own
- * {@code CommandSurfaceTest}; most of it holds unchanged, because {@link PublishArgs} reproduces
- * qits-publish's own flag grammar (required-once, refuse-on-repeat, refuse-unknown) by hand rather
- * than trusting picocli's built-in option validation, which is what keeps the exit codes and
- * messages below identical to qits-publish's own.
+ * The argv surface itself: what a mistyped invocation does. Ported from the retired
+ * qits-artifacts-cli's own {@code CommandSurfaceTest}; most of it holds unchanged, because
+ * {@link PublishArgs} reproduces qits-publish's own flag grammar (required-once, refuse-on-repeat,
+ * refuse-unknown) by hand rather than trusting picocli's built-in option validation, which is what
+ * keeps the exit codes and messages below identical to qits-publish's own.
  * <p>
  * Three cases <b>do</b> differ from qits-publish's own dispatcher, and are marked below: picocli
  * itself, not {@link PublishArgs}, is what answers "no command was named", "that command does not

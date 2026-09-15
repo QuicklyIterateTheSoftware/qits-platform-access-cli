@@ -68,7 +68,7 @@ token never appears in what the script prints. Run it with `./scripts/test-insta
 ## Download
 
 Each release publishes the static binary to the platform's artifacts store, under this repository's
-name and the released version, the way qits-ci-daemon and qits-artifacts-cli are published:
+name and the released version, the way qits-ci-daemon is published:
 
     https://registry.<env>.<domain>/artifacts/daemons/qits-platform-access-cli/<version>
 
@@ -131,7 +131,7 @@ CycloneDX document from the same build.
 ## Releases
 
 Only through a release request, like every repository here. `.config/qits/` holds the two recipes,
-shaped like qits-artifacts-cli's:
+shaped like the retired qits-artifacts-cli's were:
 
 - `ci-event-release-request.yml` gates a request's fold: `./mvnw verify`, then the static binary on
   the platform's BuildKit, and a `--help` run of it on an alpine image.
@@ -765,7 +765,8 @@ protocol works. stderr never carries one.
 
 `qits artifacts` is the platform's artifacts store, qits-artifacts. `qits artifacts publish` is its
 publish client: what a CI release step calls to put an sbom, a docs bundle, a daemon binary, or an
-npm decision where it belongs. It is qits-artifacts-cli's own `qits-publish`, folded into `qits`.
+npm decision where it belongs. It is `qits-publish`, the client of the retired qits-artifacts-cli,
+folded into `qits`.
 
 **It never signs in, and it never touches the session `qits login` keeps.** It runs inside a CI step
 container, with no person, on a bare alpine image (the binary is static). `qits login`,

@@ -6,8 +6,9 @@ import picocli.CommandLine;
 
 /**
  * {@code qits artifacts publish} — the platform's publish client for qits-artifacts, folded into
- * {@code qits} from its own repository, qits-artifacts-cli. A CI release step calls one of these
- * once per coordinate; nothing here orchestrates a release or decides what runs in what order.
+ * {@code qits} from its own repository, the since-retired qits-artifacts-cli. A CI release step
+ * calls one of these once per coordinate; nothing here orchestrates a release or decides what runs
+ * in what order.
  */
 @TuiCommand(interaction = Interaction.CI_ONLY)
 @CommandLine.Command(name = "publish", mixinStandardHelpOptions = true,

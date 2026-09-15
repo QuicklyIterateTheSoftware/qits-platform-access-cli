@@ -2,17 +2,17 @@
 # glibc or musl (alpine) alike. This repository ships no image. The last stage is a `FROM scratch`
 # holding the one file, and a build is an `--output type=local` of it.
 #
-# The shape is qits-artifacts-cli's, which is qits-ci-daemon's: one build stage on the musl
-# toolchain, two `FROM scratch` export stages (sbom, then binary, which stays the default target),
-# the `ldd` check on the same RUN as the compile, and the CycloneDX document from the same mvnw call,
-# so a release after a green fold is cache hits. Those two files carry the long reasons.
+# The shape is qits-ci-daemon's: one build stage on the musl toolchain, two `FROM scratch` export
+# stages (sbom, then binary, which stays the default target), the `ldd` check on the same RUN as the
+# compile, and the CycloneDX document from the same mvnw call, so a release after a green fold is
+# cache hits. That file carries the long reasons.
 #
 # THE TOOLCHAIN IS A STAGE OF THIS FILE, NOT A REGISTRY TAG. The first release request named
-# `graalvmce-musl-builder:jdk-25` in the platform registry, as qits-artifacts-cli does, and failed
-# with "not found": only qits-ci-daemon's pipelines push that tag, and the bootstrap builds the image
-# into the host's image store, not into the registry. So after a cold boot the tag is missing until
-# qits-ci-daemon next folds or releases. Built here, the toolchain needs no other repository's run.
-# Nothing is pushed: BuildKit uses the stage directly, and no second pipeline writes that tag.
+# `graalvmce-musl-builder:jdk-25` in the platform registry, and failed with "not found": only
+# qits-ci-daemon's pipelines push that tag, and the bootstrap builds the image into the host's image
+# store, not into the registry. So after a cold boot the tag is missing until qits-ci-daemon next
+# folds or releases. Built here, the toolchain needs no other repository's run. Nothing is pushed:
+# BuildKit uses the stage directly, and no second pipeline writes that tag.
 #
 # The `tarballs` and `toolchain` stages are qits-ci-daemon's docker/Dockerfile.musl-builder, line
 # for line; that file says why GraalVM CE and not Mandrel, why a musl-gcc shim, and why ADD. Keep
