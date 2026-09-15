@@ -11,16 +11,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The open release requests of the chosen repository.
+ * The release requests of the chosen repository that still take a branch.
  * <p>
- * Open means what {@code release-request list} means by it: every state but the two that are final.
- * A request that has shipped or been withdrawn is not something to join or withdraw.
+ * RELEASED already means the tag is cut, so it takes no more branches either, even though it is not
+ * yet FINALIZED. A request that has released, finalized, been withdrawn or gone obsolete is not
+ * something to join or withdraw.
  */
 @ApplicationScoped
 public class ReleaseRequestSource extends PlatformSource {
 
-    /** The states a request never leaves. */
-    static final Set<String> SETTLED = Set.of("RELEASED", "WITHDRAWN");
+    /** The states that take no more branches. */
+    static final Set<String> CLOSED = Set.of("RELEASED", "FINALIZED", "WITHDRAWN", "OBSOLETE");
 
     @Override
     public Set<String> dependsOn() {
@@ -34,7 +35,7 @@ public class ReleaseRequestSource extends PlatformSource {
         List<Choice> choices = new ArrayList<>();
         read(() -> api.releaseRequests(ProjectsApi.text(repository, "id"), null)).path("requests").forEach(request -> {
             String state = ProjectsApi.text(request, "state").toUpperCase(Locale.ROOT);
-            if (SETTLED.contains(state)) {
+            if (CLOSED.contains(state)) {
                 return;
             }
             String id = ProjectsApi.text(request, "id");

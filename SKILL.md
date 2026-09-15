@@ -452,7 +452,7 @@ qits epic update --project qits --epic 4f2a91c0 --description-file plan.md
 
 The release requests of one repository: the one way to release it. list shows them, create asks for a branch to be released, join adds a branch to an open request, and withdraw ends a request that must not ship.
 
-A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED, REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN.
+A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
 ### Notes
 
@@ -465,7 +465,7 @@ A request folds main and its branches into one commit, and the builds of that co
 
 List the repository's open release requests.
 
-Open means every state but RELEASED and WITHDRAWN. --state asks for other ones. The ID column shows the first 8 characters of the id, which is enough for `join`.
+Open means every state but FINALIZED, WITHDRAWN and OBSOLETE. --state asks for other ones. The ID column shows the first 8 characters of the id, which is enough for `join`.
 
 ```
 qits release-request list [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--state <STATE|all>]
@@ -477,7 +477,7 @@ qits release-request list [--output table|json] [--project <project>] [--project
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
 | `--repository <repository>` | The repository: its id or name. |
-| `--state <STATE\|all>` | Only this state (PENDING, READY, RELEASED, REJECTED, FAILED, CONFLICTED, WITHDRAWN), or all for every request. Default: the open ones. |
+| `--state <STATE\|all>` | Only this state (PENDING, READY, RELEASED, FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones. |
 
 ### Examples
 
@@ -557,7 +557,7 @@ qits release-request --project qits --repository qits-ci-service join --request 
 ```
 
 - Safe to repeat: a branch already on the request adds nothing. With --priority it states that priority again; without, the branch keeps its priority.
-- A RELEASED or WITHDRAWN request takes no more branches (HTTP 409): open a new one with `create`.
+- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request takes no more branches (HTTP 409): open a new one with `create`.
 
 ### Exit codes
 
@@ -593,7 +593,7 @@ qits release-request --project qits --repository qits-ci-service withdraw --requ
 
 - Only for a request that must not ship. A gating build that was red because of the platform, not the code, runs again with `qits ci retry <run id>`. A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push.
 - Without --reason the platform writes who withdrew it.
-- A RELEASED or WITHDRAWN request cannot be withdrawn (HTTP 409).
+- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409).
 
 ### Exit codes
 

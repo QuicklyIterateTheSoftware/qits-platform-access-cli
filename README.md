@@ -440,7 +440,7 @@ its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wo
 ### Output, errors and exit codes
 
 `--output table` (the default) prints aligned columns. `--output json` (or `-o json`) prints the
-service's answer, pretty-printed. The default `release-request list` leaves out the released
+service's answer, pretty-printed. The default `release-request list` leaves out the finalized
 requests in both forms (see below).
 
 When the platform refuses:
@@ -503,11 +503,19 @@ Resolving, editing and commenting on a ticket are not in `qits` yet.
 
 `--project` as above. `--repository` is the repository's id or name within that project.
 
-`list` shows the open requests: every state but RELEASED and WITHDRAWN. The service's default
-answer holds the open requests and the last 10 released ones; the command drops the released.
-`--state all` shows every request, and `--state PENDING` (or READY, RELEASED, REJECTED, FAILED,
-CONFLICTED, WITHDRAWN) shows one state. Columns: id (the first 8 characters), state, priority,
-summary, version, updated.
+A request folds main and its branches into one commit, and the builds of that commit are its gate.
+States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining
+gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED
+(the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later
+request for the repository superseded this one before it finished). RELEASED is open, not final:
+the request still waits on its remaining gates, one of which (PUBLISH) is the tag's own release
+pipeline.
+
+`list` shows the open requests: every state but FINALIZED, WITHDRAWN and OBSOLETE. The service's
+default answer holds the open requests and the last 10 finalized ones; the command drops the
+finalized. `--state all` shows every request, and `--state PENDING` (or READY, RELEASED, FINALIZED,
+REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. Columns: id (the first 8
+characters), state, priority, summary, version, updated.
 
 `create` asks for a branch to be released once its builds are green. `--branch` and `--summary`
 are required; `--priority` is LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING (the platform's
@@ -524,8 +532,8 @@ command prints the request that came back, with its sources, like `create`.
 
 - A branch already on the request adds nothing. With `--priority` it states that priority again;
   without, the branch keeps the priority it has.
-- A RELEASED or WITHDRAWN request takes no more branches (HTTP 409, exit code 1). Open a new one
-  with `create`.
+- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request takes no more branches (HTTP 409, exit code
+  1). Open a new one with `create`.
 - HTTP 404 means the platform has no such request (exit code 1). A branch the git host does not
   have is not a 404: the fold fails, and the request's detail says why.
 
@@ -535,7 +543,7 @@ withdrew it. WITHDRAWN is final: the request is not built or released again, and
 for one of its branches opens a new request. The command prints the request that came back, like
 `create`.
 
-- A RELEASED or WITHDRAWN request cannot be withdrawn (HTTP 409, exit code 1).
+- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409, exit code 1).
 - HTTP 404 means the platform has no such request (exit code 1).
 
     qits release-request --project qits --repository qits-ci-service list

@@ -81,9 +81,11 @@ class PlatformCommandsTest {
                   {"id":"11111111-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"PENDING","priority":"HIGH",
                    "summary":"Ship the\\nnew log view","version":null,"updatedAt":"2026-09-12T09:00:00Z"},
                   {"id":"22222222-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"RELEASED","priority":"MEDIUM",
-                   "summary":"Old release","version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"},
+                   "summary":"Cut, still gating","version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"},
                   {"id":"33333333-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"REJECTED","priority":"MEDIUM",
-                   "summary":"Red build","version":null,"updatedAt":"2026-09-12T08:00:00Z"}]}
+                   "summary":"Red build","version":null,"updatedAt":"2026-09-12T08:00:00Z"},
+                  {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED","priority":"MEDIUM",
+                   "summary":"Old release","version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
                 """);
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
@@ -224,16 +226,17 @@ class PlatformCommandsTest {
 
         assertThat(r.exit()).isZero();
         assertThat(r.out()).contains("ID        STATE     PRIORITY  SUMMARY").contains("11111111  PENDING   HIGH      Ship the new log view")
-                .contains("33333333  REJECTED").doesNotContain("RELEASED").doesNotContain("Old release");
+                .contains("22222222  RELEASED").contains("Cut, still gating")
+                .contains("33333333  REJECTED").doesNotContain("FINALIZED").doesNotContain("Old release");
         assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isNull();
     }
 
     @Test
-    void jsonOutputOfTheListLeavesTheReleasedOutToo() throws Exception {
+    void jsonOutputOfTheListLeavesTheFinalizedOutToo() throws Exception {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list", "-o", "json");
 
         assertThat(JSON.readTree(r.out()).path("requests")).extracting(n -> n.path("state").asText())
-                .containsExactly("PENDING", "REJECTED");
+                .containsExactly("PENDING", "RELEASED", "REJECTED");
     }
 
     @Test
@@ -241,7 +244,7 @@ class PlatformCommandsTest {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list", "--state", "all");
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).contains("RELEASED").contains("2026.911.1");
+        assertThat(r.out()).contains("FINALIZED").contains("2026.910.1");
         assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
     }
 
@@ -266,11 +269,35 @@ class PlatformCommandsTest {
         assertThat(sent).isEqualTo(JSON.readTree(
                 "{\"branch\":\"feature/logs\",\"summary\":\"Ship the log view\",\"priority\":\"HIGH\"}"));
         assertThat(r.out()).startsWith("Release request 44444444-2222-3333-4444-555555555555\n")
-                .contains("  state       PENDING")
-                .contains("  approval    NOT_REQUIRED")
-                .contains("  version     -")
+                .contains("  state          PENDING")
+                .contains("  approval       NOT_REQUIRED")
+                .contains("  version        -")
                 .contains("Sources:")
                 .contains("BRANCH  feature/logs  refs/heads/feature/logs  named  HIGH      wohlben");
+    }
+
+    @Test
+    void printsTheGatesAndWhatSupersededTheRequestWhenTheServiceSendsThem() throws Exception {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"OBSOLETE","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
+                  "supersededBy":"99999999-2222-3333-4444-555555555555",
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "gates":[{"kind":"PUBLISH","state":"FAILED"},{"kind":"APPROVAL","state":"PASSED"}],
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
+                """.formatted(CI));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("  state          OBSOLETE")
+                .contains("  superseded by  99999999")
+                .contains("Gates:")
+                .contains("KIND      STATE")
+                .contains("PUBLISH   FAILED")
+                .contains("APPROVAL  PASSED");
     }
 
     @Test
@@ -317,9 +344,9 @@ class PlatformCommandsTest {
         JsonNode sent = JSON.readTree(platform.requests("POST", sourcesOf(PENDING_ID)).getFirst().body());
         assertThat(sent).isEqualTo(JSON.readTree("{\"branch\":\"feature/search\",\"priority\":\"HIGHER\"}"));
         assertThat(r.out()).startsWith("Release request " + PENDING_ID + "\n")
-                .contains("  state       PENDING")
-                .contains("  priority    HIGHER")
-                .contains("  merged sha  abc123")
+                .contains("  state          PENDING")
+                .contains("  priority       HIGHER")
+                .contains("  merged sha     abc123")
                 .contains("Sources:");
         assertThat(r.out().lines().toList()).contains(
                 "  KIND    NAME            REF                        HOW    PRIORITY  ADDED BY",
@@ -431,8 +458,8 @@ class PlatformCommandsTest {
         assertThat(JSON.readTree(platform.requests("POST", withdrawOf(PENDING_ID)).getFirst().body()))
                 .isEqualTo(JSON.readTree("{\"reason\":\"The log view moves to qits-observability\"}"));
         assertThat(r.out()).startsWith("Release request " + PENDING_ID + "\n")
-                .contains("  state       WITHDRAWN")
-                .contains("  detail      The log view moves to qits-observability")
+                .contains("  state          WITHDRAWN")
+                .contains("  detail         The log view moves to qits-observability")
                 .contains("Sources:");
     }
 

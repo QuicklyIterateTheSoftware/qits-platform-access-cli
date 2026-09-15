@@ -108,7 +108,9 @@ class PlatformSourcesTest {
                 {"requests":[
                   {"id":"4f2a91c0-0000-4000-8000-000000000001","state":"PENDING","summary":"a change","version":null},
                   {"id":"4f2a91c0-0000-4000-8000-000000000002","state":"RELEASED","summary":"shipped","version":"2026.913.1"},
-                  {"id":"4f2a91c0-0000-4000-8000-000000000003","state":"WITHDRAWN","summary":"dropped","version":null}]}
+                  {"id":"4f2a91c0-0000-4000-8000-000000000003","state":"WITHDRAWN","summary":"dropped","version":null},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000005","state":"FINALIZED","summary":"done","version":"2026.912.1"},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000006","state":"OBSOLETE","summary":"superseded","version":null}]}
                 """);
         ReleaseRequestSource source = source(new ReleaseRequestSource());
         assertThat(source.dependsOn()).containsExactlyInAnyOrder("project", "repository");

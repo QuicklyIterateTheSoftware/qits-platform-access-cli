@@ -30,9 +30,11 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "asks for a branch to be released, join adds a branch to an open request, and withdraw "
                         + "ends a request that must not ship.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
-                        + "States: PENDING (waiting for its builds), READY, RELEASED, REJECTED (a gating build was "
-                        + "red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), "
-                        + "WITHDRAWN."},
+                        + "States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its "
+                        + "remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build "
+                        + "was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), "
+                        + "WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it "
+                        + "finished)."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. "
@@ -46,11 +48,17 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- --project and --repository may come before or after the command."})
 public class ReleaseRequestCommand implements Runnable {
 
-    /** The one state the default list leaves out: the service adds the last 10 of them. */
+    /** The tag is cut but the request is still open; version and merged sha are already stamped. */
     static final String RELEASED = "RELEASED";
 
-    /** The states that take no more branches. */
-    static final Set<String> SETTLED = Set.of(RELEASED, "WITHDRAWN");
+    /**
+     * Open means every state but this one, WITHDRAWN and OBSOLETE. The one the default list leaves
+     * out on top of those two: the service adds the last 10 of them.
+     */
+    static final String FINALIZED = "FINALIZED";
+
+    /** The states that take no more branches: the tag is already cut, or the request is done for. */
+    static final Set<String> CLOSED = Set.of(RELEASED, FINALIZED, "WITHDRAWN", "OBSOLETE");
 
     /** The list query for every request, of every state. */
     static final String ALL = "all";
@@ -117,16 +125,16 @@ public class ReleaseRequestCommand implements Runnable {
         return matches.getFirst();
     }
 
-    /** The state the list showed, when it is a settled one; else both, as the request may have settled since. */
+    /** The state the list showed, when it already takes no more branches; else every state that would. */
     private static String settledState(JsonNode found) {
         String listed = text(found, "state").toUpperCase(Locale.ROOT);
-        return SETTLED.contains(listed) ? listed : "RELEASED or WITHDRAWN";
+        return CLOSED.contains(listed) ? listed : "RELEASED, FINALIZED, WITHDRAWN or OBSOLETE";
     }
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
             description = {"List the repository's open release requests.",
-                    "Open means every state but RELEASED and WITHDRAWN. --state asks for other ones. The ID column "
-                            + "shows the first 8 characters of the id, which is enough for `join`."},
+                    "Open means every state but FINALIZED, WITHDRAWN and OBSOLETE. --state asks for other ones. The "
+                            + "ID column shows the first 8 characters of the id, which is enough for `join`."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits --repository qits-ci-service list",
@@ -139,8 +147,8 @@ public class ReleaseRequestCommand implements Runnable {
         ReleaseRequestCommand parent;
 
         @CommandLine.Option(names = "--state", paramLabel = "<STATE|all>",
-                description = "Only this state (PENDING, READY, RELEASED, REJECTED, FAILED, CONFLICTED, "
-                        + "WITHDRAWN), or all for every request. Default: the open ones.")
+                description = "Only this state (PENDING, READY, RELEASED, FINALIZED, REJECTED, FAILED, CONFLICTED, "
+                        + "WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones.")
         String state;
 
         @Override
@@ -150,7 +158,7 @@ public class ReleaseRequestCommand implements Runnable {
             JsonNode answer = target.api().releaseRequests(target.repoId(), state);
             boolean openOnly = state == null || state.isBlank();
             if (openOnly) {
-                answer = withoutReleased(answer);
+                answer = withoutFinalized(answer);
             }
             if (json) {
                 ProjectsApi.printJson(context.out(), answer);
@@ -176,14 +184,14 @@ public class ReleaseRequestCommand implements Runnable {
         }
 
         /**
-         * The service's default answer holds the open requests and the last 10 released. The list
-         * shows open ones, so the released are dropped here, in both output forms.
+         * The service's default answer holds the open requests and the last 10 finalized. The list
+         * shows open ones, so the finalized are dropped here, in both output forms.
          */
-        static JsonNode withoutReleased(JsonNode answer) {
+        static JsonNode withoutFinalized(JsonNode answer) {
             ObjectNode copy = answer.isObject() ? ((ObjectNode) answer).deepCopy() : JsonNodeFactory.instance.objectNode();
             ArrayNode kept = copy.arrayNode();
             answer.path("requests").forEach(r -> {
-                if (!RELEASED.equalsIgnoreCase(text(r, "state"))) {
+                if (!FINALIZED.equalsIgnoreCase(text(r, "state"))) {
                     kept.add(r);
                 }
             });
@@ -257,8 +265,8 @@ public class ReleaseRequestCommand implements Runnable {
                     "",
                     "- Safe to repeat: a branch already on the request adds nothing. With --priority it states that "
                             + "priority again; without, the branch keeps its priority.",
-                    "- A RELEASED or WITHDRAWN request takes no more branches (HTTP 409): open a new one with "
-                            + "`create`."},
+                    "- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request takes no more branches (HTTP 409): open "
+                            + "a new one with `create`."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED,
                     "2:Used wrongly (for example a --request that fits no request, or more than one), not signed in, "
@@ -332,7 +340,7 @@ public class ReleaseRequestCommand implements Runnable {
                             + "not the code, runs again with `qits ci retry <run id>`. A REJECTED or CONFLICTED request "
                             + "comes back by itself when one of its branches gets a new push.",
                     "- Without --reason the platform writes who withdrew it.",
-                    "- A RELEASED or WITHDRAWN request cannot be withdrawn (HTTP 409)."},
+                    "- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409)."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED,
                     "2:Used wrongly (for example a --request that fits no request, or more than one), not signed in, "
@@ -391,6 +399,7 @@ public class ReleaseRequestCommand implements Runnable {
         Table.print(out, "  ", null, List.of(
                 List.of("repository", Table.cell(text(request, "repoName"), 200)),
                 List.of("state", Table.cell(text(request, "state"), 200)),
+                List.of("superseded by", Table.cell(shortIdOrDash(text(request, "supersededBy")), 200)),
                 List.of("priority", Table.cell(text(request, "priority"), 200)),
                 List.of("summary", Table.cell(text(request, "summary"), 200)),
                 List.of("requester", Table.cell(text(request, "requester"), 200)),
@@ -400,6 +409,14 @@ public class ReleaseRequestCommand implements Runnable {
                 List.of("detail", Table.cell(text(request, "detail"), 200)),
                 List.of("created", Table.time(text(request, "createdAt"))),
                 List.of("updated", Table.time(text(request, "updatedAt")))));
+        List<List<String>> gates = new ArrayList<>();
+        request.path("gates").forEach(g -> gates.add(List.of(
+                Table.cell(text(g, "kind"), 20),
+                Table.cell(text(g, "state"), 12))));
+        if (!gates.isEmpty()) {
+            out.println("Gates:");
+            Table.print(out, "  ", List.of("KIND", "STATE"), gates);
+        }
         List<List<String>> sources = new ArrayList<>();
         request.path("sources").forEach(s -> sources.add(List.of(
                 Table.cell(text(s, "kind"), 20),
@@ -416,5 +433,10 @@ public class ReleaseRequestCommand implements Runnable {
 
     static String shortId(String id) {
         return id.length() <= 8 ? id : id.substring(0, 8);
+    }
+
+    /** The short id of the request that superseded this one, or blank when there is none. */
+    private static String shortIdOrDash(String supersededBy) {
+        return supersededBy.isBlank() ? "" : shortId(supersededBy);
     }
 }
