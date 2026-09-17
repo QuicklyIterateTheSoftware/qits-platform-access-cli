@@ -1,0 +1,139 @@
+archetype: daemon
+artifacts:
+  - { type: daemon, name: qits-platform-access-cli, sbom: out/sbom.json }
+  # THE PIN, AND IT IS NOT OPTIONAL. One class, three strings, no bytes of the binary: the daemons-
+  # store name, the command name, and the version this same release published the binary under.
+  # qits-ci's pom depends on it and injects the version it names, which is what stopped every
+  # composed release step on the platform from downloading whatever was latest in the daemons store
+  # at step start. Dropping it would leave qits-ci pinning a coordinate that stops advancing.
+  #
+  # NO `sbom:` ON THIS ENTRY. The composed postlude submits every declared document from ONE step —
+  # the last one that builds — and that is the buildctl step below, whose checkout has no
+  # `platform-access-cli-binary/target/` and never will. Declaring the path would make the postlude
+  # submit a file that is not there and fail the release, so the maven step submits its own, with
+  # the postlude's own command.
+  - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary" }
+
+# THE daemon ARCHETYPE'S OWN HEADER NAMES THIS REPOSITORY AS THE ONE THAT RIDES ITS OWN RECIPES, and
+# the reason is the build: there is no `docker/Dockerfile.musl-builder` here, so the archetype's
+# guarded toolchain half never fires, and `docker/Dockerfile` takes MUSL_URL and ZLIB_URL directly
+# rather than the BUILDER_IMAGE the archetype passes. It would pass an argument this Dockerfile does
+# not take from a build arg and omit the two it needs.
+release-request:
+    # THE CLONE-ALONE GATE FIRST, so a broken test costs no native compile. A ROOT invocation, so it
+    # builds the whole reactor: the application and the pin jar. Nothing is deployed from here.
+  - image: qits/build-images/maven-base:latest
+    timeout-seconds: 1800
+    script: |
+      export QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}"
+      ./mvnw -B -ntp -s .qits-maven-settings.xml verify
+
+    # Then the shipping form: the static musl binary, on the platform's builder, with no socket.
+  - image: qits/build-images/ci-base:latest
+    build: true
+    timeout-seconds: 3600
+    script: |
+      : "${QITS_MAVEN_REGISTRY_URL:?}"
+      maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
+      musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
+      zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)
+      : "${musl_url:?docker/Dockerfile declares no ARG MUSL_URL}"
+      : "${zlib_url:?docker/Dockerfile declares no ARG ZLIB_URL}"
+      musl_url="$maven_root${musl_url#*/artifacts/maven/maven}"
+      zlib_url="$maven_root${zlib_url#*/artifacts/maven/maven}"
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=binary \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --output type=local,dest=out
+      # THE BINARY IS `out/qits` AND THE ARTIFACT IS `qits-platform-access-cli`. The mismatch is the
+      # ordinary case rather than a slip — qits-workspace-oci fetches the artifact by its name and
+      # writes it into its build context as `qits` — and this migration touches neither name.
+      chmod +x out/qits
+      ./out/qits --help >/dev/null
+      # A binary that prints Quarkus build-time configuration on --help is unusable as a CLI.
+      noise=$(QUARKUS_ANALYTICS_DISABLED=true ./out/qits --help 2>&1) || true
+      case "$noise" in
+        *ConfigRecorder*|*"Build time property"*)
+          echo "$noise" >&2
+          echo "the binary prints Quarkus configuration noise under QUARKUS_ANALYTICS_DISABLED" >&2
+          exit 1 ;;
+      esac
+      echo "qits built: $(sha256sum out/qits | cut -d' ' -f1)"
+
+release:
+  - image: qits/build-images/ci-base:latest
+    build: true
+    timeout-seconds: 3600
+    script: |
+      : "${QITS_MAVEN_REGISTRY_URL:?}"
+      maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
+      musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
+      zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)
+      : "${musl_url:?docker/Dockerfile declares no ARG MUSL_URL}"
+      : "${zlib_url:?docker/Dockerfile declares no ARG ZLIB_URL}"
+      musl_url="$maven_root${musl_url#*/artifacts/maven/maven}"
+      zlib_url="$maven_root${zlib_url#*/artifacts/maven/maven}"
+      # BYTE-IDENTICAL BUILD ARGS ACROSS THE TWO INVOCATIONS, and across the QA build above, or the
+      # sbom stage is a second native compile instead of a cache hit on the resolve that produced
+      # the binary.
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=binary \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --output type=local,dest=out
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=sbom \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --output type=local,dest=out
+      # `chmod +x` IS NOT OPTIONAL: the local export loses the mode bit, and a static binary that
+      # cannot be executed is a green build that publishes nothing runnable.
+      chmod +x out/qits
+      ./out/qits --help >/dev/null
+      qits-publish daemon submit \
+        --name qits-platform-access-cli --version "$QITS_VERSION" --file out/qits
+
+    # --- the pin jar --------------------------------------------------------------------------
+    # A SECOND STEP AND A DIFFERENT IMAGE, because this one needs maven and the one above needs
+    # buildctl. It is deliberately AFTER the binary publish: the jar is what tells qits-ci which
+    # binary to fetch, so a jar resolvable before its binary is published would be a pin pointing at
+    # nothing — briefly, but a release is exactly the moment somebody is watching.
+  - image: qits/build-images/maven-base:latest
+    timeout-seconds: 1800
+    script: |
+      # A published version is never republished, and re-running a deploy of the same bytes is a
+      # no-op rather than a lie — so this SKIPS where the daemon submit above would refuse.
+      #
+      # BOTH POMS, and the `&&` is the javalib's "skip only when EVERY module is published" rule: a
+      # consumer cannot read the jar's descriptor without the parent, and `-pl` deploys the jar and
+      # not the aggregator it names as its parent. Checking one of the two would let a half publish
+      # look complete on a re-run.
+      if curl -fsS -o /dev/null \
+        "$QITS_MAVEN_REGISTRY_URL/eu/wohlben/qits/qits-platform-access-cli-binary/$QITS_VERSION/qits-platform-access-cli-binary-$QITS_VERSION.pom" \
+        && curl -fsS -o /dev/null \
+          "$QITS_MAVEN_REGISTRY_URL/eu/wohlben/qits/$QITS_VERSION/qits-$QITS_VERSION.pom"; then
+        echo "qits-platform-access-cli-binary $QITS_VERSION and its parent are already published — skipping"
+        exit 0
+      fi
+      # NO -Dqits.maven.repository.url: this repository's root pom declares no `qits-maven`
+      # <repository> for the settings file to mirror, and the pin module depends on nothing but
+      # junit. `-am` IS load-bearing and it is the parent pom — see the probe above.
+      QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+      QITS_MAVEN_AUTH_USR="${QITS_COMMISSIONED_CLIENT_ID-}" \
+      QITS_MAVEN_AUTH_PSW="${QITS_COMMISSIONED_CLIENT_SECRET-}" \
+      ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -am deploy -DskipTests \
+        -DaltDeploymentRepository="qits::default::$QITS_MAVEN_REGISTRY_URL"
+      QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+      ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -DskipTests \
+        org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
+        -DoutputFormat=json -DoutputName=sbom -DschemaVersion=1.6
+      qits artifacts publish sbom submit \
+        --type maven --name eu.wohlben.qits:qits-platform-access-cli-binary \
+        --version "$QITS_VERSION" --file platform-access-cli-binary/target/sbom.json
