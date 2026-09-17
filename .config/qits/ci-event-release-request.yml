@@ -21,6 +21,10 @@ checkout:
 steps:
     # 1. The clone-alone gate: `./mvnw verify` with no docker and no platform (AGENTS.md). It runs
     #    first, so a broken test costs no native compile.
+    #
+    #    A ROOT INVOCATION, so it builds the whole reactor: the application and the pin jar
+    #    (platform-access-cli-binary) whose version qits-ci depends on. Nothing is deployed from
+    #    here — the release recipe beside this file does that, on the tag.
   - image: qits/build-images/maven-base:latest
     timeout-seconds: 1800
     script: |
@@ -33,6 +37,10 @@ steps:
     # 2. The shipping form: the static musl binary, built on the platform's BuildKit, with no socket.
     #    docker/Dockerfile's RUN checks with `ldd` that it is static. The `--help` run below checks
     #    that it starts on an alpine image (ci-base is one), which a glibc-linked binary does not.
+    #
+    #    UNCHANGED BY THE REACTOR SPLIT, on purpose: the binary now lands in the app module's
+    #    target/, but the Dockerfile's `binary` stage still exports it as `out/qits` and its `sbom`
+    #    stage still as `/sbom.json`, so nothing below and nothing in the release recipe moved.
   - image: qits/build-images/ci-base:latest
     build: true
     timeout-seconds: 3600

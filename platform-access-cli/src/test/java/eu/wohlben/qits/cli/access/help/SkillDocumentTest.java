@@ -19,9 +19,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SkillDocumentTest {
 
-    private static final Path COMMITTED = Path.of("SKILL.md");
+    /**
+     * SKILL.md at the REPOSITORY root, resolved one directory up from this module's basedir.
+     *
+     * <p>The reactor split of 2026-09-17 moved the module's basedir under the repository root — the
+     * sources went to {@code platform-access-cli/}, and surefire runs a module in its own basedir —
+     * and SKILL.md deliberately did not follow. It is the repository's user-facing surface: README
+     * and AGENTS.md name it at the top, and it is the file a person copies into
+     * {@code ~/.claude/skills/qits/}. A reader should find it there, not two directories down.
+     *
+     * <p>One constant for both the read and the {@code -Dqits.skill.update=true} write, so the two
+     * cannot drift onto different files — a write that landed on a module-local copy would make
+     * this test pass against a file nobody ships. The path is deterministic: surefire's working
+     * directory is always this module's basedir, from the root reactor and from {@code -pl} alike.
+     */
+    private static final Path COMMITTED = Path.of("..", "SKILL.md");
     private static final String REGENERATE = "SKILL.md differs from the commands' help. Write it again with "
-            + "`./mvnw test -Dtest=SkillDocumentTest -Dqits.skill.update=true` (or `target/qits help skill > SKILL.md`), "
+            + "`./mvnw test -Dtest=SkillDocumentTest -Dqits.skill.update=true` "
+            + "(or `platform-access-cli/target/qits help skill > SKILL.md`), "
             + "read the diff, and commit it with the help change.";
 
     private static String rendered() {

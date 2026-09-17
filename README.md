@@ -42,8 +42,8 @@ It does four things:
    there of the same name, and checks that it runs.
 4. Sets Git's credential helper for the platform's git host to the installed binary, the way
    `qits git-login --configure` does (see below): it replaces any earlier helper for that host,
-   including one pointing at a build output such as `target/qits`, and leaves every other host's
-   helper (GitHub's, for example) alone.
+   including one pointing at a build output such as `platform-access-cli/target/qits`, and leaves
+   every other host's helper (GitHub's, for example) alone.
 
 Environment overrides:
 
@@ -108,17 +108,32 @@ and answers 401 without one. Use your own sign-in, never a machine client's id a
 
 ## Build
 
-    sdk env && ./mvnw package -Dnative -DskipTests   the binary for this host: target/qits
-    ./mvnw clean verify                              the tests; packages nothing
+    sdk env && ./mvnw package -Dnative -DskipTests   the binary for this host:
+                                                     platform-access-cli/target/qits
+    ./mvnw clean verify                              the tests; packages only the pin jar
     docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
                                                      the released form, static: out/qits
 
+Run all three from the repository root: it is a two-module Maven reactor.
+
+    platform-access-cli         the program — everything described above, and the native binary.
+                                It builds no jar and is deployed to no Maven repository: what it
+                                produces is a file, published to the artifacts store as bytes.
+    platform-access-cli-binary  one small jar whose own version *is* the version of the binary the
+                                same release published. It carries no bytes of the binary, only its
+                                name, the command name and that version. This is the only artifact
+                                this repository deploys to a Maven repository, and qits-ci is what
+                                depends on it: its release steps run `qits`, and depending on a
+                                coordinate is how its pom decides *which* `qits` instead of taking
+                                whatever the store had latest when a step started. See
+                                `PlatformAccessCliBinary`.
+
 `.sdkmanrc` names the GraalVM (25.0.2-graalce), so `sdk env` sets `JAVA_HOME`. Without sdkman:
 `JAVA_HOME=$HOME/.sdkman/candidates/java/25.0.2-graalce ./mvnw package -Dnative -DskipTests`.
-There is no jar. Run `clean verify` before a native build, not after: `clean` removes the binary.
+Run `clean verify` before a native build, not after: `clean` removes the binary.
 
-The tests need no docker and no platform. Copy `target/qits` to a directory on your `PATH`, for
-example `~/.local/bin`.
+The tests need no docker and no platform. Copy `platform-access-cli/target/qits` to a directory on
+your `PATH`, for example `~/.local/bin`.
 
 The host build is glibc-linked. The released binary is static (musl), so it also runs on alpine.
 `docker/Dockerfile` builds it on a musl toolchain it builds first, as a stage: a copy of
@@ -137,9 +152,16 @@ shaped like the retired qits-artifacts-cli's were:
   the platform's BuildKit, and a `--help` run of it on an alpine image.
 - `ci-event-release.yml` runs on the release tag: the same build and its SBOM, then a PUT of the
   binary to `/artifacts/daemons/qits-platform-access-cli/<version>` and of the SBOM to
-  `/artifacts/sboms/daemon/qits-platform-access-cli/-/<version>`. It declares the artifact
-  `{type: daemon, name: qits-platform-access-cli}`, so qits-ci announces the release. A version that
-  exists already (HTTP 409) fails the release: a version is never published twice.
+  `/artifacts/sboms/daemon/qits-platform-access-cli/-/<version>`. A version that exists already
+  (HTTP 409) fails the release: a version is never published twice. A second step, on a maven image
+  and deliberately after the binary is published, deploys the pin jar
+  `eu.wohlben.qits:qits-platform-access-cli-binary` under the same version — a jar resolvable before
+  the binary it names would be a pin pointing at nothing. It re-runs as a no-op: a deploy of the
+  same bytes is skipped when both the jar's pom and its parent's are already there.
+
+  The file declares both artifacts — `{type: daemon, name: qits-platform-access-cli}` and
+  `{type: maven, name: eu.wohlben.qits:qits-platform-access-cli-binary}` — so qits-ci announces one
+  release for each.
 
 The recipes need no toolchain image in the registry: `docker/Dockerfile` builds the musl toolchain
 as a stage, from two tarballs in the platform's Maven store, which the bootstrap seeds.

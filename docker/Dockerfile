@@ -93,8 +93,16 @@ ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
 # - `ldd`, not `file`: GraalVM writes a static-pie executable, and `file` never says "statically
 #   linked". A glibc-linked binary does not start on an alpine image, so the check fails the build.
 # - makeBom on the same call: the document describes the very resolve that made the bytes.
-#   cyclonedx.skipNotDeployed=false because nothing here is deployed to a Maven repository, and the
-#   plugin skips such a project quietly (measured on qits-artifacts-service's first release).
+#   cyclonedx.skipNotDeployed=false because the application module is deployed to no Maven
+#   repository (maven.deploy.skip), and the plugin skips such a project quietly (measured on
+#   qits-artifacts-service's first release).
+#
+# A ROOT INVOCATION, BUILDING THE WHOLE REACTOR. Since 2026-09-17 this repository has two modules,
+# and the binary therefore lands in `platform-access-cli/target/qits` rather than `target/qits`.
+# The second module — the pin jar that tells qits-ci which binary to fetch — is one class with no
+# main-scope dependency, so building it here costs seconds against a native compile and keeps this
+# call the same call `./mvnw verify` makes. Its own release step deploys it; nothing is deployed
+# from in here.
 RUN ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
       -Dquarkus.native.container-build=false \
       -Dquarkus.native.additional-build-args-append=--static,--libc=musl \
@@ -102,22 +110,25 @@ RUN ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
       org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
       -DoutputFormat=json -DoutputName=sbom -DschemaVersion=1.6 \
       -Dcyclonedx.skipNotDeployed=false \
- && ldd target/qits 2>&1 | grep -qE "statically linked|not a dynamic executable"
+ && ldd platform-access-cli/target/qits 2>&1 | grep -qE "statically linked|not a dynamic executable"
 
 # `qits tui` in the binary, which is the only place JLine's provider choice can be proven: the tests
 # run on a JVM, where every provider works. Started with no terminal — which is what a RUN is — it
 # must say so and exit 2. The failure this catches is a binary that waits for a key nobody can
 # press, so it runs under a timeout: a build that hangs here would otherwise hang forever.
 RUN set -eu; \
-    out=$(timeout 60 ./target/qits tui < /dev/null 2>&1 || echo "exit=$?"); \
+    out=$(timeout 60 ./platform-access-cli/target/qits tui < /dev/null 2>&1 || echo "exit=$?"); \
     printf '%s\n' "$out"; \
     printf '%s' "$out" | grep -q "needs an interactive terminal"; \
     printf '%s' "$out" | grep -q "exit=2"
 
-# The CycloneDX document, for the release step's SBOM PUT. Before `binary`, so that stays the default.
+# The CycloneDX document, for the release step's SBOM PUT. Before `binary`, so that stays the
+# default. The application module's document: the closure that made the bytes.
 FROM scratch AS sbom
-COPY --from=build /qits-build/target/sbom.json /sbom.json
+COPY --from=build /qits-build/platform-access-cli/target/sbom.json /sbom.json
 
-# The artifact: `--output type=local,dest=out` writes out/qits.
+# The artifact: `--output type=local,dest=out` writes out/qits. The export layout is unchanged by
+# the reactor split on purpose — every recipe and every hand build reads `out/qits` and `/sbom.json`
+# as before; only the paths inside the build stage moved.
 FROM scratch AS binary
-COPY --from=build /qits-build/target/qits /qits
+COPY --from=build /qits-build/platform-access-cli/target/qits /qits

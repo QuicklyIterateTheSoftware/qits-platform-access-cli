@@ -17,7 +17,42 @@ a file, and a workspace container on the platform, where the commissioned client
 was injected with is the credential and the services are dialled by their wire aliases. The mode is
 decided once at startup and the two are never mixed.
 
+## Two modules
+
+Since 2026-09-17 this repository is a Maven reactor. The root `pom.xml` is an aggregator
+(`eu.wohlben:qits`, packaging `pom`) holding the shared properties and the quarkus-bom import, the
+shape qits-ci-daemon's root has, and it lists two modules:
+
+    platform-access-cli-binary  the pin. One class, three strings, no bytes of the binary: the
+                                daemons-store name, the command name (`qits`), and the version the
+                                same release published the binary under, filtered in from
+                                `${project.version}`. THE ONLY ARTIFACT THIS REPOSITORY DEPLOYS TO A
+                                MAVEN REPOSITORY.
+    platform-access-cli         the program. Everything that was here before; the sources moved from
+                                `src/` to `platform-access-cli/src/` unchanged, and its published
+                                coordinates (`eu.wohlben.qits:qits-platform-access-cli`) did not
+                                move — they are the repository's identity. It deploys nothing
+                                (`maven.deploy.skip`): what it produces is the binary, published to
+                                the artifacts store as bytes.
+
+**Why a second module rather than a second pom beside one.** The release stamper walks a reactor by
+`<module>` only, so a nested pom the root does not list is never version-stamped — and the pin is
+worthless unless its version is the released version by construction.
+
+**Why the pin exists at all.** qits-ci hands the `qits` CLI to every composed release step, and it
+used to download whatever was latest in the daemons store at the moment the step started: a shared,
+unversioned, unreviewed input to every release on the platform at once. On 2026-09-13 one bad CLI
+release broke all of them, with nothing changed in any consumer's tree and no line to revert. Now
+qits-ci's *pom* depends on this jar and injects the version it names — a bad CLI breaks one
+repository's gate, and the fix is a revert of one line. `PlatformAccessCliBinary`'s javadoc carries
+the whole reasoning; `.config/qits/ci-event-release.yml`'s last step publishes it.
+
+`SKILL.md` stays at the repository root and did not follow the sources into the module; the test
+that keeps it in step (`SkillDocumentTest`) resolves it one directory up and says why.
+
 ## Layout
+
+The application module's sources, under `platform-access-cli/src/main/java/eu/wohlben/qits/cli/`:
 
     idp/       the idp's /token endpoint and which idp to use
     session/   the session file, its atomic write, the two locks, and the one refresh (SessionRefresh)
@@ -134,18 +169,27 @@ Two packages sit outside `access/`, because neither is about one command:
 
 ## Build forms
 
-    sdk env && ./mvnw package -Dnative -DskipTests   the binary: target/qits
-    ./mvnw clean verify                              the tests; packages nothing
+    sdk env && ./mvnw package -Dnative -DskipTests   the binary: platform-access-cli/target/qits
+    ./mvnw clean verify                              the tests; packages only the pin jar
     docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
                                                      the released form: static musl, out/qits
 
-There is no jar; the pom keeps it so the same way qits-bootstrap-cli's does. Run `clean verify`
-before a native build, never after: `clean` removes the binary. `.sdkmanrc` pins 25.0.2-graalce.
+All three are ROOT invocations and build the whole reactor. The pin module is one class with no
+main-scope dependency, so it costs seconds next to a native compile and is never worth skipping.
+
+The application module builds no jar; its pom keeps it so the same way qits-bootstrap-cli's does.
+The one jar this repository produces is `platform-access-cli-binary`'s, and it carries three
+strings rather than any of this code — see Two modules above. Run `clean verify` before a native
+build, never after: `clean` removes the binary. `.sdkmanrc` pins 25.0.2-graalce.
 
 The released binary is static (musl) and the host build is not: only `docker/Dockerfile` adds
 `--static --libc=musl`, with `additional-build-args-append`, so the pom's own build args stay. The
 two recipes in `.config/qits/` build that Dockerfile on the platform's BuildKit, and the release
-recipe publishes `out/qits` as the daemon binary `qits-platform-access-cli` (README, Releases).
+recipe publishes `out/qits` as the daemon binary `qits-platform-access-cli` and then, in a second
+step on a maven image, deploys the pin jar that names it (README, Releases). The export layout is
+what keeps those recipes short: the binary lands in `platform-access-cli/target/` now, but the
+Dockerfile's `binary` stage still exports `out/qits` and its `sbom` stage `/sbom.json`, so nothing
+outside the Dockerfile moved when the reactor split.
 Keep their `buildctl` calls identical, argument for argument: the builder's cache is shared, and
 that is what makes a release after a green fold cache hits. The musl toolchain is a stage of that
 Dockerfile, copied from qits-ci-daemon's `docker/Dockerfile.musl-builder`: no registry tag, so a cold

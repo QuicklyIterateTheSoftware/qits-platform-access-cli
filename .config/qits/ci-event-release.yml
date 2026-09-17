@@ -3,11 +3,20 @@
 #
 # `SCMRelease` only says "source control has this version". This file emits nothing it listens for.
 #
-# `artifacts:` is a declaration, not a report: qits-ci announces
-# `SoftwareRelease {daemon, qits-platform-access-cli}` on its strength once the run is green, so keep
-# it true. `daemon` is the store's type for "a static binary served as bytes under a name and a
-# version"; it does not claim this program is a daemon. qits-ci-daemon rides the same train, and the
-# name is the repository's, as it is there (the binary is called `qits`).
+# `artifacts:` is a declaration, not a report: qits-ci announces one `SoftwareRelease` per entry on
+# its strength once the run is green, so keep it true. `daemon` is the store's type for "a static
+# binary served as bytes under a name and a version"; it does not claim this program is a daemon.
+# qits-ci-daemon rides the same train, and the name is the repository's, as it is there (the binary
+# is called `qits`).
+#
+# TWO DECLARATIONS SINCE 2026-09-17, ONE BUILD. The second is a tiny jar that carries no bytes of
+# the binary — only the coordinate the binary was published under, as its own `${project.version}`.
+# It exists because qits-ci hands the `qits` CLI to every composed release step and used to download
+# WHATEVER WAS LATEST in the daemons store at step start: a shared, unversioned, unreviewed input to
+# every release on the platform at once, and on 2026-09-13 one bad CLI release broke all of them
+# with nothing in any consumer's tree changed and no line to revert. Now qits-ci's pom depends on
+# this jar and injects the version it names, so a bad CLI breaks one repository's gate and the fix
+# is a revert of one line. PlatformAccessCliBinary's javadoc has the whole reasoning.
 event: SCMRelease
 when:
   - repository: { exact: qits-platform-access-cli }
@@ -19,6 +28,11 @@ checkout:
   optional: true
 artifacts:
   - { type: daemon, name: qits-platform-access-cli }
+  # THE PIN. One class, three strings, no bytes of the binary: the daemons-store name, the command
+  # name, and the version this same release published the binary under. The consumer is qits-ci,
+  # whose release steps run `qits` — see the header, and PlatformAccessCliBinary. Published by the
+  # last step below, after the binary, so the pin never resolves ahead of what it points at.
+  - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary" }
 steps:
     # ci-base: buildctl for the build, git for the tag, curl for the two PUTs, jq for the JSON.
     # `build: true` and no socket.
@@ -84,9 +98,12 @@ steps:
       # never changed. So 409 (the version exists) fails the release, rather than announcing bytes
       # this run did not publish.
       #
-      # Plain curl, as qits-ci-daemon's release does, not qits-publish: qits-ci hands a step
-      # qits-publish only when the deployment pins it (qits.ci.artifacts-cli-version, blank by
-      # default), and this release must not depend on that pin.
+      # Plain curl, as qits-ci-daemon's release does, and not the `qits artifacts publish` this very
+      # repository ships: a release of the CLI cannot require the CLI. qits-ci hands every composed
+      # release step a downloaded `qits`, so a step here that used it would make publishing THIS
+      # binary depend on a previously published one — and a broken release would then be
+      # unpublishable by the only tool that could fix it. curl is in the step image and depends on
+      # nothing this repository produces.
       status=$(curl -sS -o /tmp/daemon-publish.json -w '%{http_code}' -X PUT \
         -H 'Content-Type: application/octet-stream' \
         --data-binary @out/qits \
@@ -109,3 +126,77 @@ steps:
       curl -fsS -X PUT -H 'Content-Type: application/vnd.cyclonedx+json' \
         --data-binary @out/sbom.json \
         "$artifacts/artifacts/sboms/daemon/qits-platform-access-cli/-/$version"
+
+    # --- the pin jar --------------------------------------------------------------------------
+    # A SECOND STEP, AND A DIFFERENT IMAGE, because this one needs maven and the one above needs
+    # buildctl. It is deliberately AFTER the binary publish: the jar is what tells qits-ci which
+    # binary to fetch, so a jar resolvable before its binary is published would be a pin pointing at
+    # nothing — briefly, but a release is exactly the moment somebody is watching.
+    #
+    # It compiles the pin module alone (`-pl`), which is one class with no main-scope dependency at
+    # all, so this step is seconds and shares nothing with the native compile above.
+  - image: qits/build-images/maven-base:latest
+    timeout-seconds: 1800
+    script: |
+      set -eu
+      version=$(printf '%s' "$QITS_EVENT_PAYLOAD" | jq -er .version)
+      case "$version" in
+        ''|*[!0-9.]*) echo "SCMRelease carries no valid CalVer" >&2; exit 1 ;;
+      esac
+
+      # The tag, for the same reason the step above takes it: main has moved on, the tag has not,
+      # and `${project.version}` of the released tree is what gets filtered into the jar as the
+      # binary version it names. A jar built from main's head would name a different release.
+      git fetch "$QITS_CI_REPOSITORY_URL" "refs/tags/$version:refs/tags/$version"
+      git checkout --detach "$version"
+
+      # A published version is never republished, and re-running a deploy of the same bytes is a
+      # no-op rather than a lie — so this one SKIPS where the daemon PUT above fails with 409. That
+      # is the maven release step's rule, not a weakening of the one above.
+      #
+      # BOTH POMS, and the `&&` is the javalib's "skip only when EVERY module is published" rule.
+      # The jar alone is not a published artifact: a consumer cannot read its descriptor without the
+      # parent, and qits-workspace-daemon 2026.916.172630 shipped exactly that — a coordinate that
+      # resolved for nobody, because `-pl` deployed the jar and not the aggregator it names as its
+      # parent. Checking one of the two would let a half publish look complete on a re-run.
+      if curl -fsS -o /dev/null \
+        "$QITS_MAVEN_REGISTRY_URL/eu/wohlben/qits/qits-platform-access-cli-binary/$version/qits-platform-access-cli-binary-$version.pom" \
+        && curl -fsS -o /dev/null \
+          "$QITS_MAVEN_REGISTRY_URL/eu/wohlben/qits/$version/qits-$version.pom"; then
+        echo "qits-platform-access-cli-binary $version and its parent are already published — skipping"
+        exit 0
+      fi
+
+      # -s and the two QITS_MAVEN_AUTH_* variables are docker/Dockerfile's arrangement, in a step
+      # instead of a secret mount: .qits-maven-settings.xml mirrors Central onto the platform's
+      # pull-through while $QITS_MAVEN_PROXY_URL is non-empty, and supplies the credential the
+      # deploy writes with. `-` under set -u: a deployment that commissions nothing sends no pair,
+      # and an anonymous resolve is the state every hand build is in.
+      #
+      # NO -Dqits.maven.repository.url, unlike qits-workspace-daemon's step this one is modelled on.
+      # That property exists there because its root pom DECLARES a `qits-maven` <repository> for the
+      # settings file to mirror. This repository declares none and needs none: the pin module
+      # depends on nothing but junit, and everything else resolves from Central through the mirror.
+      # Passing an undeclared property would be a line that looks load-bearing and is not.
+      QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+      QITS_MAVEN_AUTH_USR="${QITS_COMMISSIONED_CLIENT_ID-}" \
+      QITS_MAVEN_AUTH_PSW="${QITS_COMMISSIONED_CLIENT_SECRET-}" \
+      ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -am deploy -DskipTests \
+        -DaltDeploymentRepository="qits::default::$QITS_MAVEN_REGISTRY_URL"
+
+      # `-am` IS LOAD-BEARING AND IT IS THE PARENT POM — see the probe above. The pin module depends
+      # on nothing in-reactor, so `-am` adds exactly one thing, the aggregator, which is what a
+      # parent is for. It does NOT drag in the application module: that is not an ancestor, and it
+      # carries maven.deploy.skip besides, because what it produces is a binary published as bytes.
+
+      # Its own document, under its own coordinate — the closure of THIS jar, which is junit-free at
+      # runtime and therefore nearly empty. That is the point: a consumer auditing what it pulled in
+      # by pinning the CLI should see that it pulled in nothing.
+      QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+      ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -DskipTests \
+        org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
+        -DoutputFormat=json -DoutputName=sbom -DschemaVersion=1.6
+      sbom_base="${QITS_MAVEN_REGISTRY_URL%%/artifacts/*}/artifacts/sboms"
+      curl -fsS -X PUT -H 'Content-Type: application/vnd.cyclonedx+json' \
+        --data-binary @platform-access-cli-binary/target/sbom.json \
+        "$sbom_base/maven/eu.wohlben.qits:qits-platform-access-cli-binary/-/$version"
