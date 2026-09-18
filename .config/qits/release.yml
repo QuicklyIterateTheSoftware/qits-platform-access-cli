@@ -7,6 +7,17 @@ artifacts:
   # composed release step on the platform from downloading whatever was latest in the daemons store
   # at step start. Dropping it would leave qits-ci pinning a coordinate that stops advancing.
   #
+  # SINCE 2026-09-18 THIS ENTRY ALSO KEEPS THE BINARY ABOVE ALIVE, and that is the second reason it
+  # is not optional. The two entries are one release stamped twice, and qits-platform-maintenance
+  # now reads them that way: `control/CarriedDaemons` resolves a pinned maven coordinate to the
+  # repository that released it and serves every DAEMON artifact of that same release as a `daemon`
+  # row on `GET /maintenance/api/pins`, which qits-artifacts files as a keep. Before that, nothing
+  # named the binary at all — `daemon-binaries` collect at `window=P0D` behind the last two
+  # versions, so the version qits-ci's pom still pinned was evicted by the second release after it
+  # and every composed release step 404'd on the fetch. The pair below is therefore load-bearing in
+  # both directions: the maven entry is how the version is bumped AND how the bytes survive. Ticket
+  # d0b1965f-ca40-4780-8ee1-9be56851b465.
+  #
   # NO `sbom:` ON THIS ENTRY. The composed postlude submits every declared document from ONE step —
   # the last one that builds — and that is the buildctl step below, whose checkout has no
   # `platform-access-cli-binary/target/` and never will. Declaring the path would make the postlude
