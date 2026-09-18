@@ -240,8 +240,10 @@ the signal, decided once at startup:
   answer's `aud` claim carries every audience the client holds — and kept in memory only. It is
   never written to `t.json` and never under the agent's config folder;
 - the public vhosts do not resolve inside, so a service is dialled by its wire alias:
-  `http://dev-qits-projects:8080` for an environment service, `http://qits-platform-idp:8080` for a
-  platform one. The tier in that name comes from `QITS_ENV`, else from the host of whichever
+  `http://dev-qits-projects:8080` for a service on an environment's plane, and its own alias for one
+  on the platform plane — `http://qits-platform-idp:8080` for the idp, `http://qits-events:8080` for
+  events. Those aliases are not one pattern, so the CLI holds the two it dials by name rather than
+  spelling them. The tier in an environment name comes from `QITS_ENV`, else from the host of whichever
   platform URL the container carries — `QITS_WORKSPACE_DAEMON_URL` in a workspace,
   `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_REPOSITORY_MCP_URL` in both.
   `QITS_URL_<APP>` overrides any of them;
@@ -463,6 +465,12 @@ its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wo
 
 `qits checkout-daemon` reads the events service the same way, with `--events-url` or
 `QITS_EVENTS_URL`; the git host it fetches from is the checkout's own `origin`, never a flag.
+
+Inside a container none of those vhosts resolve and the wire aliases answer instead, on two planes:
+a service on an environment's plane is `http://<env>-qits-<app>:8080` (projects, ci, observability,
+the git host), and one on the platform plane has its own alias — `http://qits-platform-idp:8080`
+and `http://qits-events:8080`. The flags and variables above still come first in either home (see
+*qits from inside the platform*).
 
 ### Output, errors and exit codes
 

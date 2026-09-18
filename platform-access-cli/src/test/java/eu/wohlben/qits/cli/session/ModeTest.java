@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 /** Which home, and which addresses follow from it — from a fixed environment, in both directions. */
 class ModeTest {
@@ -63,6 +64,47 @@ class ModeTest {
         assertThat(inside.base("githost")).isEqualTo("http://dev-qits-githost:8080");
         assertThat(inside.base("idp")).as("one per platform, not one per environment")
                 .isEqualTo("http://qits-platform-idp:8080");
+    }
+
+    /**
+     * The regression that shipped: events is on the platform plane and answers on
+     * {@code qits-events}, so the environment prefix gave an address with no DNS record and
+     * {@code qits events} waited on it forever.
+     */
+    @Test
+    void eventsIsOnThePlatformPlaneAndItsAliasCarriesNoEnvironmentPrefix() throws CliFailure {
+        assertThat(endpoints(CONTAINER, null).base("events")).isEqualTo("http://qits-events:8080");
+        assertThat(endpoints(PROJECT_AGENT, null).base("events")).as("the tier does not reach it")
+                .isEqualTo("http://qits-events:8080");
+    }
+
+    /** The aliases are not one pattern: only the idp is spelled {@code qits-platform-<app>}. */
+    @Test
+    void aPlatformPlaneAliasIsReadOffTheMapAndNotSpelled() {
+        assertThat(PlatformEndpoints.PLATFORM_PLANE)
+                .containsOnly(entry("idp", "qits-platform-idp"), entry("events", "qits-events"));
+    }
+
+    /** The idp keeps taking the address the container was told to mint at, when it was told one. */
+    @Test
+    void theIdpPrefersTheInjectedTokenUrlAndFallsBackToItsAlias() throws CliFailure {
+        Map<String, String> told = new HashMap<>(CONTAINER);
+        told.put("QITS_GIT_AUTH_TOKEN_URL", "http://qits-platform-idp.internal:9443/idp/token");
+        assertThat(endpoints(told, null).base("idp")).isEqualTo("http://qits-platform-idp.internal:9443");
+
+        Map<String, String> untold = new HashMap<>(CONTAINER);
+        untold.remove("QITS_GIT_AUTH_TOKEN_URL");
+        assertThat(endpoints(untold, null).base("idp")).isEqualTo("http://qits-platform-idp:8080");
+        assertThat(endpoints(untold, null).base("events")).as("only the idp reads that variable")
+                .isEqualTo("http://qits-events:8080");
+    }
+
+    /** A service on an environment's plane still carries the tier, events or no events. */
+    @Test
+    void anEnvironmentPlaneServiceStillCarriesTheTier() throws CliFailure {
+        assertThat(endpoints(CONTAINER, null).base("projects")).isEqualTo("http://dev-qits-projects:8080");
+        assertThat(endpoints(CONTAINER, null).base("observability"))
+                .isEqualTo("http://dev-qits-observability:8080");
     }
 
     @Test

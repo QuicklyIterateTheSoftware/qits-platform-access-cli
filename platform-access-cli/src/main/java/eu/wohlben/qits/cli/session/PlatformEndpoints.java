@@ -6,7 +6,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Where a service is, in either home. The one place that decides it.
@@ -16,10 +15,10 @@ import java.util.Set;
  * all: the container network answers wire aliases, and nothing else. That is a second set of
  * addresses, not a second code path, which is why both live here.
  * <p>
- * The rule, not a table: an environment service is {@code http://<env>-qits-<app>:8080} and a
- * platform service is {@code http://qits-platform-<app>:8080}. {@code <env>} comes from {@code
- * QITS_ENV}, else from the host of whichever platform URL the container carries, else
- * {@code dev}.
+ * An environment service is a rule: {@code http://<env>-qits-<app>:8080}, where {@code <env>} comes
+ * from {@code QITS_ENV}, else from the host of whichever platform URL the container carries, else
+ * {@code dev}. A platform-plane service is a table ({@link #PLATFORM_PLANE}), because those aliases
+ * were never spelled to one pattern.
  * <p>
  * Keeping it in one class is deliberate: the epic <i>Remove the platform service concept</i> deletes
  * both the environment prefix and the platform/environment split, and that has to be one edit here
@@ -27,8 +26,22 @@ import java.util.Set;
  */
 public final class PlatformEndpoints {
 
-    /** The services that are one per platform rather than one per environment. */
-    static final Set<String> PLATFORM_TIER = Set.of("idp");
+    /**
+     * The services that are one per platform rather than one per environment, each with the wire
+     * alias it actually answers on.
+     * <p>
+     * A map and not a rule, because the aliases are not uniform: the idp answers on
+     * {@code qits-platform-idp} but events answers on {@code qits-events}, and
+     * {@code qits-platform-events} has no DNS record at all — a spelled name would simply never
+     * connect, which is how {@code qits events} came to hang forever on {@code dev-qits-events}.
+     * What says which plane a service is on is the deployments API's application list, where a
+     * platform service is {@code platform:<name>} and an environment service is
+     * {@code <envUuid>:<name>}; this map is the CLI's copy of that fact for the two services it
+     * dials. A third service dialled from here needs its entry added, read off that list.
+     */
+    static final Map<String, String> PLATFORM_PLANE = Map.of(
+            "idp", "qits-platform-idp",
+            "events", "qits-events");
 
     /** The port every service listens on inside the container network. */
     static final int WIRE_PORT = 8080;
@@ -90,9 +103,10 @@ public final class PlatformEndpoints {
 
     /** {@code http://dev-qits-projects:8080}, or {@code http://qits-platform-idp:8080}. */
     String wire(String app) {
-        if (PLATFORM_TIER.contains(app)) {
+        String alias = PLATFORM_PLANE.get(app);
+        if (alias != null) {
             String told = "idp".equals(app) ? origin(env.get(TOKEN_URL)) : null;
-            return told != null ? told : "http://qits-platform-" + app + ":" + WIRE_PORT;
+            return told != null ? told : "http://" + alias + ":" + WIRE_PORT;
         }
         return "http://" + environment() + "-qits-" + app + ":" + WIRE_PORT;
     }

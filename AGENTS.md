@@ -119,7 +119,11 @@ Two packages sit outside `access/`, because neither is about one command:
   two files never share a token. Both are written through `PrivateFiles`.
 - **One place decides a service's address**: `PlatformEndpoints`. `PlatformUrls` keeps the commands'
   own flags and `QITS_<APP>_URL` variables and hands the rest to it. The public vhosts on a
-  workstation, the wire aliases inside the platform, `QITS_URL_<APP>` over either. The epic
+  workstation, the wire aliases inside the platform, `QITS_URL_<APP>` over either. Inside, a service
+  on an environment's plane is `http://<env>-qits-<app>:8080` and one on the platform plane has the
+  alias `PlatformEndpoints.PLATFORM_PLANE` names for it (`qits-platform-idp`, `qits-events`) —
+  those are not one pattern, so a service added there is looked up in the deployments API's
+  application list (`platform:<name>` against `<envUuid>:<name>`), never spelled. The epic
   *Remove the platform service concept* deletes the environment prefix and the platform/environment
   split; that must stay one edit there.
 - **One credential interface**: `Credential`. `AccessTokens` is the workstation's, `AgentCredential`

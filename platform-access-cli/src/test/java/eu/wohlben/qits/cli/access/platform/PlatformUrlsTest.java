@@ -1,7 +1,9 @@
 package eu.wohlben.qits.cli.access.platform;
 
+import eu.wohlben.qits.cli.session.Mode;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +46,40 @@ class PlatformUrlsTest {
         assertThat(PlatformUrls.environment("http://idp.prod.localhost:8080/idp")).isEqualTo("prod");
         assertThatThrownBy(() -> PlatformUrls.environment("http://127.0.0.1:4000/idp")).hasMessageContaining("--audience");
         assertThatThrownBy(() -> PlatformUrls.environment("https://idp.localhost/idp")).hasMessageContaining("--audience");
+    }
+
+    /**
+     * Inside, events is a platform-plane service on {@code qits-events} — and everything a person
+     * can say about its address still comes first, because the day it moves again they must not
+     * have to wait for a CLI release.
+     */
+    @Test
+    void insideTheEventsDefaultIsThePlatformPlaneAliasAndEveryOverrideStillBeatsIt() throws Exception {
+        Map<String, String> container = Map.of(
+                Mode.CLIENT_ID, "dyn-workspace-352-m8m08",
+                Mode.CLIENT_SECRET, "a secret",
+                "QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352");
+
+        assertThat(PlatformUrls.events(null, container, null)).isEqualTo("http://qits-events:8080");
+        assertThat(PlatformUrls.projects(null, container, null)).as("still one per environment")
+                .isEqualTo("http://dev-qits-projects:8080");
+
+        Map<String, String> said = new HashMap<>(container);
+        said.put("QITS_EVENTS_URL", "http://told-env:8080/");
+        assertThat(PlatformUrls.events(null, said, null)).isEqualTo("http://told-env:8080");
+        assertThat(PlatformUrls.events("http://told-flag:8080", said, null)).isEqualTo("http://told-flag:8080");
+
+        Map<String, String> byUrlVariable = new HashMap<>(container);
+        byUrlVariable.put("QITS_URL_EVENTS", "http://told-url-events:8080");
+        assertThat(PlatformUrls.events(null, byUrlVariable, null)).isEqualTo("http://told-url-events:8080");
+    }
+
+    /** Outside, events is the idp host with its first label swapped, exactly as before. */
+    @Test
+    void theWorkstationVhostForEventsIsUnchanged() throws Exception {
+        assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.dev.wohlben.eu");
+        assertThat(PlatformUrls.events(null, Map.of(), "http://idp.prod.localhost:8080/idp/"))
+                .isEqualTo("http://events.prod.localhost:8080");
     }
 
     @Test
