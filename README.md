@@ -15,7 +15,8 @@ Commands:
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
-  `qits git-credential` is the Git credential helper that uses that sign-in.
+  `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
+  platform, the container's own credential instead.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
 - `qits tui` opens an interactive screen over all of the above: pick a command instead of
@@ -762,9 +763,9 @@ The OAuth client is `qits-git-workstation` (PKCE, no secret), not the `qits-cli`
 
 ### Git setup, for this host only
 
-Git asks `qits git-credential` for the git host and for no other host, so a global helper (for
-example Git Credential Manager for GitHub) stays as it is. The empty value first clears the helper
-list for this host:
+On a workstation Git asks `qits git-credential` for the git host and for no other host, so a global
+helper (for example Git Credential Manager for GitHub) stays as it is. The empty value first clears
+the helper list for this host:
 
     git config --global --replace-all credential.https://githost.dev.wohlben.eu.helper ''
     git config --global --add credential.https://githost.dev.wohlben.eu.helper '!/home/you/.local/bin/qits git-credential'
@@ -772,10 +773,17 @@ list for this host:
 `qits git-login` prints these two lines with the git host and its own path. `--configure` runs them.
 Running them again changes nothing.
 
+Inside the platform the setup is not per host: the workspace image points a *global*
+`credential.helper` at `qits git-credential`, so Git runs it for every http remote a checked-out
+repository names, submodule remotes included. Which host it will answer is settled by the
+environment instead — see below.
+
 ### qits git-credential
 
 Git sends the token as HTTP Basic `oauth2:<access token>`; the edge checks it and forwards it to the
-git host.
+git host. The command has the CLI's two homes.
+
+On a workstation, the sign-in of `qits git-login` in `git.json` is what answers:
 
 - `get`: for a git host with a sign-in, prints `username=oauth2` and the access token as
   `password`. An access token with more than 60 seconds left is used as it is. Otherwise it is
@@ -787,6 +795,23 @@ git host.
   stays, so a passing 401 does not cost a new browser sign-in.
 - A refresh the idp refuses prints `Git sign-in ended — run `qits git-login`.` on stderr and
   nothing on stdout.
+
+Inside the platform there is no sign-in and none is needed: `qits git-login` wants a browser and is
+refused there, so `git.json` never exists. The container's own commissioned credential answers
+instead, minted at the internal idp on demand:
+
+- `get`: for the injected git host, prints `username=oauth2` and the container's bearer as
+  `password`. The host is `QITS_GIT_AUTH_HOST` (a bare authority, `githost.dev.internal:8080`), and
+  it is compared as a normalised origin, so an explicit default port on either side still matches.
+- Any other host gets no answer, and nothing is minted for it: the helper is global, and the
+  platform's bearer is not handed to a host someone else wrote into a remote. A missing or
+  unreadable `QITS_GIT_AUTH_HOST` therefore answers nothing at all, rather than answering
+  everything.
+- `store` and `erase` do nothing, and nothing is written: neither `git.json` nor `git.json.lock` is
+  created. The agent's config folder is becoming a git repository, and a machine credential
+  committed to a branch is a leak with a history.
+- An idp that cannot be reached or refuses the client says why on stderr and still exits `0`, so
+  Git carries on with its other helpers.
 
 `git-credential get` is the one place `qits` prints a token, because that is how Git's helper
 protocol works. stderr never carries one.

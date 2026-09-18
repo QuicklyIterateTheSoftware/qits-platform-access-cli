@@ -72,13 +72,24 @@ public final class AgentCredential implements Credential {
      */
     private static volatile AgentCredential shared;
 
+    /**
+     * The environment the held instance was built from. A process has one, and it does not change,
+     * so in a container this matches on every call and the credential is minted once — the whole
+     * point of holding it. Keying on it rather than on nothing is what makes the hold correct
+     * instead of merely usual: a second environment is a second credential, never the first one's
+     * token under another idp's address. It is also what keeps the tests independent of each
+     * other, since each builds its own environment.
+     */
+    private static volatile Map<String, String> sharedEnvironment;
+
     public static AgentCredential of(Map<String, String> env, Clock clock) {
         AgentCredential held = shared;
-        if (held != null) {
+        if (held != null && sharedEnvironment.equals(env)) {
             return held;
         }
         synchronized (AgentCredential.class) {
-            if (shared == null) {
+            if (shared == null || !sharedEnvironment.equals(env)) {
+                sharedEnvironment = Map.copyOf(env);
                 shared = new AgentCredential(
                         new PlatformEndpoints(Mode.IN_PLATFORM, env, null).wire("idp"), env, clock);
             }

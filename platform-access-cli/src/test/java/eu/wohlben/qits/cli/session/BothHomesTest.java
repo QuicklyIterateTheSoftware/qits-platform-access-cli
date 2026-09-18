@@ -4,9 +4,13 @@ import eu.wohlben.qits.cli.access.AccessCli;
 import eu.wohlben.qits.cli.access.FakeIdp;
 import eu.wohlben.qits.cli.access.FakePlatform;
 import eu.wohlben.qits.cli.access.FakeTime;
+import eu.wohlben.qits.cli.access.git.GitCredential;
+import eu.wohlben.qits.cli.access.git.GitCredentialFile;
+import eu.wohlben.qits.cli.access.git.GitLoginFlow;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
+import eu.wohlben.qits.cli.access.session.ExclusiveLock;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -71,7 +76,11 @@ class BothHomesTest {
     }
 
     private int run(ByteArrayOutputStream out, String... args) {
-        CliContext context = new CliContext(Map.copyOf(env), InputStream.nullInputStream(),
+        return run(out, InputStream.nullInputStream(), args);
+    }
+
+    private int run(ByteArrayOutputStream out, InputStream in, String... args) {
+        CliContext context = new CliContext(Map.copyOf(env), in,
                 new PrintStream(out, true, StandardCharsets.UTF_8),
                 new PrintStream(out, true, StandardCharsets.UTF_8), time, time, TokenClient::new, stop -> {
         });
@@ -118,6 +127,32 @@ class BothHomesTest {
             assertThat(request).doesNotContainKey("client_secret");
             assertThat(request.get("authorization-header")).isEqualTo("null");
         });
+    }
+
+    /**
+     * {@code git-credential} learned a second home; this is the first one, unmoved. The injected
+     * host is set on purpose: outside, it means nothing, and the sign-in file decides alone.
+     */
+    @Test
+    void gitCredentialStillReadsTheSignInFileOnAWorkstation() throws Exception {
+        String origin = "https://githost.dev.wohlben.eu";
+        String access = FakeIdp.SECRET + "access-git";
+        GitCredentialFile gitStore = new GitCredentialFile(home.resolve("qits"));
+        try (ExclusiveLock ignored = gitStore.lock()) {
+            gitStore.put(new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, "dev-qits-githost", origin,
+                    access, T0.plus(Duration.ofMinutes(10)), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30))));
+        }
+        env.put("QITS_GIT_AUTH_HOST", "githost.dev.wohlben.eu");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        int exit = run(out, new ByteArrayInputStream(
+                "protocol=https\nhost=githost.dev.wohlben.eu\n\n".getBytes(StandardCharsets.UTF_8)),
+                "git-credential", "get");
+
+        assertThat(exit).isZero();
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("username=oauth2\npassword=" + access + "\n\n");
+        assertThat(idp.grants("client_credentials")).isZero();
+        assertThat(idp.requests).allSatisfy(request -> assertThat(request).doesNotContainKey("client_secret"));
     }
 
     @Test

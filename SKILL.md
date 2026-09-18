@@ -834,9 +834,11 @@ git push <remote> HEAD:refs/heads/external/log-view
 
 ## qits git-credential
 
-Git's credential helper for the platform's git host. Git runs it; a person does not. `qits git-login` sets it up.
+Git's credential helper for the platform's git host. Git runs it; a person does not.
 
-get prints the stored sign-in's access token for Git, refreshing it first when needed. store is ignored. erase drops the cached access token and keeps the sign-in.
+On a workstation `qits git-login` sets it up: get prints that sign-in's access token, refreshing it first when needed. store is ignored. erase drops the cached access token and keeps the sign-in.
+
+Inside the platform there is no sign-in and none is needed: get answers the injected git host (QITS_GIT_AUTH_HOST) from the container's own credential, and answers no other host. store and erase do nothing there, and no file is written.
 
 ```
 qits git-credential <get|store|erase>
@@ -852,11 +854,12 @@ qits git-credential <get|store|erase>
 git config --global --get-all credential.https://githost.dev.wohlben.eu.helper
 ```
 
-The example shows the setup. Do not run `get` yourself: it prints a token on stdout, because that is Git's helper protocol.
+The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, because that is Git's helper protocol.
+Inside the platform Git is set up for every host at once, so the injected host is checked before anything is minted: the platform's bearer is never handed to a host someone else named.
 
 ### Exit codes
 
-- `0` Done. For a host without a sign-in it prints nothing, and Git asks its other helpers.
+- `0` Done. For a host without a sign-in, and inside the platform for any host but the injected one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why on stderr and still exits 0, so Git carries on.
 - `1` The sign-in file cannot be read or written.
 - `2` No action named.
 
