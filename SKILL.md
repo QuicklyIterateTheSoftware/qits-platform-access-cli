@@ -83,6 +83,42 @@ systemctl --user enable --now qits-session-daemon
 - `1` Another qits session-daemon is running.
 - `2` --margin is not between 0 and 300.
 
+## qits checkout-daemon
+
+Hold a local checkout at what a repository released, and keep it there. It follows the releases, never the tips of the branches: the root ends detached at the release tag, and every submodule detached at the gitlink that release recorded. That tree is the estate somebody reviewed and released, which is not the same thing as `latest`.
+
+It brings the checkout to the newest release at the start, then waits for SCMRelease on the live event stream. After every connect it reads the newest release back, so a release cut while it was stopped or reconnecting is not missed. Notes go to stderr, and every release it moves the checkout to is one line on stdout. Stops on SIGINT or SIGTERM.
+
+```
+qits checkout-daemon [--events-url <url>] [--once] [--path <dir>] [--repository <name>] [--submodules]
+```
+
+| Name | What it does |
+|---|---|
+| `--events-url <url>` | The events service's base URL, without /events. Default: QITS_EVENTS_URL, else the session's idp address with `idp` swapped for `events`. |
+| `--once` | Bring the checkout to the newest release and exit; do not open the stream. |
+| `--path <dir>` | The checkout to hold. Default: the directory the command runs in. |
+| `--repository <name>` | Whose releases to follow. Default: the repository the checkout's origin names. |
+| `--submodules` | Hold the submodules at the gitlinks the release recorded. --no-submodules holds the root alone. Default: true. |
+
+### Examples
+
+```
+qits checkout-daemon --path /workspace
+qits checkout-daemon --path /workspace --once
+qits checkout-daemon --path /srv/qits --repository qits-qits --no-submodules
+```
+
+- A checkout with local changes is never touched: it is somebody's work. It says so and keeps watching; with --once that is exit code 1. It never stashes, resets or merges.
+- Git authentication stays the credential helper's: run `qits git-login` on a workstation, and in a container the injected host (QITS_GIT_AUTH_HOST) answers. No token is ever put in a URL.
+- --repository is needed when the origin addresses the repository by its id (/git/<repository id>), which is the git host's internal storage scheme and names nothing.
+
+### Exit codes
+
+- `0` Stopped by SIGINT or SIGTERM, --once is done, or stdout was closed.
+- `1` The platform refused the stream (401, 403 or another 4xx), or with --once the checkout has local changes or a git command failed.
+- `2` Used wrongly (the origin names no repository and --repository was not given), Git has no credential for the origin's host, not signed in, or the session ended.
+
 ## qits projects
 
 The platform's projects. Other commands take a project's id, slug or name as --project.

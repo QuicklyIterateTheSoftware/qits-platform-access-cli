@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.access;
 
 import eu.wohlben.qits.cli.access.artifacts.ArtifactsCommand;
+import eu.wohlben.qits.cli.access.checkout.CheckoutDaemonCommand;
 import eu.wohlben.qits.cli.access.ci.CiCommand;
 import eu.wohlben.qits.cli.access.daemon.SessionDaemonCommand;
 import eu.wohlben.qits.cli.access.events.EventsCommand;
@@ -29,7 +30,7 @@ import picocli.CommandLine;
 @CommandLine.Command(
         name = "qits",
         mixinStandardHelpOptions = true,
-        subcommands = {LoginCommand.class, SessionDaemonCommand.class, ProjectsCommand.class,
+        subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, TicketCommand.class, EpicCommand.class, ReleaseRequestCommand.class,
                 CiCommand.class, EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, ArtifactsCommand.class,

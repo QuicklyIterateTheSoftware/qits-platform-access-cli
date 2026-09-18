@@ -7,11 +7,14 @@ import java.util.Optional;
  * lines join with a newline, {@code id:} sets the last event id, a line starting with {@code :} is
  * a comment, and an empty line ends the event. One space after the colon is not part of the value.
  * An event the stream never ended with an empty line is dropped.
+ * <p>
+ * Public because every stream this CLI reads is one of these: {@code qits events} prints the
+ * frames and {@code qits checkout-daemon} acts on them, and one reader of the format is enough.
  */
-final class SseParser {
+public final class SseParser {
 
     /** One complete event. {@code id} is the last id the stream set; it may be null. */
-    record Event(String id, String type, String data) {
+    public record Event(String id, String type, String data) {
     }
 
     private final StringBuilder data = new StringBuilder();
@@ -20,7 +23,7 @@ final class SseParser {
     private String lastId;
 
     /** Takes one line without its line end. Answers the event an empty line completes. */
-    Optional<Event> accept(String line) {
+    public Optional<Event> accept(String line) {
         if (line.isEmpty()) {
             if (!hasData) {
                 type = null;

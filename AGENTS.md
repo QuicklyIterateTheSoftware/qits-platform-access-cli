@@ -7,8 +7,9 @@ command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
 that session fresh), `qits projects|repositories|ticket|release-request` (the projects service),
 `qits ci runs|run|retry` (qits-ci's runs, a run's step logs, a retry), `qits events` (the live event
-stream), `qits observe` (the live, server-filtered telemetry stream
-of qits-observability, over a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
+stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
+submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
+a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), and `qits tui` (an
 interactive screen over all of them). The README says how each behaves.
 
@@ -64,6 +65,9 @@ The application module's sources, under `platform-access-cli/src/main/java/eu/wo
     projects/  qits projects, repositories, ticket and release-request
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
     events/    qits events: the SSE parser and the reconnecting stream
+    checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-
+               watch loop over SCMRelease (ReleaseWatcher), a sibling of events/EventStream that
+               shares its SSE parser
     observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
                and SafeText (terminal control characters out of every streamed value)
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper

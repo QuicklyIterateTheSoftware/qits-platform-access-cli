@@ -429,6 +429,7 @@ Installing it is not part of this version.
     qits ci retry <run id> [--project <project> --repository <repository>]
     qits events [--filter=<names>]
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
+    qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories`, `ticket` and `release-request` may come before or
@@ -459,6 +460,9 @@ its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wo
 - events: `--events-url`, else `QITS_EVENTS_URL`
 - observability: `--observability-url`, else `QITS_OBSERVABILITY_URL`. The stream is a WebSocket,
   so `https` becomes `wss` and `http` becomes `ws`.
+
+`qits checkout-daemon` reads the events service the same way, with `--events-url` or
+`QITS_EVENTS_URL`; the git host it fetches from is the checkout's own `origin`, never a flag.
 
 ### Output, errors and exit codes
 
@@ -645,6 +649,63 @@ The stream is live only: it has no replay. Notes go to stderr, one line each wit
 - SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0.
 - When stdout is closed (`| head -3`), it stops, with exit code 0, at the next event it would
   print. Keepalives print nothing, so on a quiet stream that can take a while.
+
+### qits checkout-daemon
+
+    qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--[no-]submodules] \
+        [--events-url <url>]
+
+Holds a local checkout at what the repository released, and keeps it there. **It follows the
+releases, not the tips of the branches**: the root ends detached at the release tag, and every
+submodule detached at the gitlink that release recorded. That tree is the estate somebody reviewed
+and released, which is not the same thing as `latest` — a wrapper's branch tips are whatever each
+component pushed since.
+
+    qits checkout-daemon --path /workspace
+    qits checkout-daemon --path /workspace --once
+    qits checkout-daemon --path /srv/qits --repository qits-qits --no-submodules
+
+At the start, and again after every connect, it reads the newest `SCMRelease` of the repository
+from the events service and brings the checkout to it; in between it waits for `SCMRelease` on the
+live stream. The stream has no replay, so the reconcile after a connect is what closes the gap a
+reconnect leaves — and the version last acted on is remembered, so the frame that follows a
+reconcile does not run Git twice.
+
+Which repository it follows comes from the checkout's `origin`. An origin of the form
+`https://<git host>/git/<project id>/<repository>` names it, and the project id narrows the events
+it matches. `http://<git host>/git/<repository id>` does not: that is the git host's internal
+storage scheme, and the command refuses with exit code 2 until `--repository <name>` says which
+repository this is.
+
+What it runs is what a person would run:
+
+    git -C <path> fetch <origin> refs/tags/<version>:refs/tags/<version>
+    git -C <path> checkout --detach <version>
+    git -C <path> -c submodule.<name>.url=<the origin's parent>/<name> \
+        submodule update --init --checkout -- <path of the submodule>
+
+`--checkout` is the flag that matters. Every entry of the wrapper sets `update = merge`, and
+`submodule update --init` copies that into the checkout: without the flag Git merges the recorded
+commit into whatever branch the submodule sits on and leaves it there, at that branch's tip rather
+than at the commit the release recorded. `--no-submodules` holds the root alone. A gitlink
+`.gitmodules` declares but the released tree does not carry is skipped with a note, not a failure.
+
+- **A checkout with local changes is never touched.** Before anything it runs
+  `git status --porcelain --ignore-submodules=none`; anything at all there and it says so, names
+  the path, and leaves the checkout as it is. It never stashes, resets or merges away somebody's
+  work. With `--once` that is exit code 1; while watching it keeps watching, and the next release
+  tries again.
+- **Git authentication stays the credential helper's.** No token is put in a URL or an
+  `http.extraHeader`: the helper is pinned to one host on purpose, and a machine credential handed
+  to a submodule remote somebody else authored is a way out for it. At the start it checks there is
+  one — `qits git-login` on a workstation, the injected `QITS_GIT_AUTH_HOST` in a container — and
+  refuses with exit code 2 rather than hanging on a password prompt at the first release. An origin
+  that is a local path has no host and needs none.
+- Every note is one line on stderr with a time. Every release the checkout is moved to is one line
+  on stdout, so `qits checkout-daemon --path . | while read v; do ...; done` works.
+- A dropped connection or a 5xx is followed by a reconnect, waiting 1, 2, 4 … up to 30 seconds; a
+  connection silent for 60 seconds counts as dropped. A 4xx stops the command with exit code 1, and
+  SIGINT or SIGTERM with 0.
 
 ### qits observe
 

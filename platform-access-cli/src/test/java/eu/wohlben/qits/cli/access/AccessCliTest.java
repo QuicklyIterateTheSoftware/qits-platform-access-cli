@@ -46,6 +46,14 @@ class AccessCliTest {
     }
 
     @Test
+    @Launch({"checkout-daemon", "--help"})
+    void checkoutDaemonHasItsOptionsAndSaysWhatItFollows(LaunchResult result) {
+        assertThat(result.getOutput()).contains("--path").contains("--repository").contains("--once")
+                .contains("--[no-]submodules").contains("--events-url")
+                .contains("detached").contains("gitlink");
+    }
+
+    @Test
     @Launch({"git-login", "--help"})
     void gitLoginHasItsOptions(LaunchResult result) {
         assertThat(result.getOutput()).contains("--idp-url").contains("--git-host").contains("--audience")
