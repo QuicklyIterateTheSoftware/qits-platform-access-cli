@@ -123,6 +123,29 @@ public final class Checkout {
     /**
      * Brings the checkout to this release: the root detached at the release tag, and every
      * submodule detached at the gitlink the release recorded. Answers whether it moved anything.
+     * <p>
+     * <b>Untracked paths are not local changes, and the guard below excludes them on purpose</b>
+     * ({@code --untracked-files=no}). The guard exists to protect work this command could destroy,
+     * and an untracked file is not such work: {@code git checkout --detach} never deletes one, and
+     * when the target tree would overwrite one it refuses with its own error rather than clobbering
+     * it. So the guard asks only about tracked state — staged, unstaged, and submodules.
+     * <p>
+     * Counting {@code ??} entries froze real checkouts permanently, measured live on 2026-09-19:
+     * {@code /workspace} in the qits project's agent container reported
+     * {@code ?? components/qits-artifacts/qits-artifacts-cli/}, the left-behind working directory of
+     * a submodule that main no longer declares. {@code git checkout --detach} does not remove such a
+     * directory, so this command's own successful move is what strands it — and from the next
+     * release on, {@code hold} refused. In watch mode {@link ReleaseWatcher} catches that failure,
+     * logs it and keeps watching, so the child stayed alive while the checkout silently never moved
+     * again: the exact silent no-op this command exists to prevent. Every long-lived checkout that
+     * outlives a submodule removal would end up there.
+     * <p>
+     * {@code --ignore-submodules=none} is load-bearing and stays. Every wrapper {@code .gitmodules}
+     * entry sets {@code ignore = all}, which Git's status honours; without the flag a dirty
+     * submodule — real work — would be invisible to the guard.
+     * <p>
+     * Anything tracked still refuses: a modified file, a staged change and a dirty submodule all
+     * end the command, and nothing here stashes, resets or forces.
      */
     public boolean hold(Release release) throws CliFailure, InterruptedException {
         String head = git.run("rev-parse", "HEAD");
@@ -138,7 +161,7 @@ public final class Checkout {
             notes.accept("already at " + safe(release.version()) + " (" + head + ")");
             return false;
         }
-        String changes = git.run("status", "--porcelain", "--ignore-submodules=none");
+        String changes = git.run("status", "--porcelain", "--untracked-files=no", "--ignore-submodules=none");
         if (!changes.isEmpty()) {
             throw new CliFailure("The checkout at " + path + " has local changes, so nothing was touched. Commit or "
                     + "remove them and it follows " + safe(release.version()) + " again.", CliFailure.FAILED);

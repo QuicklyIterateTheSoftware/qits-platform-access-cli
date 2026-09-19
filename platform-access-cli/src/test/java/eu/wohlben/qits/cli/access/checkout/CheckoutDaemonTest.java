@@ -47,6 +47,7 @@ class CheckoutDaemonTest {
     private static final String REPO = "qits-demo-service";
     private static final String SUB = "qits-demo-sub";
     private static final String VERSION = "2026.918.1";
+    private static final String NEXT_VERSION = "2026.918.2";
 
     @TempDir
     Path tmp;
@@ -237,6 +238,118 @@ class CheckoutDaemonTest {
         assertThat(err()).contains("has local changes").contains(work.toString());
         assertThat(err().lines()).allMatch(l -> l.matches("^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d.*"
                 + " qits checkout-daemon: .*"));
+    }
+
+    /**
+     * The regression of 2026-09-19. An untracked path is not work this command can destroy:
+     * {@code git checkout --detach} never deletes one. Counting them froze every checkout that
+     * outlived a submodule removal, because the stranded directory never goes away.
+     */
+    @Test
+    void anUntrackedFileOrDirectoryIsNotALocalChangeAndTheCheckoutStillMoves() throws Exception {
+        String released = release(VERSION);
+        announced(payload("repositoryName", REPO, released));
+        Files.writeString(work.resolve("scratch.txt"), "nobody tracked this");
+        Path stray = Files.createDirectories(work.resolve("components/qits-artifacts/qits-artifacts-cli"));
+        Files.writeString(stray.resolve("pom.xml"), "left behind by a removed submodule");
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(branch(work)).isEqualTo("HEAD");
+        assertThat(Files.readString(work.resolve("scratch.txt"))).as("untracked work is still there")
+                .isEqualTo("nobody tracked this");
+        assertThat(Files.readString(stray.resolve("pom.xml"))).isEqualTo("left behind by a removed submodule");
+    }
+
+    /** Staged is tracked: the guard must still refuse, or the checkout would move under the work. */
+    @Test
+    void aStagedChangeIsStillALocalChange() throws Exception {
+        release(VERSION);
+        announced(payload("repositoryName", REPO, null));
+        String before = head(work);
+        Files.writeString(work.resolve("new.txt"), "staged, not committed");
+        git(work, "add", "new.txt");
+
+        assertThat(run("--once")).isEqualTo(1);
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(err()).contains("has local changes").contains(work.toString());
+    }
+
+    /**
+     * What keeps {@code --ignore-submodules=none} in the guard. The entry says {@code ignore = all},
+     * the way every wrapper's does, so without the flag Git's status says the root is clean and the
+     * checkout would move out from under somebody's work in the submodule.
+     */
+    @Test
+    void aDirtySubmoduleUnderACleanRootStillRefuses() throws Exception {
+        Path checkedOut = addSubmodule();
+        release(VERSION);
+        announced(payload("repositoryName", REPO, null));
+        String before = head(work);
+        Files.writeString(checkedOut.resolve("lib.txt"), "somebody is working in the submodule");
+
+        assertThat(run("--once")).isEqualTo(1);
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(Files.readString(checkedOut.resolve("lib.txt"))).isEqualTo("somebody is working in the submodule");
+        assertThat(err()).contains("has local changes").contains(work.toString());
+    }
+
+    /**
+     * The live case, end to end. A release removes a component; the move leaves its working
+     * directory on disk, untracked, forever. The next release must still be followed — before the
+     * fix this checkout was frozen from here on, and in watch mode silently so.
+     */
+    @Test
+    void aStrandedSubmoduleDirectoryDoesNotFreezeTheNextRelease() throws Exception {
+        Path checkedOut = addSubmodule();
+
+        git(upstream, "rm", "-q", "-f", "components/demo/" + SUB);
+        git(upstream, "commit", "-q", "-m", "remove the component");
+        String withoutIt = release(VERSION);
+        announced(payloadFor(withoutIt, VERSION));
+
+        assertThat(run("--once")).isZero();
+        assertThat(head(work)).isEqualTo(withoutIt);
+        // Git collapses it to the first untracked directory, which is the whole point: it is there,
+        // it is untracked, and nothing this command does will ever remove it.
+        assertThat(git(work, "status", "--porcelain")).as("the directory git left behind")
+                .startsWith("?? components/");
+        assertThat(Files.exists(checkedOut.resolve("lib.txt"))).isTrue();
+
+        out.reset();
+        err.reset();
+        String next = release(NEXT_VERSION);
+        announced(payloadFor(next, NEXT_VERSION));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).as("it followed the next release with the stranded directory there").isEqualTo(next);
+        assertThat(err()).doesNotContain("has local changes");
+    }
+
+    /** The submodule as a wrapper declares it — {@code ignore = all} and all — initialised here. */
+    private Path addSubmodule() throws Exception {
+        Path sub = Files.createDirectories(tmp.resolve("git").resolve(PROJECT).resolve(SUB));
+        init(sub);
+        commit(sub, "lib.txt", "one");
+        git(upstream, "submodule", "add", "--name", SUB, sub.toString(), "components/demo/" + SUB);
+        git(upstream, "config", "-f", ".gitmodules", "submodule." + SUB + ".ignore", "all");
+        git(upstream, "add", "-A");
+        git(upstream, "commit", "-q", "-m", "declare the submodule");
+
+        git(work, "fetch", "-q", "origin");
+        git(work, "reset", "--hard", "-q", "origin/main");
+        git(work, "-c", "submodule." + SUB + ".url=" + sub, "submodule", "update", "--init", "--",
+                "components/demo/" + SUB);
+        return work.resolve("components/demo/" + SUB);
+    }
+
+    private String payloadFor(String sha, String version) {
+        return JSON.createObjectNode().put("repositoryName", REPO).put("projectId", PROJECT)
+                .put("version", version).put("commitSha", sha).toString();
     }
 
     /**
