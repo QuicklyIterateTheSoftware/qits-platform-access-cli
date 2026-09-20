@@ -68,7 +68,7 @@ public class SbomCommand implements Runnable {
             String name = PublishArgs.requiredOnce(this.name, "--name");
             String version = PublishArgs.requiredOnce(this.version, "--version");
             String file = PublishArgs.requiredOnce(this.file, "--file");
-            Publisher publisher = new Publisher(new Http(), Store.from(env, console), console);
+            Publisher publisher = new Publisher(http(), Store.from(env, console), console);
             return publisher.sbomSubmit(Store.normalizeType(type), name, version, Path.of(file));
         }
     }

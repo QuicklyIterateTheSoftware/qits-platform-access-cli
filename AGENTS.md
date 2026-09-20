@@ -165,9 +165,19 @@ Two packages sit outside `access/`, because neither is about one command:
   `credential.helper`: the person's global helper serves GitHub and must stay. A test that runs
   `git config --global` sets `GIT_CONFIG_GLOBAL` to a scratch file first.
 - **`qits artifacts publish` never touches `t.json`, `git.json` or their locks.** It runs in a CI
-  step container with no person signed in, so its commands read only `CliContext.env()`, `.out()`
-  and `.err()` — never `.sessionFile()` or `.tokens()`. If a change to `publish/` needs either, that
-  change belongs somewhere else.
+  step container with no person signed in, so its commands read only `CliContext.env()`, `.out()`,
+  `.err()` and `.clock()` — never `.sessionFile()` or `.tokens()`. If a change to `publish/` needs
+  either, that change belongs somewhere else.
+- **Every publish request carries a bearer.** Only a CI run may write to qits-artifacts, and its
+  reads want one too, so `Http` puts an `Authorization` header on every PUT, GET and HEAD.
+  `PublishCredential` is the one place that decides where the token comes from, in this order:
+  `QITS_PUBLISH_TOKEN_COMMAND` (an executable printing a fresh token, run again for every request,
+  because a release step can publish an hour after it started), `QITS_PUBLISH_TOKEN`, then the
+  commissioned pair through `AgentCredential` — the CLI's one minter, never a second one here. With
+  none of them the request is still **sent**, without the header: the store is the authority on who
+  may write, and refusing locally would hide its 401 behind a message about a variable. A command
+  builds its client with `AbstractPublishCommand.http()`, never `new Http(...)`, so an anonymous
+  client cannot be had by forgetting an argument.
 - **A `publish/` command that has its own `--version` flag must not use
   `mixinStandardHelpOptions`.** The mixin's `-V`/`--version` (the binary's own version) collides by
   name with qits-publish's `--version` (the artifact version), and picocli then recognises neither

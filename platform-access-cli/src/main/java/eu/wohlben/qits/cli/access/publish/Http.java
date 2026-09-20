@@ -19,16 +19,24 @@ import java.util.Map;
  * <p>{@code java.net.http}, no client library: the four surfaces this speaks to are plain PUT/GET/HEAD
  * with a body and a couple of headers, and the JDK's client is already in the image.
  *
- * <p><b>No credential is sent, and that is the platform's posture rather than an omission.</b>
- * qits-artifacts' publish surfaces — sboms, docs, daemons, npm — take no credential in either
- * direction, exactly as {@code npm publish}, {@code mvn deploy} and {@code docker push} do here; the
- * store's own suite pins that with the machine-token gate switched on. What keeps it honest is
- * immutability: a publish can add a coordinate and can never redefine one. {@code
- * QITS_COMMISSIONED_CLIENT_ID}/{@code _SECRET} are read by {@link Env} and deliberately not
- * presented here — they are a build-secret pair for resolving dependencies inside an image build,
- * not an HTTP credential. When machine auth arrives it arrives for every surface at once, and it
- * becomes one release of this binary rather than a sweep of forty pipelines. That is the whole
- * reason the HTTP lives here.
+ * <p><b>Every request carries a bearer, because only a CI run may publish.</b> qits-artifacts used to
+ * answer an anonymous publish and no longer does: the store refuses one, so a request without an
+ * {@code Authorization} header is a 401 rather than a coordinate. {@link PublishCredential} decides
+ * where the token comes from — a token command, a token, or the commissioned client pair minted at
+ * the idp — and this class puts it on the wire. The reads go out with it too: the store has wanted a
+ * bearer to <em>read</em> a daemon binary for some time, so an unauthenticated probe was only ever a
+ * 401 waiting to be met.
+ *
+ * <p><b>A request with no credential is still sent.</b> When the environment holds no token at all
+ * the header is simply absent and the call happens anyway — the store is the authority on who may
+ * write, and refusing here would replace its 401, which names the real reason, with a client-side
+ * error naming a variable.
+ *
+ * <p>Machine auth arriving for every surface at once is why the HTTP lives here: it became one
+ * release of this binary rather than a sweep of forty pipelines.
+ *
+ * <p><b>Nothing here ever prints a request header.</b> A failure names the method, the address and
+ * the response — never what was sent, because what was sent is a token.
  *
  * <p>Every transport failure becomes {@link ExitCode#TRANSPORT}: the caller could not ask, which is
  * a different fact from being refused, and a release step is entitled to retry one and not the
@@ -50,17 +58,20 @@ final class Http {
   private static final int EXCERPT_LIMIT = 1000;
 
   private final HttpClient client;
+  private final PublishCredential credential;
 
-  Http() {
+  Http(PublishCredential credential) {
     this(
         HttpClient.newBuilder()
             .connectTimeout(CONNECT_TIMEOUT)
             .followRedirects(HttpClient.Redirect.NORMAL)
-            .build());
+            .build(),
+        credential);
   }
 
-  Http(HttpClient client) {
+  Http(HttpClient client, PublishCredential credential) {
     this.client = client;
+    this.credential = credential;
   }
 
   /** What came back: a status, a body, and the response headers, lower-cased for lookup. */
@@ -117,6 +128,9 @@ final class Http {
     if (contentType != null) {
       builder.header("Content-Type", contentType);
     }
+    // Asked per request, not once per client: the preferred source is a command that mints a fresh
+    // token, and a step that started an hour ago must not present the token it had at the top.
+    credential.bearer().ifPresent(token -> builder.header("Authorization", "Bearer " + token));
     headers.forEach(builder::header);
     return builder;
   }

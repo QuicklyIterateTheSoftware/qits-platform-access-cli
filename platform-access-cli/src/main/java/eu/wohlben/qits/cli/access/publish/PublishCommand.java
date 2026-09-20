@@ -25,6 +25,12 @@ import picocli.CommandLine;
         footer = {
                 "- This command never signs in and never reads or writes what `qits login` keeps: it runs in a "
                         + "CI step container with no person. `qits login` and `qits git-login` do not apply to it.",
+                "- Only a CI run may publish to qits-artifacts, so every request carries a bearer. The token comes "
+                        + "from the first of these the environment has: QITS_PUBLISH_TOKEN_COMMAND (an executable "
+                        + "that prints a fresh token, re-run for every request), QITS_PUBLISH_TOKEN (a token), or "
+                        + "QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET (minted at the idp). With "
+                        + "none of them the request still goes out, unauthenticated, and the store answers 401: the "
+                        + "store decides who may write, not this client.",
                 "- Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs "
                         + "exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as "
                         + "`qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.",

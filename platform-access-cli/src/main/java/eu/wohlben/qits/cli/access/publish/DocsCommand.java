@@ -65,7 +65,7 @@ public class DocsCommand implements Runnable {
             String site = PublishArgs.requiredOnce(this.site, "--site");
             String version = PublishArgs.requiredOnce(this.version, "--version");
             String archive = PublishArgs.requiredOnce(this.archive, "--archive");
-            Publisher publisher = new Publisher(new Http(), Store.from(env, console), console);
+            Publisher publisher = new Publisher(http(), Store.from(env, console), console);
             return publisher.docsSubmit(site, version, Path.of(archive), meta);
         }
     }

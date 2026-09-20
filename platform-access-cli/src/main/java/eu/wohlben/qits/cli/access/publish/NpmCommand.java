@@ -60,7 +60,7 @@ public class NpmCommand implements Runnable {
             PublishArgs.noExtras(unmatched);
             String pkg = PublishArgs.requiredOnce(this.pkg, "--package");
             String version = PublishArgs.requiredOnce(this.version, "--version");
-            Npm npm = new Npm(new Http(), Store.from(env, console), console);
+            Npm npm = new Npm(http(), Store.from(env, console), console);
             return npm.plan(pkg, version);
         }
     }
@@ -102,7 +102,7 @@ public class NpmCommand implements Runnable {
             String pkg = PublishArgs.requiredOnce(this.pkg, "--package");
             String version = PublishArgs.requiredOnce(this.version, "--version");
             String tag = PublishArgs.requiredOnce(this.tag, "--tag");
-            Npm npm = new Npm(new Http(), Store.from(env, console), console);
+            Npm npm = new Npm(http(), Store.from(env, console), console);
             return npm.distTag(pkg, version, tag);
         }
     }
@@ -135,7 +135,7 @@ public class NpmCommand implements Runnable {
         protected int run(Env env, Console console) {
             PublishArgs.noExtras(unmatched);
             String lockfile = PublishArgs.optionalOnce(this.lockfile, "--lockfile", "package-lock.json");
-            Npm npm = new Npm(new Http(), Store.from(env, console), console);
+            Npm npm = new Npm(http(), Store.from(env, console), console);
             return npm.rewriteLockfileOrigin(Path.of(lockfile));
         }
     }

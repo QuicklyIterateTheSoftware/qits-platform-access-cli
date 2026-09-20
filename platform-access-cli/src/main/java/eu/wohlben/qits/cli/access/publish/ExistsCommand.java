@@ -40,7 +40,7 @@ public class ExistsCommand extends AbstractPublishCommand {
         if (positionals.size() > 3) {
             throw CliException.policy("unexpected argument " + positionals.get(3));
         }
-        Publisher publisher = new Publisher(new Http(), Store.from(env, console), console);
+        Publisher publisher = new Publisher(http(), Store.from(env, console), console);
         return publisher.exists(type, name, version);
     }
 

@@ -916,11 +916,24 @@ Commands:
 when unset), `QITS_NPM_REGISTRY_URL` (the hosted npm registry, the `@qits` scope) and
 `QITS_NPM_PROXY_URL` (the npmjs pull-through cache). A CI step sets what each command needs.
 
-**Credentials**: none, by design. qits-artifacts' sbom, docs, daemon and npm routes take no
-credential in either direction, so `qits artifacts publish` sends none — the same posture as
-`npm publish`, `mvn deploy` and `docker push`. `QITS_COMMISSIONED_CLIENT_ID`/`_SECRET`, when a step
-container carries them, are a build-secret pair for resolving dependencies inside an image build,
-never an HTTP credential, and `qits artifacts publish` does not read them.
+**Credentials**: a bearer on every request. Only a CI run may publish to qits-artifacts — the store
+refuses an anonymous publish — and its reads want a bearer too, so every PUT, GET and HEAD this
+client makes carries an `Authorization` header. The token comes from the first of these the
+environment has:
+
+1. `QITS_PUBLISH_TOKEN_COMMAND` — an executable that prints a fresh token on stdout. Preferred, and
+   run again for **every request** rather than once per process: a release step can publish an hour
+   after it started, and a token minted at the top of the step would be expired by then. qits-ci
+   writes `/tmp/qits-publish-token` and points this at it.
+2. `QITS_PUBLISH_TOKEN` — a token, used verbatim.
+3. `QITS_COMMISSIONED_CLIENT_ID` and `QITS_COMMISSIONED_CLIENT_SECRET` — the commissioned client pair
+   a step container carries, exchanged at the internal idp for the `qits-platform` audience by the
+   same minter every other `qits` command uses.
+
+With none of them the request is still **sent**, without the header, and the store answers `401`.
+That is deliberate: the store is the authority on who may write, and refusing here would replace its
+refusal — which names the real reason — with a client-side error naming a variable. No token is ever
+printed, to stdout, to stderr or into an error message.
 
 **The one idempotency policy**, unchanged from `qits-publish` and identical across every surface:
 absent, PUT it and say what landed; occupied with the same bytes, say so and succeed (a retried or
