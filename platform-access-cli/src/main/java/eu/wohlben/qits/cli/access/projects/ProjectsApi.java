@@ -51,6 +51,28 @@ public final class ProjectsApi {
         return client.get(uri("/projects/api/projects/" + segment(projectId) + "/repositories"));
     }
 
+    /**
+     * {@code {"repository":{…},"projectId":…,"wrapperPath":…}}: a blank repository on the platform's
+     * git host, and the wrapper entry that names it, which is the same statement made twice.
+     * <p>
+     * <b>No {@code archetype} field, and there is no flag for one.</b> The service reads the kind
+     * off the name's role suffix ({@code qits-payments-daemon} is a {@code DAEMON}), which under the
+     * component layout is where the kind lives. The field exists on the request and is deliberately
+     * left unset: sending one would let a caller state a kind the name contradicts, and the row's
+     * archetype is the one thing nothing downstream can correct afterwards.
+     * <p>
+     * A null component lets the wrapper's own layout decide where the entry is mounted.
+     */
+    public JsonNode createRepository(String projectId, String name, String component)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("name", name);
+        if (component != null && !component.isBlank()) {
+            body.put("component", component.strip());
+        }
+        return client.post(uri("/projects/api/projects/" + segment(projectId) + "/repositories"), body);
+    }
+
     /** {@code {"requests":[…]}}. A null state asks for the service's default. */
     public JsonNode releaseRequests(String repoId, String state) throws CliFailure, InterruptedException {
         String query = state == null || state.isBlank() ? "" : "?state=" + URLEncoder.encode(state.strip(), StandardCharsets.UTF_8);

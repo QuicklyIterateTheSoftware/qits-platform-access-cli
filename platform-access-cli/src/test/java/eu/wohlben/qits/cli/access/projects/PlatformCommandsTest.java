@@ -39,7 +39,9 @@ class PlatformCommandsTest {
     private static final String DEMO = "8f1c2d3e-0000-4000-8000-000000000002";
     private static final String CI = "0a0b0c0d-0000-4000-8000-00000000000a";
     private static final String CI_FRONTEND = "0a0b0c0d-0000-4000-8000-00000000000b";
+    private static final String DOCS_APP = "0a0b0c0d-0000-4000-8000-00000000000c";
     private static final String REQUESTS = "/projects/api/repositories/" + CI + "/release-requests";
+    private static final String REPOSITORIES = "/projects/api/projects/" + QITS + "/repositories";
 
     @TempDir
     Path home;
@@ -216,6 +218,126 @@ class PlatformCommandsTest {
         assertThat(r.exit()).isEqualTo(2);
         assertThat(r.err()).contains("Name the project: --project <id, slug or name>.");
         assertThat(platform.requests).isEmpty();
+    }
+
+    // --- creating a repository ---
+
+    /** The door's answer: the row it wrote, and where the wrapper now mounts it. */
+    private void answerCreate() {
+        platform.answer("POST", REPOSITORIES, """
+                {"repository":{"id":"%s","name":"qits-docs-app","backupUrl":null,"mainBranch":"main",
+                  "archetype":"APP","component":"qits-docs","projectId":"%s","lastBackup":null},
+                 "projectId":"%s","wrapperPath":"components/qits-docs/qits-docs-app"}
+                """.formatted(DOCS_APP, QITS, QITS));
+    }
+
+    @Test
+    void createSendsTheNameAndComponentAndNeverAnArchetype() throws Exception {
+        answerCreate();
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs-app", "--component", "qits-docs");
+
+        assertThat(r.exit()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("POST", REPOSITORIES).getFirst().body());
+        assertThat(sent).isEqualTo(JSON.readTree("{\"name\":\"qits-docs-app\",\"component\":\"qits-docs\"}"));
+        assertThat(sent.has("archetype")).as("the name decides the kind; a flag could contradict it").isFalse();
+    }
+
+    @Test
+    void createPrintsTheArchetypeTheDoorDerivedAndTheWrapperPath() {
+        answerCreate();
+
+        Result r = run("repositories", "create", "qits-docs-app", "--project", "qits", "--component", "qits-docs");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out().lines().toList()).containsExactly(
+                "Repository qits-docs-app",
+                "  archetype      APP",
+                "  component      qits-docs",
+                "  id             " + DOCS_APP,
+                "  wrapper entry  components/qits-docs/qits-docs-app");
+    }
+
+    @Test
+    void createWithoutAComponentSendsNoneAndLetsTheWrapperDecide() throws Exception {
+        platform.answer("POST", REPOSITORIES, """
+                {"repository":{"id":"%s","name":"qits-docs-app","archetype":"APP","component":null,"projectId":"%s"},
+                 "projectId":"%s","wrapperPath":null}
+                """.formatted(DOCS_APP, QITS, QITS));
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs-app");
+
+        assertThat(r.exit()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", REPOSITORIES).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"name\":\"qits-docs-app\"}"));
+        assertThat(r.out().lines().toList()).containsExactly(
+                "Repository qits-docs-app",
+                "  archetype  APP",
+                "  component  -",
+                "  id         " + DOCS_APP);
+    }
+
+    @Test
+    void createInJsonPrintsTheAnswerAsItCame() throws Exception {
+        answerCreate();
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs-app", "--component", "qits-docs",
+                "-o", "json");
+
+        assertThat(r.exit()).isZero();
+        JsonNode printed = JSON.readTree(r.out());
+        assertThat(printed.path("repository").path("archetype").asText()).isEqualTo("APP");
+        assertThat(printed.path("wrapperPath").asText()).isEqualTo("components/qits-docs/qits-docs-app");
+    }
+
+    @Test
+    void aNameWithNoRoleSuffixSaysTheServiceMayNotKnowTheRoleYet() {
+        platform.answer("POST", REPOSITORIES, 400, """
+                {"message":"'qits-docs' carries no role suffix, so there is nothing to read the kind of component\
+                 out of."}
+                """);
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("The service cannot tell what kind of component 'qits-docs' is (HTTP 400)")
+                .contains("carries no role suffix")
+                .contains("a role the live service has not been released with reads exactly like a missing one");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void aRefusedCredentialSaysWhichRolesTheDoorTakes() {
+        platform.answer("POST", REPOSITORIES, 403, "{\"message\":\"forbidden\"}");
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs-app");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("HTTP 403")
+                .contains("Creating a repository needs qits:admin or qits:agent")
+                .contains("has not been released with that role on this door yet");
+    }
+
+    @Test
+    void anotherRefusalIsLeftAsTheServiceWordedIt() {
+        platform.answer("POST", REPOSITORIES, 400, "{\"message\":\"A repository named qits-docs-app exists.\"}");
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs-app");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("A repository named qits-docs-app exists.")
+                .doesNotContain("role suffix");
+    }
+
+    @Test
+    void creatingNeedsTheProjectAndTheName() {
+        Result noProject = run("repositories", "create", "qits-docs-app");
+        assertThat(noProject.exit()).isEqualTo(2);
+        assertThat(noProject.err()).contains("Name the project: --project <id, slug or name>.");
+
+        Result noName = run("repositories", "--project", "qits", "create");
+        assertThat(noName.exit()).isEqualTo(2);
+        assertThat(platform.requests("POST", REPOSITORIES)).isEmpty();
     }
 
     // --- release requests ---
