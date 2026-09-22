@@ -151,7 +151,9 @@ qits projects list -o json
 
 ## qits repositories
 
-The repositories of one project. Release requests take a repository's id or name as --repository.
+The repositories of one project: list shows them, create stands a new one up. Release requests take a repository's id or name as --repository.
+
+A repository's archetype is read off its name's role suffix, so the name is what says what kind of component it is. There is no flag for the archetype, on purpose.
 
 ## qits repositories list
 
@@ -178,6 +180,44 @@ qits repositories list --project qits -o json
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories create
+
+Create a repository in the project: a blank one on the platform's git host, seeded with the repository template, and mounted in the project's wrapper.
+
+The NAME says what kind of component it is: the service reads the archetype off the name's role suffix (payments-daemon is a DAEMON), and there is no flag to state one, because a flag could contradict the name. Name the repository <component>[-<modifier>]-<role>.
+
+--component places the wrapper entry at components/<component>/<name>. Without it the wrapper's own layout decides.
+
+```
+qits repositories create [--component <component>] [--output table|json] [--project <project>] [--projects-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The repository's name, and with it its kind: it ends in a role suffix, and that suffix is what the archetype is read from. It is also what ../<name>.git resolves to. |
+| `--component <component>` | The technical component to mount the entry under: components/<component>/<name>. Default: the wrapper's own layout decides. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits repositories --project qits create qits-docs-app --component qits-docs
+qits repositories create qits-payments-service --project qits --component qits-payments
+qits repositories --project qits create qits-docs-app -o json
+```
+
+- Roles: -service, -frontend, -app, -daemon, -oci, -cli, -javalib, -jslib. A name that carries none of them is refused by the service, because a guessed kind is the one thing nothing downstream could correct.
+- Creating a repository needs the role qits:admin or qits:agent.
+- The command prints what the service answered: the name, the archetype it derived, the component, the id, and the wrapper path the entry was written at.
+
+### Exit codes
+
+- `0` The repository exists and the wrapper names it.
+- `1` The platform refused (the message names the status and what to do next), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits ticket

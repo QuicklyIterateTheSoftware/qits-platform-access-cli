@@ -414,6 +414,7 @@ Installing it is not part of this version.
 
     qits projects list
     qits repositories --project <project> list
+    qits repositories --project <project> create <name> [--component <component>]
     qits ticket --project <project> list [--status <STATUS>] [--type <TYPE>]
     qits ticket --project <project> new --title <text> --type <TYPE> \
         [--description <text> | --description-file <path|->] [--assignee <name>]
@@ -498,6 +499,33 @@ Columns: slug, name, id.
 `--project` is the project's id, slug or name. The command lists the projects and finds the one
 that matches; a value that matches none, or more than one, stops with a message. Columns: name,
 archetype, component, id.
+
+### qits repositories --project \<project\> create \<name\> [--component \<component\>]
+
+Creates a blank repository on the platform's git host, seeded with the repository template, and
+writes the entry that mounts it in the project's wrapper. `--project` is as above.
+
+`<name>` is the repository's name and, with it, its kind: the service reads the archetype off the
+name's role suffix (`qits-payments-daemon` is a `DAEMON`), which under the component layout is where
+the kind lives. **There is no `--archetype` flag, on purpose.** The request omits the field the
+service would obey, so the name and the kind can never contradict each other — and the archetype is
+the one field nothing downstream can correct once the row exists. The roles are `-service`,
+`-frontend`, `-app`, `-daemon`, `-oci`, `-cli`, `-javalib` and `-jslib`.
+
+`--component` places the wrapper entry at `components/<component>/<name>`; without it the wrapper's
+own layout decides.
+
+The command prints what the service answered: the name, the archetype it derived, the component, the
+id and the wrapper path the entry was written at — the last being the proof the wrapper entry
+exists. `-o json` prints the answer as it came.
+
+Two refusals get a sentence that says what to do next, both with exit code 1. A 400 naming a missing
+role suffix says that the name carries none *or* that the live service has not been released with
+that role yet — the two read the same from here. A 403 says the door takes `qits:admin` or
+`qits:agent`, so a refusal on an agent credential means the role has not reached the deployed
+service yet.
+
+    qits repositories --project qits create qits-docs-app --component qits-docs
 
 ### qits ticket
 

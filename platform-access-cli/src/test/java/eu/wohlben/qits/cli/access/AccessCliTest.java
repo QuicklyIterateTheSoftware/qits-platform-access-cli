@@ -68,6 +68,15 @@ class AccessCliTest {
     }
 
     @Test
+    @Launch({"repositories", "create", "--help"})
+    void repositoriesCreateHasItsOptionsAndOffersNoArchetypeFlag(LaunchResult result) {
+        assertThat(result.getOutput()).contains("<name>").contains("--component").contains("--project")
+                .contains("--output").contains("role suffix");
+        assertThat(result.getOutput()).as("the name decides the kind; a flag could contradict it")
+                .doesNotContain("--archetype");
+    }
+
+    @Test
     @Launch({"ci", "--help"})
     void ciNamesItsCommands(LaunchResult result) {
         assertThat(result.getOutput()).contains("runs").contains("run").contains("retry")
