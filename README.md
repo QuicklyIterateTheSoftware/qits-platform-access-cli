@@ -537,9 +537,9 @@ and is ready to be picked up), `IMPLEMENTED` (released and deployed, not merely 
 (somebody checked the platform and it no longer occurs) and `DONE` (closed, a person's call).
 `DROPPED` is the exit for work a decision was taken not to do. A ticket is also blocked or not:
 blocked says the phase its status belongs to cannot proceed, and any transition clears it. Work that
-needs a plan is an epic, not a ticket. `--project` is as above. Reading tickets needs the role
-`qits:admin` or `qits:agent`; filing one, commenting and moving one to another status need
-`qits:admin`.
+needs a plan is an epic, not a ticket. `--project` is as above. Every ticket door here takes
+`qits:admin` or `qits:agent` — reading, filing, commenting and moving one to another status — and an
+agent is bound to its own project.
 
 `list` shows the project's tickets, oldest first. Columns: id (the first 8 characters), type,
 status, title, the assignee when a ticket has one, and a `BLOCKED` column when one is blocked.
