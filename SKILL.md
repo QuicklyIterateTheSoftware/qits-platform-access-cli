@@ -182,7 +182,7 @@ qits repositories list --project qits -o json
 
 ## qits ticket
 
-The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, details shows one with its description and comments, and comment adds one to its thread.
+The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, details shows one with its description and comments, comment adds one to its thread, and transition moves one to another status.
 
 Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work better).
 
@@ -192,10 +192,11 @@ A ticket is blocked when the phase its status belongs to cannot proceed. It is t
 
 ### Notes
 
-- --project, --output and --projects-url may come before or after the command. So may --ticket, which `details` and `comment` take.
-- Reading tickets needs the role qits:admin or qits:agent. Filing one and commenting need qits:admin.
+- --project, --output and --projects-url may come before or after the command. So may --ticket, which `details`, `comment` and `transition` take.
+- Reading tickets needs the role qits:admin or qits:agent. Filing one, commenting and moving one to another status need qits:admin.
 - The reporter and the comment author are the signed-in caller. Nobody can file a ticket or comment as somebody else.
-- Work that needs a plan is an epic, not a ticket. qits does not resolve or edit a ticket yet.
+- Work that needs a plan is an epic, not a ticket.
+- transition moves a ticket's status. qits does not edit a ticket's title or description yet.
 
 ## qits ticket list
 
@@ -337,6 +338,41 @@ cat note.md | qits ticket --project qits comment --ticket 4f2a91c0 --body-file -
 - `0` Done.
 - `1` The platform refused (for example your roles, HTTP 403, or the ticket was deleted a moment ago, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example neither --body nor --body-file given, an empty comment, or a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
+
+## qits ticket transition
+
+Move a ticket to another status.
+
+The service owns which moves are allowed and refuses the rest (HTTP 409), the ticket's own status included. Any transition clears the blocked flag. The command prints the ticket the way `details` does, without its comments.
+
+```
+qits ticket transition --target <STATUS> [--output table|json] [--project <project>] [--projects-url <url>] [--ticket <ticket>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <STATUS>` | Required. The status to move it to: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--ticket <ticket>` | The ticket (required, before or after transition): its id, its slug, or enough of the start of its id to name one. |
+
+### Examples
+
+```
+qits ticket --project qits transition --ticket 4f2a91c0 --target REFINED
+qits ticket transition --ticket the-log-view-stops-at-64-kib --project qits --target DROPPED
+qits ticket --project qits transition --ticket 4f2a91c0 --target DONE -o json
+```
+
+- --target is any status: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. Which moves are allowed from where is the service's to say, not this command's.
+- DROPPED is the exit for work a decision was taken not to do.
+
+### Exit codes
+
+- `0` The ticket is in the new status.
+- `1` The platform refused (a move it does not allow, HTTP 409, a status it does not know, HTTP 400, or your roles, HTTP 403), or cannot be reached.
+- `2` Used wrongly (for example a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
 
 ## qits epic
 

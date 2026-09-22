@@ -418,6 +418,7 @@ Installing it is not part of this version.
     qits ticket --project <project> new --title <text> --type <TYPE> \
         [--description <text> | --description-file <path|->] [--assignee <name>]
     qits ticket --project <project> details --ticket <id, slug or start of the id>
+    qits ticket --project <project> transition --ticket <id, slug or start of the id> --target <STATUS>
     qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
@@ -509,7 +510,8 @@ and is ready to be picked up), `IMPLEMENTED` (released and deployed, not merely 
 `DROPPED` is the exit for work a decision was taken not to do. A ticket is also blocked or not:
 blocked says the phase its status belongs to cannot proceed, and any transition clears it. Work that
 needs a plan is an epic, not a ticket. `--project` is as above. Reading tickets needs the role
-`qits:admin` or `qits:agent`; filing one needs `qits:admin`.
+`qits:admin` or `qits:agent`; filing one, commenting and moving one to another status need
+`qits:admin`.
 
 `list` shows the project's tickets, oldest first. Columns: id (the first 8 characters), type,
 status, title, the assignee when a ticket has one, and a `BLOCKED` column when one is blocked.
@@ -530,6 +532,12 @@ id, its slug, or the start of its id; the command looks among the project's tick
 fits none, or more than one, stops with exit code 2. `--ticket` may also come before `details`.
 `-o json` prints `{"ticket": …, "comments": […]}`.
 
+`transition` moves a ticket to another status. `--ticket` is as for `details`, and `--target` is any
+of the six statuses. One verb takes every move: which moves are allowed from where is the service's
+to say, and it refuses the rest, the ticket's own status included, with HTTP 409 and a sentence
+naming both ends (exit code 1). A status it does not know is an HTTP 400. Any transition clears the
+blocked flag. The command prints the ticket the way `details` does, without its comments.
+
 A ticket's text is written by people and agents, so, as for `qits ci`, the table form takes terminal
 control characters out of every value, and `-o json` writes them as escapes.
 
@@ -537,8 +545,9 @@ control characters out of every value, and `-o json` writes them as escapes.
     qits ticket --project qits new --type BUG --title "The log view stops at 64 KiB" \
         --description-file report.md
     qits ticket --project qits details --ticket 4f2a91c0
+    qits ticket --project qits transition --ticket 4f2a91c0 --target DROPPED
 
-Resolving, editing and commenting on a ticket are not in `qits` yet.
+Editing a ticket's title or description is not in `qits` yet.
 
 ### qits release-request
 

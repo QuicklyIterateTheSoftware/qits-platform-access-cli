@@ -38,10 +38,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
  */
 @CommandLine.Command(name = "ticket", mixinStandardHelpOptions = true,
         subcommands = {TicketCommand.ListCommand.class, TicketCommand.NewCommand.class, TicketCommand.DetailsCommand.class,
-                TicketCommand.CommentCommand.class},
+                TicketCommand.CommentCommand.class, TicketCommand.TransitionCommand.class},
         description = {"The tickets of one project: small pieces of work, each a bug or an improvement. list shows "
-                        + "them, new files one, details shows one with its description and comments, and comment "
-                        + "adds one to its thread.",
+                        + "them, new files one, details shows one with its description and comments, comment "
+                        + "adds one to its thread, and transition moves one to another status.",
                 "Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work "
                         + "better).",
                 "Statuses: REPORTED (somebody said what is wrong or could be better, and nothing more; a new ticket "
@@ -54,12 +54,13 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --project, --output and --projects-url may come before or after the command. So may --ticket, "
-                        + "which `details` and `comment` take.",
-                "- Reading tickets needs the role qits:admin or qits:agent. Filing one and commenting need "
-                        + "qits:admin.",
+                        + "which `details`, `comment` and `transition` take.",
+                "- Reading tickets needs the role qits:admin or qits:agent. Filing one, commenting and moving one "
+                        + "to another status need qits:admin.",
                 "- The reporter and the comment author are the signed-in caller. Nobody can file a ticket or "
                         + "comment as somebody else.",
-                "- Work that needs a plan is an epic, not a ticket. qits does not resolve or edit a ticket yet."})
+                "- Work that needs a plan is an epic, not a ticket.",
+                "- transition moves a ticket's status. qits does not edit a ticket's title or description yet."})
 public class TicketCommand implements Runnable {
 
     static final String NAME_THE_TICKET = "Name the ticket: --ticket <id, slug or the start of the id>.";
@@ -474,6 +475,78 @@ public class TicketCommand implements Runnable {
             } catch (IOException | InvalidPathException e) {
                 throw new CliFailure("Cannot read " + path + " (--body-file): " + e.getMessage(), CliFailure.USAGE);
             }
+        }
+    }
+
+    @CommandLine.Command(name = "transition", mixinStandardHelpOptions = true,
+            description = {"Move a ticket to another status.",
+                    "The service owns which moves are allowed and refuses the rest (HTTP 409), the ticket's own "
+                            + "status included. Any transition clears the blocked flag. The command prints the "
+                            + "ticket the way `details` does, without its comments."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits ticket --project qits transition --ticket 4f2a91c0 --target REFINED",
+                    "  qits ticket transition --ticket the-log-view-stops-at-64-kib --project qits --target DROPPED",
+                    "  qits ticket --project qits transition --ticket 4f2a91c0 --target DONE -o json",
+                    "",
+                    "- --target is any status: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. Which "
+                            + "moves are allowed from where is the service's to say, not this command's.",
+                    "- DROPPED is the exit for work a decision was taken not to do."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The ticket is in the new status.",
+                    "1:The platform refused (a move it does not allow, HTTP 409, a status it does not know, HTTP "
+                            + "400, or your roles, HTTP 403), or cannot be reached.",
+                    "2:Used wrongly (for example a --ticket that fits no ticket of the project, or more than one), "
+                            + "not signed in, or the session ended."})
+    public static class TransitionCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        TicketCommand parent;
+
+        @Completes(TicketSource.class)
+        @CommandLine.Option(names = "--ticket", paramLabel = "<ticket>",
+                description = "The ticket (required, before or after transition): its id, its slug, or enough of "
+                        + "the start of its id to name one.")
+        String ticket;
+
+        @CommandLine.Option(names = "--target", paramLabel = "<STATUS>", required = true,
+                description = "The status to move it to: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED.")
+        String target;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            String wanted = RepositoriesCommand.required(ticket != null ? ticket : parent.ticket, NAME_THE_TICKET);
+            String wantedTarget = upper(target);
+            if (wantedTarget == null) {
+                throw new CliFailure("--target must not be empty.", CliFailure.USAGE);
+            }
+            Scope scope = parent.scope(context);
+            String id = text(find(scope, wanted), "id");
+            JsonNode answer;
+            try {
+                answer = scope.api().transitionTicket(id, wantedTarget);
+            } catch (CliFailure refused) {
+                if (refused.status() == 400) {
+                    throw new CliFailure("No ticket status is called '" + wantedTarget + "' (HTTP 400). "
+                            + "Statuses: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE, DROPPED.",
+                            CliFailure.FAILED);
+                }
+                if (refused.status() == 404) {
+                    throw new CliFailure("No such ticket: " + id + " (HTTP 404). It may have been deleted a moment ago.",
+                            CliFailure.FAILED);
+                }
+                // A 409 names both ends of the move it refused, and a 403 names the roles: both say
+                // more than this command could, so they pass through as the service and the client
+                // worded them.
+                throw refused;
+            }
+            if (json) {
+                printJson(context.out(), answer);
+                return 0;
+            }
+            printTicket(context.out(), answer.has("ticket") ? answer.get("ticket") : answer, null);
+            return 0;
         }
     }
 
