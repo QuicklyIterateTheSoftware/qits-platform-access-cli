@@ -419,6 +419,7 @@ Installing it is not part of this version.
     qits ticket --project <project> new --title <text> --type <TYPE> \
         [--description <text> | --description-file <path|->] [--assignee <name>]
     qits ticket --project <project> details --ticket <id, slug or start of the id>
+    qits ticket --project <project> transition --ticket <id, slug or start of the id> --target <STATUS>
     qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
@@ -530,37 +531,51 @@ service yet.
 ### qits ticket
 
 A ticket is a small piece of work in a project: a `BUG` (something behaves other than it should) or
-an `IMPROVEMENT` (something works and could work better). It is `OPEN` or `RESOLVED`. Work that
-needs a plan is an epic, not a ticket. `--project` is as above. Reading tickets needs the role
-`qits:admin` or `qits:agent`; filing one needs `qits:admin`.
+an `IMPROVEMENT` (something works and could work better). Its status walks five phases: `REPORTED`
+(somebody said what is wrong or could be better, and nothing more), `REFINED` (it says what to do,
+and is ready to be picked up), `IMPLEMENTED` (released and deployed, not merely merged), `VERIFIED`
+(somebody checked the platform and it no longer occurs) and `DONE` (closed, a person's call).
+`DROPPED` is the exit for work a decision was taken not to do. A ticket is also blocked or not:
+blocked says the phase its status belongs to cannot proceed, and any transition clears it. Work that
+needs a plan is an epic, not a ticket. `--project` is as above. Every ticket door here takes
+`qits:admin` or `qits:agent` — reading, filing, commenting and moving one to another status — and an
+agent is bound to its own project.
 
 `list` shows the project's tickets, oldest first. Columns: id (the first 8 characters), type,
-status, title, and the assignee when a ticket has one. `--status OPEN` (or `RESOLVED`) goes to the
-service, which refuses a status it does not know (HTTP 400, exit code 1) rather than answer with no
-tickets. The service has no type filter, so `--type BUG` (or `IMPROVEMENT`) is applied here, in both
+status, title, the assignee when a ticket has one, and a `BLOCKED` column when one is blocked.
+`--status REFINED` (or any of the six) goes to the service, which refuses a status it does not
+know (HTTP 400, exit code 1) rather than answer with no tickets. The service has no type filter, so `--type BUG` (or `IMPROVEMENT`) is applied here, in both
 output forms.
 
-`new` files a ticket; it starts `OPEN`. `--title` and `--type` are required: the platform takes no
-ticket that is neither a bug nor an improvement. The description is Markdown, from `--description`
+`new` files a ticket; it starts `REPORTED`. `--title` and `--type` are required: the platform takes
+no ticket that is neither a bug nor an improvement. The description is Markdown, from `--description`
 or from a file with `--description-file` (`-` is stdin), not both; trailing blank lines are left
 out. `--assignee` names who takes it. The service stamps the reporter from your token. The command
 prints the new ticket the way `details` does.
 
-`details` shows one ticket: id, slug, type, status, title, assignee, who created it, the times, the
-live workspaces on it, its description and its comments, the oldest first. `--ticket` is the ticket's
+`details` shows one ticket: id, slug, type, status, whether it is blocked, title, assignee, who
+created it, the times, the live workspaces on it, its description and its comments, the oldest
+first. `--ticket` is the ticket's
 id, its slug, or the start of its id; the command looks among the project's tickets, and a value that
 fits none, or more than one, stops with exit code 2. `--ticket` may also come before `details`.
 `-o json` prints `{"ticket": …, "comments": […]}`.
 
+`transition` moves a ticket to another status. `--ticket` is as for `details`, and `--target` is any
+of the six statuses. One verb takes every move: which moves are allowed from where is the service's
+to say, and it refuses the rest, the ticket's own status included, with HTTP 409 and a sentence
+naming both ends (exit code 1). A status it does not know is an HTTP 400. Any transition clears the
+blocked flag. The command prints the ticket the way `details` does, without its comments.
+
 A ticket's text is written by people and agents, so, as for `qits ci`, the table form takes terminal
 control characters out of every value, and `-o json` writes them as escapes.
 
-    qits ticket --project qits list --status OPEN --type BUG
+    qits ticket --project qits list --status REFINED --type BUG
     qits ticket --project qits new --type BUG --title "The log view stops at 64 KiB" \
         --description-file report.md
     qits ticket --project qits details --ticket 4f2a91c0
+    qits ticket --project qits transition --ticket 4f2a91c0 --target DROPPED
 
-Resolving, editing and commenting on a ticket are not in `qits` yet.
+Editing a ticket's title or description is not in `qits` yet.
 
 ### qits release-request
 

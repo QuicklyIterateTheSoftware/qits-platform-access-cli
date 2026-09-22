@@ -35,7 +35,7 @@
          pin. -->
     <groupId>eu.wohlben</groupId>
     <artifactId>qits</artifactId>
-    <version>2026.920.214907</version>
+    <version>2026.922.92718</version>
     <packaging>pom</packaging>
     <name>qits-platform-access-cli</name>
 
