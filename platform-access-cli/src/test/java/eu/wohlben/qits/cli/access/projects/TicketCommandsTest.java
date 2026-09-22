@@ -40,6 +40,7 @@ class TicketCommandsTest {
     private static final String QITS = "8f1c2d3e-0000-4000-8000-000000000001";
     private static final String TICKETS = "/projects/api/projects/" + QITS + "/tickets";
     private static final String LOG = "aaaa1111-0000-4000-8000-000000000001";
+    private static final String TRANSITION = "/projects/api/tickets/" + LOG + "/transition";
     private static final String FILTER = "aaaa2222-0000-4000-8000-000000000002";
     private static final String EVIL = "bbbb3333-0000-4000-8000-000000000003";
     private static final String NEW = "cccc4444-0000-4000-8000-000000000004";
@@ -109,6 +110,12 @@ class TicketCommandsTest {
                 {"comment":{"id":"c3","ticketId":"%s","author":"wohlben","body":"I can \\u001b[2Jreproduce it too",
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z"}}
                 """.formatted(LOG));
+        platform.answer("POST", TRANSITION, """
+                {"ticket":{"id":"%s","projectId":"%s","title":"Log view stops at 64 KiB","slug":"log-view-stops",
+                  "type":"BUG","status":"DROPPED","blocked":false,"assignee":null,"createdBy":"wohlben",
+                  "description":null,
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","workspaces":[]}}
+                """.formatted(LOG, QITS));
     }
 
     @AfterEach
@@ -637,5 +644,66 @@ class TicketCommandsTest {
         assertThat(r.exit()).isEqualTo(1);
         assertThat(r.err()).contains("Your roles do not allow this (HTTP 403): POST " + platform.url()
                 + "/projects/api/tickets/" + LOG + "/comments");
+    }
+
+    // --- transition ---
+
+    @Test
+    void transitionSendsTheTargetAndPrintsTheTicketInItsNewStatus() throws Exception {
+        Result r = run("ticket", "--project", "qits", "transition", "--ticket", "AAAA1", "--target", "dropped");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", TRANSITION).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"target\":\"DROPPED\"}"));
+        assertThat(r.out()).startsWith("Ticket " + LOG + "\n")
+                .contains("  status      DROPPED\n")
+                .contains("  blocked     no\n")
+                .doesNotContain("Comments");
+    }
+
+    @Test
+    void aMoveTheServiceDoesNotAllowKeepsItsOwnWords() {
+        platform.answer("POST", TRANSITION, 409, "{\"message\":\"A REPORTED ticket cannot become VERIFIED\"}");
+
+        Result r = run("ticket", "--project", "qits", "transition", "--ticket", "aaaa1111", "--target", "VERIFIED");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("A REPORTED ticket cannot become VERIFIED");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void aTargetTheServiceDoesNotKnowNamesTheStatuses() {
+        platform.answer("POST", TRANSITION, 400, "{\"message\":\"Unknown ticket status: REPRTED\"}");
+
+        Result r = run("ticket", "--project", "qits", "transition", "--ticket", "aaaa1111", "--target", "reprted");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("No ticket status is called 'REPRTED' (HTTP 400). "
+                + "Statuses: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE, DROPPED.");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void transitionWithoutTheRoleSaysSo() {
+        platform.answer("POST", TRANSITION, 403, "");
+
+        Result r = run("ticket", "--project", "qits", "transition", "--ticket", "aaaa1111", "--target", "DONE");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("Your roles do not allow this (HTTP 403): POST " + platform.url() + TRANSITION);
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void transitionNeedsATicketAndATargetWithoutMovingAnything() {
+        Result noTicket = run("ticket", "--project", "qits", "transition", "--target", "DONE");
+        assertThat(noTicket.exit()).isEqualTo(2);
+        assertThat(noTicket.err()).contains("Name the ticket: --ticket <id, slug or the start of the id>.");
+
+        Result noTarget = run("ticket", "--project", "qits", "transition", "--ticket", "aaaa1111");
+        assertThat(noTarget.exit()).isEqualTo(2);
+
+        assertThat(platform.requests("POST", TRANSITION)).isEmpty();
     }
 }

@@ -161,6 +161,17 @@ public final class ProjectsApi {
         return client.post(uri("/projects/api/tickets/" + segment(ticketId) + "/comments"), payload);
     }
 
+    /**
+     * {@code {"ticket":{…}}}: the ticket in its new status, with the blocked flag cleared. The
+     * service owns the lifecycle graph: it refuses a move the graph does not allow, and a move to
+     * the status the ticket already has, with HTTP 409 and a sentence naming both ends.
+     */
+    public JsonNode transitionTicket(String ticketId, String target) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("target", target);
+        return client.post(uri("/projects/api/tickets/" + segment(ticketId) + "/transition"), body);
+    }
+
     /** {@code {"entries":[{"epic":{…}}]}}, oldest first. A null status asks for every epic. */
     public JsonNode epics(String projectId, String status) throws CliFailure, InterruptedException {
         String query = status == null || status.isBlank() ? "" : "?status=" + URLEncoder.encode(status.strip(), StandardCharsets.UTF_8);
