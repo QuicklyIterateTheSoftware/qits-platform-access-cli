@@ -76,18 +76,19 @@ class TicketCommandsTest {
         platform.answer("GET", TICKETS, """
                 {"entries":[
                   {"ticket":{"id":"%s","projectId":"%s","title":"Log view stops\\nat 64 KiB","slug":"log-view-stops",
-                    "type":"BUG","status":"OPEN","assignee":null,"createdBy":"wohlben","description":"x",
+                    "type":"BUG","status":"REPORTED","assignee":null,"createdBy":"wohlben","description":"x",
                     "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T09:00:00Z","workspaces":[]}},
                   {"ticket":{"id":"%s","projectId":"%s","title":"Filter runs by author","slug":"filter-runs-by-author",
-                    "type":"IMPROVEMENT","status":"RESOLVED","assignee":"alice","createdBy":"wohlben","description":null,
+                    "type":"IMPROVEMENT","status":"IMPLEMENTED","assignee":"alice","createdBy":"wohlben","description":null,
+                    "blocked":false,
                     "createdAt":"2026-09-12T09:10:00Z","updatedAt":"2026-09-12T09:20:00Z","workspaces":[]}},
                   {"ticket":{"id":"%s","projectId":"%s","title":"Evil \\u001b]0;pwned\\u0007title","slug":"evil-title",
-                    "type":"BUG","status":"OPEN","assignee":null,"createdBy":null,"description":null,
+                    "type":"BUG","status":"REPORTED","assignee":null,"createdBy":null,"description":null,
                     "createdAt":"2026-09-12T09:30:00Z","updatedAt":"2026-09-12T09:30:00Z","workspaces":[]}}]}
                 """.formatted(LOG, QITS, FILTER, QITS, EVIL, QITS));
         platform.answer("GET", "/projects/api/tickets/" + LOG, """
                 {"ticket":{"id":"%s","projectId":"%s","title":"Log view stops at 64 KiB","slug":"log-view-stops",
-                  "type":"BUG","status":"OPEN","assignee":null,"createdBy":"wohlben",
+                  "type":"BUG","status":"REPORTED","assignee":null,"createdBy":"wohlben",
                   "description":"It stops.\\n\\u001b[31mRed\\u001b[0m text\\u202e here\\r\\nThird line",
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T09:00:00Z",
                   "workspaces":[{"workspaceRowId":7,"repositoryId":"r1","workspaceId":"ws-7","branch":"external/fix-log"}]}}
@@ -101,7 +102,7 @@ class TicketCommandsTest {
                 """.formatted(LOG, LOG));
         platform.answer("POST", TICKETS, """
                 {"ticket":{"id":"%s","projectId":"%s","title":"The log view stops","slug":"the-log-view-stops",
-                  "type":"BUG","status":"OPEN","assignee":null,"createdBy":"wohlben","description":null,
+                  "type":"BUG","status":"REPORTED","assignee":null,"createdBy":"wohlben","description":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z","workspaces":[]}}
                 """.formatted(NEW, QITS));
         platform.answer("POST", "/projects/api/tickets/" + LOG + "/comments", """
@@ -151,7 +152,12 @@ class TicketCommandsTest {
     }
 
     private static String listLine(String id, String type, String status, String title, String assignee) {
-        return String.format("%-10s%-13s%-10s%-26s%s", id, type, status, title, assignee);
+        return String.format("%-10s%-13s%-13s%-26s%s", id, type, status, title, assignee);
+    }
+
+    /** The same table with the BLOCKED column, which only a blocked ticket brings. */
+    private static String blockedLine(String id, String type, String status, String blocked, String title) {
+        return String.format("%-10s%-13s%-13s%-9s%s", id, type, status, blocked, title);
     }
 
     // --- list ---
@@ -163,9 +169,11 @@ class TicketCommandsTest {
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(r.out().lines().toList()).containsExactly(
                 listLine("ID", "TYPE", "STATUS", "TITLE", "ASSIGNEE"),
-                listLine("aaaa1111", "BUG", "OPEN", "Log view stops at 64 KiB", "-"),
-                listLine("aaaa2222", "IMPROVEMENT", "RESOLVED", "Filter runs by author", "alice"),
-                listLine("bbbb3333", "BUG", "OPEN", "Evil title", "-"));
+                listLine("aaaa1111", "BUG", "REPORTED", "Log view stops at 64 KiB", "-"),
+                listLine("aaaa2222", "IMPROVEMENT", "IMPLEMENTED", "Filter runs by author", "alice"),
+                listLine("bbbb3333", "BUG", "REPORTED", "Evil title", "-"));
+        // The longest status fits: no ticket is shown as IMPLEMENTE…
+        assertThat(r.out()).contains("IMPLEMENTED").doesNotContain("\u2026");
         assertThat(platform.requests("GET", TICKETS).getFirst().query()).isNull();
         assertThat(platform.requests("GET", TICKETS).getFirst().authorization())
                 .isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
@@ -173,15 +181,15 @@ class TicketCommandsTest {
 
     @Test
     void theStatusGoesToTheServiceAndTheTypeIsAppliedHere() {
-        Result r = run("ticket", "--project", "qits", "list", "--status", "open", "--type", "bug");
+        Result r = run("ticket", "--project", "qits", "list", "--status", "reported", "--type", "bug");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(platform.requests("GET", TICKETS).getFirst().query()).isEqualTo("status=OPEN");
+        assertThat(platform.requests("GET", TICKETS).getFirst().query()).isEqualTo("status=REPORTED");
         // No ticket left has an assignee, so the column goes.
         assertThat(r.out().lines().toList()).containsExactly(
-                "ID        TYPE  STATUS  TITLE",
-                "aaaa1111  BUG   OPEN    Log view stops at 64 KiB",
-                "bbbb3333  BUG   OPEN    Evil title");
+                "ID        TYPE  STATUS    TITLE",
+                "aaaa1111  BUG   REPORTED  Log view stops at 64 KiB",
+                "bbbb3333  BUG   REPORTED  Evil title");
     }
 
     @Test
@@ -202,19 +210,52 @@ class TicketCommandsTest {
                 .isEqualTo("No CHORE tickets in project qits.\n");
         platform.answer("GET", TICKETS, "{\"entries\":[]}");
         assertThat(run("ticket", "--project", "qits", "list").out()).isEqualTo("No tickets in project qits.\n");
-        assertThat(run("ticket", "--project", "qits", "list", "--status", "RESOLVED", "--type", "BUG").out())
-                .isEqualTo("No RESOLVED BUG tickets in project qits.\n");
+        assertThat(run("ticket", "--project", "qits", "list", "--status", "DROPPED", "--type", "BUG").out())
+                .isEqualTo("No DROPPED BUG tickets in project qits.\n");
     }
 
     @Test
     void aStatusTheServiceDoesNotKnowIsRefused() {
-        platform.answer("GET", TICKETS, 400, "{\"message\":\"Unknown ticket status: RESOLVD\"}");
+        platform.answer("GET", TICKETS, 400, "{\"message\":\"Unknown ticket status: REPRTED\"}");
 
-        Result r = run("ticket", "--project", "qits", "list", "--status", "resolvd");
+        Result r = run("ticket", "--project", "qits", "list", "--status", "reprted");
 
         assertThat(r.exit()).isEqualTo(1);
-        assertThat(r.err()).contains("No ticket status is called 'RESOLVD' (HTTP 400). Statuses: OPEN, RESOLVED.");
+        assertThat(r.err()).contains("No ticket status is called 'REPRTED' (HTTP 400). "
+                + "Statuses: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE, DROPPED.");
         assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void aBlockedTicketBringsItsColumnAndADroppedOneIsListed() {
+        platform.answer("GET", TICKETS, """
+                {"entries":[
+                  {"ticket":{"id":"%s","title":"Log view stops at 64 KiB","slug":"log-view-stops",
+                    "type":"BUG","status":"REPORTED","assignee":null,"createdBy":"wohlben"}},
+                  {"ticket":{"id":"%s","title":"Filter runs by author","slug":"filter-runs-by-author",
+                    "type":"IMPROVEMENT","status":"IMPLEMENTED","blocked":true,"assignee":null,"createdBy":"wohlben"}},
+                  {"ticket":{"id":"%s","title":"Evil title","slug":"evil-title",
+                    "type":"BUG","status":"DROPPED","blocked":false,"assignee":null,"createdBy":null}}]}
+                """.formatted(LOG, FILTER, EVIL));
+
+        Result r = run("ticket", "--project", "qits", "list");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        // The first ticket carries no blocked field at all, and reads as not blocked.
+        assertThat(r.out().lines().toList()).containsExactly(
+                blockedLine("ID", "TYPE", "STATUS", "BLOCKED", "TITLE"),
+                blockedLine("aaaa1111", "BUG", "REPORTED", "-", "Log view stops at 64 KiB"),
+                blockedLine("aaaa2222", "IMPROVEMENT", "IMPLEMENTED", "yes", "Filter runs by author"),
+                blockedLine("bbbb3333", "BUG", "DROPPED", "-", "Evil title"));
+        assertThat(r.out()).doesNotContain("null");
+    }
+
+    @Test
+    void noBlockedTicketMeansNoBlockedColumn() {
+        Result r = run("ticket", "--project", "qits", "list");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).doesNotContain("BLOCKED").doesNotContain("null");
     }
 
     // --- new ---
@@ -228,7 +269,8 @@ class TicketCommandsTest {
         assertThat(r.out()).startsWith("Ticket " + NEW + "\n")
                 .contains("  slug        the-log-view-stops\n")
                 .contains("  type        BUG\n")
-                .contains("  status      OPEN\n")
+                .contains("  status      REPORTED\n")
+                .contains("  blocked     no\n")
                 .contains("  assignee    -\n")
                 .contains("  created by  wohlben\n")
                 .contains("Description:\n  (none)\n")
@@ -339,7 +381,8 @@ class TicketCommandsTest {
         assertThat(r.out()).startsWith("Ticket " + LOG + "\n")
                 .contains("  slug        log-view-stops\n")
                 .contains("  type        BUG\n")
-                .contains("  status      OPEN\n")
+                .contains("  status      REPORTED\n")
+                .contains("  blocked     no\n")
                 .contains("  title       Log view stops at 64 KiB\n")
                 .contains("  assignee    -\n")
                 .contains("  created by  wohlben\n")
@@ -419,7 +462,7 @@ class TicketCommandsTest {
     @Test
     void aTicketWithNoDescriptionOrCommentsSaysSo() {
         platform.answer("GET", "/projects/api/tickets/" + FILTER, """
-                {"ticket":{"id":"%s","slug":"filter-runs-by-author","type":"IMPROVEMENT","status":"RESOLVED",
+                {"ticket":{"id":"%s","slug":"filter-runs-by-author","type":"IMPROVEMENT","status":"IMPLEMENTED",
                   "title":"Filter runs by author","assignee":"alice","description":null}}
                 """.formatted(FILTER));
         platform.answer("GET", "/projects/api/tickets/" + FILTER + "/comments", "{\"entries\":[]}");
@@ -453,6 +496,35 @@ class TicketCommandsTest {
         assertThat(run("ticket", "--project", "qits", "list", "--ticket", "aaaa1111").exit()).isEqualTo(2);
         assertThat(run("ticket", "--project", "qits").exit()).isEqualTo(2);
         assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void detailsShowsADroppedTicketAndThatItIsBlocked() {
+        platform.answer("GET", "/projects/api/tickets/" + FILTER, """
+                {"ticket":{"id":"%s","slug":"filter-runs-by-author","type":"IMPROVEMENT","status":"DROPPED",
+                  "blocked":true,"title":"Filter runs by author","assignee":"alice","description":null}}
+                """.formatted(FILTER));
+        platform.answer("GET", "/projects/api/tickets/" + FILTER + "/comments", "{\"entries\":[]}");
+
+        Result r = run("ticket", "--project", "qits", "details", "--ticket", "aaaa2");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("  status      DROPPED\n").contains("  blocked     yes\n");
+    }
+
+    @Test
+    void aTicketWithNoBlockedFieldIsNotBlocked() {
+        platform.answer("GET", "/projects/api/tickets/" + FILTER, """
+                {"ticket":{"id":"%s","slug":"filter-runs-by-author","type":"IMPROVEMENT","status":"VERIFIED",
+                  "title":"Filter runs by author","assignee":"alice","description":null}}
+                """.formatted(FILTER));
+        platform.answer("GET", "/projects/api/tickets/" + FILTER + "/comments", "{\"entries\":[]}");
+
+        Result r = run("ticket", "--project", "qits", "details", "--ticket", "aaaa2");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("  status      VERIFIED\n").contains("  blocked     no\n")
+                .doesNotContain("null");
     }
 
     // --- refusals and the project ---

@@ -184,7 +184,11 @@ qits repositories list --project qits -o json
 
 The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, details shows one with its description and comments, and comment adds one to its thread.
 
-Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work better). Statuses: OPEN (a new ticket starts here) and RESOLVED.
+Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work better).
+
+Statuses: REPORTED (somebody said what is wrong or could be better, and nothing more; a new ticket starts here), REFINED (it now says what to do, and is ready to be picked up), IMPLEMENTED (the change is released and deployed, not merely merged), VERIFIED (somebody checked the platform and it no longer occurs), DONE (closed, which is a person's call). DROPPED is the exit for work a decision was taken not to do.
+
+A ticket is blocked when the phase its status belongs to cannot proceed. It is temporary: any transition clears it.
 
 ### Notes
 
@@ -195,7 +199,7 @@ Types: BUG (something behaves other than it should) and IMPROVEMENT (something w
 
 ## qits ticket list
 
-List the project's tickets, oldest first: id, type, status, title, and the assignee when a ticket has one.
+List the project's tickets, oldest first: id, type, status, title, the assignee when a ticket has one, and BLOCKED when one is blocked.
 
 Without --status and --type it lists every ticket. The ID column shows the first 8 characters of the id, which is enough for `details`.
 
@@ -208,14 +212,14 @@ qits ticket list [--output table|json] [--project <project>] [--projects-url <ur
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--status <STATUS>` | Only the tickets in this status: OPEN or RESOLVED. Default: every status. |
+| `--status <STATUS>` | Only the tickets in this status: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. Default: every status. |
 | `--type <TYPE>` | Only the tickets of this type: BUG or IMPROVEMENT. Default: every type. |
 
 ### Examples
 
 ```
 qits ticket --project qits list
-qits ticket --project qits list --status OPEN --type BUG
+qits ticket --project qits list --status REFINED --type BUG
 qits ticket list --project qits -o json
 ```
 
@@ -231,7 +235,7 @@ qits ticket list --project qits -o json
 
 File a ticket in the project: a bug or an improvement.
 
-The ticket starts OPEN, and you are its reporter. The command prints the new ticket the way `details` does.
+The ticket starts REPORTED, and you are its reporter. The command prints the new ticket the way `details` does.
 
 ```
 qits ticket new --title <text> --type <TYPE> [--assignee <name>] [--description <text>] [--description-file <path>] [--output table|json] [--project <project>] [--projects-url <url>]
@@ -268,7 +272,7 @@ cat report.md | qits ticket --project qits new --type BUG --title "Login loops" 
 
 ## qits ticket details
 
-Show one ticket: id, slug, type, status, title, assignee, who created it and when, its description, and its comments, the oldest first.
+Show one ticket: id, slug, type, status, whether it is blocked, title, assignee, who created it and when, its description, and its comments, the oldest first.
 
 --ticket takes the ticket's id, its slug, or the start of its id (list shows 8 characters). Terminal control characters are taken out of the text.
 
