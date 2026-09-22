@@ -193,7 +193,7 @@ A ticket is blocked when the phase its status belongs to cannot proceed. It is t
 ### Notes
 
 - --project, --output and --projects-url may come before or after the command. So may --ticket, which `details`, `comment` and `transition` take.
-- Reading tickets needs the role qits:admin or qits:agent. Filing one, commenting and moving one to another status need qits:admin.
+- Every ticket door here takes qits:admin or qits:agent: reading, filing, commenting and moving one to another status. An agent is bound to its own project.
 - The reporter and the comment author are the signed-in caller. Nobody can file a ticket or comment as somebody else.
 - Work that needs a plan is an epic, not a ticket.
 - transition moves a ticket's status. qits does not edit a ticket's title or description yet.
