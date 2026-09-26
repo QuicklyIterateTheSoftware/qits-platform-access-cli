@@ -15,33 +15,22 @@ import java.util.Map;
  * all: the container network answers wire aliases, and nothing else. That is a second set of
  * addresses, not a second code path, which is why both live here.
  * <p>
- * An environment service is a rule: {@code http://<env>-qits-<app>:8080}, where {@code <env>} comes
- * from {@code QITS_ENV}, else from the host of whichever platform URL the container carries, else
- * {@code dev}. A platform-plane service is a table ({@link #PLATFORM_PLANE}), because those aliases
- * were never spelled to one pattern.
+ * Every service is a rule: {@code http://<env>-qits-<app>:8080}, where {@code <env>} comes from
+ * {@code QITS_ENV}, else from the host of whichever platform URL the container carries, else
+ * {@code dev}.
  * <p>
- * Keeping it in one class is deliberate: the epic <i>Remove the platform service concept</i> deletes
- * both the environment prefix and the platform/environment split, and that has to be one edit here
- * rather than a search across the commands.
+ * <b>There was a table beside that rule and it has been deleted.</b> A platform-plane service
+ * answered on a bare alias that no pattern described — the idp on {@code qits-platform-idp}, the bus
+ * on {@code qits-events} — so the two had to be written down. The epic <i>Remove the platform
+ * service concept</i> deleted that plane, and every one of those aliases stopped resolving; the
+ * table went on handing them out. {@code qits events} therefore reconnect-looped forever against
+ * {@code http://qits-events:8080} in every agent container on the estate, which is the cost of a
+ * copy of somebody else's fact.
+ * <p>
+ * Keeping the rule in one class was the reason this class exists, and it is why the deletion is one
+ * edit rather than a search across the commands.
  */
 public final class PlatformEndpoints {
-
-    /**
-     * The services that are one per platform rather than one per environment, each with the wire
-     * alias it actually answers on.
-     * <p>
-     * A map and not a rule, because the aliases are not uniform: the idp answers on
-     * {@code qits-platform-idp} but events answers on {@code qits-events}, and
-     * {@code qits-platform-events} has no DNS record at all — a spelled name would simply never
-     * connect, which is how {@code qits events} came to hang forever on {@code dev-qits-events}.
-     * What says which plane a service is on is the deployments API's application list, where a
-     * platform service is {@code platform:<name>} and an environment service is
-     * {@code <envUuid>:<name>}; this map is the CLI's copy of that fact for the two services it
-     * dials. A third service dialled from here needs its entry added, read off that list.
-     */
-    static final Map<String, String> PLATFORM_PLANE = Map.of(
-            "idp", "qits-platform-idp",
-            "events", "qits-events");
 
     /** The port every service listens on inside the container network. */
     static final int WIRE_PORT = 8080;
@@ -101,12 +90,28 @@ public final class PlatformEndpoints {
         return mode.inPlatform() ? wire(app) : vhost(app, refusal);
     }
 
-    /** {@code http://dev-qits-projects:8080}, or {@code http://qits-platform-idp:8080}. */
+    /**
+     * {@code http://dev-qits-projects:8080}. One rule for every application, because there is one
+     * kind of service.
+     * <p>
+     * <b>The idp is the one address read rather than derived, and only when the container was told
+     * one.</b> {@code QITS_GIT_AUTH_TOKEN_URL} is injected at container creation and names the idp
+     * this platform mints at, so believing it costs nothing and covers the case the rule cannot: an
+     * idp reached somewhere other than its wire alias. It is preferred over the rule rather than
+     * used as a fallback, which is deliberate — a container carrying an explicit address is a
+     * container somebody addressed on purpose.
+     * <p>
+     * That preference has a cost worth naming: a container created BEFORE an address moved carries
+     * the old one, and its environment is frozen at creation. So a stale container keeps dialling a
+     * name that has gone while a fresh one is correct, and the symptom is per-container rather than
+     * per-version. {@code QITS_URL_IDP} overrides both.
+     */
     String wire(String app) {
-        String alias = PLATFORM_PLANE.get(app);
-        if (alias != null) {
-            String told = "idp".equals(app) ? origin(env.get(TOKEN_URL)) : null;
-            return told != null ? told : "http://" + alias + ":" + WIRE_PORT;
+        if ("idp".equals(app)) {
+            String told = origin(env.get(TOKEN_URL));
+            if (told != null) {
+                return told;
+            }
         }
         return "http://" + environment() + "-qits-" + app + ":" + WIRE_PORT;
     }
