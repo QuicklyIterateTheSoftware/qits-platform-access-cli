@@ -30,7 +30,7 @@ class NpmTest {
         new Harness()
             .store(store)
             .with("QITS_NPM_REGISTRY_URL", store.url() + "/artifacts/npm/npm")
-            .with("QITS_NPM_PROXY_URL", store.url() + "/artifacts/npm/npmjs");
+            .with("QITS_NPM_PROXY_URL", store.url() + "/npm/npmjs");
   }
 
   @AfterEach
@@ -165,7 +165,7 @@ class NpmTest {
           "packages": {
             "node_modules/zone.js": {
               "version": "0.15.0",
-              "resolved": "http://mirror.dev.localhost:8080/artifacts/npm/npmjs/zone.js/-/zone.js-0.15.0.tgz",
+              "resolved": "http://mirror.dev.localhost:8080/npm/npmjs/zone.js/-/zone.js-0.15.0.tgz",
               "integrity": "sha512-deadbeef"
             },
             "node_modules/@qits/ui-components": {
@@ -183,7 +183,7 @@ class NpmTest {
     assertEquals(ExitCode.OK, run.code());
     String after = Files.readString(lockfile);
     assertTrue(
-        after.contains(store.url() + "/artifacts/npm/npmjs/zone.js/-/zone.js-0.15.0.tgz"),
+        after.contains(store.url() + "/npm/npmjs/zone.js/-/zone.js-0.15.0.tgz"),
         after);
     assertTrue(
         after.contains(
@@ -201,7 +201,7 @@ class NpmTest {
     Path lockfile = work.resolve("package-lock.json");
     Files.writeString(
         lockfile,
-        "{\"resolved\": \"http://elsewhere:1/artifacts/npm/npmjs/a/-/a-1.tgz\"}");
+        "{\"resolved\": \"http://elsewhere:1/npm/npmjs/a/-/a-1.tgz\"}");
 
     cli.run("npm", "rewrite-lockfile-origin", "--lockfile", lockfile.toString());
     String once = Files.readString(lockfile);
