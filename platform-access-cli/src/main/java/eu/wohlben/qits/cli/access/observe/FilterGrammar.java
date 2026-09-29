@@ -14,7 +14,7 @@ import java.util.Set;
 
 /**
  * The compact condition syntax of {@code qits observe --filter}, read into the groups of the wire
- * protocol (qits-observe-plan.md). One filter is one group. The server ANDs the conditions of a
+ * protocol (qits-observability-service's README, "The live stream"). One filter is one group. The server ANDs the conditions of a
  * group and ORs the groups.
  * <p>
  * The syntax is checked here, before anything goes out, so a mistyped filter stops with a usage

@@ -154,8 +154,8 @@ Two packages sit outside `access/`, because neither is about one command:
   field in the output goes through them too. A CI step's output is untrusted in the same way (the
   code the run builds writes it), so `qits ci` puts every value through `SafeText` as well. So does
   `qits ticket`: people and agents write a ticket's title, description and comments.
-- **The observe wire protocol is `qits-observe-plan.md`** in the superproject, shared with
-  qits-observability, which is built from the same text. Change it there first, and on both sides.
+- **The observe wire protocol is qits-observability-service's README, "The live stream"**, shared
+  with qits-observability. Change it there first, and on both sides.
   The server sends no acknowledgement for a subscribe frame, so an `{"error": …}` before the first
   record is taken as its answer.
 - Do not configure the idp from its discovery document: it names the idp's internal issuer.
