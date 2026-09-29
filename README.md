@@ -7,8 +7,9 @@ Commands:
 
 - `qits login` signs you in through the browser and stores the session.
 - `qits session-daemon` keeps that session fresh for as long as it runs.
-- `qits projects list`, `qits repositories … list`, `qits ticket … list|new|details` and
-  `qits release-request … list|create|join|withdraw` read from and ask the projects service.
+- `qits projects list`, `qits repositories … list`,
+  `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
+  and `qits release-request … list|create|join|withdraw` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again.
 - `qits events` prints the platform's domain events as they happen.
@@ -214,7 +215,7 @@ the last run printed.
 | `⌃P` | history: the commands run this session; `⏎` re-runs one, `e` puts it back in the picker |
 | `q` | quit |
 
-`--project`, `--repository`, `--release-request`, `--ticket` and a run's id are lists the platform
+`--project`, `--repository`, `--release-request` and a run's id are lists the platform
 fills in: pick a project and the repository list is that project's. An option with nothing to offer
 is a field to type into, and so is one whose source could not answer — the screen says why and stays
 usable. Nothing it fetches is written to disk, and a value typed into a hidden field is never
@@ -276,7 +277,7 @@ secret and the session file is the only credential there is.
 The container is also quiet. The workspace image sets `QUARKUS_ANALYTICS_DISABLED=true` for the
 Maven builds the agent runs there, and this binary is a Quarkus application as well, so that
 variable used to make it print a configuration warning on stdout ahead of every answer — corrupt
-data for `qits ticket list | head` and for anything else that reads the output. The build now
+data for `qits work list --project qits | head` and for anything else that reads the output. The build now
 records the same value, the two agree, and nothing but the command's own answer is printed.
 
 ### The smoke run
@@ -415,13 +416,12 @@ Installing it is not part of this version.
     qits projects list
     qits repositories --project <project> list
     qits repositories --project <project> create <name> [--component <component>]
-    qits ticket --project <project> list [--status <STATUS>] [--type <TYPE>]
-    qits ticket --project <project> new --title <text> --type <TYPE> \
-        [--description <text> | --description-file <path|->] [--assignee <name>]
-    qits ticket --project <project> details --ticket <id, slug or start of the id>
-    qits ticket --project <project> transition --ticket <id, slug or start of the id> --target <STATUS>
-    qits ticket --project <project> comment --ticket <id, slug or start of the id> \
-        (--body <text> | --body-file <path|->)
+    qits work list --project <project> [--archetype <A>] [--status <STATUS>] [--parent <entity>]
+    qits work --entity <id or qualified id> details
+    <payload> | qits work create --archetype <A>
+    <merge patch> | qits work --entity <id or qualified id> update
+    <payload> | qits work --entity <id or qualified id> transition --archetype <A>
+    {"target":"<STATUS>"} | qits work --entity <id or qualified id> status
     <payload> | qits work --entity <id or qualified id> comment create
     <merge patch> | qits work --entity <id or qualified id> comment update --comment <id>
     qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
@@ -440,7 +440,7 @@ Installing it is not part of this version.
     qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
-bearer. The options of `projects`, `repositories`, `ticket`, `work` and `release-request` may come before or
+bearer. The options of `projects`, `repositories`, `work` and `release-request` may come before or
 after the subcommand: `qits repositories --project qits list` and `qits repositories list --project qits`
 are the same.
 
@@ -532,86 +532,84 @@ service yet.
 
     qits repositories --project qits create qits-docs-app --component qits-docs
 
-### qits ticket
-
-A ticket is a small piece of work in a project: a `BUG` (something behaves other than it should) or
-an `IMPROVEMENT` (something works and could work better). Its status walks five phases: `REPORTED`
-(somebody said what is wrong or could be better, and nothing more), `REFINED` (it says what to do,
-and is ready to be picked up), `IMPLEMENTED` (released and deployed, not merely merged), `VERIFIED`
-(somebody checked the platform and it no longer occurs) and `DONE` (closed, a person's call).
-`DROPPED` is the exit for work a decision was taken not to do. A ticket is also blocked or not:
-blocked says the phase its status belongs to cannot proceed, and any transition clears it. Work that
-needs a plan is an epic, not a ticket. `--project` is as above. Every ticket door here takes
-`qits:admin` or `qits:agent` — reading, filing, commenting and moving one to another status — and an
-agent is bound to its own project.
-
-`list` shows the project's tickets, oldest first. Columns: id (the first 8 characters), type,
-status, title, the assignee when a ticket has one, and a `BLOCKED` column when one is blocked.
-`--status REFINED` (or any of the six) goes to the service, which refuses a status it does not
-know (HTTP 400, exit code 1) rather than answer with no tickets. The service has no type filter, so `--type BUG` (or `IMPROVEMENT`) is applied here, in both
-output forms.
-
-`new` files a ticket; it starts `REPORTED`. `--title` and `--type` are required: the platform takes
-no ticket that is neither a bug nor an improvement. The description is Markdown, from `--description`
-or from a file with `--description-file` (`-` is stdin), not both; trailing blank lines are left
-out. `--assignee` names who takes it. The service stamps the reporter from your token. The command
-prints the new ticket the way `details` does.
-
-`details` shows one ticket: id, slug, type, status, whether it is blocked, title, assignee, who
-created it, the times, the live workspaces on it, its description and its comments, the oldest
-first. `--ticket` is the ticket's
-id, its slug, or the start of its id; the command looks among the project's tickets, and a value that
-fits none, or more than one, stops with exit code 2. `--ticket` may also come before `details`.
-`-o json` prints `{"ticket": …, "comments": […]}`.
-
-`transition` moves a ticket to another status. `--ticket` is as for `details`, and `--target` is any
-of the six statuses. One verb takes every move: which moves are allowed from where is the service's
-to say, and it refuses the rest, the ticket's own status included, with HTTP 409 and a sentence
-naming both ends (exit code 1). A status it does not know is an HTTP 400. Any transition clears the
-blocked flag. The command prints the ticket the way `details` does, without its comments.
-
-A ticket's text is written by people and agents, so, as for `qits ci`, the table form takes terminal
-control characters out of every value, and `-o json` writes them as escapes.
-
-    qits ticket --project qits list --status REFINED --type BUG
-    qits ticket --project qits new --type BUG --title "The log view stops at 64 KiB" \
-        --description-file report.md
-    qits ticket --project qits details --ticket 4f2a91c0
-    qits ticket --project qits transition --ticket 4f2a91c0 --target DROPPED
-
-Editing a ticket's title or description is not in `qits` yet. `comment` adds a comment to a
-ticket's thread; `qits work` below does the same for any work entity, and edits one too.
-
 ### qits work
 
-`qits work` is any work entity - a ticket, an epic, a feature, a task or a campaign - named once with
-`--entity`: its id or its qualified id (`qits-100`), passed to the service as it is, which resolves
-either. There is no `--project`. Today it holds the comment thread; the entity's own create, update,
-transition, list and details are to join it in the same form.
+`qits work` is every work item of a project, whatever its archetype: `EPIC`, `TICKET`, `FEATURE`,
+`TASK` or `CAMPAIGN`. One item is named once with `--entity`: its id or its qualified id
+(`qits-100`), which the service resolves. The group carries no route per archetype and no field of
+any: it calls the service's archetype-agnostic doors, and every payload schema it shows is served by
+the service per archetype and door, built from the same table the service validates against.
 
-A write reads its payload, a JSON document, on stdin and sends it unchanged: the service says what a
-payload may hold, not the CLI. A payload that is not one JSON object is a usage error (exit code 2),
-and nothing is sent. With nothing put in - stdin a terminal, or empty, as with `</dev/null` or in
-`qits tui` - the command sends nothing, prints the payload's JSON schema with its required fields
-named, and exits with 0. The schema is the running service's own: the command reads it from the
-OpenAPI document at `/projects/q/openapi?format=json`, from the operation's request body, with every
-`$ref` resolved, and keeps no copy. A service that does not describe the door yet is an exit code 1.
+Epics, tickets and campaigns walk one lifecycle: `REPORTED` (somebody said what is wrong or could be
+better), `REFINED` (it says what to do), `IMPLEMENTED` (released and deployed, not merely merged),
+`VERIFIED` (somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit
+for work a decision was taken not to do. Features and tasks have no status. A ticket is also blocked
+or not: the phase its status belongs to cannot proceed.
 
-`comment create` sends the payload (`{"body": "..."}`, Markdown) to
-`POST /projects/api/entities/{id}/comments`. `comment update --comment <id>` first reads the
-entity's thread and refuses a comment that is not on it (exit code 2, nothing sent), then sends the
-payload as a JSON merge patch to `PATCH /projects/api/comments/{id}`, with the content type
-`application/merge-patch+json`. The author is the caller and an edit leaves it as it was. Commenting
-and editing take `qits:admin` or `qits:agent`, an agent in its own project only; deleting a comment
-takes `qits:admin` and has no command here.
+Reading takes `qits:admin` or `qits:agent`, and so does writing, an agent in its own project only.
+An epic's status move takes `qits:admin`: an agent is answered HTTP 403, and the command prints the
+service's sentence as it came.
 
-The table prints the comment's id, author and time; `-o json` prints the service's answer, and with
-nothing put in, the schema alone. As for `qits ticket`, every value goes through the same control
-character filter.
+**Reads.** `list --project <p>` shows a project's items in the service's order (`GET
+/projects/api/projects/{p}/entities`): qualified id, archetype, status, a `BLOCKED` column when a
+ticket is blocked, title and when it last changed. `--archetype`, `--status` and `--parent` narrow
+it; the first two are case-insensitive, and `--parent` takes an id or a qualified id. `details`
+shows one item (`GET /projects/api/entities/{id}`): its fields, its description, its comment thread
+and its children. `-o json` prints `{"entity": …, "comments": […], "children": […]}`.
 
+**Writes read a JSON payload on stdin.** A payload that is not one JSON object is a usage error
+(exit code 2), and nothing is sent. With nothing put in - stdin a terminal, or empty, as with
+`</dev/null` or in `qits tui` - the command sends nothing, prints its usage and then the payload's
+JSON schema with its required fields named and its source, and exits with 0. `-o json` prints the
+bare schema.
+
+- `create --archetype <A>` sets `archetype` on the payload and sends it to `POST
+  /projects/api/entities`. The schema is `GET /projects/api/entities/archetypes/{A}/schemas/create`:
+  a root item names its `project` (id or slug), a child its `parent`. A payload whose own
+  `archetype` disagrees with `--archetype` is a usage error.
+- `update` looks the item up, then sends the payload unchanged as a JSON merge patch to `PATCH
+  /projects/api/entities/{uuid}` (`application/merge-patch+json`): left out is unchanged, `null`
+  clears. The schema is the item's archetype's `update` schema.
+- `transition --archetype <B>` reshapes the item into another archetype. The door (`POST
+  /projects/api/entities/transition`) is full-state: what the request leaves out is cleared. So the
+  command starts from the item as it stands (`title`, `description`, `status`, `ticketType`,
+  `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementedAt`, `dependsOn`, and
+  `membership {parent, position}` when it has a parent), merges the payload over it (RFC 7396),
+  sets `archetype`, and drops every property B's `transition` schema has no slot for, naming them
+  on stderr (`impetus, ticketType have no slot on EPIC and are not carried.`). `{}` carries the item
+  over as it is. With nothing put in, it prints B's schema and names the required properties the
+  item does not carry yet (`membership.parent` for a ticket becoming a feature) and the ones that
+  would be dropped.
+- `status` sends `{"target": "<STATUS>"}` unchanged to `POST /projects/api/entities/{id}/status`.
+  With nothing put in, it prints a schema whose `target` enum is the moves the service's archetype
+  registry (`GET /projects/api/entities/archetypes`) opens from the item's current status. An item
+  whose archetype has no lifecycle is a usage error. A move the lifecycle does not allow is HTTP 409.
+- `comment create` sends the payload (`{"body": "..."}`, Markdown) to `POST
+  /projects/api/entities/{id}/comments`. `comment update --comment <id>` first reads the item's
+  thread and refuses a comment that is not on it (exit code 2, nothing sent), then sends the payload
+  as a JSON merge patch to `PATCH /projects/api/comments/{id}`. The author is the caller and an edit
+  leaves it as it was; deleting a comment takes `qits:admin` and has no command here. Their schemas
+  come from the service's OpenAPI document (`/projects/q/openapi?format=json`), from the operation's
+  request body with every `$ref` resolved.
+
+`update` and `transition` look the item up first (`GET /projects/api/entities/{id}`) and send its
+UUID, because those doors take no qualified id. The service's 400, 403 and 409 answers are printed
+with the service's own sentence, exit code 1.
+
+The table prints the item's qualified id, archetype, status, title and time; `-o json` prints the
+service's answer. An item's text is written by people and agents, so, as for `qits ci`, the table
+form takes terminal control characters out of every value, and `-o json` writes them as escapes.
+
+    qits work list --project qits --archetype epic --status REFINED
+    qits work --entity qits-100 details
+    qits work create --archetype ticket </dev/null
+    echo '{"project":"qits","title":"The log view stops at 64 KiB","ticketType":"BUG","impetus":"A long run is cut."}' \
+        | qits work create --archetype ticket
+    echo '{"title":"The log view stops at 64 KiB"}' | qits work --entity qits-100 update
+    qits work --entity qits-100 transition --archetype epic </dev/null
+    echo '{"target":"DROPPED"}' | qits work --entity qits-100 status
     echo '{"body":"I can reproduce it."}' | qits work --entity qits-100 comment create
     echo '{"body":"Fixed."}' | qits work --entity qits-100 comment update --comment <comment id>
-    qits work --entity qits-100 comment create </dev/null
 
 ### qits release-request
 

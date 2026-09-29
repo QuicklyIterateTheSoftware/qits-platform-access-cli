@@ -5,8 +5,9 @@
 The `qits` command: access to the qits platform from a Linux or WSL workstation. A Quarkus
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
-that session fresh), `qits projects|repositories|ticket|release-request` (the projects service),
-`qits ci runs|run|retry` (qits-ci's runs, a run's step logs, a retry), `qits events` (the live event
+that session fresh), `qits projects|repositories|work|release-request` (the projects service;
+`work` is every work item, of every archetype), `qits ci runs|run|retry` (qits-ci's runs, a run's
+step logs, a retry), `qits events` (the live event
 stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
@@ -62,9 +63,12 @@ The application module's sources, under `platform-access-cli/src/main/java/eu/wo
     platform/  what every platform command shares: the context, the token (with inline refresh),
                the HTTP client and its error messages, which address a service has (PlatformUrls),
                and the aligned table (Table)
-    projects/  qits projects, repositories, ticket, epic, work and release-request. `qits work`'s
-               writes take a JSON payload on stdin and, with none, print its schema from the
-               service's OpenAPI document (WorkPayload); the CLI keeps no copy of a schema
+    projects/  qits projects, repositories, work and release-request. `qits work` is one group for
+               every archetype (WorkCommand; WorkEntities holds the transition's full-state merge
+               and the tables). Its writes take a JSON payload on stdin and, with none, print the
+               usage and the schema the service serves per archetype and door (entity doors) or
+               its OpenAPI document (comment doors), through WorkPayload; the CLI keeps no copy of
+               a schema and no route per archetype
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
     events/    qits events: the SSE parser and the reconnecting stream
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-
@@ -82,8 +86,8 @@ The application module's sources, under `platform-access-cli/src/main/java/eu/wo
                argument-grammar checks Args used to do) are new. Touches no session file — see
                Conventions.
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
-    complete/  the six platform sources behind the TUI's dropdowns (projects, repositories,
-               release requests, tickets, runs, versions), over the credential the commands use
+    complete/  the five platform sources behind the TUI's dropdowns (projects, repositories,
+               release requests, runs, versions), over the credential the commands use
 
 Two packages sit outside `access/`, because neither is about one command:
 
@@ -155,7 +159,8 @@ Two packages sit outside `access/`, because neither is about one command:
   (the line form) or `SafeText.JSON` (the JSON form), notices and close reasons included. A new
   field in the output goes through them too. A CI step's output is untrusted in the same way (the
   code the run builds writes it), so `qits ci` puts every value through `SafeText` as well. So does
-  `qits ticket`: people and agents write a ticket's title, description and comments.
+  `qits work`: people and agents write an item's title, description and comments. Its JSON form
+  goes through `SafeJson`, never `ProjectsApi.printJson`, which escapes nothing.
 - **The observe wire protocol is qits-observability-service's README, "The live stream"**, shared
   with qits-observability. Change it there first, and on both sides.
   The server sends no acknowledgement for a subscribe frame, so an `{"error": …}` before the first

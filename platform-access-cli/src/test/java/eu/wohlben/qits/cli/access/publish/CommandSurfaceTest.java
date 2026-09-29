@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * itself, not {@link PublishArgs}, is what answers "no command was named", "that command does not
  * exist" and "that flag was given with nothing after it" — because those are refused before a
  * command's own {@code run(Env, Console)} ever executes, the same way every other command group in
- * this CLI (`qits ticket`, `qits help`, `qits` itself) already lets picocli answer them, at picocli's
+ * this CLI (`qits work`, `qits help`, `qits` itself) already lets picocli answer them, at picocli's
  * own exit code (2) rather than qits-publish's (1).
  */
 class CommandSurfaceTest {
