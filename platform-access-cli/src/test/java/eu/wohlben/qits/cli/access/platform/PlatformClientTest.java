@@ -43,7 +43,9 @@ class PlatformClientTest {
     @Test
     void a403AndOtherStatusesSayWhatHappened() {
         assertThat(PlatformClient.refusal("GET", URL, 403, headers(Map.of()), "{\"message\":\"x\"}").getMessage())
-                .startsWith("Your roles do not allow this (HTTP 403)");
+                .isEqualTo("Your roles do not allow this (HTTP 403): GET " + URL + ": x");
+        assertThat(PlatformClient.refusal("GET", URL, 403, headers(Map.of()), "").getMessage())
+                .isEqualTo("Your roles do not allow this (HTTP 403): GET " + URL);
         assertThat(PlatformClient.refusal("POST", URL, 409, headers(Map.of()), "{\"message\":\"stale\"}").getMessage())
                 .isEqualTo("POST " + URL + " answered HTTP 409: stale");
         assertThat(PlatformClient.refusal("POST", URL, 409, headers(Map.of()), "").status()).isEqualTo(409);

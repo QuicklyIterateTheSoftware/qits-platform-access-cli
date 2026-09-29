@@ -320,7 +320,11 @@ public final class PlatformClient {
                     + "). If this goes on, run `qits login`.", status);
         }
         if (status == 403) {
-            return CliFailure.refused("Your roles do not allow this (HTTP 403): " + method + " " + uri, status);
+            // The service's own sentence says which rule refused ("this credential is qits:agent,
+            // which reads but does not write"); without it a person sees only that something did.
+            String serviceMessage = serviceMessage(body);
+            return CliFailure.refused("Your roles do not allow this (HTTP 403): " + method + " " + uri
+                    + (serviceMessage.isEmpty() ? "" : ": " + serviceMessage), status);
         }
         StringBuilder message = new StringBuilder(method + " " + uri + " answered HTTP " + status);
         String serviceMessage = serviceMessage(body);
