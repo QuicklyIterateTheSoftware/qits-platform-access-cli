@@ -1,6 +1,5 @@
 package eu.wohlben.qits.cli.access.projects;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -640,11 +639,7 @@ public class TicketCommand implements Runnable {
 
     /** The answer, indented, with every control character written as an escape. */
     static void printJson(PrintStream out, JsonNode node) throws CliFailure {
-        try {
-            out.println(SafeText.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(node));
-        } catch (JsonProcessingException impossible) {
-            throw new CliFailure("cannot print the answer as JSON", CliFailure.FAILED);
-        }
+        SafeJson.print(out, node);
     }
 
     private static List<String> row(String name, String value) {

@@ -153,7 +153,7 @@ public class WorkCommentCommand implements Runnable {
     private static void print(PrintStream out, boolean json, JsonNode answer, String timeField, String timeHeader)
             throws CliFailure {
         if (json) {
-            TicketCommand.printJson(out, answer);
+            SafeJson.print(out, answer);
             return;
         }
         JsonNode c = answer.path("comment");
