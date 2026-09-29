@@ -27,6 +27,12 @@ public final class ProjectsApi {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
+    /** Where the service's OpenAPI document is. */
+    public static final String OPENAPI = "/projects/q/openapi";
+
+    /** RFC 7396's media type, which the service's PATCH doors consume. */
+    public static final String MERGE_PATCH = "application/merge-patch+json";
+
     private final PlatformClient client;
     private final String base;
 
@@ -219,6 +225,36 @@ public final class ProjectsApi {
             body.put("description", description);
         }
         return client.put(uri("/projects/api/epics/" + segment(epicId)), body);
+    }
+
+    /**
+     * {@code {"entries":[{"comment":{…}}]}}, oldest first: the thread of any work entity. {@code
+     * entity} is its id or its qualified id ({@code qits-100}); the service resolves either.
+     */
+    public JsonNode entityComments(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/entities/" + segment(entity) + "/comments"));
+    }
+
+    /**
+     * {@code {"comment":{…}}}: the new comment. The payload goes as the caller wrote it; the service
+     * is the one that says what it may hold, and takes the author from the caller's identity.
+     */
+    public JsonNode createEntityComment(String entity, JsonNode payload) throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/entities/" + segment(entity) + "/comments"), payload);
+    }
+
+    /** {@code {"comment":{…}}}: the comment with the merge patch applied, sent as it was written. */
+    public JsonNode patchComment(String commentId, JsonNode mergePatch) throws CliFailure, InterruptedException {
+        return client.patch(uri("/projects/api/comments/" + segment(commentId)), mergePatch, MERGE_PATCH);
+    }
+
+    /**
+     * The service's OpenAPI document, as JSON. It is served as YAML unless asked otherwise, and
+     * {@code format=json} is how SmallRye OpenAPI is asked. It lives beside the API, under {@code
+     * /projects/q}, not under {@code /projects/api}.
+     */
+    public JsonNode openApi() throws CliFailure, InterruptedException {
+        return client.get(uri(OPENAPI + "?format=json"));
     }
 
     /** A priority only when one is given, so the service's rule for none applies. */

@@ -420,6 +420,10 @@ Installing it is not part of this version.
         [--description <text> | --description-file <path|->] [--assignee <name>]
     qits ticket --project <project> details --ticket <id, slug or start of the id>
     qits ticket --project <project> transition --ticket <id, slug or start of the id> --target <STATUS>
+    qits ticket --project <project> comment --ticket <id, slug or start of the id> \
+        (--body <text> | --body-file <path|->)
+    <payload> | qits work --entity <id or qualified id> comment create
+    <merge patch> | qits work --entity <id or qualified id> comment update --comment <id>
     qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
@@ -436,7 +440,7 @@ Installing it is not part of this version.
     qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
-bearer. The options of `projects`, `repositories`, `ticket` and `release-request` may come before or
+bearer. The options of `projects`, `repositories`, `ticket`, `work` and `release-request` may come before or
 after the subcommand: `qits repositories --project qits list` and `qits repositories list --project qits`
 are the same.
 
@@ -575,7 +579,39 @@ control characters out of every value, and `-o json` writes them as escapes.
     qits ticket --project qits details --ticket 4f2a91c0
     qits ticket --project qits transition --ticket 4f2a91c0 --target DROPPED
 
-Editing a ticket's title or description is not in `qits` yet.
+Editing a ticket's title or description is not in `qits` yet. `comment` adds a comment to a
+ticket's thread; `qits work` below does the same for any work entity, and edits one too.
+
+### qits work
+
+`qits work` is any work entity - a ticket, an epic, a feature, a task or a campaign - named once with
+`--entity`: its id or its qualified id (`qits-100`), passed to the service as it is, which resolves
+either. There is no `--project`. Today it holds the comment thread; the entity's own create, update,
+transition, list and details are to join it in the same form.
+
+A write reads its payload, a JSON document, on stdin and sends it unchanged: the service says what a
+payload may hold, not the CLI. A payload that is not one JSON object is a usage error (exit code 2),
+and nothing is sent. With nothing put in - stdin a terminal, or empty, as with `</dev/null` or in
+`qits tui` - the command sends nothing, prints the payload's JSON schema with its required fields
+named, and exits with 0. The schema is the running service's own: the command reads it from the
+OpenAPI document at `/projects/q/openapi?format=json`, from the operation's request body, with every
+`$ref` resolved, and keeps no copy. A service that does not describe the door yet is an exit code 1.
+
+`comment create` sends the payload (`{"body": "..."}`, Markdown) to
+`POST /projects/api/entities/{id}/comments`. `comment update --comment <id>` first reads the
+entity's thread and refuses a comment that is not on it (exit code 2, nothing sent), then sends the
+payload as a JSON merge patch to `PATCH /projects/api/comments/{id}`, with the content type
+`application/merge-patch+json`. The author is the caller and an edit leaves it as it was. Commenting
+and editing take `qits:admin` or `qits:agent`, an agent in its own project only; deleting a comment
+takes `qits:admin` and has no command here.
+
+The table prints the comment's id, author and time; `-o json` prints the service's answer, and with
+nothing put in, the schema alone. As for `qits ticket`, every value goes through the same control
+character filter.
+
+    echo '{"body":"I can reproduce it."}' | qits work --entity qits-100 comment create
+    echo '{"body":"Fixed."}' | qits work --entity qits-100 comment update --comment <comment id>
+    qits work --entity qits-100 comment create </dev/null
 
 ### qits release-request
 

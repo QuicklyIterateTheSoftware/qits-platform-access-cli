@@ -11,9 +11,12 @@ import eu.wohlben.qits.cli.session.PlatformEndpoints;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -68,6 +71,29 @@ public record CliContext(
      */
     public String idpUrl() throws CliFailure, InterruptedException {
         return mode().inPlatform() ? null : tokens().session().idpUrl();
+    }
+
+    /**
+     * Whether stdin is a person's terminal rather than a pipe, a file or nothing. A command that
+     * reads a document on stdin asks first, so that typing it bare shows what it wants instead of
+     * waiting for input nobody knows to give.
+     * <p>
+     * Only the process's own stdin can be a terminal: a stream a test hands in never is. The answer
+     * is read from where {@code /proc/self/fd/0} points (a {@code /dev/pts/} or {@code /dev/tty}
+     * device), not from {@link System#console()}, which also asks about stdout and, since Java 22,
+     * answers even when neither is a terminal; a link read works the same in the native binary.
+     * Where there is no {@code /proc} the answer is no, and the command reads stdin.
+     */
+    public boolean stdinIsTerminal() {
+        if (in != System.in) {
+            return false;
+        }
+        try {
+            String device = Files.readSymbolicLink(Path.of("/proc/self/fd/0")).toString();
+            return device.startsWith("/dev/pts/") || device.startsWith("/dev/tty") || device.equals("/dev/console");
+        } catch (IOException | UnsupportedOperationException | SecurityException unknown) {
+            return false;
+        }
     }
 
     /** Which of the CLI's two homes this is. Decided from the environment, which does not change. */

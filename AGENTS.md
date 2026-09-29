@@ -62,7 +62,9 @@ The application module's sources, under `platform-access-cli/src/main/java/eu/wo
     platform/  what every platform command shares: the context, the token (with inline refresh),
                the HTTP client and its error messages, which address a service has (PlatformUrls),
                and the aligned table (Table)
-    projects/  qits projects, repositories, ticket and release-request
+    projects/  qits projects, repositories, ticket, epic, work and release-request. `qits work`'s
+               writes take a JSON payload on stdin and, with none, print its schema from the
+               service's OpenAPI document (WorkPayload); the CLI keeps no copy of a schema
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
     events/    qits events: the SSE parser and the reconnecting stream
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-

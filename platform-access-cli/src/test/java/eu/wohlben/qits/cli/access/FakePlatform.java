@@ -28,7 +28,8 @@ import java.util.concurrent.LinkedBlockingDeque;
  */
 public final class FakePlatform implements AutoCloseable {
 
-    public record Request(String method, String path, String query, String authorization, String accept, String body) {
+    public record Request(String method, String path, String query, String authorization, String accept, String body,
+            String contentType) {
     }
 
     public record Answer(int status, String body, Map<String, String> headers) {
@@ -112,7 +113,8 @@ public final class FakePlatform implements AutoCloseable {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         URI uri = exchange.getRequestURI();
         requests.add(new Request(exchange.getRequestMethod(), uri.getPath(), uri.getRawQuery(),
-                exchange.getRequestHeaders().getFirst("Authorization"), exchange.getRequestHeaders().getFirst("Accept"), body));
+                exchange.getRequestHeaders().getFirst("Authorization"), exchange.getRequestHeaders().getFirst("Accept"), body,
+                exchange.getRequestHeaders().getFirst("Content-Type")));
         if (uri.getPath().equals("/events/api/stream")) {
             StreamScript script = streams.poll();
             try {

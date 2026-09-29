@@ -16,6 +16,7 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.TicketCommand;
+import eu.wohlben.qits.cli.access.projects.WorkCommand;
 import eu.wohlben.qits.cli.tui.TuiCommand;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine;
@@ -31,13 +32,14 @@ import picocli.CommandLine;
         name = "qits",
         mixinStandardHelpOptions = true,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
-                RepositoriesCommand.class, TicketCommand.class, EpicCommand.class, ReleaseRequestCommand.class,
-                CiCommand.class, EventsCommand.class,
+                RepositoriesCommand.class, TicketCommand.class, EpicCommand.class, WorkCommand.class,
+                ReleaseRequestCommand.class, CiCommand.class, EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, ArtifactsCommand.class,
                 TuiCommand.class, HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
-                        + "tickets, epics, release requests, CI runs and their logs, domain events, live telemetry, Git "
+                        + "tickets, epics, comment threads on any work entity, release requests, CI runs and their logs, "
+                        + "domain events, live telemetry, Git "
                         + "pushes to the platform's git host, and publishing release artifacts from a CI step.",
                 "Each command calls the platform through its edge, with the session of `qits login`, except "
                         + "`qits artifacts publish`, which runs in a CI step container with no person and never touches that "

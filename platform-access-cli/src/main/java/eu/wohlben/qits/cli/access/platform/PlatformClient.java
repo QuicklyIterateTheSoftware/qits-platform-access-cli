@@ -93,6 +93,22 @@ public final class PlatformClient {
     }
 
     /**
+     * A PATCH with a body of the given media type: a merge patch is {@code application/merge-patch+json},
+     * and a service that reads both takes it by that name.
+     */
+    public JsonNode patch(URI uri, JsonNode body, String contentType) throws CliFailure, InterruptedException {
+        String json;
+        try {
+            json = JSON.writeValueAsString(body);
+        } catch (IOException impossible) {
+            throw new CliFailure("cannot write the request body", CliFailure.FAILED);
+        }
+        return send("PATCH", uri, HttpRequest.newBuilder(uri)
+                .header("Content-Type", contentType)
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)));
+    }
+
+    /**
      * The body is parsed as it arrives, not first held as one string: a CI run's answer carries
      * the output of its steps. A refusal's body is read only as far as its message needs.
      */

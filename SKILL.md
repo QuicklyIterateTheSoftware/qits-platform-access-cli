@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, tickets, epics, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, tickets, epics, comment threads on any work entity, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -563,6 +563,99 @@ qits epic update --project qits --epic 4f2a91c0 --description-file plan.md
 - `0` Done.
 - `1` The platform refused (for example the epic's scope is frozen, HTTP 409), or cannot be reached.
 - `2` Used wrongly (for example neither --title nor a description given, an empty --title, or an --epic that fits no epic of the project, or more than one), not signed in, or the session ended.
+
+## qits work
+
+Any work entity - a ticket, an epic, a feature, a task or a campaign - named with --entity. comment writes to and edits the entity's comment thread.
+
+A write reads its payload, a JSON document, on stdin and sends it to the service as it is. With nothing on stdin (a terminal, or empty) it sends nothing and prints the payload's JSON schema instead, read from the service's own OpenAPI document.
+
+### Notes
+
+- --entity, --output and --projects-url may come before or after the command.
+- --entity is the entity's id or its qualified id (qits-100); the service resolves either. There is no --project.
+- Commenting takes qits:admin or qits:agent. An agent writes only in its own project.
+
+## qits work comment
+
+The comment thread of a work entity: create adds a comment, update edits one.
+
+Both read a JSON document on stdin and send it as it is. With nothing on stdin they send nothing and print the payload's JSON schema, with its required fields named.
+
+### Notes
+
+- The author is the signed-in caller, and an edit leaves it as it is. Anybody who may comment may edit a comment's text.
+- Deleting a comment takes qits:admin, and qits has no command for it.
+
+## qits work comment create
+
+Add a comment to a work entity's thread.
+
+Reads the payload, a JSON object such as {"body":"..."}, on stdin and sends it unchanged to POST /projects/api/entities/{id}/comments. The body is Markdown. You are its author. The command prints the comment once filed.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) with the required fields named, and exits with 0.
+
+```
+qits work comment create [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+echo '{"body":"I can reproduce it."}' | qits work --entity qits-100 comment create
+jq -n --rawfile b note.md '{body: $b}' | qits work comment create --entity qits-100 -o json
+qits work --entity qits-100 comment create </dev/null
+```
+
+- The last one prints the schema: nothing is sent.
+- -o json prints the service's answer; the table prints the comment's id, author and time.
+
+### Exit codes
+
+- `0` The comment is filed, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example your roles or another project's entity, HTTP 403, an entity it does not know, HTTP 404, or a payload it does not take, HTTP 400), cannot be reached, or its OpenAPI document does not describe the payload.
+- `2` Used wrongly (for example a payload that is not a JSON object, or no --entity), not signed in, or the session ended.
+
+## qits work comment update
+
+Edit a comment on a work entity's thread.
+
+Reads a JSON merge patch, such as {"body":"..."}, on stdin and sends it unchanged to PATCH /projects/api/comments/{commentId} as application/merge-patch+json. Before that it reads the entity's thread, and refuses a comment that is not on it. The author stays who it was.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints the patch's JSON schema from the service's OpenAPI document (/projects/q/openapi) with the required fields named, and exits with 0.
+
+```
+qits work comment update [--comment <comment>] [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--comment <comment>` | The comment to edit (required unless nothing is put in): its id. |
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+echo '{"body":"Fixed in 2026.929.1."}' | qits work --entity qits-100 comment update --comment 8de195f1-631d-420a-893e-7baca2229be4
+qits work --entity qits-100 comment update </dev/null
+```
+
+- --comment is the comment's full id, as `create` printed it.
+- -o json prints the service's answer; the table prints the comment's id, author and time.
+
+### Exit codes
+
+- `0` The comment is edited, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example your roles, HTTP 403, an entity it does not know, HTTP 404, or a patch it does not take, HTTP 400), cannot be reached, or its OpenAPI document does not describe the patch.
+- `2` Used wrongly (for example a patch that is not a JSON object, no --entity or --comment, or a comment that is not on the entity's thread), not signed in, or the session ended.
 
 ## qits release-request
 
