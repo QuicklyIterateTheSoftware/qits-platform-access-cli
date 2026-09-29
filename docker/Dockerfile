@@ -23,6 +23,13 @@
 # the platform builder cannot reach for an ADD, so both recipes pass the in-network Maven root, as
 # qits-ci-daemon's do. The bootstrap seeds both tarballs into the store on every boot.
 #
+# ON A REMOTE RUNNER (the EDGE plane, epic qits-441) THAT ROOT IS THE PUBLIC ONE, and the edge
+# answers an anonymous read of it with 401. The ADD still works because BuildKit's HTTP source
+# attaches `Authorization: Bearer <value>` from a session secret named `HTTP_AUTH_TOKEN_<url host>`
+# when one exists, and sends nothing when none does; the recipes pass that secret, from the run's
+# `$QITS_TOKEN`, only on the EDGE plane, so an in-network read stays anonymous. Nothing here changes
+# for it. qits-ci-daemon's file carries the long reasons, and why not `RUN … curl`.
+#
 # A hand build off the platform passes the upstream URLs and base:
 #
 #     docker build --target binary --output type=local,dest=out -f docker/Dockerfile \
@@ -83,6 +90,10 @@ COPY . .
 
 # Maven Central through the platform mirror's in-network route when CI passes it. Empty (the
 # default, and every hand build) switches off .qits-maven-settings.xml's profile: Central directly.
+# On a remote runner that route is the public mirror, which answers anonymously 401, so the mvnw RUN
+# mounts the two CI secrets and exports them as QITS_MAVEN_AUTH_USR/PSW for `qits-central-proxy`;
+# in-network the mirror never challenges and Maven never sends them. qits-ci-daemon's
+# docker/Dockerfile has the measurement; absent secrets (a hand build) leave both empty.
 ARG QITS_MAVEN_CENTRAL_URL=
 ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
 
@@ -103,7 +114,11 @@ ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
 # main-scope dependency, so building it here costs seconds against a native compile and keeps this
 # call the same call `./mvnw verify` makes. Its own release step deploys it; nothing is deployed
 # from in here.
-RUN ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
+RUN --mount=type=secret,id=qits-client-id \
+    --mount=type=secret,id=qits-client-secret \
+    export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
+    export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
+    ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
       -Dquarkus.native.container-build=false \
       -Dquarkus.native.additional-build-args-append=--static,--libc=musl \
       -Dquarkus.native.native-image-xmx=4g \
