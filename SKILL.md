@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, tickets, epics, comment threads on any work entity, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -220,361 +220,219 @@ qits repositories --project qits create qits-docs-app -o json
 - `1` The platform refused (the message names the status and what to do next), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
-## qits ticket
-
-The tickets of one project: small pieces of work, each a bug or an improvement. list shows them, new files one, details shows one with its description and comments, comment adds one to its thread, and transition moves one to another status.
-
-Types: BUG (something behaves other than it should) and IMPROVEMENT (something works and could work better).
-
-Statuses: REPORTED (somebody said what is wrong or could be better, and nothing more; a new ticket starts here), REFINED (it now says what to do, and is ready to be picked up), IMPLEMENTED (the change is released and deployed, not merely merged), VERIFIED (somebody checked the platform and it no longer occurs), DONE (closed, which is a person's call). DROPPED is the exit for work a decision was taken not to do.
-
-A ticket is blocked when the phase its status belongs to cannot proceed. It is temporary: any transition clears it.
-
-### Notes
-
-- --project, --output and --projects-url may come before or after the command. So may --ticket, which `details`, `comment` and `transition` take.
-- Every ticket door here takes qits:admin or qits:agent: reading, filing, commenting and moving one to another status. An agent is bound to its own project.
-- The reporter and the comment author are the signed-in caller. Nobody can file a ticket or comment as somebody else.
-- Work that needs a plan is an epic, not a ticket.
-- transition moves a ticket's status. qits does not edit a ticket's title or description yet.
-
-## qits ticket list
-
-List the project's tickets, oldest first: id, type, status, title, the assignee when a ticket has one, and BLOCKED when one is blocked.
-
-Without --status and --type it lists every ticket. The ID column shows the first 8 characters of the id, which is enough for `details`.
-
-```
-qits ticket list [--output table|json] [--project <project>] [--projects-url <url>] [--status <STATUS>] [--type <TYPE>]
-```
-
-| Name | What it does |
-|---|---|
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--status <STATUS>` | Only the tickets in this status: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. Default: every status. |
-| `--type <TYPE>` | Only the tickets of this type: BUG or IMPROVEMENT. Default: every type. |
-
-### Examples
-
-```
-qits ticket --project qits list
-qits ticket --project qits list --status REFINED --type BUG
-qits ticket list --project qits -o json
-```
-
-- The service applies --status, and refuses a status it does not know (HTTP 400) rather than answer with no tickets. --type is applied here, in both output forms.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits ticket new
-
-File a ticket in the project: a bug or an improvement.
-
-The ticket starts REPORTED, and you are its reporter. The command prints the new ticket the way `details` does.
-
-```
-qits ticket new --title <text> --type <TYPE> [--assignee <name>] [--description <text>] [--description-file <path>] [--output table|json] [--project <project>] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--title <text>` | Required. What is wrong or could be better, in a short line. |
-| `--type <TYPE>` | Required. BUG or IMPROVEMENT. |
-| `--assignee <name>` | Who takes it, as a name. Default: nobody. |
-| `--description <text>` | The long form, in Markdown: what happens, what should happen, how to see it. |
-| `--description-file <path>` | Read the description from this file (UTF-8), or from stdin for -. Not together with --description. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-
-### Examples
-
-```
-qits ticket --project qits new --type BUG --title "The log view stops at 64 KiB"
-qits ticket --project qits new --type IMPROVEMENT --title "Filter runs by author" --description "The runs list needs an author filter."
-qits ticket new --project qits --type BUG --title "Login loops" --description-file report.md
-cat report.md | qits ticket --project qits new --type BUG --title "Login loops" --description-file -
-```
-
-- --type is required: the platform takes no ticket that is neither a bug nor an improvement.
-- The description is Markdown. --description-file - reads it from stdin.
-
-### Exit codes
-
-- `0` The ticket is filed.
-- `1` The platform refused (for example a type it does not know, HTTP 400, or your roles, HTTP 403), or cannot be reached.
-- `2` Used wrongly (for example an empty title, or a description file that cannot be read), not signed in, or the session ended.
-
-## qits ticket details
-
-Show one ticket: id, slug, type, status, whether it is blocked, title, assignee, who created it and when, its description, and its comments, the oldest first.
-
---ticket takes the ticket's id, its slug, or the start of its id (list shows 8 characters). Terminal control characters are taken out of the text.
-
-```
-qits ticket details [--output table|json] [--project <project>] [--projects-url <url>] [--ticket <ticket>]
-```
-
-| Name | What it does |
-|---|---|
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--ticket <ticket>` | The ticket (required, before or after details): its id, its slug, or enough of the start of its id to name one. |
-
-### Examples
-
-```
-qits ticket --project qits details --ticket 4f2a91c0
-qits ticket details --ticket the-log-view-stops-at-64-kib --project qits
-qits ticket --project qits details --ticket 4f2a91c0 -o json | jq -r .ticket.description
-```
-
-- -o json prints one object: the ticket as the service answers it, and its comments as a list. Control characters are written as escapes.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example the ticket was deleted a moment ago, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
-
-## qits ticket comment
-
-Add a comment to a ticket's thread.
-
-You are its author. The comment is Markdown; the command prints it once filed.
-
-```
-qits ticket comment [--body <text>] [--body-file <path>] [--output table|json] [--project <project>] [--projects-url <url>] [--ticket <ticket>]
-```
-
-| Name | What it does |
-|---|---|
-| `--body <text>` | The comment, in Markdown. |
-| `--body-file <path>` | Read the comment from this file (UTF-8), or from stdin for -. Not together with --body. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--ticket <ticket>` | The ticket (required, before or after comment): its id, its slug, or enough of the start of its id to name one. |
-
-### Examples
-
-```
-qits ticket --project qits comment --ticket 4f2a91c0 --body "I can reproduce it."
-qits ticket comment --ticket the-log-view-stops-at-64-kib --project qits --body-file note.md
-cat note.md | qits ticket --project qits comment --ticket 4f2a91c0 --body-file -
-```
-
-- The comment is Markdown. --body-file - reads it from stdin.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example your roles, HTTP 403, or the ticket was deleted a moment ago, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example neither --body nor --body-file given, an empty comment, or a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
-
-## qits ticket transition
-
-Move a ticket to another status.
-
-The service owns which moves are allowed and refuses the rest (HTTP 409), the ticket's own status included. Any transition clears the blocked flag. The command prints the ticket the way `details` does, without its comments.
-
-```
-qits ticket transition --target <STATUS> [--output table|json] [--project <project>] [--projects-url <url>] [--ticket <ticket>]
-```
-
-| Name | What it does |
-|---|---|
-| `--target <STATUS>` | Required. The status to move it to: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--ticket <ticket>` | The ticket (required, before or after transition): its id, its slug, or enough of the start of its id to name one. |
-
-### Examples
-
-```
-qits ticket --project qits transition --ticket 4f2a91c0 --target REFINED
-qits ticket transition --ticket the-log-view-stops-at-64-kib --project qits --target DROPPED
-qits ticket --project qits transition --ticket 4f2a91c0 --target DONE -o json
-```
-
-- --target is any status: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE or DROPPED. Which moves are allowed from where is the service's to say, not this command's.
-- DROPPED is the exit for work a decision was taken not to do.
-
-### Exit codes
-
-- `0` The ticket is in the new status.
-- `1` The platform refused (a move it does not allow, HTTP 409, a status it does not know, HTTP 400, or your roles, HTTP 403), or cannot be reached.
-- `2` Used wrongly (for example a --ticket that fits no ticket of the project, or more than one), not signed in, or the session ended.
-
-## qits epic
-
-The epics of one project: work that needs a plan, broken into features and tasks. list shows them, new files one, and details shows one with its description and, when the platform returns them, its features and their tasks.
-
-Statuses: REFINING (a new epic starts here, its plan still being drafted), IMPLEMENTATION (the plan is frozen and being built), SUPERSEDED and ABANDONED.
-
-### Notes
-
-- --project, --output and --projects-url may come before or after the command. So may --epic, which only `details` takes.
-- Reading epics needs the role qits:admin or qits:agent. Filing one needs qits:admin.
-- A small bug or improvement is a ticket, not an epic. qits does not move an epic to implementation, supersede or abandon it yet.
-
-## qits epic list
-
-List the project's epics, oldest first: id, slug, status, title, and when it last changed.
-
-Without --status it lists every epic. The ID column shows the first 8 characters of the id, which is enough for `details`.
-
-```
-qits epic list [--output table|json] [--project <project>] [--projects-url <url>] [--status <STATUS>]
-```
-
-| Name | What it does |
-|---|---|
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--status <STATUS>` | Only the epics in this status: REFINING, IMPLEMENTATION, SUPERSEDED or ABANDONED. Default: every status. |
-
-### Examples
-
-```
-qits epic --project qits list
-qits epic --project qits list --status REFINING
-qits epic list --project qits -o json
-```
-
-- The service applies --status, and refuses a status it does not know (HTTP 400) rather than answer with no epics.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits epic new
-
-File an epic in the project: work that needs a plan.
-
-The epic starts REFINING, its plan still being drafted. The command prints it the way `details` does.
-
-```
-qits epic new --title <text> [--description <text>] [--description-file <path>] [--output table|json] [--project <project>] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--title <text>` | Required. What the epic delivers, in a short line. |
-| `--description <text>` | The long form, in Markdown: the plan, or as much of it as there is so far. |
-| `--description-file <path>` | Read the description from this file (UTF-8), or from stdin for -. Not together with --description. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-
-### Examples
-
-```
-qits epic --project qits new --title "Let an agent dispatch on an epic"
-qits epic --project qits new --title "Live telemetry" --description "Stream logs, spans and metrics as they arrive."
-qits epic new --project qits --title "Live telemetry" --description-file plan.md
-cat plan.md | qits epic --project qits new --title "Live telemetry" --description-file -
-```
-
-- The description is Markdown. --description-file - reads it from stdin.
-
-### Exit codes
-
-- `0` The epic is filed.
-- `1` The platform refused (for example your roles, HTTP 403), or cannot be reached.
-- `2` Used wrongly (for example an empty title, or a description file that cannot be read), not signed in, or the session ended.
-
-## qits epic details
-
-Show one epic: id, slug, status, title, its description, and, when the platform returns them, its features and their tasks.
-
---epic takes the epic's id, its slug, or the start of its id (list shows 8 characters). Terminal control characters are taken out of the text.
-
-```
-qits epic details [--epic <epic>] [--output table|json] [--project <project>] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--epic <epic>` | The epic (required, before or after details): its id, its slug, or enough of the start of its id to name one. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-
-### Examples
-
-```
-qits epic --project qits details --epic 4f2a91c0
-qits epic details --epic live-telemetry --project qits
-qits epic --project qits details --epic 4f2a91c0 -o json | jq -r .epic.description
-```
-
-- -o json prints one object: the epic as the service answers it, and its features, each with its tasks. Control characters are written as escapes.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example the epic was deleted a moment ago, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example an --epic that fits no epic of the project, or more than one), not signed in, or the session ended.
-
-## qits epic update
-
-Edit an epic's title or description.
-
-Give --title, --description or --description-file, or more than one; a field you leave out keeps its current value. Prints the epic afterwards the way `details` does.
-
-```
-qits epic update [--description <text>] [--description-file <path>] [--epic <epic>] [--output table|json] [--project <project>] [--projects-url <url>] [--title <text>]
-```
-
-| Name | What it does |
-|---|---|
-| `--description <text>` | The new description, in Markdown. Default: unchanged. |
-| `--description-file <path>` | Read the new description from this file (UTF-8), or from stdin for -. Not together with --description. Default: unchanged. |
-| `--epic <epic>` | The epic (required, before or after update): its id, its slug, or enough of the start of its id to name one. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
-| `--title <text>` | The new title. Default: unchanged. |
-
-### Examples
-
-```
-qits epic --project qits update --epic 4f2a91c0 --title "Live telemetry v2"
-qits epic --project qits update --epic live-telemetry --description "Revised plan."
-qits epic update --project qits --epic 4f2a91c0 --description-file plan.md
-```
-
-- The service allows this only while the epic is REFINING: its scope freezes once implementation starts, and an edit past that point is refused (HTTP 409).
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example the epic's scope is frozen, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example neither --title nor a description given, an empty --title, or an --epic that fits no epic of the project, or more than one), not signed in, or the session ended.
-
 ## qits work
 
-Any work entity - a ticket, an epic, a feature, a task or a campaign - named with --entity. comment writes to and edits the entity's comment thread.
+Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, and comment writes to its thread.
 
-A write reads its payload, a JSON document, on stdin and sends it to the service as it is. With nothing on stdin (a terminal, or empty) it sends nothing and prints the payload's JSON schema instead, read from the service's own OpenAPI document.
+A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
+
+Statuses (epics, tickets and campaigns; features and tasks have none): REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. `status` names the moves open from where an item stands.
 
 ### Notes
 
 - --entity, --output and --projects-url may come before or after the command.
-- --entity is the entity's id or its qualified id (qits-100); the service resolves either. There is no --project.
-- Commenting takes qits:admin or qits:agent. An agent writes only in its own project.
+- --entity is the item's id or its qualified id (qits-100); the service resolves either. update and transition look the item up first and send its id.
+- Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which takes qits:admin. An agent writes only in its own project.
+
+## qits work list
+
+A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is.
+
+Each filter narrows the list; without one it shows everything.
+
+```
+qits work list [--archetype <archetype>] [--entity <entity>] [--output table|json] [--parent <entity>] [--project <project>] [--projects-url <url>] [--status <status>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archetype <archetype>` | Only items of this archetype: EPIC, TICKET, FEATURE, TASK or CAMPAIGN. |
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--parent <entity>` | Only the children of this item: its id or its qualified id. |
+| `--project <project>` | The project (required): its id or its slug. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+| `--status <status>` | Only items in this status, such as REFINED. |
+
+### Examples
+
+```
+qits work list --project qits
+qits work list --project qits --archetype epic --status REFINED
+qits work list --project qits --parent qits-120 -o json
+```
+
+- --archetype and --status are case-insensitive. --parent lists the children of one item.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an unknown archetype or status, HTTP 400, or a project it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --project), not signed in, or the session ended.
+
+## qits work details
+
+One work item: its fields, its description, its comment thread and its children.
+
+```
+qits work details [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 details
+qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json
+```
+
+- -o json prints one object: the item as the service answers it, its comments and its children. Control characters are written as escapes.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work create
+
+File a new work item of an archetype.
+
+Reads the payload, a JSON object, on stdin, sets its "archetype" from --archetype, and sends it to POST /projects/api/entities. A root item names its "project" (id or slug), a child its "parent" (id or qualified id). The item starts REPORTED if its archetype has a lifecycle. The command prints the new item, its qualified id first.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's JSON schema, served by the service at GET /projects/api/entities/archetypes/{archetype}/schemas/create, and exits with 0.
+
+```
+qits work create [--archetype <archetype>] [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archetype <archetype>` | The new item's archetype (required): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits work create --archetype ticket </dev/null
+echo '{"project":"qits","title":"The log view stops at 64 KiB","ticketType":"BUG","impetus":"A long run's log is cut."}' | qits work create --archetype ticket
+jq -n --rawfile d plan.md '{parent:"qits-120",title:"Retry",description:$d}' | qits work create --archetype feature -o json
+```
+
+- The first one prints the schema: nothing is sent.
+
+### Exit codes
+
+- `0` The item is filed, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a payload it does not take, HTTP 400, your roles or another project, HTTP 403, or an archetype it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --archetype, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work update
+
+Edit a work item's fields.
+
+Looks the item up (for its id and archetype), then reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/entities/{id} as application/merge-patch+json: a property left out stays as it is, null clears it. Status and archetype are not edited here; see status and transition.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the patch's JSON schema for the item's archetype, served by the service at GET /projects/api/entities/archetypes/{archetype}/schemas/update, and exits with 0.
+
+```
+qits work update [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 update </dev/null
+echo '{"title":"The log view stops at 64 KiB"}' | qits work --entity qits-100 update
+echo '{"assignee":null}' | qits work update --entity qits-100 -o json
+```
+
+### Exit codes
+
+- `0` The item is edited, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a patch it does not take, HTTP 400, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or a patch that is not a JSON object), not signed in, or the session ended.
+
+## qits work transition
+
+Reshape a work item into another archetype (a ticket into an epic, a feature into a task, ...), keeping its id, its number and its thread.
+
+The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, ticketType, impetus, assignee, supersededBy, repositoryId, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/entities/transition.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/entities/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
+
+```
+qits work transition [--archetype <archetype>] [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archetype <archetype>` | The archetype to turn the item into (required): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 transition --archetype epic </dev/null
+echo '{}' | qits work --entity qits-100 transition --archetype epic
+echo '{"membership":{"parent":"6f0c2d1e-0000-4000-8000-000000000001"}}' | qits work --entity qits-100 transition --archetype feature
+```
+
+- {} carries the item over as it stands. membership.parent is the parent's id, not its qualified id.
+
+### Exit codes
+
+- `0` The item is reshaped, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a state it does not take, HTTP 400, your roles or another project, HTTP 403, an item or archetype it does not know, HTTP 404, or a conflict, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity or --archetype, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work status
+
+Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTED, VERIFIED, DONE, or DROPPED. Features and tasks have no lifecycle, and so no status.
+
+Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/entities/{id}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/entities/archetypes) states them, and exits with 0.
+
+```
+qits work status [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 status </dev/null
+echo '{"target":"REFINED"}' | qits work --entity qits-100 status
+```
+
+- An epic's status move takes qits:admin; an agent is answered HTTP 403.
+
+### Exit codes
+
+- `0` The item moved, or nothing was put in and the legal targets are printed.
+- `1` The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity, an item whose archetype has no lifecycle, or a payload that is not a JSON object), not signed in, or the session ended.
 
 ## qits work comment
 

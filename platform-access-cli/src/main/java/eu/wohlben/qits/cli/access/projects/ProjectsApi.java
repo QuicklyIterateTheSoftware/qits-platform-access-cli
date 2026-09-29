@@ -123,110 +123,6 @@ public final class ProjectsApi {
                 + segment(requestId) + "/withdraw"), body);
     }
 
-    /** {@code {"entries":[{"ticket":{…}}]}}, oldest first. A null status asks for every ticket. */
-    public JsonNode tickets(String projectId, String status) throws CliFailure, InterruptedException {
-        String query = status == null || status.isBlank() ? "" : "?status=" + URLEncoder.encode(status.strip(), StandardCharsets.UTF_8);
-        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/tickets" + query));
-    }
-
-    /** {@code {"ticket":{…}}}, with the live workspaces that work on it. */
-    public JsonNode ticket(String ticketId) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/tickets/" + segment(ticketId)));
-    }
-
-    /** {@code {"entries":[{"comment":{…}}]}}, oldest first. */
-    public JsonNode ticketComments(String ticketId) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/tickets/" + segment(ticketId) + "/comments"));
-    }
-
-    /**
-     * {@code {"ticket":{…}}}: the new ticket, OPEN. A description and an assignee only when given.
-     * No reporter: the service takes the token's.
-     */
-    public JsonNode createTicket(String projectId, String title, String type, String description, String assignee)
-            throws CliFailure, InterruptedException {
-        ObjectNode body = JSON.createObjectNode();
-        body.put("title", title);
-        body.put("type", type);
-        if (description != null) {
-            body.put("description", description);
-        }
-        if (assignee != null && !assignee.isBlank()) {
-            body.put("assignee", assignee.strip());
-        }
-        return client.post(uri("/projects/api/projects/" + segment(projectId) + "/tickets"), body);
-    }
-
-    /**
-     * {@code {"comment":{…}}}: the new comment. No author: the service takes it from the caller's
-     * identity, so nobody can comment as somebody else.
-     */
-    public JsonNode createTicketComment(String ticketId, String body) throws CliFailure, InterruptedException {
-        ObjectNode payload = JSON.createObjectNode();
-        payload.put("body", body);
-        return client.post(uri("/projects/api/tickets/" + segment(ticketId) + "/comments"), payload);
-    }
-
-    /**
-     * {@code {"ticket":{…}}}: the ticket in its new status, with the blocked flag cleared. The
-     * service owns the lifecycle graph: it refuses a move the graph does not allow, and a move to
-     * the status the ticket already has, with HTTP 409 and a sentence naming both ends.
-     */
-    public JsonNode transitionTicket(String ticketId, String target) throws CliFailure, InterruptedException {
-        ObjectNode body = JSON.createObjectNode();
-        body.put("target", target);
-        return client.post(uri("/projects/api/tickets/" + segment(ticketId) + "/transition"), body);
-    }
-
-    /** {@code {"entries":[{"epic":{…}}]}}, oldest first. A null status asks for every epic. */
-    public JsonNode epics(String projectId, String status) throws CliFailure, InterruptedException {
-        String query = status == null || status.isBlank() ? "" : "?status=" + URLEncoder.encode(status.strip(), StandardCharsets.UTF_8);
-        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/epics" + query));
-    }
-
-    /** {@code {"epic":{…}}}, with the live workspaces working on it. */
-    public JsonNode epic(String epicId) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/epics/" + segment(epicId)));
-    }
-
-    /** {@code {"entries":[{"feature":{…}}]}}. */
-    public JsonNode epicFeatures(String epicId) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/epics/" + segment(epicId) + "/features"));
-    }
-
-    /** {@code {"entries":[{"task":{…}}]}}. */
-    public JsonNode featureTasks(String featureId) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/features/" + segment(featureId) + "/tasks"));
-    }
-
-    /**
-     * {@code {"epic":{…}}}: the new epic, REFINING. A description only when given. No reporter: the
-     * service takes no field for one — the epic belongs to the project, not to whoever filed it.
-     */
-    public JsonNode createEpic(String projectId, String title, String description) throws CliFailure, InterruptedException {
-        ObjectNode body = JSON.createObjectNode();
-        body.put("title", title);
-        if (description != null) {
-            body.put("description", description);
-        }
-        return client.post(uri("/projects/api/projects/" + segment(projectId) + "/epics"), body);
-    }
-
-    /**
-     * {@code {"epic":{…}}}: the epic, retitled and redescribed. The service REPLACES both fields, so
-     * a caller that means to leave one unchanged must resend its current value; a null description
-     * clears it. Refused (HTTP 409) unless the epic is REFINING: its scope is frozen once features
-     * and tasks are being built.
-     */
-    public JsonNode updateEpic(String epicId, String title, String description) throws CliFailure, InterruptedException {
-        ObjectNode body = JSON.createObjectNode();
-        body.put("title", title);
-        if (description != null) {
-            body.put("description", description);
-        }
-        return client.put(uri("/projects/api/epics/" + segment(epicId)), body);
-    }
-
     /**
      * {@code {"entries":[{"comment":{…}}]}}, oldest first: the thread of any work entity. {@code
      * entity} is its id or its qualified id ({@code qits-100}); the service resolves either.
@@ -246,6 +142,75 @@ public final class ProjectsApi {
     /** {@code {"comment":{…}}}: the comment with the merge patch applied, sent as it was written. */
     public JsonNode patchComment(String commentId, JsonNode mergePatch) throws CliFailure, InterruptedException {
         return client.patch(uri("/projects/api/comments/" + segment(commentId)), mergePatch, MERGE_PATCH);
+    }
+
+    /** Where one archetype's payload schema for one door is served; {@code door} is create, update or transition. */
+    public static String schemaPath(String archetype, String door) {
+        return "/projects/api/entities/archetypes/" + segment(archetype) + "/schemas/" + segment(door);
+    }
+
+    /** Where the archetype registry is served: lifecycles and the legal moves of every status. */
+    public static final String ARCHETYPES = "/projects/api/entities/archetypes";
+
+    /**
+     * A work entity of any archetype, flat: {@code {id, archetype, qualifiedId, status, parent, …}}.
+     * {@code entity} is its id or its qualified id ({@code qits-100}); the service resolves either.
+     */
+    public JsonNode entity(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/entities/" + segment(entity)));
+    }
+
+    /**
+     * {@code {"entities":[…]}}: a project's work entities, every archetype, in the service's order.
+     * {@code project} is its id or its slug. Each filter is left out when null.
+     */
+    public JsonNode entities(String project, String archetype, String status, String parent)
+            throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "archetype", archetype);
+        addQuery(query, "status", status);
+        addQuery(query, "parent", parent);
+        return client.get(uri("/projects/api/projects/" + segment(project) + "/entities"
+                + (query.isEmpty() ? "" : "?" + String.join("&", query))));
+    }
+
+    /** The new entity, flat. The body is the caller's payload with {@code archetype} set. */
+    public JsonNode createEntity(JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/entities"), body);
+    }
+
+    /** The entity with the merge patch applied, sent as it was written. {@code id} is the UUID. */
+    public JsonNode patchEntity(String id, JsonNode mergePatch) throws CliFailure, InterruptedException {
+        return client.patch(uri("/projects/api/entities/" + segment(id)), mergePatch, MERGE_PATCH);
+    }
+
+    /**
+     * {@code {<uuid>: entity}}. The body is {@code {<uuid>: full state}}: the door is full-state, so
+     * a property the state leaves out is cleared.
+     */
+    public JsonNode transitionEntities(JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/entities/transition"), body);
+    }
+
+    /** The entity in its new status, {@code statusBefore} filled. The body is {@code {"target": …}}. */
+    public JsonNode moveStatus(String entity, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/entities/" + segment(entity) + "/status"), body);
+    }
+
+    /** A JSON Schema: what the door takes for this archetype, as the service validates it. */
+    public JsonNode archetypeSchema(String archetype, String door) throws CliFailure, InterruptedException {
+        return client.get(uri(schemaPath(archetype, door)));
+    }
+
+    /** {@code {"archetypes":[{archetype, lifecycle, transitions, …}]}}. */
+    public JsonNode archetypes() throws CliFailure, InterruptedException {
+        return client.get(uri(ARCHETYPES));
+    }
+
+    private static void addQuery(List<String> query, String name, String value) {
+        if (value != null && !value.isBlank()) {
+            query.add(name + "=" + URLEncoder.encode(value.strip(), StandardCharsets.UTF_8));
+        }
     }
 
     /**
@@ -321,12 +286,6 @@ public final class ProjectsApi {
     public static String text(JsonNode node, String field) {
         JsonNode value = node.get(field);
         return value == null || value.isNull() || value.isMissingNode() ? "" : value.asText();
-    }
-
-    /** The field as text; null when absent or null, so an update can tell "unset" from "blank". */
-    public static String nullableText(JsonNode node, String field) {
-        JsonNode value = node.get(field);
-        return value == null || value.isNull() || value.isMissingNode() ? null : value.asText();
     }
 
     public static String projectLabel(JsonNode project) {

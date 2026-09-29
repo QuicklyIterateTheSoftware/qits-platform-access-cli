@@ -24,9 +24,11 @@ import java.util.Set;
 /**
  * The payload of a {@code qits work} write: a JSON document on stdin, sent as it was written. The
  * service is the one that says what a payload may hold, so nothing here knows a field. When nothing
- * is put in, the command shows the payload's schema instead, and that too is the service's: it is
- * read from the OpenAPI document the running service serves, never from a copy kept here, so it
- * cannot describe a payload the service no longer takes.
+ * is put in, the command shows the payload's schema instead, and that too is the service's: the
+ * entity doors read the schema the service serves per archetype and door
+ * ({@code /projects/api/entities/archetypes/{A}/schemas/{door}}), the comment doors the OpenAPI
+ * document the running service serves. Never a copy kept here, so it cannot describe a payload the
+ * service no longer takes.
  */
 final class WorkPayload {
 
@@ -94,18 +96,47 @@ final class WorkPayload {
                     + ") describes no request body for " + method + " " + path
                     + ": the service that serves this door may not be deployed yet.", CliFailure.FAILED);
         }
-        PrintStream out = context.out();
+        printSchema(context.out(), json, found.schema(), "From the service's OpenAPI document: " + method + " " + path
+                + ", " + SafeText.line(found.mediaType()) + ".", List.of());
+    }
+
+    /**
+     * The schema the service serves at {@code GET path}: one archetype's payload for one door, built
+     * by the service from the same table its validators read. A refusal says that nothing was sent.
+     */
+    static JsonNode served(String path, Fetch fetch) throws CliFailure, InterruptedException {
+        try {
+            return fetch.get();
+        } catch (CliFailure refused) {
+            throw new CliFailure("Nothing was sent. The payload's schema comes from the service (GET " + path
+                    + "), which could not be read: " + refused.getMessage(), refused.exitCode());
+        }
+    }
+
+    /** A read that may be refused. */
+    @FunctionalInterface
+    interface Fetch {
+        JsonNode get() throws CliFailure, InterruptedException;
+    }
+
+    /**
+     * Prints a schema, wherever it came from. The JSON form is the schema alone; the table form
+     * first says nothing was sent, names the required properties, adds {@code notes} (a line each)
+     * and says where the schema came from in {@code from}.
+     */
+    static void printSchema(PrintStream out, boolean json, JsonNode schema, String from, List<String> notes)
+            throws CliFailure {
         if (!json) {
             List<String> required = new ArrayList<>();
-            found.schema().path("required").forEach(r -> required.add(SafeText.line(r.asText())));
+            schema.path("required").forEach(r -> required.add(SafeText.line(r.asText())));
             out.println("Nothing on stdin, so nothing was sent. Pipe in a JSON document of this schema to send it.");
             out.println("Required: " + (required.isEmpty() ? "nothing" : String.join(", ", required)) + ".");
-            out.println("From the service's OpenAPI document: " + method + " " + path + ", "
-                    + SafeText.line(found.mediaType()) + ".");
+            notes.forEach(out::println);
+            out.println(from);
             out.println();
         }
         try {
-            out.println(SafeText.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(found.schema()));
+            out.println(SafeText.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(schema));
         } catch (JsonProcessingException impossible) {
             throw new CliFailure("cannot print the schema as JSON", CliFailure.FAILED);
         }

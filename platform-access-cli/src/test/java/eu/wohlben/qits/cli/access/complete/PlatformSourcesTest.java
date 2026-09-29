@@ -134,19 +134,6 @@ class PlatformSourcesTest {
     }
 
     @Test
-    void ticketsAreTheOpenOnesOfTheProject() {
-        platform.answer("GET", "/projects/api/projects/" + QITS + "/tickets", """
-                {"entries":[{"ticket":{"id":"235bc53e-0000-4000-8000-000000000001","title":"a thing to do","status":"OPEN"}}]}
-                """);
-        TicketSource source = source(new TicketSource());
-        assertThat(source.dependsOn()).containsExactly("project");
-        assertThat(source.choices(Map.of("project", "qits"))).singleElement().satisfies(choice -> {
-            assertThat(choice.value()).isEqualTo("235bc53e-0000-4000-8000-000000000001");
-            assertThat(choice.label()).contains("235bc53e").contains("a thing to do");
-        });
-    }
-
-    @Test
     void aRunIsPickedByItsBranchStatusAndTime() {
         platform.answer("GET", "/ci/api/runs", """
                 {"runs":[{"id":"5f2c0a9e-0000-4000-8000-000000000001","branch":"main","status":"SUCCESS",
@@ -177,10 +164,8 @@ class PlatformSourcesTest {
         assertThat(qits.child("ci").child("run").row("run id").completionSource()).isEqualTo(RunSource.class);
         assertThat(qits.child("repositories").child("list").row("project").completionSource())
                 .isEqualTo(ProjectSource.class);
-        assertThat(qits.child("ticket").child("list").row("project").completionSource())
+        assertThat(qits.child("work").child("list").row("project").completionSource())
                 .isEqualTo(ProjectSource.class);
-        assertThat(qits.child("ticket").child("details").row("ticket").completionSource())
-                .isEqualTo(TicketSource.class);
         assertThat(qits.child("release-request").child("list").row("repository").completionSource())
                 .isEqualTo(RepositorySource.class);
     }
