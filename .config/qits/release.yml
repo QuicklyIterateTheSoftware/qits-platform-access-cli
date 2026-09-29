@@ -52,11 +52,24 @@ release-request:
       : "${zlib_url:?docker/Dockerfile declares no ARG ZLIB_URL}"
       musl_url="$maven_root${musl_url#*/artifacts/maven/maven}"
       zlib_url="$maven_root${zlib_url#*/artifacts/maven/maven}"
+      # ON THE EDGE PLANE THE TARBALL `ADD` NEEDS THE RUN'S TOKEN (qits-441): there $maven_root is
+      # the public registry, which answers an anonymous read 401. BuildKit's HTTP source sends a
+      # session secret named HTTP_AUTH_TOKEN_<url host> as `Authorization: Bearer`, so the secret is
+      # keyed by exactly that host and passed only when the step holds $QITS_TOKEN, which qits-ci
+      # sets on the EDGE plane alone. On the INTERNAL plane nothing is passed and the in-network read
+      # stays anonymous, as qits-ci intends. docker/Dockerfile's header has the
+      # long form.
+      tarball_auth=
+      if [ -n "${QITS_TOKEN:-}" ]; then
+        tarball_host=$(printf '%s\n' "$maven_root" | sed -E 's|^[A-Za-z]+://||; s|[/:?].*$||')
+        tarball_auth="--secret id=HTTP_AUTH_TOKEN_$tarball_host,env=QITS_TOKEN"
+      fi
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
         --opt target=binary \
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
+        $tarball_auth \
         --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
         --output type=local,dest=out
       # THE BINARY IS `out/qits` AND THE ARTIFACT IS `qits-platform-access-cli`. The mismatch is the
@@ -87,6 +100,12 @@ release:
       : "${zlib_url:?docker/Dockerfile declares no ARG ZLIB_URL}"
       musl_url="$maven_root${musl_url#*/artifacts/maven/maven}"
       zlib_url="$maven_root${zlib_url#*/artifacts/maven/maven}"
+      # The QA step's tarball credential, byte for byte: the run's token on the EDGE plane only.
+      tarball_auth=
+      if [ -n "${QITS_TOKEN:-}" ]; then
+        tarball_host=$(printf '%s\n' "$maven_root" | sed -E 's|^[A-Za-z]+://||; s|[/:?].*$||')
+        tarball_auth="--secret id=HTTP_AUTH_TOKEN_$tarball_host,env=QITS_TOKEN"
+      fi
       # BYTE-IDENTICAL BUILD ARGS ACROSS THE TWO INVOCATIONS, and across the QA build above, or the
       # sbom stage is a second native compile instead of a cache hit on the resolve that produced
       # the binary.
@@ -95,6 +114,7 @@ release:
         --opt target=binary \
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
+        $tarball_auth \
         --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
         --output type=local,dest=out
       buildctl build --frontend dockerfile.v0 \
@@ -102,6 +122,7 @@ release:
         --opt target=sbom \
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
+        $tarball_auth \
         --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
         --output type=local,dest=out
       # `chmod +x` IS NOT OPTIONAL: the local export loses the mode bit, and a static binary that

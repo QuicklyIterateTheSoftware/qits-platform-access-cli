@@ -23,6 +23,13 @@
 # the platform builder cannot reach for an ADD, so both recipes pass the in-network Maven root, as
 # qits-ci-daemon's do. The bootstrap seeds both tarballs into the store on every boot.
 #
+# ON A REMOTE RUNNER (the EDGE plane, epic qits-441) THAT ROOT IS THE PUBLIC ONE, and the edge
+# answers an anonymous read of it with 401. The ADD still works because BuildKit's HTTP source
+# attaches `Authorization: Bearer <value>` from a session secret named `HTTP_AUTH_TOKEN_<url host>`
+# when one exists, and sends nothing when none does; the recipes pass that secret, from the run's
+# `$QITS_TOKEN`, only on the EDGE plane, so an in-network read stays anonymous. Nothing here changes
+# for it. qits-ci-daemon's file carries the long reasons, and why not `RUN … curl`.
+#
 # A hand build off the platform passes the upstream URLs and base:
 #
 #     docker build --target binary --output type=local,dest=out -f docker/Dockerfile \
