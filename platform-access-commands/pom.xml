@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>eu.wohlben</groupId>
+        <artifactId>qits</artifactId>
+        <version>2026.1001.174743</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <!-- THE COMMANDS. Every `qits` command — the picocli tree under AccessCli, the session and the
+         two homes, and the model the screen walks (tui/api, tui/model) — as a plain jar, so that
+         more than one program can be built from the same tree: the `qits` binary beside it, and the
+         MCP service that serves the same commands as tools.
+
+         A PLAIN JAR, NOT A QUARKUS APPLICATION. It depends on picocli itself and never on
+         quarkus-picocli: that extension makes any application that carries it a command-mode
+         application, which a consumer serving requests must not become. What quarkus-picocli did
+         for the tree the binary needs is therefore done here instead:
+
+           - the top command is named by the consumer (`quarkus.picocli.top-command`), since
+             @TopCommand is a quarkus-picocli annotation and is gone from AccessCli;
+           - picocli-codegen writes the tree's native-image reflection config into this jar, under
+             META-INF/native-image/picocli-generated/qits-platform-access-commands/, so every
+             native build that has the jar on its classpath reads it;
+           - a Jandex index, so Quarkus in a consumer sees the @Command classes and the beans.
+
+         quarkus-arc FOR THE ANNOTATIONS, NOT FOR A CONTAINER OF ITS OWN: the completion sources are
+         @ApplicationScoped beans the screen looks up through CDI, PlatformMode is a @Singleton, and
+         three answer records carry @RegisterForReflection. Nothing here starts Quarkus, and every
+         test in this module is plain JUnit.
+
+         NEVER DEPLOYED TO A MAVEN REPOSITORY. Consumed in this reactor only; the owner's call
+         (2026-10-01) is that it stays internal until a real consumer outside this repository
+         appears. -->
+    <groupId>eu.wohlben.qits</groupId>
+    <artifactId>qits-platform-access-commands</artifactId>
+    <name>qits-platform-access-commands</name>
+
+    <properties>
+        <!-- Not in any BOM, so it is pinned here. -->
+        <assertj.version>3.27.4</assertj.version>
+        <!-- The house's Jandex plugin (qits-integrations-quarkus-javalib, qits-registries-javalib). -->
+        <jandex-plugin.version>3.4.0</jandex-plugin.version>
+
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <!-- The command tree. Plain picocli, the version quarkus-bom manages. -->
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+        </dependency>
+        <dependency>
+            <!-- The session file and the platform's answers. The services are called with
+                 java.net.http. -->
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <!-- The Instants in the session file and the Git sign-in. -->
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <!-- @ApplicationScoped, @Singleton and @RegisterForReflection; see the header. -->
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-arc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- picocli-codegen's processor writes the reflection and resource config of
+                         every @Command it compiles into the jar. -Aproject names the directory it
+                         writes under, so a second picocli jar on a consumer's classpath cannot
+                         collide with this one. No proxy config: the tree declares no interface
+                         command, so the file would be an empty list in a format GraalVM 25 has
+                         deprecated. -->
+                    <annotationProcessorPathsUseDepMgmt>true</annotationProcessorPathsUseDepMgmt>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>info.picocli</groupId>
+                            <artifactId>picocli-codegen</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aproject=qits-platform-access-commands</arg>
+                        <arg>-Adisable.proxy.config=true</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- quarkus-arc brings JBoss LogManager onto the test classpath; set before the
+                     first logger, or JUL complains on stderr that it was asked too late. -->
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.smallrye</groupId>
+                <artifactId>jandex-maven-plugin</artifactId>
+                <version>${jandex-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>make-index</id>
+                        <goals>
+                            <goal>jandex</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

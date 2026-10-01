@@ -112,15 +112,22 @@ and answers 401 without one. Use your own sign-in, never a machine client's id a
 
     sdk env && ./mvnw package -Dnative -DskipTests   the binary for this host:
                                                      platform-access-cli/target/qits
-    ./mvnw clean verify                              the tests; packages only the pin jar
+    ./mvnw clean verify                              the tests; packages the pin jar and the
+                                                     commands jar
     docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
                                                      the released form, static: out/qits
 
-Run all three from the repository root: it is a two-module Maven reactor.
+Run all three from the repository root: it is a three-module Maven reactor.
 
-    platform-access-cli         the program — everything described above, and the native binary.
-                                It builds no jar and is deployed to no Maven repository: what it
-                                produces is a file, published to the artifacts store as bytes.
+    platform-access-commands    every command but `qits tui`, the session and the screen's model,
+                                as a plain picocli jar: no quarkus-picocli, no JLine. One command
+                                tree that more than one program is built from. It is deployed to
+                                no Maven repository; the program below takes it from the reactor.
+    platform-access-cli         the program — everything described above, and the native binary:
+                                the commands, plus `qits tui`, as a Quarkus command-mode
+                                application. It builds no jar and is deployed to no Maven
+                                repository: what it produces is a file, published to the artifacts
+                                store as bytes.
     platform-access-cli-binary  one small jar whose own version *is* the version of the binary the
                                 same release published. It carries no bytes of the binary, only its
                                 name, the command name and that version. This is the only artifact

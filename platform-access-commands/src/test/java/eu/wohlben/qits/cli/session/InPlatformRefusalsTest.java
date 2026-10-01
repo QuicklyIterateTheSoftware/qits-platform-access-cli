@@ -6,10 +6,8 @@ import eu.wohlben.qits.cli.access.FakePlatform;
 import eu.wohlben.qits.cli.access.FakeTime;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
-import eu.wohlben.qits.cli.tui.TuiApp;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.model.CommandNode;
-import eu.wohlben.qits.cli.tui.run.CommandRunner;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +18,6 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -130,20 +127,6 @@ class InPlatformRefusalsTest {
         }, mode));
         cli.execute(args);
         return ranThrough[0] ? null : err.toString(StandardCharsets.UTF_8).strip();
-    }
-
-    @Test
-    void theScreenShowsTheBrowserCommandsAsDecorationInside() {
-        CommandNode root = CommandNode.of(new CommandLine(new AccessCli()).getCommandSpec());
-        TuiApp inside = new TuiApp(root, "qits tui", new CommandRunner("/bin/true")).inPlatform(true);
-        List<String> names = inside.view().rows().stream().map(row -> row.name()).toList();
-        assertThat(inside.view().rows()).filteredOn(row -> row.name().equals("login"))
-                .singleElement().satisfies(row -> assertThat(row.dim()).isTrue());
-        assertThat(names.indexOf("login")).isGreaterThan(names.indexOf("ci"));
-
-        TuiApp outside = new TuiApp(root, "qits tui", new CommandRunner("/bin/true"));
-        assertThat(outside.view().rows()).filteredOn(row -> row.name().equals("login"))
-                .singleElement().satisfies(row -> assertThat(row.dim()).isFalse());
     }
 
     @Test

@@ -15,8 +15,6 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.WorkCommand;
-import eu.wohlben.qits.cli.tui.TuiCommand;
-import io.quarkus.picocli.runtime.annotations.TopCommand;
 import picocli.CommandLine;
 
 /**
@@ -24,8 +22,12 @@ import picocli.CommandLine;
  * <p>
  * The help texts of all commands are the one source of SKILL.md ({@code qits help skill}). The
  * first description line here is its trigger, and the footer is its platform rules.
+ * <p>
+ * The tree here is every command but {@code qits tui}, which needs a terminal and lives with the
+ * binary. The binary names this class as its top command ({@code quarkus.picocli.top-command}) and
+ * puts {@code tui} back in its place, before {@code help} ({@code QitsCommandLine}), so the binary's
+ * tree and its help are what they were when this was one module.
  */
-@TopCommand
 @CommandLine.Command(
         name = "qits",
         mixinStandardHelpOptions = true,
@@ -33,7 +35,7 @@ import picocli.CommandLine;
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, ArtifactsCommand.class,
-                TuiCommand.class, HelpCommand.class},
+                HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
                         + "work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment "

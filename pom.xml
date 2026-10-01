@@ -14,25 +14,32 @@
 
          AN AGGREGATOR SINCE 2026-09-17, AND THE SHAPE IS qits-ci-daemon's ROOT: the
          `eu.wohlben:qits` coordinate a child's <parent> points at (../pom.xml), the quarkus-bom
-         import, the compiler/surefire pins, and nothing else. Two modules:
+         import, the compiler/surefire pins, and nothing else. Three modules:
 
            platform-access-cli-binary  the pin: one tiny jar whose own version IS the version of
                                        the binary this release published. The only thing here that
                                        is deployed to a Maven repository. See
                                        PlatformAccessCliBinary.
+           platform-access-commands    the commands: every `qits` command but `qits tui`, the
+                                       session and the screen's model, as a plain picocli jar with
+                                       no quarkus-picocli and no JLine, so more than one program can
+                                       be built from one tree. Never deployed; consumed in this
+                                       reactor only.
            platform-access-cli         the program: the `qits` native binary, which is what this
-                                       repository is for.
+                                       repository is for. The commands, plus `qits tui` and the
+                                       command-mode Quarkus application around them.
 
          THE PIN IS FIRST IN THE LIST because it is the cheap module and nothing depends on it in
-         reactor: a broken pin costs no native compile. The release stamper walks a reactor by
+         reactor: a broken pin costs no native compile. The commands come before the program that
+         depends on them (Maven orders the reactor by dependency anyway; the list says it too). The release stamper walks a reactor by
          <module> only, so a module missing from this list would never be version-stamped — which
          is the whole reason the pin had to become a module rather than a nested pom beside one.
 
          ONE FORM, STILL. `./mvnw package -Dnative -DskipTests` makes the native binary
          `platform-access-cli/target/qits`, which is what this program is. The application module
          builds no jar; the three lines that keep it so live in its pom, as they do in
-         qits-bootstrap-cli's. `./mvnw clean verify` runs the tests and packages nothing but the
-         pin. -->
+         qits-bootstrap-cli's. `./mvnw clean verify` runs the tests and packages the pin and the
+         commands jar the program is built from. -->
     <groupId>eu.wohlben</groupId>
     <artifactId>qits</artifactId>
     <version>2026.1001.174743</version>
@@ -41,6 +48,7 @@
 
     <modules>
         <module>platform-access-cli-binary</module>
+        <module>platform-access-commands</module>
         <module>platform-access-cli</module>
     </modules>
 
@@ -68,9 +76,10 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Supplies the managed versions both children leave unversioned: junit-jupiter for
-                 the pin module, the whole Quarkus surface for the application. The pin module has
-                 no main-scope dependency at all and is not allowed to grow one. -->
+            <!-- Supplies the managed versions the children leave unversioned: junit-jupiter for
+                 the pin module, picocli, jackson and quarkus-arc for the commands, the whole Quarkus
+                 surface for the application. The pin module
+                 has no main-scope dependency at all and is not allowed to grow one. -->
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>

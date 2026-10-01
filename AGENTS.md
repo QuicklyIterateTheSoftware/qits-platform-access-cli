@@ -19,23 +19,42 @@ a file, and a workspace container on the platform, where the commissioned client
 was injected with is the credential and the services are dialled by their wire aliases. The mode is
 decided once at startup and the two are never mixed.
 
-## Two modules
+## Three modules
 
 Since 2026-09-17 this repository is a Maven reactor. The root `pom.xml` is an aggregator
 (`eu.wohlben:qits`, packaging `pom`) holding the shared properties and the quarkus-bom import, the
-shape qits-ci-daemon's root has, and it lists two modules:
+shape qits-ci-daemon's root has, and it lists three modules, in this order:
 
     platform-access-cli-binary  the pin. One class, three strings, no bytes of the binary: the
                                 daemons-store name, the command name (`qits`), and the version the
                                 same release published the binary under, filtered in from
                                 `${project.version}`. THE ONLY ARTIFACT THIS REPOSITORY DEPLOYS TO A
                                 MAVEN REPOSITORY.
-    platform-access-cli         the program. Everything that was here before; the sources moved from
-                                `src/` to `platform-access-cli/src/` unchanged, and its published
+    platform-access-commands    the commands (`eu.wohlben.qits:qits-platform-access-commands`).
+                                Everything under `access/` but `Main`, `session/`, `tui/api/` and
+                                `tui/model/`, with their tests: the whole picocli tree except
+                                `qits tui`. A plain jar on plain picocli — never quarkus-picocli,
+                                which would make every consumer a command-mode application, and no
+                                JLine. quarkus-arc is there for the annotations (the completion
+                                sources are beans, three records carry @RegisterForReflection).
+                                picocli-codegen writes the tree's native-image reflection config
+                                into the jar, and a Jandex index lets Quarkus see its classes.
+                                Deploys nothing (`maven.deploy.skip`); consumed in this reactor.
+    platform-access-cli         the program. The sources moved from `src/` to
+                                `platform-access-cli/src/` on 2026-09-17, and its published
                                 coordinates (`eu.wohlben.qits:qits-platform-access-cli`) did not
-                                move — they are the repository's identity. It deploys nothing
-                                (`maven.deploy.skip`): what it produces is the binary, published to
-                                the artifacts store as bytes.
+                                move — they are the repository's identity. Since the commands
+                                moved out, it holds `Main`, `QitsCommandLine`, `tui/` (minus api/
+                                and model/), JLine, quarkus-picocli and the native profile. It
+                                deploys nothing (`maven.deploy.skip`): what it produces is the
+                                binary, published to the artifacts store as bytes.
+
+**How the program finds its tree.** `AccessCli` carries no `@TopCommand` (a quarkus-picocli
+annotation) and does not list `tui`. `application.properties` names it as
+`quarkus.picocli.top-command`, and `QitsCommandLine` produces the `CommandLine` `Main` is handed:
+quarkus-picocli's tree with `tui` put back before `help`, the order it was declared in, so `--help`
+and `SKILL.md` did not change. A test that needs the binary's tree builds it the same way,
+`QitsCommandLine.withTui(new CommandLine(new AccessCli()))`.
 
 **Why a second module rather than a second pom beside one.** The release stamper walks a reactor by
 `<module>` only, so a nested pom the root does not list is never version-stamped — and the pin is
@@ -54,7 +73,8 @@ that keeps it in step (`SkillDocumentTest`) resolves it one directory up and say
 
 ## Layout
 
-The application module's sources, under `platform-access-cli/src/main/java/eu/wohlben/qits/cli/`:
+The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/qits/cli/access/`
+(`Main` and `QitsCommandLine`, in the same package, are in `platform-access-cli`):
 
     idp/       the idp's /token endpoint and which idp to use
     session/   the session file, its atomic write, the two locks, and the one refresh (SessionRefresh)
@@ -95,7 +115,8 @@ Two packages sit outside `access/`, because neither is about one command:
                  (@TuiCommand, CompletionSource, @Completes), model/ the tree read from
                  CommandSpec, screen/ the lines, run/ the fork and the history, complete/ the
                  resolution and caching of sources. TuiApp is all of the behaviour, with no
-                 terminal in it.
+                 terminal in it. api/ and model/ are in platform-access-commands, beside the
+                 commands that use them; the rest, and JLine, are in platform-access-cli.
     ../session/  which of the CLI's two homes this is (Mode), where the services are in it
                  (PlatformEndpoints), the container's credential (AgentCredential), what a call
                  is made with either way (Credential), and BrowserGuard.
@@ -137,9 +158,10 @@ Two packages sit outside `access/`, because neither is about one command:
   The two are never mixed: in-platform never opens the session file, and a workstation never mints
   with a client secret (`BothHomesTest`).
 - **The TUI holds no command's name.** Everything it shows it read from picocli's model.
-  `FictionalCommandTest` fails the build if a string literal under `eu.wohlben.qits.cli.tui` names a
-  command. What the model cannot say is said by `@TuiCommand(interaction, output)` on the command
-  and `@Completes(SomeSource.class)` on the option — both optional, both with a working default.
+  `FictionalCommandTest` fails the build if a string literal under `eu.wohlben.qits.cli.tui`, in
+  either module, names a command. What the model cannot say is said by
+  `@TuiCommand(interaction, output)` on the command and `@Completes(SomeSource.class)` on the
+  option — both optional, both with a working default.
 - **The CLI never sends `X-Qits-User` / `X-Qits-Roles`.** Those are what the gateway asserts about a
   caller; a client that writes them asserts a role it does not hold. An agent that needs a door its
   credential cannot open is granted the audience instead.
@@ -195,16 +217,19 @@ Two packages sit outside `access/`, because neither is about one command:
 ## Build forms
 
     sdk env && ./mvnw package -Dnative -DskipTests   the binary: platform-access-cli/target/qits
-    ./mvnw clean verify                              the tests; packages only the pin jar
+    ./mvnw clean verify                              the tests; packages the pin and commands jars
     docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
                                                      the released form: static musl, out/qits
 
-All three are ROOT invocations and build the whole reactor. The pin module is one class with no
-main-scope dependency, so it costs seconds next to a native compile and is never worth skipping.
+The first two are ROOT invocations and build the whole reactor. The pin module is one class with
+no main-scope dependency, so it costs seconds next to a native compile and is never worth skipping.
+The Dockerfile builds `-pl platform-access-cli -am`: the program and the commands it is built
+from, without the pin, which its own release step deploys.
 
 The application module builds no jar; its pom keeps it so the same way qits-bootstrap-cli's does.
-The one jar this repository produces is `platform-access-cli-binary`'s, and it carries three
-strings rather than any of this code — see Two modules above. Run `clean verify` before a native
+The one jar this repository deploys is `platform-access-cli-binary`'s, and it carries three
+strings rather than any of this code — see Three modules above. The commands jar is built and never
+deployed. Run `clean verify` before a native
 build, never after: `clean` removes the binary. `.sdkmanrc` pins 25.0.2-graalce.
 
 The released binary is static (musl) and the host build is not: only `docker/Dockerfile` adds

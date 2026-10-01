@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.tui;
 
 import eu.wohlben.qits.cli.access.AccessCli;
+import eu.wohlben.qits.cli.access.QitsCommandLine;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.model.CommandNode;
 import eu.wohlben.qits.cli.tui.run.CommandRunner;
@@ -113,16 +114,26 @@ class FictionalCommandTest {
                 .isEmpty();
     }
 
+    /**
+     * The screen's sources in both modules: this one's, and tui/api and tui/model, which live in
+     * qits-platform-access-commands beside the commands they describe. Surefire runs in the module's
+     * basedir, so the library is one directory over.
+     */
     private static List<Path> tuiSources() throws IOException {
-        try (Stream<Path> tree = Files.walk(Path.of("src/main/java/eu/wohlben/qits/cli/tui"))) {
-            return tree.filter(path -> path.toString().endsWith(".java")).sorted().toList();
+        List<Path> sources = new ArrayList<>();
+        for (String root : List.of("src/main/java/eu/wohlben/qits/cli/tui",
+                "../platform-access-commands/src/main/java/eu/wohlben/qits/cli/tui")) {
+            try (Stream<Path> tree = Files.walk(Path.of(root))) {
+                tree.filter(path -> path.toString().endsWith(".java")).forEach(sources::add);
+            }
         }
+        return sources.stream().sorted().toList();
     }
 
     /** Every command name the CLI has, the root's own included. */
     private static Set<String> commandNames() {
         Set<String> names = new LinkedHashSet<>();
-        collect(new CommandLine(new AccessCli()).getCommandSpec(), names);
+        collect(QitsCommandLine.withTui(new CommandLine(new AccessCli())).getCommandSpec(), names);
         return names;
     }
 

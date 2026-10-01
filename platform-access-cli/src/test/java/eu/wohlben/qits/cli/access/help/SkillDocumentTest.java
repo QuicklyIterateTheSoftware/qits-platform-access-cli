@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.access.help;
 
 import eu.wohlben.qits.cli.access.AccessCli;
+import eu.wohlben.qits.cli.access.QitsCommandLine;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
@@ -39,8 +40,9 @@ class SkillDocumentTest {
             + "(or `platform-access-cli/target/qits help skill > SKILL.md`), "
             + "read the diff, and commit it with the help change.";
 
+    /** The binary's tree: the library's commands with {@code qits tui} in its place. */
     private static String rendered() {
-        return SkillDocument.render(new CommandLine(new AccessCli()).getCommandSpec());
+        return SkillDocument.render(QitsCommandLine.withTui(new CommandLine(new AccessCli())).getCommandSpec());
     }
 
     @Test

@@ -108,17 +108,19 @@ ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
 #   repository (maven.deploy.skip), and the plugin skips such a project quietly (measured on
 #   qits-artifacts-service's first release).
 #
-# A ROOT INVOCATION, BUILDING THE WHOLE REACTOR. Since 2026-09-17 this repository has two modules,
-# and the binary therefore lands in `platform-access-cli/target/qits` rather than `target/qits`.
-# The second module — the pin jar that tells qits-ci which binary to fetch — is one class with no
-# main-scope dependency, so building it here costs seconds against a native compile and keeps this
-# call the same call `./mvnw verify` makes. Its own release step deploys it; nothing is deployed
-# from in here.
+# THE PROGRAM AND WHAT IT IS BUILT FROM: `-pl platform-access-cli -am`. Since 2026-09-17 this
+# repository is a reactor, and the binary lands in `platform-access-cli/target/qits` rather than
+# `target/qits`. `-am` builds the commands library (`platform-access-commands`) the program depends
+# on, and the root pom; the pin jar that tells qits-ci which binary to fetch is no part of the
+# binary and is left out, and its own release step builds and deploys it. Nothing is deployed from
+# in here. makeBom runs per module of that same reactor, and the application module's document is
+# the one the sbom stage exports.
 RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
+      -pl platform-access-cli -am \
       -Dquarkus.native.container-build=false \
       -Dquarkus.native.additional-build-args-append=--static,--libc=musl \
       -Dquarkus.native.native-image-xmx=4g \

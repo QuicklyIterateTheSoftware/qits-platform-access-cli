@@ -51,7 +51,16 @@
 
     <dependencies>
         <dependency>
-            <!-- Command mode: picocli parses the arguments, Quarkus owns the lifecycle. -->
+            <!-- Every command but `qits tui`: the tree under AccessCli, the session, and the model
+                 the screen walks. In this reactor only; see its pom. -->
+            <groupId>eu.wohlben.qits</groupId>
+            <artifactId>qits-platform-access-commands</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Command mode: picocli parses the arguments, Quarkus owns the lifecycle. The library
+                 carries plain picocli; this extension is what makes THIS module the command-mode
+                 application, and application.properties names its top command. -->
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-picocli</artifactId>
         </dependency>
