@@ -12,7 +12,9 @@ import org.jline.utils.AttributedString;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,8 +53,40 @@ class InteractionClassesTest {
     static class Quiet {
     }
 
+    @CommandLine.Command(name = "past", description = "Asks what already happened.")
+    static class Past {
+
+        @CommandLine.Option(names = "--since", description = "How far back.")
+        String since;
+    }
+
+    /** Runs on its own, and has a command under it: a stream and its query. */
+    @eu.wohlben.qits.cli.tui.api.TuiCommand(interaction = Interaction.STREAMING)
+    @CommandLine.Command(name = "tap", description = "Streams, with its past below.", subcommands = Past.class)
+    static class Tap implements Callable<Integer> {
+
+        @CommandLine.Option(names = "--filter", description = "Which.")
+        String filter;
+
+        @Override
+        public Integer call() {
+            return 0;
+        }
+    }
+
+    /** Only leads somewhere: run bare, a group refuses. */
+    @CommandLine.Command(name = "bunch", description = "Holds commands.", subcommands = Quiet.class)
+    static class Bunch implements Runnable {
+
+        @Override
+        public void run() {
+            throw new IllegalStateException("Name a command.");
+        }
+    }
+
     @CommandLine.Command(name = "qits", description = "The root.",
-            subcommands = {Flowing.class, Opener.class, InStep.class, AsJson.class, Quiet.class, Beside.class})
+            subcommands = {Flowing.class, Opener.class, InStep.class, AsJson.class, Quiet.class, Beside.class,
+                    Tap.class, Bunch.class})
     static class Root {
     }
 
@@ -77,6 +111,62 @@ class InteractionClassesTest {
             app.key(Key.of(Key.Kind.DOWN));
         }
         throw new AssertionError("no row " + name);
+    }
+
+    /** Down to the row named {@code name} in the list now showing, without pressing anything else. */
+    private void moveTo(String name) {
+        for (int i = 0; i < 20; i++) {
+            if (app.view().rows().get(app.view().selected()).name().equals(name)) {
+                return;
+            }
+            app.key(Key.of(Key.Kind.DOWN));
+        }
+        throw new AssertionError("no row " + name);
+    }
+
+    /**
+     * A parent that runs on its own still runs from the screen, as it did while it had no command
+     * under it, and the command under it can still be walked into.
+     */
+    @Test
+    void aRunnableParentRunsAndItsCommandsCanStillBeBrowsed() {
+        assertThat(root.child("tap").leaf()).isFalse();
+        assertThat(root.child("tap").runnable()).isTrue();
+        enter("tap");
+        List<String> names = app.view().rows().stream().map(row -> row.name()).toList();
+        assertThat(names).containsExactly("past", "--filter");
+
+        moveTo("--filter");
+        app.key(Key.of(Key.Kind.ENTER));
+        "x".chars().forEach(ch -> app.key(Key.character((char) ch)));
+        app.key(Key.of(Key.Kind.ENTER));
+        assertThat(app.selection().commandLine()).isEqualTo("qits tap --filter x");
+
+        app.key(Key.of(Key.Kind.CTRL_R));
+        assertThat(runner.title()).isEqualTo("streaming");
+        assertThat(app.history().entries()).singleElement()
+                .satisfies(entry -> assertThat(entry.commandLine()).isEqualTo("qits tap --filter x"));
+
+        app.key(Key.of(Key.Kind.CTRL_C));
+        moveTo("past");
+        app.key(Key.of(Key.Kind.ENTER));
+        assertThat(app.selection().pathLine("/")).isEqualTo("tap/past");
+        assertThat(app.view().rows()).extracting(row -> row.name()).containsExactly("--since");
+        app.key(Key.of(Key.Kind.CTRL_R));
+        assertThat(runner.title()).isNotEqualTo("streaming");
+        assertThat(app.history().entries().getFirst().commandLine()).isEqualTo("qits tap past");
+    }
+
+    /** A group shows only its commands, and ⌃R on it runs nothing. */
+    @Test
+    void aGroupThatOnlyLeadsSomewhereIsNotRun() {
+        assertThat(root.child("bunch").runnable()).isFalse();
+        assertThat(root.runnable()).isFalse();
+        enter("bunch");
+        assertThat(app.view().rows()).extracting(row -> row.name()).containsExactly("quiet");
+        app.key(Key.of(Key.Kind.CTRL_R));
+        assertThat(lines()).anySatisfy(line -> assertThat(line).contains("pick a command first"));
+        assertThat(app.history().entries()).isEmpty();
     }
 
     @Test
@@ -163,5 +253,22 @@ class InteractionClassesTest {
         Object skill = new CommandLine(new AccessCli()).getSubcommands().get("help").getSubcommands().get("skill")
                 .getCommandSpec().userObject();
         assertThat(eu.wohlben.qits.cli.tui.api.TuiCommands.interactionOf(skill)).isEqualTo(Interaction.LOCAL);
+
+        // The live streams run on their own and hold their query; every other parent only leads.
+        List<String> runnableParents = new ArrayList<>();
+        collectRunnableParents(qits, "", runnableParents);
+        assertThat(runnableParents).containsExactlyInAnyOrder("events", "observe");
+        assertThat(qits.child("events").child("query").interaction()).isEqualTo(Interaction.PLAIN);
+        assertThat(qits.child("observe").child("query").interaction()).isEqualTo(Interaction.PLAIN);
+    }
+
+    private static void collectRunnableParents(CommandNode node, String path, List<String> found) {
+        for (CommandNode child : node.children()) {
+            String at = path.isEmpty() ? child.name() : path + " " + child.name();
+            if (!child.leaf() && child.runnable()) {
+                found.add(at);
+            }
+            collectRunnableParents(child, at, found);
+        }
     }
 }

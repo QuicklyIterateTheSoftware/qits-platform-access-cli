@@ -277,7 +277,11 @@ public class TuiApp {
             for (CommandNode child : children) {
                 rows.add(new View.Row(" ", child.name(), child.description(), "", dim(child)));
             }
-            return rows;
+            if (!node.runnable()) {
+                return rows;
+            }
+            // A parent that runs on its own shows its rows under its commands: ⏎ walks into a
+            // command or edits a row, ⌃R runs the parent as filled in.
         }
         for (OptionRow row : orderedRows(node)) {
             rows.add(new View.Row(row.required() ? "*" : " ", row.name(), shownValue(row),
@@ -350,12 +354,13 @@ public class TuiApp {
             return null;
         }
         String name = rows.get(index).name();
-        if (selection.current().leaf()) {
-            OptionRow row = orderedRows(selection.current()).stream()
-                    .filter(r -> r.name().equals(name)).findFirst().orElse(null);
-            return row == null ? null : row.key();
+        CommandNode current = selection.current();
+        if (!current.leaf() && current.child(name) != null) {
+            return name;
         }
-        return name;
+        OptionRow row = orderedRows(current).stream()
+                .filter(r -> r.name().equals(name)).findFirst().orElse(null);
+        return row == null ? null : row.key();
     }
 
     /** Handle one keypress. Returns false when the TUI is finished. */
@@ -496,11 +501,9 @@ public class TuiApp {
         if (key == null) {
             return;
         }
-        if (!selection.current().leaf()) {
-            CommandNode child = selection.current().child(key);
-            if (child != null) {
-                enter(child);
-            }
+        CommandNode child = selection.current().leaf() ? null : selection.current().child(key);
+        if (child != null) {
+            enter(child);
             return;
         }
         OptionRow row = selection.current().row(key);
@@ -680,7 +683,7 @@ public class TuiApp {
             jumpTo(missing.key());
             return;
         }
-        if (!selection.current().leaf()) {
+        if (!selection.current().runnable()) {
             message("pick a command first");
             return;
         }

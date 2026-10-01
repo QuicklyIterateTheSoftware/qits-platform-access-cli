@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * One command of the tree, as the screen shows it: a name, a line of help, the commands under it
@@ -35,21 +36,24 @@ public final class CommandNode {
     private final List<OptionRow> rows;
     private final Interaction interaction;
     private final Output output;
+    private final boolean runsOnItsOwn;
 
     private CommandNode(String name, String description, List<CommandNode> children, List<OptionRow> rows,
-                        Interaction interaction, Output output) {
+                        Interaction interaction, Output output, boolean runsOnItsOwn) {
         this.name = name;
         this.description = description;
         this.children = List.copyOf(children);
         this.rows = List.copyOf(rows);
         this.interaction = interaction;
         this.output = output;
+        this.runsOnItsOwn = this.children.isEmpty() || runsOnItsOwn;
     }
 
     /** The whole tree under {@code spec}, subcommands and all. */
     public static CommandNode of(CommandSpec spec) {
         return new CommandNode(spec.name(), firstLine(spec), children(spec), rows(spec),
-                TuiCommands.interactionOf(spec.userObject()), TuiCommands.outputOf(spec.userObject()));
+                TuiCommands.interactionOf(spec.userObject()), TuiCommands.outputOf(spec.userObject()),
+                spec.userObject() instanceof Callable<?>);
     }
 
     /**
@@ -215,7 +219,10 @@ public final class CommandNode {
         return children;
     }
 
-    /** The rows of this command. A command with subcommands usually has none of its own. */
+    /**
+     * The rows of this command. A group's are the options it hands down and are not shown; a
+     * {@linkplain #runnable() runnable} parent's are shown under its subcommands.
+     */
     public List<OptionRow> rows() {
         return rows;
     }
@@ -233,6 +240,20 @@ public final class CommandNode {
     /** A command with nothing under it: the list shows its rows instead of more commands. */
     public boolean leaf() {
         return children.isEmpty();
+    }
+
+    /**
+     * Whether the command does something when it is named last, rather than only lead somewhere: a
+     * leaf, or a parent that runs on its own as well as holding commands (a live stream whose
+     * {@code query} child asks the past).
+     * <p>
+     * picocli's model has no word for this, so the command object's shape says it. A group in this
+     * tree is a {@link Runnable} whose {@code run()} refuses to run without a subcommand; a command that
+     * does something answers an exit code, so it is a {@link Callable}. Nothing is named here: a new
+     * parent of either kind is read the same way.
+     */
+    public boolean runnable() {
+        return runsOnItsOwn;
     }
 
     public CommandNode child(String childName) {
