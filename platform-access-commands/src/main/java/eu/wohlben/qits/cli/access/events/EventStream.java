@@ -175,28 +175,37 @@ public final class EventStream {
         JsonNode line;
         try {
             JsonNode parsed = JSON.readTree(data);
-            if (parsed instanceof ObjectNode event) {
-                JsonNode payload = event.get("payload");
-                if (payload != null && payload.isTextual()) {
-                    JsonNode inner = parse(payload.asText());
-                    if (inner != null) {
-                        event.set("payload", inner);
-                    }
-                }
-                line = event;
-            } else {
-                line = TextNode.valueOf(data);
-            }
+            line = parsed instanceof ObjectNode event ? line(event) : TextNode.valueOf(data);
         } catch (IOException notJson) {
             // Printed as a JSON string, so every line stays JSON for a reader like jq.
             line = TextNode.valueOf(data);
         }
-        try {
-            out.println(JSON.writeValueAsString(line));
-        } catch (IOException impossible) {
-            out.println("\"\"");
-        }
+        out.println(write(line));
         out.flush();
+    }
+
+    /**
+     * The printed form of one event: the event, with its payload string read as JSON when it is
+     * JSON. {@code qits events query} prints the log's rows through it too, so a line means the
+     * same live and in the past.
+     */
+    static ObjectNode line(ObjectNode event) {
+        JsonNode payload = event.get("payload");
+        if (payload != null && payload.isTextual()) {
+            JsonNode inner = parse(payload.asText());
+            if (inner != null) {
+                event.set("payload", inner);
+            }
+        }
+        return event;
+    }
+
+    static String write(JsonNode line) {
+        try {
+            return JSON.writeValueAsString(line);
+        } catch (IOException impossible) {
+            return "\"\"";
+        }
     }
 
     private static JsonNode parse(String text) {

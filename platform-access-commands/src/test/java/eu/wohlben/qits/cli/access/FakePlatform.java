@@ -19,6 +19,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.function.Function;
 
 /**
  * The platform's edge in the test's own process: canned JSON answers by method and path, and a
@@ -44,6 +45,7 @@ public final class FakePlatform implements AutoCloseable {
     private final HttpServer server;
     private final ExecutorService threads = Executors.newCachedThreadPool(r -> Thread.ofPlatform().daemon().unstarted(r));
     private final Map<String, Answer> answers = new ConcurrentHashMap<>();
+    private final Map<String, Function<Request, Answer>> routes = new ConcurrentHashMap<>();
     private final CountDownLatch closing = new CountDownLatch(1);
     public final List<Request> requests = Collections.synchronizedList(new ArrayList<>());
     public final BlockingDeque<StreamScript> streams = new LinkedBlockingDeque<>();
@@ -66,6 +68,14 @@ public final class FakePlatform implements AutoCloseable {
             headers.put(headerPairs[i], headerPairs[i + 1]);
         }
         answers.put(method + " " + path, new Answer(status, body, headers));
+    }
+
+    /**
+     * A route that answers from the request, for an answer a canned one cannot give: a page that
+     * depends on its cursor, or a search that depends on its body. It wins over {@link #answer}.
+     */
+    public void route(String method, String path, Function<Request, Answer> handler) {
+        routes.put(method + " " + path, handler);
     }
 
     public void answer(String method, String path, String json) {
@@ -112,9 +122,10 @@ public final class FakePlatform implements AutoCloseable {
     private void handle(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         URI uri = exchange.getRequestURI();
-        requests.add(new Request(exchange.getRequestMethod(), uri.getPath(), uri.getRawQuery(),
+        Request request = new Request(exchange.getRequestMethod(), uri.getPath(), uri.getRawQuery(),
                 exchange.getRequestHeaders().getFirst("Authorization"), exchange.getRequestHeaders().getFirst("Accept"), body,
-                exchange.getRequestHeaders().getFirst("Content-Type")));
+                exchange.getRequestHeaders().getFirst("Content-Type"));
+        requests.add(request);
         if (uri.getPath().equals("/events/api/stream")) {
             StreamScript script = streams.poll();
             try {
@@ -128,6 +139,17 @@ public final class FakePlatform implements AutoCloseable {
             } finally {
                 exchange.close();
             }
+            return;
+        }
+        Function<Request, Answer> route = routes.get(exchange.getRequestMethod() + " " + uri.getPath());
+        if (route != null) {
+            Answer routed;
+            try {
+                routed = route.apply(request);
+            } catch (RuntimeException failed) {
+                routed = new Answer(500, "{\"message\":\"the fake's route failed: " + failed + "\"}", Map.of());
+            }
+            respond(exchange, routed);
             return;
         }
         Answer answer = answers.get(exchange.getRequestMethod() + " " + uri.getPath());

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @TuiCommand(interaction = Interaction.STREAMING)
-@CommandLine.Command(name = "events", mixinStandardHelpOptions = true,
+@CommandLine.Command(name = "events", mixinStandardHelpOptions = true, subcommands = EventsQueryCommand.class,
         description = {
                 "Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait "
                         + "for something on the platform: a build (BuildSuccessful, BuildFailed) or a release "

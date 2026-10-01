@@ -824,6 +824,41 @@ qits events --filter=ReleaseRequestChanged | jq -r '.payload'
 - `1` The platform refused the stream (401, 403 or another 4xx).
 - `2` Used wrongly (for example a pattern in --filter), not signed in, or the session ended.
 
+## qits events query
+
+Print the qits-events domain events that already happened in a window of time, oldest first, from the events log. It answers with what exists when it is called and never waits for a new event; `qits events` is the live form.
+
+The window is --since to --until, both inclusive; --since is an hour ago and --until is now unless given. When more than --limit events fall in it, the newest --limit are kept. The text form starts with a line giving the window as two absolute instants, then prints one JSON object per event, the same line `qits events` prints, and ends with a line saying so when the answer was cut. -o json prints one object: {"events": [...], "truncated": true|false, "window": {"since": ..., "until": ...}}.
+
+```
+qits events query [--events-url <url>] [--filter <names>] [--limit <n>] [--output <text|json>] [--since <time>] [--until <time>]
+```
+
+| Name | What it does |
+|---|---|
+| `--events-url <url>` | The events service's base URL, without /events. Default: QITS_EVENTS_URL, else the session's idp address with `idp` swapped for `events`. |
+| `--filter <names>` | Which events: exact event names, comma-separated (for example BuildSuccessful,BuildFailed), or * for every event. No patterns. Default: *. |
+| `--limit <n>` | At most this many, 1 to 1000. When more match, the newest are kept. Default: 100. |
+| `-o, --output <text\|json>` | text: the window, then one line per event (the default). json: one object with the events, whether the answer was cut, and the window. |
+| `--since <time>` | Where the window starts, inclusive: an ISO-8601 instant (2026-10-01T18:00:00Z) or a time back from now, a whole number with s, m, h or d (90s, 15m, 2h, 7d). Default: 1h. |
+| `--until <time>` | Where the window ends, inclusive, in the same two forms. A time after now is taken as now. Default: now. |
+
+### Examples
+
+```
+qits events query --filter=BuildFailed --since 1d
+qits events query --filter=ReleaseRequestChanged --since 2026-10-01T18:00:00Z --until 2026-10-01T19:00:00Z
+qits events query --since 15m -o json | jq -r '.events[].name'
+```
+
+--filter takes exact event names, as `qits events` does. A pattern such as Build* is refused.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (a pattern in --filter, a time that cannot be read, --since after --until, a --limit outside 1..1000), not signed in, or the session ended.
+
 ## qits observe
 
 Print what qits-observability takes in (logs, spans with their events, metrics) as it arrives. Use it to watch a service's errors or to follow one trace live. The service applies the filters and sends only the records that match.
@@ -835,7 +870,7 @@ Conditions: F=V equal and F^=V starts with (both match case: status=ERROR, not s
 Fields: kind service trace span level body name status event attr.<key> resource.<key>. attr.<key> is the record's own attribute, resource.<key> its resource's. Quote a value that holds spaces: body~"connection refused".
 
 ```
-qits observe --filter <conditions>... [--observability-url <url>] [--output <text|json>]
+qits observe [--filter <conditions>...] [--observability-url <url>] [--output <text|json>]
 ```
 
 | Name | What it does |
@@ -863,6 +898,48 @@ qits observe --filter 'kind=log level>=WARN' -o json | jq -r .record.body
 - `0` Stopped by SIGINT or SIGTERM, or stdout was closed.
 - `1` The platform refused the socket (401, 403 or another 4xx).
 - `2` A --filter cannot be read or the service refused the filters, not signed in, or the session ended.
+
+## qits observe query
+
+Print the logs, spans and metrics qits-observability still holds for a window of time, oldest first, filtered as `qits observe` filters. It answers with what the service holds when it is called and never waits for a new record; `qits observe` is the live form.
+
+The window is --since to --until, both inclusive; --since is an hour ago and --until is now unless given. A record is in the window by its own time: a log's time, a span's start. A metric keeps only its latest point, so a metric is found only when that point is in the window. When more than --limit records match, the newest --limit are kept.
+
+The service keeps a bounded buffer, not a history. When the window starts before the oldest record it still holds, a note on stderr says so: an empty answer there is not proof that nothing happened.
+
+The text form starts with a line giving the window as two absolute instants, then prints one line per record, the line `qits observe` prints, and ends with a line saying so when the answer was cut. -o json prints one object: {"records": [...], "truncated": true|false, "window": {"since": ..., "until": ...}}, each record the frame the live stream sends.
+
+--filter takes the conditions and fields `qits observe` takes; see `qits observe --help`.
+
+```
+qits observe query --filter <conditions>... [--limit <n>] [--observability-url <url>] [--output <text|json>] [--since <time>] [--source <key>] [--until <time>]
+```
+
+| Name | What it does |
+|---|---|
+| `--filter <conditions>...` | Required. One group of conditions, for example 'kind=log level>=ERROR'. Give it again for another group. '*' matches every record. |
+| `--limit <n>` | At most this many, 1 to 1000. When more match, the newest are kept. Default: 100. |
+| `--observability-url <url>` | The observability service's base URL, without /observability. Default: QITS_OBSERVABILITY_URL, else the session's idp address with `idp` swapped for `observability`. |
+| `-o, --output <text\|json>` | text: the window, then one line per record (the default). json: one object with the records, whether the answer was cut, and the window. |
+| `--since <time>` | Where the window starts, inclusive: an ISO-8601 instant (2026-10-01T18:00:00Z) or a time back from now, a whole number with s, m, h or d (90s, 15m, 2h, 7d). Default: 1h. |
+| `--source <key>` | Only this source's records: a key such as _service/qits-ci. Default: every source. |
+| `--until <time>` | Where the window ends, inclusive, in the same two forms. A time after now is taken as now. Default: now. |
+
+### Examples
+
+```
+qits observe query --filter 'kind=log level>=ERROR' --since 2h
+qits observe query --filter 'trace=4bf92f3577b34da6a3ce929d0e0e4736' --since 1d --limit 1000
+qits observe query --filter 'kind=span status=ERROR' --source _service/qits-ci -o json
+```
+
+- --source takes a key as the service's telemetry sources list it (_service/<name>, a repository or a workspace). Without it every source is searched.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (a --filter that cannot be read or that the service refused, a time that cannot be read, --since after --until, a --limit outside 1..1000), not signed in, or the session ended.
 
 ## qits git-login
 

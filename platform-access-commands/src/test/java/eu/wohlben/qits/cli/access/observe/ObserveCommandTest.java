@@ -83,8 +83,11 @@ class ObserveCommandTest {
 
     @Test
     void theFilterIsRequired() {
+        // Checked by the command since `query` came under it, in picocli's own words, at the same exit.
         assertThat(run("observe")).isEqualTo(2);
-        assertThat(err()).contains("--filter");
+        assertThat(err()).isEqualTo("Missing required option: '--filter=<conditions>'\n");
+        assertThat(run("observe", "-o", "json")).isEqualTo(2);
+        assertThat(err()).endsWith("Missing required option: '--filter=<conditions>'\n");
         assertThat(server.upgrades).isEmpty();
     }
 

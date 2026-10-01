@@ -82,7 +82,8 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
     daemon/    qits session-daemon: the refresh loop, the sleeper seam, the stop signals
     platform/  what every platform command shares: the context, the token (with inline refresh),
                the HTTP client and its error messages, which address a service has (PlatformUrls),
-               and the aligned table (Table)
+               the aligned table (Table), and the --since/--until/--limit window both query
+               commands share (QueryWindow, a picocli mixin)
     projects/  qits projects, repositories, work and release-request. `qits work` is one group for
                every archetype (WorkCommand; WorkEntities holds the transition's full-state merge
                and the tables). Its writes take a JSON payload on stdin and, with none, print the
@@ -90,12 +91,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                its OpenAPI document (comment doors), through WorkPayload; the CLI keeps no copy of
                a schema and no route per archetype
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
-    events/    qits events: the SSE parser and the reconnecting stream
+    events/    qits events: the SSE parser and the reconnecting stream; `query` under it pages the
+               events log over a window (EventsQueryCommand)
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-
                watch loop over SCMRelease (ReleaseWatcher), a sibling of events/EventStream that
                shares its SSE parser
     observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
-               and SafeText (terminal control characters out of every streamed value)
+               and SafeText (terminal control characters out of every streamed value); `query`
+               under it asks the records search with the same filters (ObserveQueryCommand)
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
@@ -184,6 +187,13 @@ Two packages sit outside `access/`, because neither is about one command:
   same way, and aborts its open connection (`HttpClient.shutdownNow`), never the thread.
   `EventStream` waits through its `Sleeper`; only its idle watchdog reads `System.nanoTime`.
   `qits observe` does the same: `stop()` aborts the socket and puts a stop mark on the loop's queue.
+- **A stream's `query` never touches the stream.** `qits events` and `qits observe` are runnable
+  parents: bare, they stream; `query` under each reads a window of the past and returns. A parent's
+  required options are checked even when a subcommand is named, so `qits observe` refuses a
+  missing `--filter` in `execute`, in picocli's words, rather than with `required = true`. The
+  `query` leaves say `@TuiCommand(interaction = PLAIN)` themselves, so the parents' `STREAMING`
+  does not reach them (nearest declaration wins). `SkillDocument` documents the options of a parent
+  that has its own, as it does a leaf's.
 - **Streamed telemetry is untrusted text.** Ingest takes records without a sign-in, so anyone who
   reaches it writes what `qits observe` shows. Every streamed value goes through `SafeText.line`
   (the line form) or `SafeText.JSON` (the JSON form), notices and close reasons included. A new

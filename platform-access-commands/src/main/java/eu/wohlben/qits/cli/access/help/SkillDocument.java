@@ -63,13 +63,23 @@ public final class SkillDocument {
     private static void section(StringBuilder md, CommandSpec command) {
         md.append("## ").append(command.qualifiedName()).append("\n\n");
         paragraphs(command.usageMessage().description()).forEach(p -> md.append(p).append("\n\n"));
-        // A group only names its commands; the commands under it carry the options.
-        if (command.subcommands().isEmpty()) {
+        // A group only names its commands; the commands under it carry the options. A command that
+        // runs on its own and has commands under it (qits events, and its query) has both.
+        if (command.subcommands().isEmpty() || runsOnItsOwn(command)) {
             md.append("```\n").append(synopsis(command)).append("\n```\n\n");
             arguments(md, command);
         }
         footer(md, command, "### ");
         exitCodes(md, command, "### ");
+    }
+
+    /**
+     * Whether a command with subcommands is also a command of its own: it declares options that are
+     * its own rather than handed down to the commands under it, as a group's are.
+     */
+    private static boolean runsOnItsOwn(CommandSpec command) {
+        return options(command).stream().anyMatch(o -> o.scopeType() != CommandLine.ScopeType.INHERIT)
+                || !command.positionalParameters().isEmpty();
     }
 
     private static String synopsis(CommandSpec command) {

@@ -43,7 +43,10 @@ class AccessCliTest {
     @Test
     @Launch(value = {"observe"}, exitCode = 2)
     void observeWithoutAFilterIsAUsageError(LaunchResult result) {
-        assertThat(result.getErrorOutput()).contains("--filter");
+        // The command refuses it now, not picocli (a parent's required option would bind `observe
+        // query` too), and a command writes to file descriptor 2, which this harness does not
+        // capture. ObserveCommandTest pins the message, word for word; here the exit code is the proof.
+        assertThat(result.exitCode()).isEqualTo(2);
     }
 
     @Test

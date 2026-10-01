@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Locale;
 
 @TuiCommand(interaction = Interaction.STREAMING)
-@CommandLine.Command(name = "observe", mixinStandardHelpOptions = true,
+@CommandLine.Command(name = "observe", mixinStandardHelpOptions = true, subcommands = ObserveQueryCommand.class,
         description = {
                 "Print what qits-observability takes in (logs, spans with their events, metrics) as it arrives. "
                         + "Use it to watch a service's errors or to follow one trace live. The service applies the "
@@ -52,8 +52,16 @@ import java.util.Locale;
                         + "ended."})
 public class ObserveCommand extends PlatformCommand {
 
-    @CommandLine.Option(names = "--filter", required = true, paramLabel = "<conditions>",
-            description = "One group of conditions, for example 'kind=log level>=ERROR'. Give it again for another "
+    /** What picocli said when it still checked --filter itself; scripts and people know this line. */
+    static final String MISSING_FILTER = "Missing required option: '--filter=<conditions>'";
+
+    /**
+     * Required, but not at picocli's level: picocli checks a parent's required options even when a
+     * subcommand is named, so {@code qits observe query} would need a --filter it never reads.
+     * {@link #execute} refuses its absence with picocli's own words instead.
+     */
+    @CommandLine.Option(names = "--filter", paramLabel = "<conditions>",
+            description = "Required. One group of conditions, for example 'kind=log level>=ERROR'. Give it again for another "
                     + "group. '*' streams every record.")
     List<String> filters;
 
@@ -74,6 +82,9 @@ public class ObserveCommand extends PlatformCommand {
             case "json" -> true;
             default -> throw new CliFailure("--output must be text or json, not '" + output + "'.", CliFailure.USAGE);
         };
+        if (filters == null || filters.isEmpty()) {
+            throw new CliFailure(MISSING_FILTER, CliFailure.USAGE);
+        }
         List<List<FilterGrammar.Condition>> groups = new ArrayList<>();
         for (String filter : filters) {
             groups.add(FilterGrammar.parse(filter));

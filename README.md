@@ -12,9 +12,10 @@ Commands:
   and `qits release-request … list|create|join|withdraw` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again.
-- `qits events` prints the platform's domain events as they happen.
+- `qits events` prints the platform's domain events as they happen; `qits events query` prints the
+  ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
-  filtered by the service.
+  filtered by the service; `qits observe query` asks the same filters of what it still holds.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -451,7 +452,10 @@ Installing it is not part of this version.
     qits ci run <run id> [--logs] [--project <project> --repository <repository>]
     qits ci retry <run id> [--project <project> --repository <repository>]
     qits events [--filter=<names>]
+    qits events query [--filter=<names>] [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
+    qits observe query --filter <conditions> [--filter <conditions> …] [--source <key>] \
+        [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
@@ -749,6 +753,46 @@ The stream is live only: it has no replay. Notes go to stderr, one line each wit
 - SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0.
 - When stdout is closed (`| head -3`), it stops, with exit code 0, at the next event it would
   print. Keepalives print nothing, so on a quiet stream that can take a while.
+
+### The query window
+
+`qits events query` and `qits observe query` answer with what already exists in a window of time,
+and never wait for anything new: they are the live commands asked about the past, and what the
+qits MCP server serves in place of the streams. Both take the same three options:
+
+| option | meaning | default |
+|---|---|---|
+| `--since <time>` | where the window starts, inclusive | `1h` |
+| `--until <time>` | where it ends, inclusive; a time after now is taken as now | now |
+| `--limit <n>` | at most n records, 1 to 1000 | `100` |
+
+A time is an ISO-8601 instant (`2026-10-01T18:00:00Z`) or a whole number of seconds, minutes, hours
+or days back from now (`90s`, `15m`, `2h`, `7d`). Anything else, a `--limit` outside 1..1000, or a
+`--since` after the `--until`, is exit code 2 naming the option.
+
+When more than `--limit` match, the newest are kept (a tail wants the end), printed oldest first.
+The text form's first line is the window as two absolute instants, so the same window can be asked
+again or extended, and its last line says when the answer was cut:
+
+    window: 2026-10-01T17:00:00Z .. 2026-10-01T18:00:00Z
+    …one line per record, the line the live command prints…
+    … truncated: 100 shown, more in the window
+
+`-o json` prints one object rather than one per line, because a query has one answer:
+`{"events"|"records": […], "truncated": true|false, "window": {"since": "…", "until": "…"}}`.
+
+`qits events query` reads `GET /events/api/events`. That route has `?since=` and no upper bound but
+its cursor, so the first page asks for `?cursor=<until, truncated to microseconds, plus one
+microsecond>,0` — every row at or before `--until`, ties included — and the pages after it follow
+`nextCursor`.
+
+`qits observe query` sends its filters, in the live command's grammar, to `POST
+/observability/api/telemetry/records/search`, which reads qits-observability's buffer with the
+live feed's own matching. `--source <key>` narrows it to one source. A record is in the window by
+its own time; a metric keeps only its latest point, so it is found only when that point is in the
+window. The buffer is bounded: when the window starts before the oldest record it still holds,
+stderr says so, because an empty answer there is not proof that nothing happened. A filter the
+service refuses (HTTP 400) is exit code 2.
 
 ### qits checkout-daemon
 
