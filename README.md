@@ -49,7 +49,7 @@ It does four things:
 
 Environment overrides:
 
-- `QITS_IDP_URL` — the idp's base URL. Default `https://idp.dev.wohlben.eu/idp`.
+- `QITS_IDP_URL` — the idp's base URL. Default `https://idp.qits.wohlben.eu/idp`.
 - `QITS_ARTIFACTS_URL` — the artifacts store's base URL. Default: derived from the idp URL, the
   same way `qits` derives every other service's address (swap the idp host's first label).
 - `QITS_GIT_HOST_URL` — the git host's base URL. Default: derived the same way.
@@ -189,7 +189,7 @@ the options of the one you chose, required first and marked `*`; the line betwee
 command your choices have built, so the screen also teaches the command line; the lower half is what
 the last run printed.
 
-     qits tui · dev.wohlben.eu · signed in as jan
+     qits tui · qits.wohlben.eu · signed in as jan
      ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────┐
      │ * --project        qits                                                     │
      │ * --repository     ▸ qits-ci-service                                        │
@@ -328,20 +328,26 @@ with `login` and `git-login` dim and sorted last, the way a CI-only command alre
 4. The session goes to `$XDG_CONFIG_HOME/qits/t.json` (default `~/.config/qits/t.json`), and the
    command prints when the access token and the session end.
 
-Which platform: `--idp-url`, else `QITS_IDP_URL`, else `https://idp.<QITS_ENV_NAME>.<QITS_DOMAIN>/idp`.
-With `QITS_DOMAIN` set and `QITS_ENV_NAME` not set, the command stops and names the variable. With
-neither, it uses the platform on this machine, `http://idp.<QITS_ENV_NAME or prod>.localhost:8080/idp`.
+Which platform: `--idp-url`, else `QITS_IDP_URL`, else `https://idp.qits.<QITS_DOMAIN>/idp`, else
+`https://idp.qits.wohlben.eu/idp` (the default install.sh uses too). The platform is the project
+`qits` and has no environments, so `QITS_ENV_NAME` is not read.
 
-For the dev platform:
+Naming the platform explicitly:
 
-    qits login --idp-url https://idp.dev.wohlben.eu/idp
+    qits login --idp-url https://idp.qits.wohlben.eu/idp
 
 `--no-browser` only prints the address. Use it over SSH.
+
+A workstation signed in before the platform's names moved still has the old environment name,
+`https://idp.dev.<domain>/idp`, as `idpUrl` in `t.json`, an address that no longer answers. Run
+`qits login`, then `qits git-login --configure`, and both sign-ins point at the new names. The old
+`https://githost.dev.<domain>` key in `git.json` and its `credential.<that address>.helper` entry
+stay behind and are harmless: Git never asks that host again.
 
 ### The session file
 
     {
-      "idpUrl" : "https://idp.dev.wohlben.eu/idp",
+      "idpUrl" : "https://idp.qits.wohlben.eu/idp",
       "clientId" : "qits-cli",
       "accessToken" : "…",
       "accessExpiresAt" : "2026-09-11T20:15:00Z",
@@ -457,10 +463,10 @@ refuses prints `Session ended — run `qits login`.` and exits with 2.
 
 ### Which address
 
-A service lives at `<app>.<env>.<domain>`. The commands take the session's idp address and swap
-its first label: `https://idp.dev.wohlben.eu/idp` gives `https://projects.dev.wohlben.eu`,
-`https://ci.dev.wohlben.eu`, `https://events.dev.wohlben.eu` and
-`https://observability.dev.wohlben.eu`. To name the address yourself (a base URL, without
+A service lives at `<app>.qits.<domain>`. The commands take the session's idp address and swap
+its first label: `https://idp.qits.wohlben.eu/idp` gives `https://projects.qits.wohlben.eu`,
+`https://ci.qits.wohlben.eu`, `https://events.qits.wohlben.eu` and
+`https://observability.qits.wohlben.eu`. To name the address yourself (a base URL, without
 `/projects`, `/ci`, `/events` or `/observability`):
 
 - projects: `--projects-url`, else `QITS_PROJECTS_URL`
@@ -901,9 +907,9 @@ Which platform:
 - idp: `--idp-url`, else `QITS_IDP_URL`, else the idp of the `qits login` session, else as
   `qits login` finds it.
 - git host: `--git-host`, else `QITS_GIT_HOST_URL`, else the idp's host with `idp` swapped for
-  `githost` (`https://githost.dev.wohlben.eu`).
-- audience: `--audience`, else `<env>-qits-githost`, where `<env>` is the idp host's second label
-  (`dev` in `idp.dev.wohlben.eu`).
+  `githost` (`https://githost.qits.wohlben.eu`).
+- audience: `--audience`, else `qits-platform`, the one audience every platform service accepts
+  and the one the git host validates.
 
 The OAuth client is `qits-git-workstation` (PKCE, no secret), not the `qits-cli` of `qits login`.
 
@@ -913,8 +919,8 @@ On a workstation Git asks `qits git-credential` for the git host and for no othe
 helper (for example Git Credential Manager for GitHub) stays as it is. The empty value first clears
 the helper list for this host:
 
-    git config --global --replace-all credential.https://githost.dev.wohlben.eu.helper ''
-    git config --global --add credential.https://githost.dev.wohlben.eu.helper '!/home/you/.local/bin/qits git-credential'
+    git config --global --replace-all credential.https://githost.qits.wohlben.eu.helper ''
+    git config --global --add credential.https://githost.qits.wohlben.eu.helper '!/home/you/.local/bin/qits git-credential'
 
 `qits git-login` prints these two lines with the git host and its own path. `--configure` runs them.
 Running them again changes nothing.

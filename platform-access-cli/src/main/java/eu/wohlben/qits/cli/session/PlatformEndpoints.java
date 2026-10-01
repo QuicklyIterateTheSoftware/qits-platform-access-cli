@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Where a service is, in either home. The one place that decides it.
  * <p>
- * Outside, a service is a public vhost behind the edge — {@code https://projects.dev.wohlben.eu} —
+ * Outside, a service is a public vhost behind the edge — {@code https://projects.qits.wohlben.eu} —
  * derived from the session's own idp address. Inside the platform those names do not resolve at
  * all: the container network answers wire aliases, and nothing else. That is a second set of
  * addresses, not a second code path, which is why both live here.
@@ -116,7 +116,7 @@ public final class PlatformEndpoints {
         return "http://" + environment() + "-qits-" + app + ":" + WIRE_PORT;
     }
 
-    /** {@code https://projects.dev.wohlben.eu}, from the session's own idp address. */
+    /** {@code https://projects.qits.wohlben.eu}, from the session's own idp address. */
     String vhost(String app, String refusal) throws CliFailure {
         URI idp = uri(idpUrl);
         String host = idp == null ? null : idp.getHost();

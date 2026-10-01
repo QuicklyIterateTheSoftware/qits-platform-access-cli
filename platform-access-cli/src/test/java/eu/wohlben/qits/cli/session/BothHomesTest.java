@@ -135,18 +135,18 @@ class BothHomesTest {
      */
     @Test
     void gitCredentialStillReadsTheSignInFileOnAWorkstation() throws Exception {
-        String origin = "https://githost.dev.wohlben.eu";
+        String origin = "https://githost.qits.wohlben.eu";
         String access = FakeIdp.SECRET + "access-git";
         GitCredentialFile gitStore = new GitCredentialFile(home.resolve("qits"));
         try (ExclusiveLock ignored = gitStore.lock()) {
             gitStore.put(new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, "dev-qits-githost", origin,
                     access, T0.plus(Duration.ofMinutes(10)), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30))));
         }
-        env.put("QITS_GIT_AUTH_HOST", "githost.dev.wohlben.eu");
+        env.put("QITS_GIT_AUTH_HOST", "githost.qits.wohlben.eu");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         int exit = run(out, new ByteArrayInputStream(
-                "protocol=https\nhost=githost.dev.wohlben.eu\n\n".getBytes(StandardCharsets.UTF_8)),
+                "protocol=https\nhost=githost.qits.wohlben.eu\n\n".getBytes(StandardCharsets.UTF_8)),
                 "git-credential", "get");
 
         assertThat(exit).isZero();

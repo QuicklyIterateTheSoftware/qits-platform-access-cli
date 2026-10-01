@@ -3,13 +3,21 @@ package eu.wohlben.qits.cli.access.idp;
 import java.util.Map;
 
 /**
- * Which platform: {@code --idp-url}, else {@code QITS_IDP_URL}, else derived from {@code
- * QITS_DOMAIN} and {@code QITS_ENV_NAME} the way qits-bootstrap-cli's login does it.
+ * Which platform: {@code --idp-url}, else {@code QITS_IDP_URL}, else {@code
+ * https://idp.qits.<QITS_DOMAIN>/idp}, else {@value #DEFAULT}, the same default install.sh writes.
+ * <p>
+ * The platform is the project {@value #PROJECT}, and it has no environments, so a public name is
+ * {@code <app>.qits.<domain>} and nothing else. {@code QITS_ENV_NAME} is not read: there is no
+ * environment left for it to name.
  * <p>
  * Not from the idp's discovery document: that names the idp's INTERNAL issuer
  * ({@code http://qits-platform-idp:8080/idp}), which no workstation can reach.
  */
 public final class IdpUrl {
+
+    /** The platform's own project slug, the label between the app and the domain. */
+    static final String PROJECT = "qits";
+    static final String DEFAULT = "https://idp." + PROJECT + ".wohlben.eu/idp";
 
     private IdpUrl() {
     }
@@ -24,19 +32,10 @@ public final class IdpUrl {
             return trim(configured);
         }
         String domain = env.getOrDefault("QITS_DOMAIN", "").strip();
-        String environment = env.getOrDefault("QITS_ENV_NAME", "").strip();
         if (!domain.isEmpty()) {
-            // Every public name spells its environment, and with a domain no guess is safe: the
-            // zone's wildcards resolve every name, so a wrong one reaches the right host and fails
-            // with a confusing 404.
-            if (environment.isEmpty()) {
-                throw new IllegalArgumentException("QITS_DOMAIN is set to '" + domain + "' but QITS_ENV_NAME is not."
-                        + " Set QITS_ENV_NAME to the platform's environment (for example dev), or pass --idp-url.");
-            }
-            return "https://idp." + environment + "." + domain + "/idp";
+            return "https://idp." + PROJECT + "." + domain + "/idp";
         }
-        // A platform on this machine, behind the edge's port. It has always been called prod there.
-        return "http://idp." + (environment.isEmpty() ? "prod" : environment) + ".localhost:8080/idp";
+        return DEFAULT;
     }
 
     static String trim(String url) {

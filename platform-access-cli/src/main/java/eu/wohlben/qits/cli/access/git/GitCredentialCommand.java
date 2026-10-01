@@ -38,7 +38,7 @@ import java.util.Optional;
                         + "store and erase do nothing there, and no file is written."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
-                "  git config --global --get-all credential.https://githost.dev.wohlben.eu.helper",
+                "  git config --global --get-all credential.https://githost.qits.wohlben.eu.helper",
                 "",
                 "The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, "
                         + "because that is Git's helper protocol.",

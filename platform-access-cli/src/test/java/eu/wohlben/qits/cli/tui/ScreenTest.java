@@ -38,7 +38,7 @@ class ScreenTest {
     private static final int HEIGHT = 24;
 
     private final CommandNode root = CommandNode.of(new CommandLine(new Root()).getCommandSpec());
-    private final TuiApp app = new TuiApp(root, "qits tui · dev.wohlben.eu · signed in as jan");
+    private final TuiApp app = new TuiApp(root, "qits tui · qits.wohlben.eu · signed in as jan");
     private final Frame frame = new Frame(Glyphs.UNICODE);
 
     private List<String> lines() {

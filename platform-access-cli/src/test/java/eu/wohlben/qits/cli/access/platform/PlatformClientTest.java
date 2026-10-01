@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PlatformClientTest {
 
-    private static final URI URL = URI.create("https://projects.dev.wohlben.eu/projects/api/projects");
+    private static final URI URL = URI.create("https://projects.qits.wohlben.eu/projects/api/projects");
 
     private static HttpHeaders headers(Map<String, List<String>> values) {
         return HttpHeaders.of(values, (k, v) -> true);

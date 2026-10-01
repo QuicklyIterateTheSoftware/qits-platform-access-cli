@@ -33,8 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GitCredentialCommandTest {
 
     private static final Instant T0 = Instant.parse("2026-09-12T10:00:00Z");
-    private static final String ORIGIN = "https://githost.dev.wohlben.eu";
-    private static final String REQUEST = "protocol=https\nhost=githost.dev.wohlben.eu\npath=git/qits/qits-ci.git\n\n";
+    private static final String ORIGIN = "https://githost.qits.wohlben.eu";
+    private static final String REQUEST = "protocol=https\nhost=githost.qits.wohlben.eu\npath=git/qits/qits-ci.git\n\n";
     private static final String OLD_ACCESS = FakeIdp.SECRET + "access-git";
 
     @TempDir
@@ -195,7 +195,7 @@ class GitCredentialCommandTest {
 
         assertThat(other).isEqualTo(new Result(0, "", ""));
         assertThat(noHost).isEqualTo(new Result(0, "", ""));
-        assertThat(credential("get", REQUEST.replace("githost.dev", "githost.prod"))).isEqualTo(new Result(0, "", ""));
+        assertThat(credential("get", REQUEST.replace("githost.qits", "githost.other"))).isEqualTo(new Result(0, "", ""));
     }
 
     @Test

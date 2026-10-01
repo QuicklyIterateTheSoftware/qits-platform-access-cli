@@ -14,7 +14,7 @@ public class ProjectsOptions {
     @CommandLine.Option(names = "--projects-url", paramLabel = "<url>", scope = CommandLine.ScopeType.INHERIT,
             description = "The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, "
                     + "else the session's idp address with `idp` swapped for `projects` "
-                    + "(https://idp.dev.wohlben.eu/idp gives https://projects.dev.wohlben.eu).")
+                    + "(https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu).")
     String projectsUrl;
 
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "table|json", scope = CommandLine.ScopeType.INHERIT,

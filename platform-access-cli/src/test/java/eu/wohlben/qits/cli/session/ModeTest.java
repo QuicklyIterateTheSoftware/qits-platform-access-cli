@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.entry;
 /** Which home, and which addresses follow from it — from a fixed environment, in both directions. */
 class ModeTest {
 
-    private static final String IDP = "https://idp.dev.wohlben.eu/idp";
+    private static final String IDP = "https://idp.qits.wohlben.eu/idp";
 
     private static final Map<String, String> CONTAINER = Map.of(
             Mode.CLIENT_ID, "dyn-workspace-352-m8m08",
@@ -51,9 +51,9 @@ class ModeTest {
     @Test
     void aWorkstationDialsThePublicVhosts() throws CliFailure {
         PlatformEndpoints outside = endpoints(Map.of(), IDP);
-        assertThat(outside.base("projects")).isEqualTo("https://projects.dev.wohlben.eu");
-        assertThat(outside.base("ci")).isEqualTo("https://ci.dev.wohlben.eu");
-        assertThat(outside.base("idp")).isEqualTo("https://idp.dev.wohlben.eu");
+        assertThat(outside.base("projects")).isEqualTo("https://projects.qits.wohlben.eu");
+        assertThat(outside.base("ci")).isEqualTo("https://ci.qits.wohlben.eu");
+        assertThat(outside.base("idp")).isEqualTo("https://idp.qits.wohlben.eu");
     }
 
     @Test

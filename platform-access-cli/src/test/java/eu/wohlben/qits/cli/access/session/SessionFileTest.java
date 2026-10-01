@@ -22,7 +22,7 @@ class SessionFileTest {
     Path home;
 
     private static Session session(int n) {
-        return new Session("https://idp.dev.wohlben.eu/idp", "qits-cli", "SECRET-access-" + n,
+        return new Session("https://idp.qits.wohlben.eu/idp", "qits-cli", "SECRET-access-" + n,
                 Instant.parse("2026-09-11T20:15:00Z"), "SECRET-refresh-" + n, Instant.parse("2026-10-11T20:00:00Z"));
     }
 
@@ -42,7 +42,7 @@ class SessionFileTest {
         store.write(session(1));
 
         assertThat(Files.readString(store.path()))
-                .contains("\"idpUrl\" : \"https://idp.dev.wohlben.eu/idp\"")
+                .contains("\"idpUrl\" : \"https://idp.qits.wohlben.eu/idp\"")
                 .contains("\"clientId\" : \"qits-cli\"")
                 .contains("\"accessExpiresAt\" : \"2026-09-11T20:15:00Z\"")
                 .contains("\"refreshExpiresAt\" : \"2026-10-11T20:00:00Z\"");

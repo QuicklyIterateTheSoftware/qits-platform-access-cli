@@ -17,7 +17,7 @@
 # `qits login` does (see LoginFlow.java in this repository).
 #
 # Environment overrides:
-#   QITS_IDP_URL        the idp's base URL (default https://idp.dev.wohlben.eu/idp)
+#   QITS_IDP_URL        the idp's base URL (default https://idp.qits.wohlben.eu/idp)
 #   QITS_ARTIFACTS_URL   the artifacts store's base URL (default: derived from
 #                        the idp URL, swapping the idp host label for `registry`)
 #   QITS_GIT_HOST_URL    the git host's base URL (default: derived from the idp
@@ -33,7 +33,7 @@ DAEMON_NAME="qits-platform-access-cli"
 CLIENT_ID="qits-cli"
 CODE_TTL_SECONDS=300
 
-IDP_URL="${QITS_IDP_URL:-https://idp.dev.wohlben.eu/idp}"
+IDP_URL="${QITS_IDP_URL:-https://idp.qits.wohlben.eu/idp}"
 INSTALL_DIR="${QITS_INSTALL_DIR:-$HOME/.local/bin}"
 
 # ---- helpers ------------------------------------------------------------

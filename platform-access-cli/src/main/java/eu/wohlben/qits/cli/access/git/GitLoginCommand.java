@@ -38,22 +38,28 @@ import java.util.Optional;
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Signed in.",
                 "1:The sign-in did not complete (the browser did not come back in time, or the idp refused).",
-                "2:Used wrongly, or the idp or the git host cannot be worked out."})
+                "2:Used wrongly, or the git host cannot be worked out."})
 public class GitLoginCommand extends PlatformCommand {
+
+    /**
+     * The audience every platform service accepts, and the one the git host validates. The idp
+     * grants it to the workstation client, so it needs nothing from the idp's address.
+     */
+    static final String AUDIENCE = "qits-platform";
 
     @CommandLine.Option(names = "--idp-url", paramLabel = "<url>",
             description = "The idp's public base URL. Default: QITS_IDP_URL, else the idp of the `qits login` "
-                    + "session, else https://idp.<QITS_ENV_NAME>.<QITS_DOMAIN>/idp.")
+                    + "session, else https://idp.qits.<QITS_DOMAIN>/idp, else https://idp.qits.wohlben.eu/idp.")
     String idpUrl;
 
     @CommandLine.Option(names = "--git-host", paramLabel = "<url>",
             description = "The git host's address. Default: QITS_GIT_HOST_URL, else the idp's host with `idp` "
-                    + "swapped for `githost` (https://githost.dev.wohlben.eu).")
+                    + "swapped for `githost` (https://githost.qits.wohlben.eu).")
     String gitHost;
 
     @CommandLine.Option(names = "--audience", paramLabel = "<audience>",
-            description = "The audience of the token. Default: <env>-qits-githost, where <env> is the idp host's "
-                    + "second label (dev in idp.dev.wohlben.eu).")
+            description = "The audience of the token. Default: qits-platform, the one audience every platform "
+                    + "service accepts.")
     String audience;
 
     @CommandLine.Option(names = "--timeout", paramLabel = "<seconds>", defaultValue = "300",
@@ -84,7 +90,7 @@ public class GitLoginCommand extends PlatformCommand {
         }
         String resolvedAudience = audience != null && !audience.isBlank()
                 ? audience.strip()
-                : PlatformUrls.environment(idp) + "-qits-githost";
+                : AUDIENCE;
 
         int result;
         try {
@@ -114,23 +120,19 @@ public class GitLoginCommand extends PlatformCommand {
     }
 
     /** Which idp: the flag or QITS_IDP_URL, else the `qits login` session's, else as `qits login` finds it. */
-    static String idpUrl(String flag, Map<String, String> env, CliContext context) throws CliFailure {
-        try {
-            if ((flag != null && !flag.isBlank()) || !blank(env.get("QITS_IDP_URL"))) {
-                return IdpUrl.resolve(flag, env);
-            }
-            try {
-                Optional<Session> session = context.sessionFile().read();
-                if (session.isPresent()) {
-                    return session.get().idpUrl();
-                }
-            } catch (IOException unreadable) {
-                // Not needed: the idp can be found without it.
-            }
-            return IdpUrl.resolve(null, env);
-        } catch (IllegalArgumentException refused) {
-            throw new CliFailure(refused.getMessage(), CliFailure.USAGE);
+    static String idpUrl(String flag, Map<String, String> env, CliContext context) {
+        if ((flag != null && !flag.isBlank()) || !blank(env.get("QITS_IDP_URL"))) {
+            return IdpUrl.resolve(flag, env);
         }
+        try {
+            Optional<Session> session = context.sessionFile().read();
+            if (session.isPresent()) {
+                return session.get().idpUrl();
+            }
+        } catch (IOException unreadable) {
+            // Not needed: the idp can be found without it.
+        }
+        return IdpUrl.resolve(null, env);
     }
 
     /**

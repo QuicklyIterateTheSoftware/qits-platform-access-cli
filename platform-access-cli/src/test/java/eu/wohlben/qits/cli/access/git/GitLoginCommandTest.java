@@ -55,17 +55,27 @@ class GitLoginCommandTest {
         return out.toString(StandardCharsets.UTF_8);
     }
 
-    /** Runs the command, and plays the browser once the address is on stdout. */
+    /** The sign-in address the last run printed. */
+    private String address;
+
+    /** Runs the command with an explicit audience, and plays the browser once the address is on stdout. */
     private int gitLogin(String... extra) throws Exception {
+        List<String> args = new java.util.ArrayList<>(List.of("--audience", "dev-qits-githost"));
+        args.addAll(List.of(extra));
+        return gitLoginWith(args.toArray(String[]::new));
+    }
+
+    /** The same, with no audience but what {@code extra} names. */
+    private int gitLoginWith(String... extra) throws Exception {
         CliContext context = new CliContext(Map.copyOf(env), InputStream.nullInputStream(),
                 new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
                 new FakeTime(Instant.parse("2026-09-12T10:00:00Z")), new FakeTime(Instant.EPOCH), TokenClient::new, stop -> { });
         List<String> args = new java.util.ArrayList<>(List.of("git-login", "--idp-url", idp.url(), "--git-host",
-                ORIGIN + "/git/qits", "--audience", "dev-qits-githost", "--no-browser", "--timeout", "20"));
+                ORIGIN + "/git/qits", "--no-browser", "--timeout", "20"));
         args.addAll(List.of(extra));
         CompletableFuture<Integer> run = CompletableFuture.supplyAsync(() -> TestCli.execute(context, args.toArray(String[]::new)));
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
-        String address = null;
+        address = null;
         while (address == null && System.nanoTime() < deadline && !run.isDone()) {
             address = out().lines().map(String::strip).filter(l -> l.contains("/authorize?")).findFirst().orElse(null);
             Thread.sleep(20);
@@ -92,6 +102,15 @@ class GitLoginCommandTest {
                 .contains("  git config --global --add credential." + ORIGIN + ".helper '!qits git-credential'");
         assertThat(new GitCredentialFile(home.resolve("qits")).find(ORIGIN)).isPresent();
         assertThat(home.resolve("gitconfig")).doesNotExist();
+    }
+
+    @Test
+    void withNoAudienceItAsksForTheOneEveryPlatformServiceAccepts() throws Exception {
+        assertThat(gitLoginWith()).isZero();
+
+        assertThat(GitLoginFlowTest.query(address)).containsEntry("audience", "qits-platform");
+        assertThat(new GitCredentialFile(home.resolve("qits")).find(ORIGIN)).get()
+                .extracting(GitCredential::audience).isEqualTo("qits-platform");
     }
 
     @Test

@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GitLoginFlowTest {
 
     private static final Instant T0 = Instant.parse("2026-09-12T10:00:00Z");
-    static final String ORIGIN = "https://githost.dev.wohlben.eu";
+    static final String ORIGIN = "https://githost.qits.wohlben.eu";
     private static final String AUDIENCE = "dev-qits-githost";
 
     @TempDir

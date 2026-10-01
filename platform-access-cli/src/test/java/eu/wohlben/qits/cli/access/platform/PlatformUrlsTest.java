@@ -11,14 +11,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PlatformUrlsTest {
 
-    private static final String IDP = "https://idp.dev.wohlben.eu/idp";
+    private static final String IDP = "https://idp.qits.wohlben.eu/idp";
 
     @Test
     void theHostComesFromTheIdpAddress() throws Exception {
-        assertThat(PlatformUrls.projects(null, Map.of(), IDP)).isEqualTo("https://projects.dev.wohlben.eu");
-        assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.dev.wohlben.eu");
-        assertThat(PlatformUrls.observability(null, Map.of(), IDP)).isEqualTo("https://observability.dev.wohlben.eu");
-        assertThat(PlatformUrls.ci(null, Map.of(), IDP)).isEqualTo("https://ci.dev.wohlben.eu");
+        assertThat(PlatformUrls.projects(null, Map.of(), IDP)).isEqualTo("https://projects.qits.wohlben.eu");
+        assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.qits.wohlben.eu");
+        assertThat(PlatformUrls.observability(null, Map.of(), IDP)).isEqualTo("https://observability.qits.wohlben.eu");
+        assertThat(PlatformUrls.ci(null, Map.of(), IDP)).isEqualTo("https://ci.qits.wohlben.eu");
         assertThat(PlatformUrls.ci(null, Map.of("QITS_CI_URL", "http://ci.prod.localhost:8080/"), IDP))
                 .isEqualTo("http://ci.prod.localhost:8080");
         assertThat(PlatformUrls.observability("http://o.example/", Map.of("QITS_OBSERVABILITY_URL", "http://env.example"), IDP))
@@ -38,14 +38,10 @@ class PlatformUrlsTest {
     }
 
     @Test
-    void theGitHostAndTheEnvironmentComeFromTheIdpToo() throws Exception {
-        assertThat(PlatformUrls.gitHost(null, Map.of(), IDP)).isEqualTo("https://githost.dev.wohlben.eu");
+    void theGitHostComesFromTheIdpToo() throws Exception {
+        assertThat(PlatformUrls.gitHost(null, Map.of(), IDP)).isEqualTo("https://githost.qits.wohlben.eu");
         assertThat(PlatformUrls.gitHost(null, Map.of("QITS_GIT_HOST_URL", "http://githost.prod.localhost:8080"), IDP))
                 .isEqualTo("http://githost.prod.localhost:8080");
-        assertThat(PlatformUrls.environment(IDP)).isEqualTo("dev");
-        assertThat(PlatformUrls.environment("http://idp.prod.localhost:8080/idp")).isEqualTo("prod");
-        assertThatThrownBy(() -> PlatformUrls.environment("http://127.0.0.1:4000/idp")).hasMessageContaining("--audience");
-        assertThatThrownBy(() -> PlatformUrls.environment("https://idp.localhost/idp")).hasMessageContaining("--audience");
     }
 
     /**
@@ -82,7 +78,7 @@ class PlatformUrlsTest {
     /** Outside, events is the idp host with its first label swapped, exactly as before. */
     @Test
     void theWorkstationVhostForEventsIsUnchanged() throws Exception {
-        assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.dev.wohlben.eu");
+        assertThat(PlatformUrls.events(null, Map.of(), IDP)).isEqualTo("https://events.qits.wohlben.eu");
         assertThat(PlatformUrls.events(null, Map.of(), "http://idp.prod.localhost:8080/idp/"))
                 .isEqualTo("http://events.prod.localhost:8080");
     }

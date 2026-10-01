@@ -151,8 +151,8 @@ class ObserveCommandTest {
 
     @Test
     void theSocketAddressFollowsTheScheme() throws Exception {
-        assertThat(ObserveCommand.socketUri("https://observability.dev.wohlben.eu"))
-                .hasToString("wss://observability.dev.wohlben.eu/observability/stream");
+        assertThat(ObserveCommand.socketUri("https://observability.qits.wohlben.eu"))
+                .hasToString("wss://observability.qits.wohlben.eu/observability/stream");
         assertThat(ObserveCommand.socketUri("http://observability.prod.localhost:8080"))
                 .hasToString("ws://observability.prod.localhost:8080/observability/stream");
         assertThat(ObserveCommand.socketUri("HTTPS://o.example")).hasToString("wss://o.example/observability/stream");
