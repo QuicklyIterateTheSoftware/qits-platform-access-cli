@@ -120,6 +120,20 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!-- A test jar beside the main one, for the MCP service in this reactor: its
+                     end-to-end calls run against the same fakes (FakePlatform, FakeSocketServer) the
+                     commands' own tests use, rather than a second copy of them. Never deployed,
+                     like the main jar. -->
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>io.smallrye</groupId>
                 <artifactId>jandex-maven-plugin</artifactId>
                 <version>${jandex-plugin.version}</version>

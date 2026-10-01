@@ -19,11 +19,11 @@ a file, and a workspace container on the platform, where the commissioned client
 was injected with is the credential and the services are dialled by their wire aliases. The mode is
 decided once at startup and the two are never mixed.
 
-## Three modules
+## Four modules
 
 Since 2026-09-17 this repository is a Maven reactor. The root `pom.xml` is an aggregator
 (`eu.wohlben:qits`, packaging `pom`) holding the shared properties and the quarkus-bom import, the
-shape qits-ci-daemon's root has, and it lists three modules, in this order:
+shape qits-ci-daemon's root has, and it lists four modules, in this order:
 
     platform-access-cli-binary  the pin. One class, three strings, no bytes of the binary: the
                                 daemons-store name, the command name (`qits`), and the version the
@@ -40,6 +40,14 @@ shape qits-ci-daemon's root has, and it lists three modules, in this order:
                                 picocli-codegen writes the tree's native-image reflection config
                                 into the jar, and a Jandex index lets Quarkus see its classes.
                                 Deploys nothing (`maven.deploy.skip`); consumed in this reactor.
+                                Also builds a test jar, so the MCP service's tests run against the
+                                same fakes (`FakePlatform`, `FakeSocketServer`).
+    platform-access-mcp-service the MCP service (`eu.wohlben.qits:qits-platform-access-mcp-service`,
+                                application `qits-platform-access-mcp-service`): the commands served
+                                as MCP tools at `/mcp`. quarkus-mcp-server-http, quarkus-oidc (bearer
+                                check only), health. Never quarkus-oidc-client, never quarkus-picocli.
+                                Deploys nothing to Maven; the release ships it as an image. See "The
+                                MCP service" below.
     platform-access-cli         the program. The sources moved from `src/` to
                                 `platform-access-cli/src/` on 2026-09-17, and its published
                                 coordinates (`eu.wohlben.qits:qits-platform-access-cli`) did not
@@ -70,6 +78,34 @@ the whole reasoning; `.config/qits/ci-event-release.yml`'s last step publishes i
 
 `SKILL.md` stays at the repository root and did not follow the sources into the module; the test
 that keeps it in step (`SkillDocumentTest`) resolves it one directory up and says why.
+
+## The MCP service
+
+`platform-access-mcp-service/src/main/java/eu/wohlben/qits/cli/mcp/`: three classes.
+
+    ToolCatalog  the tools, read off the picocli tree: one per command that runs (a leaf, or a
+                 runnable parent), named by its path joined with `_`. A command is NOT a tool when
+                 the nearest `@TuiCommand(interaction)` from it upwards is BROWSER, STREAMING,
+                 CI_ONLY or LOCAL; those are listed, with their reason, in the server's
+                 `instructions`. The schema is the command's options (inherited ones included) and
+                 positionals, minus help/version and every `*-url` option (a caller-chosen address
+                 would receive the caller's bearer), plus `payload` on `input = PAYLOAD` commands.
+                 `--output` defaults to `json` where the command offers it.
+    ToolRunner   one call: a fresh CommandLine, argv built from the arguments (never a shell), the
+                 payload as stdin, buffered stdout/stderr, a CliContext on every PlatformCommand
+                 with the caller's bearer (`RequestCredential`) and a fixed environment
+                 (`QITS_PLATFORM=true`, `QITS_ENV`, the `QITS_<APP>_URL` overrides the service was
+                 configured with, nothing else). Exit 0 is the stdout (and stderr, when it says
+                 something); anything else is `isError` with stderr, `exit <n>` and stdout.
+    McpTools     registers the catalog with `ToolManager` under the server `qits`, runs each call on
+                 a worker thread (the commands block), and answers `instructions`. It sets
+                 `QITS_MCP_SERVICE` first, so `CliContext.system()` throws in this process.
+
+A new command or option on the CLI is a tool or a schema property with no change here.
+`McpToolCatalogTest` walks the real tree and fails when that stops being true; `McpServiceTest`
+proves the 401 without a bearer, `tools/list`, the instructions and a call carrying the caller's
+bearer. A plain `mvn verify` runs both; neither needs docker or an idp (the bearer tests sign with
+a key under `src/test/resources`).
 
 ## Layout
 
@@ -234,7 +270,10 @@ Two packages sit outside `access/`, because neither is about one command:
 
 ## Build forms
 
-    sdk env && ./mvnw package -Dnative -DskipTests   the binary: platform-access-cli/target/qits
+    sdk env && ./mvnw package -Dnative -DskipTests   the binary: platform-access-cli/target/qits,
+                                                     and the service:
+                                                     platform-access-mcp-service/target/
+                                                     qits-platform-access-mcp-service
     ./mvnw clean verify                              the tests; packages the pin and commands jars
     docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
                                                      the released form: static musl, out/qits

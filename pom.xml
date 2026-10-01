@@ -14,7 +14,7 @@
 
          AN AGGREGATOR SINCE 2026-09-17, AND THE SHAPE IS qits-ci-daemon's ROOT: the
          `eu.wohlben:qits` coordinate a child's <parent> points at (../pom.xml), the quarkus-bom
-         import, the compiler/surefire pins, and nothing else. Three modules:
+         import, the compiler/surefire pins, and nothing else. Four modules:
 
            platform-access-cli-binary  the pin: one tiny jar whose own version IS the version of
                                        the binary this release published. The only thing here that
@@ -25,18 +25,25 @@
                                        no quarkus-picocli and no JLine, so more than one program can
                                        be built from one tree. Never deployed; consumed in this
                                        reactor only.
+           platform-access-mcp-service the same commands served as MCP tools at /mcp, each call run
+                                       as its caller: the Quarkus service
+                                       qits-platform-access-mcp-service, released as an image from
+                                       the same release as the binary. Never deployed to Maven.
            platform-access-cli         the program: the `qits` native binary, which is what this
                                        repository is for. The commands, plus `qits tui` and the
                                        command-mode Quarkus application around them.
 
          THE PIN IS FIRST IN THE LIST because it is the cheap module and nothing depends on it in
-         reactor: a broken pin costs no native compile. The commands come before the program that
-         depends on them (Maven orders the reactor by dependency anyway; the list says it too). The release stamper walks a reactor by
+         reactor: a broken pin costs no native compile. The commands come before the two programs
+         that depend on them, the service before the CLI (Maven orders the reactor by dependency
+         anyway; the list says it too). The release stamper walks a reactor by
          <module> only, so a module missing from this list would never be version-stamped — which
          is the whole reason the pin had to become a module rather than a nested pom beside one.
 
-         ONE FORM, STILL. `./mvnw package -Dnative -DskipTests` makes the native binary
-         `platform-access-cli/target/qits`, which is what this program is. The application module
+         `./mvnw package -Dnative -DskipTests` makes the native binary
+         `platform-access-cli/target/qits` and the native service
+         `platform-access-mcp-service/target/qits-platform-access-mcp-service`; `-pl <module> -am`
+         builds one of them. The application module
          builds no jar; the three lines that keep it so live in its pom, as they do in
          qits-bootstrap-cli's. `./mvnw clean verify` runs the tests and packages the pin and the
          commands jar the program is built from. -->
@@ -49,6 +56,7 @@
     <modules>
         <module>platform-access-cli-binary</module>
         <module>platform-access-commands</module>
+        <module>platform-access-mcp-service</module>
         <module>platform-access-cli</module>
     </modules>
 

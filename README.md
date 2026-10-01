@@ -120,12 +120,21 @@ and answers 401 without one. Use your own sign-in, never a machine client's id a
     docker build --target binary --output type=local,dest=out -f docker/Dockerfile .
                                                      the released form, static: out/qits
 
-Run all three from the repository root: it is a three-module Maven reactor.
+Run all three from the repository root: it is a four-module Maven reactor. A root native build
+compiles two programs, the binary and the MCP service; `-pl platform-access-cli -am` (what the
+Dockerfile builds) or `-pl platform-access-mcp-service -am` builds one.
 
     platform-access-commands    every command but `qits tui`, the session and the screen's model,
                                 as a plain picocli jar: no quarkus-picocli, no JLine. One command
                                 tree that more than one program is built from. It is deployed to
                                 no Maven repository; the program below takes it from the reactor.
+    platform-access-mcp-service the same commands served as MCP tools at /mcp
+                                (`qits-platform-access-mcp-service`): one tool per command, named by
+                                its path joined with `_` (`work_update`), its options as the
+                                schema, each call run in-process as the caller, with the bearer on
+                                the MCP request as its credential. A Quarkus service, native in
+                                `target/qits-platform-access-mcp-service`; deployed to no Maven
+                                repository. See "The MCP service" in AGENTS.md.
     platform-access-cli         the program — everything described above, and the native binary:
                                 the commands, plus `qits tui`, as a Quarkus command-mode
                                 application. It builds no jar and is deployed to no Maven
