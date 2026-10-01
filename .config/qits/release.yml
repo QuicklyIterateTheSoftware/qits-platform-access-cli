@@ -1,6 +1,12 @@
 archetype: daemon
 artifacts:
   - { type: daemon, name: qits-platform-access-cli, sbom: out/sbom.json }
+  # THE MCP SERVICE'S IMAGE, from the same release as the binary: `docker/Dockerfile`'s `service`
+  # target, pushed by the release step below and deployed by qits-deployments as the application
+  # `qits-platform-access-mcp-service` (`.config/qits/deployments.yml`). ONE FLOW LINE, the fleet's
+  # spelling. Its SBOM sits beside the binary's because the composed postlude submits every declared
+  # `sbom:` from ONE step, the last `build: true` one, so the image is built in that same step.
+  - { type: docker, name: qits/qits-platform-access-mcp-service, sbom: out/service/sbom.json }
   # THE PIN, AND IT IS NOT OPTIONAL. One class, three strings, no bytes of the binary: the daemons-
   # store name, the command name, and the version this same release published the binary under.
   # qits-ci's pom depends on it and injects the version it names, which is what stopped every
@@ -39,10 +45,11 @@ release-request:
       export QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}"
       ./mvnw -B -ntp -s .qits-maven-settings.xml verify
 
-    # Then the shipping form: the static musl binary, on the platform's builder, with no socket.
+    # Then the shipping forms: the static musl binary and the MCP service image, on the platform's
+    # builder, with no socket. Two native compiles, hence the release step's 5400.
   - image: qits/build-images/ci-base:latest
     build: true
-    timeout-seconds: 3600
+    timeout-seconds: 5400
     script: |
       : "${QITS_MAVEN_REGISTRY_URL:?}"
       maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
@@ -93,11 +100,26 @@ release-request:
           exit 1 ;;
       esac
       echo "qits built: $(sha256sum out/qits | cut -d' ' -f1)"
+      # THE SERVICE IMAGE, BUILT AND NOT PUSHED, so a native break in the MCP service fails the
+      # request rather than the release. No `--output` at all: buildctl solves the graph and exports
+      # nothing, as the java-service archetype's QA build does. The same args and secrets as every
+      # other invocation here, so the release step's image build is cache hits.
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=service \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
+        $tarball_auth \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --secret id=qits-client-id,src=/tmp/qits-client-id \
+        --secret id=qits-client-secret,src=/tmp/qits-client-secret
 
 release:
+    # Two native compiles in one step — the binary and the MCP service — one after the other, each
+    # inside the 4g cap; 5400 rather than 3600 for the second.
   - image: qits/build-images/ci-base:latest
     build: true
-    timeout-seconds: 3600
+    timeout-seconds: 5400
     script: |
       : "${QITS_MAVEN_REGISTRY_URL:?}"
       maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
@@ -113,9 +135,9 @@ release:
         tarball_host=$(printf '%s\n' "$maven_root" | sed -E 's|^[A-Za-z]+://||; s|[/:?].*$||')
         tarball_auth="--secret id=HTTP_AUTH_TOKEN_$tarball_host,env=QITS_TOKEN"
       fi
-      # BYTE-IDENTICAL BUILD ARGS ACROSS THE TWO INVOCATIONS, and across the QA build above, or the
+      # BYTE-IDENTICAL BUILD ARGS ACROSS THE FOUR INVOCATIONS, and across the QA builds above, or an
       # sbom stage is a second native compile instead of a cache hit on the resolve that produced
-      # the binary.
+      # the bytes.
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
         --opt target=binary \
@@ -136,6 +158,34 @@ release:
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret \
         --output type=local,dest=out
+      # THE MCP SERVICE IMAGE, pushed: `push=true` IS THE PUBLISH, from the builder straight to the
+      # registry. The coordinate is the java-service archetype's, spelled the same way:
+      # `$QITS_BUILD_REGISTRY` is the registry as the builder resolves it, and the declaration's
+      # `qits/` namespace is re-supplied as `$QITS_IMAGE_REPOSITORY`. Before the daemon submit, so the
+      # order is: binary built, image pushed, binary submitted. The postlude then submits both
+      # declared SBOMs, out/sbom.json and out/service/sbom.json, from this step.
+      ref="$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/qits-platform-access-mcp-service:$QITS_VERSION"
+      echo "releasing $ref"
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=service \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
+        $tarball_auth \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --secret id=qits-client-id,src=/tmp/qits-client-id \
+        --secret id=qits-client-secret,src=/tmp/qits-client-secret \
+        --output "type=image,name=$ref,push=true"
+      buildctl build --frontend dockerfile.v0 \
+        --local context=. --local dockerfile=docker \
+        --opt target=service-sbom \
+        --opt build-arg:MUSL_URL="$musl_url" \
+        --opt build-arg:ZLIB_URL="$zlib_url" \
+        $tarball_auth \
+        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --secret id=qits-client-id,src=/tmp/qits-client-id \
+        --secret id=qits-client-secret,src=/tmp/qits-client-secret \
+        --output type=local,dest=out/service
       # `chmod +x` IS NOT OPTIONAL: the local export loses the mode bit, and a static binary that
       # cannot be executed is a green build that publishes nothing runnable.
       chmod +x out/qits

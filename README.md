@@ -184,6 +184,19 @@ shaped like the retired qits-artifacts-cli's were:
   `{type: maven, name: eu.wohlben.qits:qits-platform-access-cli-binary}` — so qits-ci announces one
   release for each.
 
+The same release also ships the MCP service as an image, `qits/qits-platform-access-mcp-service`
+(`docker build --target service -f docker/Dockerfile .`; its SBOM is `--target service-sbom`). The
+release's first step builds the binary, then builds and pushes the image to
+`$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/qits-platform-access-mcp-service:<version>`, then submits
+the binary; the postlude submits both SBOMs from that step. The request's QA step builds the image
+too, without pushing, so a native break in the service fails the request. `.config/qits/release.yml`
+declares it as the third artifact, `{type: docker, name: qits/qits-platform-access-mcp-service}`.
+
+qits-deployments deploys that image because `.config/qits/deployments.yml` exists: application
+`qits-platform-access-mcp-service`, wire alias `<env>-qits-platform-access-mcp-service:8080`, route
+`/mcp`, public host `mcp.<env>.<domain>`, readiness at `/q/health/ready`. Its environment
+(`QUARKUS_OIDC_AUTH_SERVER_URL`, `QITS_ENV`, …) comes from qits-bootstrap-cli's `ComposeTemplate`.
+
 The recipes need no toolchain image in the registry: `docker/Dockerfile` builds the musl toolchain
 as a stage, from two tarballs in the platform's Maven store, which the bootstrap seeds.
 

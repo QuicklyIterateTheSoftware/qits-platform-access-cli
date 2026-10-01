@@ -1,6 +1,12 @@
 # HOW THE RELEASED BINARY IS BUILT: `qits`, a fully static musl native image that runs on any Linux,
-# glibc or musl (alpine) alike. This repository ships no image. The last stage is a `FROM scratch`
-# holding the one file, and a build is an `--output type=local` of it.
+# glibc or musl (alpine) alike. The last stage is a `FROM scratch` holding the one file, and a build
+# is an `--output type=local` of it.
+#
+# AND THE ONE IMAGE THIS REPOSITORY SHIPS, `--target service`: the MCP service
+# (platform-access-mcp-service), the same commands served as MCP tools at /mcp. Its own build stage
+# (`service-build`), its own SBOM stage (`service-sbom`) and a ubi-minimal runtime stage (`service`),
+# all before `binary`, so a plain build still yields `qits`. The release step builds and pushes it
+# beside the binary, from the same release (`.config/qits/release.yml`).
 #
 # The shape is qits-ci-daemon's: one build stage on the musl toolchain, two `FROM scratch` export
 # stages (sbom, then binary, which stays the default target), the `ldd` check on the same RUN as the
@@ -139,10 +145,66 @@ RUN set -eu; \
     printf '%s' "$out" | grep -q "needs an interactive terminal"; \
     printf '%s' "$out" | grep -q "exit=2"
 
+# THE MCP SERVICE'S NATIVE RUNNER, A SECOND COMPILE IN A SECOND STAGE. Not on the `build` RUN: one
+# mvnw call over both modules would run two native-image processes in one RUN, and each is sized to
+# the 4g step cap on its own. Everything else is `build`'s, argument for argument — the same COPY,
+# the same two secrets, the same static musl flags and xmx — so the two stages share every layer up
+# to the mvnw call. `-pl platform-access-mcp-service -am` builds the commands library and the root
+# pom with it, not the CLI. makeBom on the same call, for the same reason as `build`'s, and
+# skipNotDeployed=false for the same reason too: the service module is deployed to no Maven
+# repository.
+#
+# THE SAME `ldd` CHECK AS THE BINARY'S. The runtime base is ubi-minimal and has a glibc, so a
+# dynamic runner would start there; the check holds anyway, because a dynamic runner means the musl
+# flags did not reach this compile, and then this is not the build the header describes. There is
+# no smoke run of the runner here: a service started in a RUN would wait for requests, and the
+# readiness gate of the deployment is what proves it starts.
+FROM ${BUILDER_IMAGE} AS service-build
+USER root
+WORKDIR /qits-build
+COPY . .
+ARG QITS_MAVEN_CENTRAL_URL=
+ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
+RUN --mount=type=secret,id=qits-client-id \
+    --mount=type=secret,id=qits-client-secret \
+    export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
+    export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
+    ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
+      -pl platform-access-mcp-service -am \
+      -Dquarkus.native.container-build=false \
+      -Dquarkus.native.additional-build-args-append=--static,--libc=musl \
+      -Dquarkus.native.native-image-xmx=4g \
+      org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
+      -DoutputFormat=json -DoutputName=sbom -DschemaVersion=1.6 \
+      -Dcyclonedx.skipNotDeployed=false \
+ && ldd platform-access-mcp-service/target/qits-platform-access-mcp-service 2>&1 \
+      | grep -qE "statically linked|not a dynamic executable"
+
 # The CycloneDX document, for the release step's SBOM PUT. Before `binary`, so that stays the
 # default. The application module's document: the closure that made the bytes.
 FROM scratch AS sbom
 COPY --from=build /qits-build/platform-access-cli/target/sbom.json /sbom.json
+
+# The service's document, exported to out/service by the release step, which declares it as the
+# image's `sbom:`. Same args and secrets as the image build, so it is a cache hit on that compile.
+FROM scratch AS service-sbom
+COPY --from=service-build /qits-build/platform-access-mcp-service/target/sbom.json /sbom.json
+
+# THE IMAGE: qits/qits-platform-access-mcp-service, deployed as the application of the same name
+# (`.config/qits/deployments.yml`). The runtime base and its shape are qits-ci-service's final
+# stage: `mirror.dev.localhost:8080/redhat/…` is qits-platform-mirror pointed at
+# registry.access.redhat.com, /work, user 1001, nothing installed. The runner keeps its
+# `quarkus.package.output-name`, so `ps` shows what the edge routes to.
+FROM mirror.dev.localhost:8080/redhat/ubi9/ubi-minimal:9.6 AS service
+WORKDIR /work
+COPY --from=service-build --chown=1001:root \
+     /qits-build/platform-access-mcp-service/target/qits-platform-access-mcp-service \
+     /work/qits-platform-access-mcp-service
+RUN chmod +x /work/qits-platform-access-mcp-service
+EXPOSE 8080
+USER 1001
+# Quarkus binds 127.0.0.1 outside dev mode, which inside a container means nothing can reach it.
+ENTRYPOINT ["/work/qits-platform-access-mcp-service", "-Dquarkus.http.host=0.0.0.0"]
 
 # The artifact: `--output type=local,dest=out` writes out/qits. The export layout is unchanged by
 # the reactor split on purpose — every recipe and every hand build reads `out/qits` and `/sbom.json`

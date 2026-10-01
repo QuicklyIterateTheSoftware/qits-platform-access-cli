@@ -297,6 +297,14 @@ step on a maven image, deploys the pin jar that names it (README, Releases). The
 what keeps those recipes short: the binary lands in `platform-access-cli/target/` now, but the
 Dockerfile's `binary` stage still exports `out/qits` and its `sbom` stage `/sbom.json`, so nothing
 outside the Dockerfile moved when the reactor split.
+The same release step builds the MCP service from the Dockerfile's `service` target (a second
+native compile in its own `service-build` stage, never on the binary's RUN: two native-image
+processes would not fit the 4g cap) and pushes it as `qits/qits-platform-access-mcp-service`; its
+SBOM comes from `service-sbom` into `out/service/`, and the composed postlude submits both declared
+SBOMs from that one step, which is why the image is built there and not in a step of its own.
+`.config/qits/deployments.yml` makes qits-deployments deploy it (application
+`qits-platform-access-mcp-service`, `routes: /mcp`, `host: mcp`, `health_path: /q/health/ready`).
+`binary` stays the Dockerfile's last stage, so a plain build still yields `qits`.
 Keep their `buildctl` calls identical, argument for argument: the builder's cache is shared, and
 that is what makes a release after a green fold cache hits. The musl toolchain is a stage of that
 Dockerfile, copied from qits-ci-daemon's `docker/Dockerfile.musl-builder`: no registry tag, so a cold
