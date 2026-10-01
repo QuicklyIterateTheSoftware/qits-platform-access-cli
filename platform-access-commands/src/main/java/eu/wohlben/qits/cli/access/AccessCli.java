@@ -9,6 +9,7 @@ import eu.wohlben.qits.cli.access.git.GitCredentialCommand;
 import eu.wohlben.qits.cli.access.git.GitLoginCommand;
 import eu.wohlben.qits.cli.access.help.HelpCommand;
 import eu.wohlben.qits.cli.access.login.LoginCommand;
+import eu.wohlben.qits.cli.access.mcp.McpCredentialCommand;
 import eu.wohlben.qits.cli.access.observe.ObserveCommand;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
@@ -34,7 +35,8 @@ import picocli.CommandLine;
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, EventsCommand.class,
-                ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, ArtifactsCommand.class,
+                ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
+                ArtifactsCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
@@ -52,7 +54,8 @@ import picocli.CommandLine;
                         + "branch to an open one. A push releases nothing.",
                 "- Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from "
                         + "`qits git-credential`.",
-                "- qits never prints a token. The one exception is `qits git-credential get`, which Git runs.",
+                "- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, "
+                        + "and `qits mcp-credential`, which Claude runs.",
                 "- A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})

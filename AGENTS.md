@@ -105,6 +105,7 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                classes, kept as they were; the picocli commands and PublishArgs (the
                argument-grammar checks Args used to do) are new. Touches no session file — see
                Conventions.
+    mcp/       qits mcp-credential: Claude's MCP headers helper (interim, retired by qits-684)
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
     complete/  the five platform sources behind the TUI's dropdowns (projects, repositories,
                release requests, runs, versions), over the credential the commands use
@@ -135,9 +136,11 @@ Two packages sit outside `access/`, because neither is about one command:
   `Session`, `TokenResponse` and `Pkce` override `toString` for that reason. An error from the idp
   names its status, `error` and `error_description`, never the request form. A Jackson error on a
   session or token body is replaced, because its message can quote the body.
-  **The one exception is `qits git-credential get`**: it prints the git access token on stdout,
-  because that is Git's credential helper protocol. Nothing else prints one, and stderr and logs
-  never carry one, that command's included.
+  **The two exceptions are `qits git-credential get`**, which prints the git access token on
+  stdout because that is Git's credential helper protocol, **and `qits mcp-credential`**, which
+  prints `{"Authorization":"Bearer <token>"}` because that is what Claude's MCP `headersHelper`
+  reads (interim, until qits-684 gives every workspace a long-lived token). Nothing else prints one,
+  and stderr and logs never carry one, those two commands' included.
 - **Every refresh and every write of `t.json` happens under the write lock**, and the file is read
   again under it. Refresh tokens rotate; a spent one presented again revokes the whole session.
   `SessionRefresh` is the only code that spends a `t.json` refresh token; the daemon and the

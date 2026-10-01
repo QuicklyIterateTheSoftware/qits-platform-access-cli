@@ -20,6 +20,7 @@ class AccessCliTest {
         assertThat(result.getOutput()).contains("qits").contains("login").contains("session-daemon")
                 .contains("projects").contains("repositories").contains("release-request").contains("events")
                 .contains("observe").contains("git-login").contains("git-credential")
+                .contains("mcp-credential").contains("The two exceptions are `qits git-credential get`")
                 .contains("Platform rules:").contains("Exit codes:");
         assertThat(result.getOutputStream()).as("help is for agents and stays hidden")
                 .noneMatch(line -> line.strip().startsWith("help "));

@@ -18,6 +18,8 @@ Commands:
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
+- `qits mcp-credential` is Claude's MCP headers helper for the qits MCP server (interim) — see
+  below.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
 - `qits tui` opens an interactive screen over all of the above: pick a command instead of
@@ -972,8 +974,23 @@ instead, minted at the internal idp on demand:
 - An idp that cannot be reached or refuses the client says why on stderr and still exits `0`, so
   Git carries on with its other helpers.
 
-`git-credential get` is the one place `qits` prints a token, because that is how Git's helper
-protocol works. stderr never carries one.
+`git-credential get` is one of the two places `qits` prints a token, because that is how Git's
+helper protocol works. stderr never carries one.
+
+### qits mcp-credential
+
+    qits mcp-credential      Claude runs this; a person does not
+
+Claude's MCP configuration names it as the `headersHelper` of the qits MCP server's entry, and
+Claude runs it whenever it connects. It prints `{"Authorization":"Bearer <token>"}` and a newline
+on stdout and exits `0`: inside the platform the container's own credential (audience
+`qits-platform`, minted on demand), on a workstation the session of `qits login`, refreshed first
+when it is about to expire. Any failure is one line on stderr, nothing on stdout and exit `1`, so
+Claude connects without the header and the server answers 401.
+
+It is the other place `qits` prints a token. It is interim: a container's token lasts an hour, so
+a header written once at launch would go stale. Follow-up qits-684 gives every workspace a
+long-lived token of its own, the entry then carries it as a plain header, and this command goes.
 
 ## qits artifacts publish
 

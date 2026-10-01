@@ -12,7 +12,7 @@ Each command calls the platform through its edge, with the session of `qits logi
 - Sign in once with `qits login`, and keep `qits session-daemon` running so the session stays fresh.
 - Release only through a release request: `qits release-request create`, or `join` to add a branch to an open one. A push releases nothing.
 - Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from `qits git-credential`.
-- qits never prints a token. The one exception is `qits git-credential get`, which Git runs.
+- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, and `qits mcp-credential`, which Claude runs.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
 
 ## Exit codes
@@ -929,6 +929,31 @@ Inside the platform Git is set up for every host at once, so the injected host i
 - `0` Done. For a host without a sign-in, and inside the platform for any host but the injected one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why on stderr and still exits 0, so Git carries on.
 - `1` The sign-in file cannot be read or written.
 - `2` No action named.
+
+## qits mcp-credential
+
+The headers helper of Claude's MCP entry for the qits MCP server. Claude runs it; a person does not.
+
+Prints {"Authorization":"Bearer <token>"} on stdout: inside the platform the container's own credential, on a workstation the session of `qits login`, refreshed first when needed.
+
+Interim: once every workspace has a long-lived token of its own (qits-684) the entry carries it as a plain header and this command goes.
+
+```
+qits mcp-credential
+```
+
+### Examples
+
+```
+"qits": {"type": "http", "url": "http://dev-qits-platform-access-mcp-service:8080/mcp", "headersHelper": "qits mcp-credential"}
+```
+
+The example is the entry in Claude's MCP configuration. Do not run it yourself: it prints a token on stdout, because that is what a headers helper does.
+
+### Exit codes
+
+- `0` Printed.
+- `1` No token to be had (not signed in, the session ended, or the idp refused or cannot be reached): one line on stderr and nothing on stdout, so Claude connects without the header and is told 401.
 
 ## qits artifacts
 
