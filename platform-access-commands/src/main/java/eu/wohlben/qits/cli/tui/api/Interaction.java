@@ -18,5 +18,13 @@ public enum Interaction {
     BROWSER,
 
     /** Only means anything inside a CI step, where the step's own credentials are. */
-    CI_ONLY
+    CI_ONLY,
+
+    /**
+     * Only means something on the caller's machine: it answers a program running beside it (Git, an
+     * MCP client) or writes a file there. The screen treats it exactly like {@link #PLAIN}; it says
+     * so for whoever runs the commands somewhere else, such as the MCP service, which offers none of
+     * them.
+     */
+    LOCAL
 }

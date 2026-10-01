@@ -32,6 +32,11 @@ public final class TuiCommands {
         return declared == null ? Interaction.PLAIN : declared.interaction();
     }
 
+    public static Input inputOf(Object command) {
+        TuiCommand declared = declaredOn(command);
+        return declared == null ? Input.NONE : declared.input();
+    }
+
     public static Output outputOf(Object command) {
         TuiCommand declared = declaredOn(command);
         return declared == null ? Output.TEXT : declared.output();

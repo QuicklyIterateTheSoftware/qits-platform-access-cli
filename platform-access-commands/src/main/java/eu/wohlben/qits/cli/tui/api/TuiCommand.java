@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * The few things about a command that picocli's model cannot say, said once, next to the command.
  * <p>
- * Both members are optional and both have a working default, so a command that carries no
+ * Every member is optional and both have a working default, so a command that carries no
  * {@code @TuiCommand} at all still appears in {@code qits tui} and still runs. Nothing outside this
  * annotation and {@link CompletionSource} may make the TUI treat one command differently from
  * another — that is the whole of the contract, and the fictional-command test holds it.
@@ -20,4 +20,7 @@ public @interface TuiCommand {
     Interaction interaction() default Interaction.PLAIN;
 
     Output output() default Output.TEXT;
+
+    /** Whether the command reads a document on stdin. The screen does not read it. */
+    Input input() default Input.NONE;
 }

@@ -46,7 +46,17 @@ class FictionalCommandTest {
         String thing;
     }
 
-    @CommandLine.Command(name = "qits", description = "The root.", subcommands = FictionalCommand.class)
+    /** The same, declared as only meaning something on the caller's machine: the screen does not care. */
+    @eu.wohlben.qits.cli.tui.api.TuiCommand(interaction = Interaction.LOCAL)
+    @CommandLine.Command(name = "nearby", description = "Not a real command either.")
+    static class NearbyCommand {
+
+        @CommandLine.Option(names = "--thing", required = true, description = "The thing it needs.")
+        String thing;
+    }
+
+    @CommandLine.Command(name = "qits", description = "The root.",
+            subcommands = {FictionalCommand.class, NearbyCommand.class})
     static class Root {
     }
 
@@ -72,6 +82,25 @@ class FictionalCommandTest {
         app.key(Key.of(Key.Kind.ENTER));
         assertThat(app.selection().commandLine()).isEqualTo("qits fictional --thing 'a value'");
         assertThat(app.selection().argv()).containsExactly("fictional", "--thing", "a value");
+    }
+
+    @Test
+    void aLocalCommandThisTestInventedAppearsAndRunsLikeAnyOther() {
+        assertThat(lines()).anySatisfy(line -> assertThat(line).contains("nearby")
+                .contains("Not a real command either."));
+
+        app.key(Key.of(Key.Kind.DOWN));
+        app.key(Key.of(Key.Kind.ENTER));
+        assertThat(lines()).anySatisfy(line -> assertThat(line).contains("* --thing"));
+        assertThat(lines()).anySatisfy(line -> assertThat(line).contains("$ qits nearby"));
+
+        app.key(Key.of(Key.Kind.ENTER));
+        "here".chars().forEach(ch -> app.key(Key.character((char) ch)));
+        app.key(Key.of(Key.Kind.ENTER));
+        assertThat(app.selection().argv()).containsExactly("nearby", "--thing", "here");
+        app.key(Key.of(Key.Kind.CTRL_R));
+        assertThat(app.history().entries()).singleElement()
+                .satisfies(entry -> assertThat(entry.commandLine()).isEqualTo("qits nearby --thing here"));
     }
 
     /**

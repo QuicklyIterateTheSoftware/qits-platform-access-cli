@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * What a platform command takes from the world. The real one is {@link #system()}; a test gives
@@ -28,6 +29,9 @@ import java.util.function.Function;
  * process.
  *
  * @param onStop installs what SIGTERM and SIGINT do
+ * @param credentials what a call is made with. Null is today's choice by mode (see {@link
+ *                    #credential()}); a host that runs the commands for somebody else — the MCP
+ *                    service, which forwards its caller's bearer — hands its own.
  */
 public record CliContext(
         Map<String, String> env,
@@ -37,10 +41,51 @@ public record CliContext(
         Clock clock,
         Sleeper sleeper,
         Function<String, TokenClient> idpFor,
-        Consumer<Runnable> onStop) {
+        Consumer<Runnable> onStop,
+        Supplier<Credential> credentials) {
 
-    /** UTF-8 whatever the locale says, so a dash in a message stays a dash. */
+    /**
+     * Set, as a system property or in the environment, in the MCP service. That process runs the
+     * commands for whoever called it, so a context it forgot to hand a command must fail loudly: the
+     * fallback would read the service's own environment and call the platform as the service
+     * rather than as the caller. Its value does not matter, only that it is there.
+     */
+    public static final String MCP_SERVICE = "QITS_MCP_SERVICE";
+
+    public CliContext {
+        if (credentials == null) {
+            // The components, not the accessors: a compact constructor has not assigned them yet.
+            Map<String, String> environment = env;
+            Clock time = clock;
+            Function<String, TokenClient> idps = idpFor;
+            credentials = () -> Mode.of(environment).inPlatform()
+                    ? AgentCredential.of(environment, time)
+                    : new AccessTokens(SessionFile.fromEnvironment(environment), time, idps);
+        }
+    }
+
+    /** The context every caller had before a credential could be carried: the credential by mode. */
+    public CliContext(Map<String, String> env, InputStream in, PrintStream out, PrintStream err, Clock clock,
+                      Sleeper sleeper, Function<String, TokenClient> idpFor, Consumer<Runnable> onStop) {
+        this(env, in, out, err, clock, sleeper, idpFor, onStop, null);
+    }
+
+    /** This one, calling the platform with {@code credential} whatever the mode says. */
+    public CliContext withCredential(Credential credential) {
+        return new CliContext(env, in, out, err, clock, sleeper, idpFor, onStop, () -> credential);
+    }
+
+    /**
+     * The process's own context. UTF-8 whatever the locale says, so a dash in a message stays a dash.
+     *
+     * @throws IllegalStateException inside the MCP service ({@link #MCP_SERVICE}), which must never
+     *                               fall back to its own environment
+     */
     public static CliContext system() {
+        if (System.getProperty(MCP_SERVICE) != null || System.getenv(MCP_SERVICE) != null) {
+            throw new IllegalStateException("A command ran without a context in the MCP service ("
+                    + MCP_SERVICE + " is set): it would have called the platform as the service, not the caller.");
+        }
         return new CliContext(System.getenv(), System.in,
                 new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8),
                 new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8),
@@ -57,11 +102,12 @@ public record CliContext(
 
     /**
      * What this process calls the platform with: the session file outside, the workspace
-     * credential inside. The two are never mixed — in-platform never opens the session file, and a
-     * workstation never mints with a client secret.
+     * credential inside, unless the context was built with a credential of its own. The two homes
+     * are never mixed — in-platform never opens the session file, and a workstation never mints
+     * with a client secret.
      */
     public Credential credential() {
-        return mode().inPlatform() ? AgentCredential.of(env, clock) : tokens();
+        return credentials.get();
     }
 
     /**

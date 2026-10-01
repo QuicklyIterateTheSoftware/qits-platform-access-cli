@@ -34,6 +34,11 @@ class InteractionClassesTest {
     static class InStep {
     }
 
+    @eu.wohlben.qits.cli.tui.api.TuiCommand(interaction = Interaction.LOCAL)
+    @CommandLine.Command(name = "beside", description = "Answers a program on this machine.")
+    static class Beside {
+    }
+
     @eu.wohlben.qits.cli.tui.api.TuiCommand(output = Output.JSON)
     @CommandLine.Command(name = "asjson", description = "Answers as JSON.")
     static class AsJson {
@@ -47,7 +52,7 @@ class InteractionClassesTest {
     }
 
     @CommandLine.Command(name = "qits", description = "The root.",
-            subcommands = {Flowing.class, Opener.class, InStep.class, AsJson.class, Quiet.class})
+            subcommands = {Flowing.class, Opener.class, InStep.class, AsJson.class, Quiet.class, Beside.class})
     static class Root {
     }
 
@@ -82,6 +87,24 @@ class InteractionClassesTest {
         app.key(Key.of(Key.Kind.CTRL_R));
         assertThat(app.history().entries()).singleElement()
                 .satisfies(entry -> assertThat(entry.commandLine()).isEqualTo("qits quiet"));
+    }
+
+    /** The screen is on the caller's machine, so a command that only means something there is plain. */
+    @Test
+    void aLocalCommandIsTreatedExactlyLikeAPlainOne() {
+        assertThat(root.child("beside").interaction()).isEqualTo(Interaction.LOCAL);
+        List<String> names = app.view().rows().stream().map(row -> row.name()).toList();
+        assertThat(names.indexOf("beside")).as("not sorted last like a CI-only command")
+                .isLessThan(names.indexOf("instep"));
+        assertThat(app.view().rows().stream().filter(row -> row.name().equals("beside")))
+                .singleElement().satisfies(row -> assertThat(row.dim()).isFalse());
+
+        enter("beside");
+        app.key(Key.of(Key.Kind.CTRL_R));
+        assertThat(runner.title()).isNotEqualTo("streaming");
+        assertThat(lines()).noneSatisfy(line -> assertThat(line).contains("y/n"));
+        assertThat(app.history().entries()).singleElement()
+                .satisfies(entry -> assertThat(entry.commandLine()).isEqualTo("qits beside"));
     }
 
     @Test
@@ -135,5 +158,10 @@ class InteractionClassesTest {
         assertThat(qits.child("git-login").interaction()).isEqualTo(Interaction.BROWSER);
         assertThat(qits.child("artifacts").child("publish").interaction()).isEqualTo(Interaction.CI_ONLY);
         assertThat(qits.child("ci").interaction()).isEqualTo(Interaction.PLAIN);
+        assertThat(qits.child("git-credential").interaction()).isEqualTo(Interaction.LOCAL);
+        // `help` is hidden, so the screen's model leaves it out; the declaration is still read.
+        Object skill = new CommandLine(new AccessCli()).getSubcommands().get("help").getSubcommands().get("skill")
+                .getCommandSpec().userObject();
+        assertThat(eu.wohlben.qits.cli.tui.api.TuiCommands.interactionOf(skill)).isEqualTo(Interaction.LOCAL);
     }
 }

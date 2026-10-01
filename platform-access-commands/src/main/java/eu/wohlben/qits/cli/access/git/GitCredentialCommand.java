@@ -4,6 +4,8 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
@@ -27,6 +29,7 @@ import java.util.Optional;
  * read — {@code qits git-login} needs a browser and is refused there — so the container's own
  * credential answers instead, for the injected git host and no other.
  */
+@TuiCommand(interaction = Interaction.LOCAL)
 @CommandLine.Command(name = "git-credential", mixinStandardHelpOptions = true,
         description = {
                 "Git's credential helper for the platform's git host. Git runs it; a person does not.",

@@ -108,6 +108,14 @@ class InPlatformRefusalsTest {
         assertThat(refuse(Mode.IN_PLATFORM, "ci")).isNull();
     }
 
+    /** A command that only means something on the caller's machine still runs there, inside or out. */
+    @Test
+    void aLocalCommandIsNotTheGuardsBusiness() {
+        assertThat(refuse(Mode.IN_PLATFORM, "git-credential", "get")).isNull();
+        assertThat(refuse(Mode.IN_PLATFORM, "help", "skill")).isNull();
+        assertThat(refuse(Mode.WORKSTATION, "git-credential", "get")).isNull();
+    }
+
     @Test
     void helpOnABrowserCommandStillAnswersInside() {
         assertThat(refuse(Mode.IN_PLATFORM, "login", "--help")).isNull();

@@ -156,12 +156,17 @@ Two packages sit outside `access/`, because neither is about one command:
 - **One credential interface**: `Credential`. `AccessTokens` is the workstation's, `AgentCredential`
   the container's, and `CliContext.credential()` picks by mode. A command never asks which it has.
   The two are never mixed: in-platform never opens the session file, and a workstation never mints
-  with a client secret (`BothHomesTest`).
+  with a client secret (`BothHomesTest`). The third, `RequestCredential`, is a caller's bearer handed
+  in whole by the MCP service (`CliContext.withCredential`); it never mints or refreshes. That service
+  sets `QITS_MCP_SERVICE`, and `CliContext.system()` then throws: a command it forgot to hand a
+  context must not call the platform as the service.
 - **The TUI holds no command's name.** Everything it shows it read from picocli's model.
   `FictionalCommandTest` fails the build if a string literal under `eu.wohlben.qits.cli.tui`, in
   either module, names a command. What the model cannot say is said by
-  `@TuiCommand(interaction, output)` on the command and `@Completes(SomeSource.class)` on the
-  option — both optional, both with a working default.
+  `@TuiCommand(interaction, output, input)` on the command and `@Completes(SomeSource.class)` on the
+  option — all optional, all with a working default. `Interaction.LOCAL` (only means something on the
+  caller's machine) and `input = PAYLOAD` (reads a JSON payload on stdin; `PayloadMarkerTest`) are
+  for whoever runs the commands somewhere else; the screen treats `LOCAL` like `PLAIN`.
 - **The CLI never sends `X-Qits-User` / `X-Qits-Roles`.** Those are what the gateway asserts about a
   caller; a client that writes them asserts a role it does not hold. An agent that needs a door its
   credential cannot open is granted the audience instead.

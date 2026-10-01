@@ -8,6 +8,8 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.Table;
+import eu.wohlben.qits.cli.tui.api.Input;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -68,6 +70,7 @@ public class WorkCommentCommand implements Runnable {
                             + "be reached, or its OpenAPI document does not describe the payload.",
                     "2:Used wrongly (for example a payload that is not a JSON object, or no --entity), not signed "
                             + "in, or the session ended."})
+    @TuiCommand(input = Input.PAYLOAD)
     public static class CreateCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -115,6 +118,7 @@ public class WorkCommentCommand implements Runnable {
                             + "document does not describe the patch.",
                     "2:Used wrongly (for example a patch that is not a JSON object, no --entity or --comment, or a "
                             + "comment that is not on the entity's thread), not signed in, or the session ended."})
+    @TuiCommand(input = Input.PAYLOAD)
     public static class UpdateCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

@@ -47,6 +47,9 @@ public final class AgentCredential implements Credential {
 
     static final String AUDIENCE = "QITS_GIT_AUTH_AUDIENCE";
 
+    /** The role every workspace credential carries: it reads across the estate and writes nowhere. */
+    static final String AGENT_ROLE = "qits:agent";
+
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
@@ -144,8 +147,16 @@ public final class AgentCredential implements Credential {
      */
     @Override
     public String explain(int status) {
+        return explainAgent(status, audience);
+    }
+
+    /**
+     * The sentences of {@link #explain(int)}, for any holder of an agent's token: this credential,
+     * and a {@link RequestCredential} carrying an agent's bearer, which must say exactly the same.
+     */
+    static String explainAgent(int status, String audience) {
         if (status == 403) {
-            return "403 - this credential is qits:agent, which reads but does not write";
+            return "403 - this credential is " + AGENT_ROLE + ", which reads but does not write";
         }
         if (status == 401) {
             return "401 - this service did not accept the workspace credential, which asked the idp"
@@ -156,8 +167,12 @@ public final class AgentCredential implements Credential {
 
     @Override
     public String who() throws CliFailure {
-        String role = TokenClaims.of(bearer()).role().orElse("no role");
-        return "agent (" + role + ")";
+        return who(TokenClaims.of(bearer()));
+    }
+
+    /** {@code agent (qits:agent)}: how an agent's token is named, whoever holds it. */
+    static String who(TokenClaims claims) {
+        return "agent (" + claims.role().orElse("no role") + ")";
     }
 
     /** The audiences the idp says this credential holds, once it has been minted. */

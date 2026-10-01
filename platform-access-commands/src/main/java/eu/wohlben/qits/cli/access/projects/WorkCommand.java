@@ -11,6 +11,8 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.tui.api.Completes;
+import eu.wohlben.qits.cli.tui.api.Input;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -246,6 +248,7 @@ public class WorkCommand implements Runnable {
                             + "reached.",
                     "2:Used wrongly (for example no --archetype, or a payload that is not a JSON object), not signed "
                             + "in, or the session ended."})
+    @TuiCommand(input = Input.PAYLOAD)
     public static class CreateCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -304,6 +307,7 @@ public class WorkCommand implements Runnable {
                             + "project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity, or a patch that is not a JSON object), not signed in, "
                             + "or the session ended."})
+    @TuiCommand(input = Input.PAYLOAD)
     public static class UpdateCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -362,6 +366,7 @@ public class WorkCommand implements Runnable {
                             + "HTTP 409), or cannot be reached.",
                     "2:Used wrongly (for example no --entity or --archetype, or a payload that is not a JSON object), "
                             + "not signed in, or the session ended."})
+    @TuiCommand(input = Input.PAYLOAD)
     public static class TransitionCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -441,6 +446,7 @@ public class WorkCommand implements Runnable {
                             + "reached.",
                     "2:Used wrongly (for example no --entity, an item whose archetype has no lifecycle, or a payload "
                             + "that is not a JSON object), not signed in, or the session ended."})
+    @TuiCommand(input = Input.PAYLOAD)
     public static class StatusCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
