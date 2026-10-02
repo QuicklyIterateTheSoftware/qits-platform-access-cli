@@ -746,6 +746,25 @@ start of it, looked up among that repository's runs.
     qits ci run 5f2c0a9e --project qits --repository qits-ci-service --logs
     qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
+### qits maintenance
+
+Jobs of qits-maintenance. `--project` and `--repository` are as for `release-request`.
+
+`screenshot-baselines --request <id>` renders a release request's screenshot tests in the CI image
+(`node-browser-base`, the one the `app` gate compares in) and joins the reference images that
+changed to the request. The job starts from the request's fold, runs
+`UPDATE_SNAPSHOT=all npm run test:browser`, commits only `__screenshots__/` files onto
+`maintenance/baselines/<request id>` and joins that branch to the request. Missing references are
+written too, so a repository's first baselines come from here. `--request` takes the id or its
+start; `--work-item` is the commit subject's scope (default: the newest one on the request's own
+commits). The request must be open (HTTP 409 otherwise). Any of the three roles may ask, the agent
+credential included, as for every maintenance door.
+
+`bump <id>` shows a job: SUCCEEDED (joined), NOTHING_TO_DO (unchanged) or FAILED, with the reason.
+
+    qits maintenance --project qits --repository qits-landing-app screenshot-baselines --request 4f2a91c0
+    qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+
 ### qits events
 
     qits events [--filter=<names>] [--events-url <url>]
