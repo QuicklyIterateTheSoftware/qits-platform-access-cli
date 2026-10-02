@@ -794,6 +794,81 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 - `1` The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
 - `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
+## qits maintenance
+
+Jobs of qits-maintenance: screenshot-baselines renders a release request's screenshot references in the CI image and joins them to the request, and bump shows how one job went.
+
+### Notes
+
+- --project, --repository, --output and the two -url options may come before or after the command.
+
+## qits maintenance screenshot-baselines
+
+Render a release request's screenshot tests in the CI image, and join the reference images that changed to the request.
+
+The job starts from the request's fold (release/<request id>), runs `UPDATE_SNAPSHOT=all npm run test:browser`, commits only __screenshots__/ files onto maintenance/baselines/<request id> and joins that branch to the request. Missing references are written too, so a repository's first baselines come from here. It prints the job's id; `qits maintenance bump <id>` shows how it went: SUCCEEDED (joined), NOTHING_TO_DO (every image already matched) or FAILED.
+
+```
+qits maintenance screenshot-baselines --request <id> [--maintenance-url <url>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--work-item <id>]
+```
+
+| Name | What it does |
+|---|---|
+| `--request <id>` | Required. The release request: its id, or enough of its start to name one (`qits release-request list` shows 8 characters). |
+| `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else the session's idp address with `idp` swapped for `maintenance`. |
+| `-o, --output table\|json` | table (the default): one line per field. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project, --repository and --request are looked up. Default: QITS_PROJECTS_URL, else derived like --maintenance-url. |
+| `--repository <repository>` | The repository: its id or name. |
+| `--work-item <id>` | The work item the commit names, for example qits-112. |
+
+### Examples
+
+```
+qits maintenance --project qits --repository qits-landing-app screenshot-baselines --request 4f2a91c0
+qits maintenance --project qits --repository qits-landing-app screenshot-baselines --request 4f2a91c0 --work-item qits-112
+```
+
+- The request must be open. Run this after the screenshots changed on purpose; the request's gate compares against the references and fails on a difference.
+- --work-item is the commit subject's scope (chore(<work item>): update screenshot baselines). Without it, the newest one named on the request's own commits is used.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits maintenance bump
+
+Show one qits-maintenance job: its mode, status, the sentence about how it went, and the commit it left.
+
+```
+qits maintenance bump [--maintenance-url <url>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <id>
+```
+
+| Name | What it does |
+|---|---|
+| `<id>` | The job's id, as the request printed it. |
+| `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else the session's idp address with `idp` swapped for `maintenance`. |
+| `-o, --output table\|json` | table (the default): one line per field. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project, --repository and --request are looked up. Default: QITS_PROJECTS_URL, else derived like --maintenance-url. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+```
+
+- Run it again to follow a job: REQUESTED and RUNNING are not finished.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
 ## qits events
 
 Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait for something on the platform: a build (BuildSuccessful, BuildFailed) or a release request (ReleaseRequestChanged).
