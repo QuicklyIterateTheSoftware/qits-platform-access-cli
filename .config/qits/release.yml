@@ -29,7 +29,7 @@ artifacts:
   # `platform-access-cli-binary/target/` and never will. Declaring the path would make the postlude
   # submit a file that is not there and fail the release, so the maven step submits its own, with
   # the postlude's own command.
-  - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary" }
+  - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary }
 
 # THE daemon ARCHETYPE'S OWN HEADER NAMES THIS REPOSITORY AS THE ONE THAT RIDES ITS OWN RECIPES, and
 # the reason is the build: there is no `docker/Dockerfile.musl-builder` here, so the archetype's
