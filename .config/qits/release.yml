@@ -24,12 +24,9 @@ artifacts:
   # both directions: the maven entry is how the version is bumped AND how the bytes survive. Ticket
   # d0b1965f-ca40-4780-8ee1-9be56851b465.
   #
-  # NO `sbom:` ON THIS ENTRY. The composed postlude submits every declared document from ONE step —
-  # the last one that builds — and that is the buildctl step below, whose checkout has no
-  # `platform-access-cli-binary/target/` and never will. Declaring the path would make the postlude
-  # submit a file that is not there and fail the release, so the maven step submits its own, with
-  # the postlude's own command.
-  - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary }
+  # qits-ci submits this `sbom:` from whichever release step holds the file — the maven step below,
+  # where `makeBom` writes it — and checks on the last step that it reached the store.
+  - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary, sbom: platform-access-cli-binary/target/sbom.json }
 
 # THE daemon ARCHETYPE'S OWN HEADER NAMES THIS REPOSITORY AS THE ONE THAT RIDES ITS OWN RECIPES, and
 # the reason is the build: there is no `docker/Dockerfile.musl-builder` here, so the archetype's
@@ -212,6 +209,3 @@ release:
       ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -DskipTests \
         org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
         -DoutputFormat=json -DoutputName=sbom -DschemaVersion=1.6
-      qits artifacts publish sbom submit \
-        --type maven --name eu.wohlben.qits:qits-platform-access-cli-binary \
-        --version "$QITS_VERSION" --file platform-access-cli-binary/target/sbom.json
