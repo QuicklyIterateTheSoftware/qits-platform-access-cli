@@ -69,8 +69,8 @@ class ContractPublishTest {
 
   @Test
   void theContractJarIsByteIdenticalAcrossBuildsAndCarriesItsDirectories() throws IOException {
-    byte[] first = ContractPackager.jar(tree, ContractPackager.Kind.GOLDEN_MASTERS);
-    byte[] second = ContractPackager.jar(tree, ContractPackager.Kind.GOLDEN_MASTERS);
+    byte[] first = ContractPackager.jar(tree, ContractPackager.Kind.GOLDEN_MASTERS, null);
+    byte[] second = ContractPackager.jar(tree, ContractPackager.Kind.GOLDEN_MASTERS, null);
     assertArrayEquals(first, second);
 
     List<String> names = new java.util.ArrayList<>();
@@ -85,11 +85,31 @@ class ContractPublishTest {
   }
 
   @Test
-  void thePactsJarIsRootedByKindNotByTheDirectoryName() {
-    List<String> names = Archives.readJar(ContractPackager.jar(tree, ContractPackager.Kind.PACTS), "jar").stream()
+  void aPactsJarHoldsOnlyItsProvidersPactsFromAFlatDirectory() throws IOException {
+    Path pacts = Files.createDirectories(work.resolve("consumer-pacts"));
+    Files.writeString(pacts.resolve("qits-landing-app_qits-projects-service.json"), "{}\n");
+    Files.writeString(pacts.resolve("qits-landing-app_qits-githost-service.json"), "{}\n");
+    Files.writeString(pacts.resolve("README.md"), "not a pact\n");
+
+    List<String> names = Archives.readJar(
+            ContractPackager.jar(pacts, ContractPackager.Kind.PACTS, "qits-projects-service"), "jar").stream()
         .map(Archives.Entry::name).toList();
-    assertTrue(names.contains("pacts/"), names.toString());
-    assertTrue(names.contains("pacts/index.json"), names.toString());
+
+    assertEquals(List.of("META-INF/", "META-INF/MANIFEST.MF", "pacts/",
+        "pacts/qits-landing-app_qits-projects-service.json"), names);
+  }
+
+  @Test
+  void aPactsPackageWithNoFileForItsProviderIsRefused() throws IOException {
+    Path pacts = Files.createDirectories(work.resolve("consumer-pacts"));
+    Files.writeString(pacts.resolve("qits-landing-app_qits-githost-service.json"), "{}\n");
+
+    Harness.Run run = cli.run("contract", "--kind", "pacts", "--ecosystem", "maven", "--name",
+        "eu.wohlben.qits:qits-landing-app-pacts-qits-projects-service", "--application", "qits-landing",
+        "--provider", "qits-projects-service", "--from", pacts.toString(), "--version", V);
+
+    assertEquals(ExitCode.POLICY, run.code());
+    assertTrue(run.errContains("holds no *_qits-projects-service.json"), run.err());
   }
 
   @Test

@@ -19,9 +19,14 @@ import java.util.stream.Stream;
  * node on the step image).
  *
  * <p><b>The root inside the package is fixed by the kind</b> ({@code golden-masters/} or
- * {@code pacts/}), never by the directory's name: {@code from: pacts/qits-projects/} still lands at
- * {@code pacts/<file>} on the classpath, which is where qits-projects' {@code ClasspathPactLoader}
- * and every {@code golden-masters/index.json} reader look.
+ * {@code pacts/}), never by the directory's name, which is where every provider's {@code
+ * ClasspathPactLoader} and every {@code golden-masters/index.json} reader look.
+ *
+ * <p><b>A pacts package holds one provider's pacts, chosen by file name.</b> A consumer keeps all its
+ * pacts flat in one directory, named {@code <consumer>_<provider>.json} by repository name, so the
+ * pacts package for {@code --provider qits-projects-service} holds exactly the top-level files
+ * named {@code *_qits-projects-service.json}. Another provider's pact is not in it, so a change to
+ * that pact does not publish, and bump, this provider's package.
  *
  * <p>The jar carries directory entries, and they are mandatory: {@code ClasspathPactLoader} asks the
  * class loader for the {@code pacts/} directory, which only answers when the jar has that entry.
@@ -83,9 +88,44 @@ final class ContractPackager {
         return entries;
     }
 
-    /** The maven jar: {@code META-INF/}, a one-line manifest, and the tree. STORED, sorted. */
-    static byte[] jar(Path from, Kind kind) {
-        List<Archives.Entry> entries = new ArrayList<>(tree(from, kind.root));
+    /**
+     * One provider's pacts: the {@code pacts/} directory entry and every top-level regular file of
+     * {@code from} named {@code *_<provider>.json}, sorted by name. Anything else in {@code from} is
+     * another provider's, and is left out.
+     */
+    static List<Archives.Entry> pacts(Path from, String provider) {
+        if (!Files.isDirectory(from)) {
+            throw CliException.policy("--from " + from + " is not a directory");
+        }
+        String suffix = "_" + provider + ".json";
+        List<Archives.Entry> entries = new ArrayList<>();
+        entries.add(new Archives.Entry(Kind.PACTS.root + "/", new byte[0]));
+        try (Stream<Path> list = Files.list(from)) {
+            for (Path path : list.sorted().toList()) {
+                String name = path.getFileName().toString();
+                if (name.endsWith(suffix) && name.length() > suffix.length()
+                        && Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+                    entries.add(new Archives.Entry(Kind.PACTS.root + "/" + name, Files.readAllBytes(path)));
+                }
+            }
+        } catch (IOException e) {
+            throw CliException.transport("cannot read " + from + ": " + e.getMessage(), e);
+        }
+        if (entries.size() == 1) {
+            throw CliException.policy("--from " + from + " holds no *" + suffix
+                    + "; a pact with " + provider + " is a file named <consumer>" + suffix);
+        }
+        return entries;
+    }
+
+    /** What a package of {@code kind} holds: the whole tree, or one provider's pacts. */
+    static List<Archives.Entry> entries(Path from, Kind kind, String provider) {
+        return kind == Kind.PACTS ? pacts(from, provider) : tree(from, kind.root);
+    }
+
+    /** The maven jar: {@code META-INF/}, a one-line manifest, and the entries. STORED, sorted. */
+    static byte[] jar(Path from, Kind kind, String provider) {
+        List<Archives.Entry> entries = new ArrayList<>(entries(from, kind, provider));
         entries.add(new Archives.Entry("META-INF/", new byte[0]));
         entries.add(new Archives.Entry("META-INF/MANIFEST.MF",
                 "Manifest-Version: 1.0\r\n\r\n".getBytes(StandardCharsets.UTF_8)));
@@ -105,7 +145,8 @@ final class ContractPackager {
     }
 
     /** The npm package: a generated {@code package.json} and the tree, under {@code package/}. */
-    static NpmPublisher.Package npm(Path from, Kind kind, String name, String version, String description) {
+    static NpmPublisher.Package npm(Path from, Kind kind, String provider, String name, String version,
+            String description) {
         ObjectNode manifest = JSON.createObjectNode();
         manifest.put("name", name);
         manifest.put("version", version);
@@ -118,7 +159,7 @@ final class ContractPackager {
         } catch (IOException e) {
             throw new IllegalStateException("writing package.json failed", e);
         }
-        List<Archives.Entry> files = tree(from, kind.root).stream().filter(e -> !e.directory()).toList();
+        List<Archives.Entry> files = entries(from, kind, provider).stream().filter(e -> !e.directory()).toList();
         return NpmPublisher.of(name, version, bytes, files);
     }
 

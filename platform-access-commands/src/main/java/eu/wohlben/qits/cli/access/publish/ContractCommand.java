@@ -14,10 +14,13 @@ import java.util.Optional;
                 + "package (a maven jar or an npm tarball), and publish it if its content changed. Prints "
                 + "exactly one line on stdout: `published <version>` or `unchanged since <version>`.",
                 "The packages are built deterministically: the same tree gives the same bytes. Inside the "
-                        + "package the tree sits under golden-masters/ or pacts/, by --kind, whatever --from "
+                        + "package the files sit under golden-masters/ or pacts/, by --kind, whatever --from "
                         + "is called; the jar carries directory entries, because a class-path pact loader asks "
                         + "for the directory. Every contract package is if-changed, and decides on its own: "
                         + "packages built from the same tree agree without any link between them.",
+                "Golden masters pack the whole --from tree. Pacts pack only the top-level files of --from "
+                        + "named <consumer>_<provider>.json for the --provider given (both repository names), so "
+                        + "one flat pacts/ directory serves every provider.",
                 "--name is the coordinate qits-ci derived from the contracts: section; this command does not "
                         + "derive coordinates."},
         footerHeading = "%nExamples:%n",
@@ -25,12 +28,14 @@ import java.util.Optional;
                 + "--name eu.wohlben.qits:qits-projects-golden-masters --application qits-projects "
                 + "--from golden-masters/ --version 2026.1002.1",
                 "  qits artifacts publish contract --kind pacts --ecosystem maven "
-                        + "--name eu.wohlben.qits:qits-workspaces-pacts-qits-projects --application qits-workspaces "
-                        + "--provider qits-projects --from pacts/ --version 2026.1002.1"},
+                        + "--name eu.wohlben.qits:qits-workspaces-service-pacts-qits-projects-service "
+                        + "--application qits-workspaces --provider qits-projects-service --from pacts/ "
+                        + "--version 2026.1002.1"},
         exitCodeListHeading = "%nExit codes:%n",
         exitCodeList = {
                 "0:Published, already published at this version with the same content, or unchanged.",
-                "1:Refused: bad arguments, an empty --from, a 4xx, or this version already holds other content.",
+                "1:Refused: bad arguments, an empty --from (for pacts: no *_<provider>.json in it), a 4xx, or "
+                        + "this version already holds other content.",
                 "2:Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never "
                         + "read as unchanged."})
 public class ContractCommand extends AbstractPublishCommand {
@@ -52,8 +57,9 @@ public class ContractCommand extends AbstractPublishCommand {
             description = "The application whose contracts these are; named in the package's description.")
     List<String> application = new ArrayList<>();
 
-    @CommandLine.Option(names = "--provider", paramLabel = "<application>",
-            description = "The provider a pact is with. Required for pacts, refused for golden masters.")
+    @CommandLine.Option(names = "--provider", paramLabel = "<repository>",
+            description = "The provider a pact is with, by repository name: the pacts packed are --from's "
+                    + "*_<provider>.json. Required for pacts, refused for golden masters.")
     List<String> provider = new ArrayList<>();
 
     @CommandLine.Option(names = "--from", paramLabel = "<dir>", description = "The tree to pack.")
@@ -85,9 +91,9 @@ public class ContractCommand extends AbstractPublishCommand {
         Store store = Store.from(env, console);
         Decision.Outcome outcome = switch (ecosystem) {
             case "maven" -> new MavenPublisher(http(), store, env, console)
-                    .publishContract(name, version, ContractPackager.jar(from, kind), description);
+                    .publishContract(name, version, ContractPackager.jar(from, kind, provider), description);
             case "npm" -> new NpmPublisher(http(), store, console).publish(
-                    ContractPackager.npm(from, kind, name, version, description), Optional.empty(), List.of(), true,
+                    ContractPackager.npm(from, kind, provider, name, version, description), Optional.empty(), List.of(), true,
                     false);
             default -> throw CliException.policy("--ecosystem '" + ecosystem + "' is maven or npm");
         };
