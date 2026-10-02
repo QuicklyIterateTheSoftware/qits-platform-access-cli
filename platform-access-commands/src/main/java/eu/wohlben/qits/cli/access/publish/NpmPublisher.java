@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -35,6 +37,8 @@ final class NpmPublisher {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     /** Never packed, at any depth. */
+    private static final String NPMIGNORE = ".npmignore";
+
     private static final Set<String> NEVER = Set.of("node_modules", ".git", ".npmrc", "package-lock.json",
             "pnpm-lock.yaml");
 
@@ -57,8 +61,11 @@ final class NpmPublisher {
     /**
      * The package in {@code dir}: {@code package.json} must name {@code name@version} and must not be
      * private. Every regular file, less what npm never packs; narrowed by {@code files} when the
-     * manifest has it. A {@code .npmignore} is refused: its rules are npm's to interpret, and a
-     * second reading of them here would pack something npm would not.
+     * manifest has it, else by a root {@code .npmignore} (ng-packagr writes one into every dist).
+     * As npm does: {@code files} wins and the {@code .npmignore} is then not read, the
+     * {@code .npmignore} itself is never packed, and the root {@code package.json}, README and
+     * licence go in whatever it says. Only the gitignore syntax that occurs is read: a negation, or
+     * a {@code .npmignore} below the root, is refused rather than guessed at.
      */
     static Package pack(Path dir, String name, String version) {
         Path manifestFile = dir.resolve("package.json");
@@ -87,9 +94,12 @@ final class NpmPublisher {
                 if (relative.toString().isEmpty() || skipped(relative)) {
                     continue;
                 }
-                if (file.getFileName().toString().equals(".npmignore")) {
-                    throw CliException.policy(file + ": a .npmignore is not supported; say what to pack with "
-                            + "\"files\" in package.json");
+                if (file.getFileName().toString().equals(NPMIGNORE)) {
+                    if (relative.getNameCount() > 1) {
+                        throw CliException.policy(file + ": a .npmignore below the package root is not supported; "
+                                + "say what to pack with \"files\" in package.json");
+                    }
+                    continue;
                 }
                 if (Files.isRegularFile(file, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
                     files.add(relative.toString().replace(java.io.File.separatorChar, '/'));
@@ -104,6 +114,11 @@ final class NpmPublisher {
             List<String> globs = new ArrayList<>();
             patterns.forEach(p -> globs.add(p.asText()));
             files = files.stream().filter(f -> alwaysPacked(f) || matchesAny(globs, f)).toList();
+        } else if (Files.isRegularFile(dir.resolve(NPMIGNORE))) {
+            Path ignoreFile = dir.resolve(NPMIGNORE);
+            List<Pattern> ignored = npmignore(new String(read(ignoreFile), StandardCharsets.UTF_8),
+                    ignoreFile.toString());
+            files = files.stream().filter(f -> alwaysPacked(f) || !ignoredBy(ignored, f)).toList();
         }
 
         List<Archives.Entry> entries = new ArrayList<>();
@@ -174,6 +189,87 @@ final class NpmPublisher {
             }
         }
         return false;
+    }
+
+    /**
+     * The patterns of a {@code .npmignore}, each compiled to match a slash-separated relative path:
+     * blank lines and {@code #} comments are skipped; {@code *} and {@code ?} stay within a segment,
+     * {@code **} crosses them; a trailing {@code /} matches directories only; a pattern with a
+     * {@code /} other than a trailing one is anchored at the root, one without matches at any depth.
+     */
+    static List<Pattern> npmignore(String text, String what) {
+        List<Pattern> patterns = new ArrayList<>();
+        for (String raw : text.split("\\r?\\n", -1)) {
+            String line = raw.stripTrailing();
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+            if (line.startsWith("!")) {
+                throw CliException.policy(what + ": the negation \"" + line + "\" is not supported; say what to "
+                        + "pack with \"files\" in package.json");
+            }
+            boolean directoryOnly = line.endsWith("/");
+            String body = directoryOnly ? line.substring(0, line.length() - 1) : line;
+            boolean anchored = body.contains("/");
+            while (body.startsWith("/")) {
+                body = body.substring(1);
+            }
+            if (body.isEmpty()) {
+                continue;
+            }
+            String regex = (anchored ? "" : "(?:.*/)?") + globToRegex(body) + (directoryOnly ? "/" : "(?:/|$)");
+            patterns.add(Pattern.compile("^" + regex));
+        }
+        return patterns;
+    }
+
+    /**
+     * Ignored when a pattern matches the file or a directory above it. Directory-only patterns end
+     * in {@code /} and so can match only a directory prefix of the path, never the file itself.
+     */
+    static boolean ignoredBy(List<Pattern> patterns, String file) {
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(file).lookingAt()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String globToRegex(String glob) {
+        StringBuilder regex = new StringBuilder();
+        int i = 0;
+        while (i < glob.length()) {
+            char c = glob.charAt(i);
+            if (glob.startsWith("**/", i) && (i == 0 || glob.charAt(i - 1) == '/')) {
+                regex.append("(?:.*/)?");
+                i += 3;
+            } else if (glob.startsWith("**", i) && i + 2 == glob.length() && (i == 0 || glob.charAt(i - 1) == '/')) {
+                regex.append(".*");
+                i += 2;
+            } else if (c == '*') {
+                regex.append("[^/]*");
+                i++;
+            } else if (c == '?') {
+                regex.append("[^/]");
+                i++;
+            } else if (c == '[' && glob.indexOf(']', i + 2) > 0) {
+                int end = glob.indexOf(']', i + 2);
+                String set = glob.substring(i + 1, end);
+                if (set.startsWith("!")) {
+                    set = "^" + set.substring(1);
+                }
+                regex.append('[').append(set.replace("\\", "\\\\").replace("[", "\\[")).append(']');
+                i = end + 1;
+            } else if (c == '\\' && i + 1 < glob.length()) {
+                regex.append(Pattern.quote(String.valueOf(glob.charAt(i + 1))));
+                i += 2;
+            } else {
+                regex.append(Pattern.quote(String.valueOf(c)));
+                i++;
+            }
+        }
+        return regex.toString();
     }
 
     // --- publishing --------------------------------------------------------------------------------

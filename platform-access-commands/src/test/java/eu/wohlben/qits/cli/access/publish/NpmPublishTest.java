@@ -253,14 +253,78 @@ class NpmPublishTest {
         NpmPublisher.pack(pkg, "@qits/x", V).tarball()));
   }
 
-  @Test
-  void anNpmignoreIsRefused() throws IOException {
-    Files.writeString(pkg.resolve(".npmignore"), "*.txt\n");
+  private static List<String> packed(Path dir) {
+    return Archives.readTarGz(NpmPublisher.pack(dir, "@qits/x", V).tarball(), "t").stream()
+        .map(Archives.Entry::name).toList();
+  }
 
-    Harness.Run run = publish();
+  /** What ng-packagr leaves in a dist: no "files", a secondary entry point, and its .npmignore. */
+  private Path ngPackagrDist() throws IOException {
+    Path dist = work.resolve("ng-dist");
+    Files.createDirectories(dist.resolve("fesm2022"));
+    Files.createDirectories(dist.resolve("testing"));
+    Files.writeString(dist.resolve("package.json"),
+        "{\"name\":\"@qits/x\",\"version\":\"" + V + "\",\"license\":\"UNLICENSED\"}");
+    Files.writeString(dist.resolve("README.md"), "# x\n");
+    Files.writeString(dist.resolve("index.d.ts"), "export {};\n");
+    Files.writeString(dist.resolve("fesm2022/x.mjs"), "export const x = 1;\n");
+    Files.writeString(dist.resolve("testing/package.json"), "{\"module\":\"../fesm2022/x-testing.mjs\"}");
+    Files.writeString(dist.resolve("testing/index.d.ts"), "export {};\n");
+    Files.writeString(dist.resolve(".npmignore"),
+        "# Nested package.json's are only needed for development.\n**/package.json\n");
+    return dist;
+  }
+
+  @Test
+  void anNgPackagrNpmignoreDropsNestedManifestsButNeverTheRootOne() throws IOException {
+    Path dist = ngPackagrDist();
+
+    assertEquals(List.of("package/README.md", "package/fesm2022/x.mjs", "package/index.d.ts",
+        "package/package.json", "package/testing/index.d.ts"), packed(dist));
+  }
+
+  @Test
+  void npmignorePatternsFollowGitignore() throws IOException {
+    Path dist = ngPackagrDist();
+    Files.createDirectories(dist.resolve("src/deep"));
+    Files.writeString(dist.resolve("src/deep/a.ts"), "a\n");
+    Files.writeString(dist.resolve("deep.map"), "m\n");
+    Files.writeString(dist.resolve("fesm2022/x.mjs.map"), "m\n");
+    Files.writeString(dist.resolve("LICENSE"), "UNLICENSED\n");
+    Files.writeString(dist.resolve(".npmignore"), "\n# comment\n/src/\n*.map\nLICENSE\ntesting\n");
+
+    assertEquals(List.of("package/LICENSE", "package/README.md", "package/fesm2022/x.mjs",
+        "package/index.d.ts", "package/package.json"), packed(dist));
+  }
+
+  @Test
+  void withFilesTheNpmignoreIsNotRead() throws IOException {
+    Files.writeString(pkg.resolve(".npmignore"), "lib/\n");
+
+    assertEquals(List.of("package/README.md", "package/lib/index.js", "package/package.json"), packed(pkg));
+  }
+
+  @Test
+  void anNpmignoreNegationIsRefused() throws IOException {
+    Path dist = ngPackagrDist();
+    Files.writeString(dist.resolve(".npmignore"), "**/package.json\n!testing/package.json\n");
+
+    Harness.Run run = cli.run("npm", "--name", "@qits/x", "--version", V, "--path", dist.toString());
 
     assertEquals(ExitCode.POLICY, run.code());
-    assertTrue(run.errContains(".npmignore is not supported"), run.err());
+    assertTrue(run.errContains("the negation \"!testing/package.json\" is not supported"), run.err());
+    assertFalse(uploaded());
+  }
+
+  @Test
+  void aNestedNpmignoreIsRefused() throws IOException {
+    Path dist = ngPackagrDist();
+    Files.writeString(dist.resolve("testing/.npmignore"), "*.d.ts\n");
+
+    Harness.Run run = cli.run("npm", "--name", "@qits/x", "--version", V, "--path", dist.toString());
+
+    assertEquals(ExitCode.POLICY, run.code());
+    assertTrue(run.errContains("a .npmignore below the package root is not supported"), run.err());
     assertFalse(uploaded());
   }
 

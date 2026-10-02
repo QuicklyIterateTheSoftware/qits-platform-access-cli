@@ -1094,7 +1094,7 @@ qits artifacts publish maven --name eu.wohlben.qits:qits-registries-npm --path n
 
 Publish one npm package from its built directory: the tarball is packed here (deterministic: sorted entries, fixed mode, owner and mtime) and PUT with the registry's publish document. Prints exactly one line on stdout: `published <version>` or `unchanged since <version>`; the reasoning goes to stderr.
 
-package.json in --path must name --name at --version and must not be private. Every regular file is packed except node_modules/, .git/, .npmrc and the lockfiles, narrowed by "files" when the manifest has it (package.json, README* and LICENSE* always go in). A .npmignore is refused.
+package.json in --path must name --name at --version and must not be private. Every regular file is packed except node_modules/, .git/, .npmrc and the lockfiles, narrowed by "files" when the manifest has it (package.json, README* and LICENSE* always go in), else by a root .npmignore (ng-packagr writes one): its patterns drop files, package.json, README* and LICENSE* at the root still go in, and the .npmignore itself is never packed. With "files" the .npmignore is not read. A negation (!pattern) or a .npmignore below the root is refused.
 
 A version below the registry's latest is a replay: it is published under the tag `replay` and leaves the real tags alone. Otherwise the `main` dist-tag is moved onto the version after the publish, on a re-run too.
 
@@ -1122,7 +1122,7 @@ qits artifacts publish npm --name @qits/ui-components --path dist/qits-spa-ui-co
 ### Exit codes
 
 - `0` Published, already published at this version with the same content, or unchanged.
-- `1` Refused: bad arguments, a package.json that is not --name at --version, a .npmignore, a 4xx, or this version already holds other content.
+- `1` Refused: bad arguments, a package.json that is not --name at --version, an unsupported .npmignore, a 4xx, or this version already holds other content.
 - `2` Could not ask: no registry configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
 
 ## qits artifacts publish npm plan
