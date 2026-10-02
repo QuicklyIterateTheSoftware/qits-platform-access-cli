@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
  * The npm half: what to do before publishing, what to do after it, and the lockfile edit every
  * frontend repository copied.
  *
- * <p>Nothing here runs {@code npm}. {@code npm publish} stays in the archetype's script, where the
- * ecosystem tool belongs; what moves in here is the reasoning around it, which is the part that was
- * duplicated and the part that disagreed with itself.
+ * <p>Nothing here runs {@code npm}. The publish itself is {@link NpmPublisher} now (epic qits-620),
+ * which builds the tarball and calls {@link #distTag} after it; {@code plan} stays until the
+ * build-only npm-library archetype is live everywhere, and then goes.
  */
 final class Npm {
 

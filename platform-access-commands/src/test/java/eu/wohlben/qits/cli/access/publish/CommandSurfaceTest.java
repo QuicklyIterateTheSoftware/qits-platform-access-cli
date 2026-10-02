@@ -111,6 +111,10 @@ class CommandSurfaceTest {
                 {"docs", "submit", "--help"},
                 {"daemon", "submit", "--help"},
                 {"npm", "plan", "--help"},
+                {"npm", "--help"},
+                {"maven", "--help"},
+                {"contract", "--help"},
+                {"contract-docs", "--help"},
                 {"npm", "dist-tag", "--help"}}) {
             Harness.Run run = cli.run(argv);
             String command = String.join(" ", argv);

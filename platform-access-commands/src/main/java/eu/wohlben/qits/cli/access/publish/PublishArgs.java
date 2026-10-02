@@ -50,4 +50,19 @@ final class PublishArgs {
         }
         throw CliException.policy("unexpected argument " + first);
     }
+
+    /**
+     * {@code --if-changed} hashes the SBOM with the content, so it needs one; {@code --include} only
+     * narrows that hash, so it means nothing without {@code --if-changed}.
+     */
+    static void ifChangedNeedsSbom(boolean ifChanged, boolean hasSbom, List<String> include) {
+        if (ifChanged && !hasSbom) {
+            throw CliException.policy("--if-changed needs --sbom: the change decision hashes the SBOM with the "
+                    + "content, so a dependency bump is a change");
+        }
+        if (!include.isEmpty() && !ifChanged) {
+            throw CliException.policy("--include narrows the --if-changed hash and means nothing without "
+                    + "--if-changed");
+        }
+    }
 }

@@ -1034,11 +1034,11 @@ The example is the entry in Claude's MCP configuration. Do not run it yourself: 
 
 ## qits artifacts
 
-The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: an sbom, a docs bundle, a daemon binary, or an npm decision.
+The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: a maven module, an npm package, a contract package, an sbom, a docs bundle or a daemon binary.
 
 ## qits artifacts publish
 
-Publish to qits-artifacts from a CI release step: an sbom, a docs bundle, a daemon binary, or an npm publish/replay/skip decision. This is the qits-publish client.
+Publish to qits-artifacts from a CI release step: a maven module or an npm package (built, hashed and uploaded here, optionally only if its content changed), a contract package, an sbom, a docs bundle, or a daemon binary. This is the qits-publish client.
 
 Every publish follows one rule, for every surface: absent, PUT it and say what landed; occupied with the same bytes, say so and succeed (a retried or replayed step must go green); occupied with different bytes, fail naming both digests (a coordinate must never come to mean two things); occupied and not comparable, warn and skip.
 
@@ -1055,137 +1055,79 @@ Every publish follows one rule, for every surface: absent, PUT it and say what l
 - `1` Refused, and re-running will not help: invalid arguments, a 4xx, or the coordinate already holds different bytes.
 - `2` Could not ask, or could not be answered: no store configured, an I/O failure, or a 5xx. A step may retry a 2 and must not retry a 1.
 
-## qits artifacts publish sbom
+## qits artifacts publish maven
 
-An SBOM: submit a document that already exists, or build one from a Dockerfile's FROM lines.
+Publish one maven module of the reactor at the working directory: its jar and a flattened pom, with the content hash. Prints exactly one line on stdout: `published <version>` or `unchanged since <version>`; the reasoning goes to stderr.
 
-## qits artifacts publish sbom submit
+The pom uploaded is generated from the module's effective model: no parent, every version resolved, and only external dependencies. Every dependency on another module of the same reactor is bundled into the jar (classes, resources, META-INF/services merged; any other path present twice with different bytes is refused), unless --link names it: a linked sibling stays a pom dependency at the version decided for it in this release. A pom-packaging module is a product (a parent or BOM another repository consumes) and keeps its dependencyManagement.
 
-Publish a CycloneDX document at (packageType, name, version).
-
-```
-qits artifacts publish sbom submit [--file <path>...] [--name <name>...] [--type <npm|maven|docker|daemon>...] [--version <version>...]
-```
-
-| Name | What it does |
-|---|---|
-| `--file <path>...` | The CycloneDX document to publish. |
-| `--name <name>...` | The package name. |
-| `--type <npm\|maven\|docker\|daemon>...` | The package type the sbom store files this under. |
-| `--version <version>...` | The version. |
-
-### Examples
+With --if-changed the module is uploaded only when its content hash differs from the newest published version's. No published version, no stored hash, or another algorithm version all count as changed. A re-run at a version already published answers `published <version>` without uploading.
 
 ```
-qits artifacts publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 --file sbom.json
-```
-
-### Exit codes
-
-- `0` Published, or already published with the same bytes.
-- `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
-
-## qits artifacts publish sbom from-dockerfile
-
-Build a CycloneDX document from a Dockerfile's FROM lines: one component per distinct upstream image. Publishes nothing itself: write the file with -o, then `sbom submit` it.
-
-null-style variables in a FROM resolve from the file's own ARG default, or from --build-arg, in the precedence a real build has.
-
-```
-qits artifacts publish sbom from-dockerfile [--build-arg <NAME=value>...] [--dockerfile <path>...] [--output <path>...] [--root-name <name>...] [--root-version <version>...]
+qits artifacts publish maven [--if-changed] [--include <glob>...] [--link <groupId:artifactId>...] [--name <groupId:artifactId>...] [--path <dir>...] [--root <dir>...] [--sbom <file>...] [--version <version>...]
 ```
 
 | Name | What it does |
 |---|---|
-| `--build-arg <NAME=value>...` | A build argument, for a FROM that names one. Repeatable. |
-| `--dockerfile <path>...` | A Dockerfile to read FROM lines from. Repeatable. Default: Dockerfile. |
-| `-o, --output <path>...` | Where to write the document. Required, exactly once. |
-| `--root-name <name>...` | The image's own name, for the document's root component. |
-| `--root-version <version>...` | The image's own version. |
+| `--if-changed` | Upload only when the content differs from the newest published version. |
+| `--include <glob>...` | Hash only the jar entries matching one of these globs. Narrows the hash, never what is uploaded. Repeatable. |
+| `--link <groupId:artifactId>...` | A reactor sibling that stays a pom dependency instead of being bundled. Repeatable. |
+| `--name <groupId:artifactId>...` | The coordinate the entry declares. |
+| `--path <dir>...` | The module's directory, relative to the reactor root. Default: `.`. |
+| `--root <dir>...` | The reactor root, whose pom.xml lists the modules. Default: the working directory. |
+| `--sbom <file>...` | The module's CycloneDX document, hashed with the content. Required with --if-changed. |
+| `--version <version>...` | The release version. |
 
 ### Examples
 
 ```
-qits artifacts publish sbom from-dockerfile --root-name qits/qits-ci --root-version 2026.906.1 -o sbom.json
-qits artifacts publish sbom from-dockerfile --root-name x --root-version 1 --dockerfile a.Dockerfile --dockerfile b.Dockerfile --build-arg BASE=alpine:3.20 -o sbom.json
+qits artifacts publish maven --name eu.wohlben.qits:qits-registries-npm --path npm --sbom npm/target/sbom.json --link eu.wohlben.qits:qits-blobstore --if-changed --version 2026.1002.1
 ```
 
 ### Exit codes
 
-- `0` Wrote the document.
-- `1` Refused: bad arguments, a Dockerfile with no FROM line, or a variable nothing resolves.
-
-## qits artifacts publish docs
-
-A documentation bundle, at (site, version).
-
-## qits artifacts publish docs submit
-
-Publish a documentation bundle at (site, version).
-
-The store explodes the archive into per-file blobs and keeps no archive digest, so an occupied version cannot be verified: it is skipped, with a WARN naming the degradation, rather than reported as a plain success.
-
-```
-qits artifacts publish docs submit [--archive <tgz>...] [--meta <key=value>...] [--site <name>...] [--version <version>...]
-```
-
-| Name | What it does |
-|---|---|
-| `--archive <tgz>...` | The gzipped tar archive to publish. |
-| `--meta <key=value>...` | A metadata header, sent as X-Artifacts-Meta-<key>. Repeatable. |
-| `--site <name>...` | The docs site's name. |
-| `--version <version>...` | The version. |
-
-### Examples
-
-```
-qits artifacts publish docs submit --site @apidocs/qits-ci --version 2026.906.1 --archive apidocs.tgz --meta git.commit.hash=deadbeef
-```
-
-### Exit codes
-
-- `0` Published, or already published (see above: not verified in that case).
-- `1` Refused: bad arguments, or a 4xx that is not the store's "already there".
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
-
-## qits artifacts publish daemon
-
-A daemon binary, at (name, version).
-
-## qits artifacts publish daemon submit
-
-Publish a daemon binary at (name, version).
-
-Daemon versions are immutable: a re-publish always answers 409, even for identical bytes. The stored digest decides whether that is a re-fire of a run that already succeeded, or two builds claiming one version.
-
-```
-qits artifacts publish daemon submit [--file <bin>...] [--name <name>...] [--version <version>...]
-```
-
-| Name | What it does |
-|---|---|
-| `--file <bin>...` | The binary to publish. |
-| `--name <name>...` | The daemon's name. |
-| `--version <version>...` | The version. |
-
-### Examples
-
-```
-qits artifacts publish daemon submit --name qits-platform-access-cli --version 2026.906.1 --file target/qits
-```
-
-### Exit codes
-
-- `0` Published, or already published with the same bytes.
-- `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+- `0` Published, already published at this version with the same content, or unchanged.
+- `1` Refused: bad arguments, a module that is not --name at --version, a bundling conflict, a 4xx, or this version already holds other content.
+- `2` Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
 
 ## qits artifacts publish npm
 
-What to do before an npm publish, what to do after it, and the lockfile edit a step container needs. Nothing here runs `npm`; `npm publish` stays in the release step.
+Publish one npm package from its built directory: the tarball is packed here (deterministic: sorted entries, fixed mode, owner and mtime) and PUT with the registry's publish document. Prints exactly one line on stdout: `published <version>` or `unchanged since <version>`; the reasoning goes to stderr.
+
+package.json in --path must name --name at --version and must not be private. Every regular file is packed except node_modules/, .git/, .npmrc and the lockfiles, narrowed by "files" when the manifest has it (package.json, README* and LICENSE* always go in). A .npmignore is refused.
+
+A version below the registry's latest is a replay: it is published under the tag `replay` and leaves the real tags alone. Otherwise the `main` dist-tag is moved onto the version after the publish, on a re-run too.
+
+With --if-changed the package is uploaded only when its content hash differs from the newest published version's (by version order, never the latest tag). The manifest's version field is not part of the hash.
+
+```
+qits artifacts publish npm [--if-changed] [--include <glob>...] [--name <package>...] [--path <dir>...] [--sbom <file>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--if-changed` | Upload only when the content differs from the newest published version. |
+| `--include <glob>...` | Hash only the files matching one of these globs (paths inside the package). Narrows the hash, never what is uploaded. Repeatable. |
+| `--name <package>...` | The npm package name. |
+| `--path <dir>...` | The built package's directory, holding its package.json. Default: `.`. |
+| `--sbom <file>...` | The package's CycloneDX document, hashed with the content. Required with --if-changed. |
+| `--version <version>...` | The release version. |
+
+### Examples
+
+```
+qits artifacts publish npm --name @qits/ui-components --path dist/qits-spa-ui-components --sbom sbom.json --if-changed --version 2026.1002.1
+```
+
+### Exit codes
+
+- `0` Published, already published at this version with the same content, or unchanged.
+- `1` Refused: bad arguments, a package.json that is not --name at --version, a .npmignore, a 4xx, or this version already holds other content.
+- `2` Could not ask: no registry configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
 
 ## qits artifacts publish npm plan
+
+Retired by `qits artifacts publish npm`, which decides, builds and uploads in one call; kept until the build-only npm-library archetype is live everywhere.
 
 Decide, in one word on stdout, what to do with package@version: publish (the ordinary case), skip (this exact version is already there; versions are immutable), or publish-replay (this version is below the registry's latest, so it must take a throwaway tag rather than move latest backwards).
 
@@ -1263,6 +1205,201 @@ qits artifacts publish npm rewrite-lockfile-origin --lockfile package-lock.json
 - `0` Rewritten, or already correct.
 - `1` Refused: bad arguments.
 - `2` Could not ask: the npm registry variables are not set, or the file cannot be read or written.
+
+## qits artifacts publish contract
+
+Pack a provider's golden masters or a consumer's pacts from a directory into one package (a maven jar or an npm tarball), and publish it if its content changed. Prints exactly one line on stdout: `published <version>` or `unchanged since <version>`.
+
+The packages are built deterministically: the same tree gives the same bytes. Inside the package the tree sits under golden-masters/ or pacts/, by --kind, whatever --from is called; the jar carries directory entries, because a class-path pact loader asks for the directory. Every contract package is if-changed, and decides on its own: packages built from the same tree agree without any link between them.
+
+--name is the coordinate qits-ci derived from the contracts: section; this command does not derive coordinates.
+
+```
+qits artifacts publish contract [--application <application>...] [--ecosystem <maven|npm>...] [--from <dir>...] [--kind <golden-masters|pacts>...] [--name <coordinate>...] [--provider <application>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>...` | The application whose contracts these are; named in the package's description. |
+| `--ecosystem <maven\|npm>...` | Which package to build. |
+| `--from <dir>...` | The tree to pack. |
+| `--kind <golden-masters\|pacts>...` | What the tree is. |
+| `--name <coordinate>...` | groupId:artifactId for maven, the package name for npm. |
+| `--provider <application>...` | The provider a pact is with. Required for pacts, refused for golden masters. |
+| `--version <version>...` | The release version. |
+
+### Examples
+
+```
+qits artifacts publish contract --kind golden-masters --ecosystem maven --name eu.wohlben.qits:qits-projects-golden-masters --application qits-projects --from golden-masters/ --version 2026.1002.1
+qits artifacts publish contract --kind pacts --ecosystem maven --name eu.wohlben.qits:qits-workspaces-pacts-qits-projects --application qits-workspaces --provider qits-projects --from pacts/ --version 2026.1002.1
+```
+
+### Exit codes
+
+- `0` Published, already published at this version with the same content, or unchanged.
+- `1` Refused: bad arguments, an empty --from, a 4xx, or this version already holds other content.
+- `2` Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
+
+## qits artifacts publish contract-docs
+
+Publish the @contracts/<application> docs bundle when at least one golden-masters package is at --version: the tree under golden-masters/, plus contracts.json listing every --package with its newest version and whether that is this release. Prints exactly one line on stdout: `published <version>` or `unchanged` (no package moved; the docs store keeps the previous bundle).
+
+Run it after the contract packages are published: a package with no version at all is a refusal, not a state.
+
+```
+qits artifacts publish contract-docs [--application <application>...] [--from <dir>...] [--meta <key=value>...] [--package <ecosystem=coordinate>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>...` | The provider application; the site is @contracts/<application>. |
+| `--from <dir>...` | The golden-masters tree. |
+| `--meta <key=value>...` | A metadata header, sent as X-Artifacts-Meta-<key>. Repeatable. |
+| `--package <ecosystem=coordinate>...` | A golden-masters package, e.g. npm=@qits/projects-golden-masters. Repeatable. |
+| `--version <version>...` | The release version. |
+
+### Examples
+
+```
+qits artifacts publish contract-docs --application qits-projects --from golden-masters/ --package maven=eu.wohlben.qits:qits-projects-golden-masters --package npm=@qits/projects-golden-masters --version 2026.1002.1 --meta git.commit.hash=deadbeef
+```
+
+### Exit codes
+
+- `0` Published, already published, or unchanged.
+- `1` Refused: bad arguments, a package with no published version, or a 4xx.
+- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+
+## qits artifacts publish sbom
+
+An SBOM: submit a document that already exists, or build one from a Dockerfile's FROM lines.
+
+## qits artifacts publish sbom submit
+
+Publish a CycloneDX document at (packageType, name, version).
+
+```
+qits artifacts publish sbom submit [--file <path>...] [--name <name>...] [--type <npm|maven|docker|daemon>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--file <path>...` | The CycloneDX document to publish. |
+| `--name <name>...` | The package name. |
+| `--type <npm\|maven\|docker\|daemon>...` | The package type the sbom store files this under. |
+| `--version <version>...` | The version. |
+
+### Examples
+
+```
+qits artifacts publish sbom submit --type docker --name qits/qits-ci --version 2026.906.1 --file sbom.json
+```
+
+### Exit codes
+
+- `0` Published, or already published with the same bytes.
+- `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
+- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+
+## qits artifacts publish sbom from-dockerfile
+
+Build a CycloneDX document from a Dockerfile's FROM lines: one component per distinct upstream image. Publishes nothing itself: write the file with -o, then `sbom submit` it.
+
+null-style variables in a FROM resolve from the file's own ARG default, or from --build-arg, in the precedence a real build has.
+
+```
+qits artifacts publish sbom from-dockerfile [--build-arg <NAME=value>...] [--dockerfile <path>...] [--output <path>...] [--root-name <name>...] [--root-version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--build-arg <NAME=value>...` | A build argument, for a FROM that names one. Repeatable. |
+| `--dockerfile <path>...` | A Dockerfile to read FROM lines from. Repeatable. Default: Dockerfile. |
+| `-o, --output <path>...` | Where to write the document. Required, exactly once. |
+| `--root-name <name>...` | The image's own name, for the document's root component. |
+| `--root-version <version>...` | The image's own version. |
+
+### Examples
+
+```
+qits artifacts publish sbom from-dockerfile --root-name qits/qits-ci --root-version 2026.906.1 -o sbom.json
+qits artifacts publish sbom from-dockerfile --root-name x --root-version 1 --dockerfile a.Dockerfile --dockerfile b.Dockerfile --build-arg BASE=alpine:3.20 -o sbom.json
+```
+
+### Exit codes
+
+- `0` Wrote the document.
+- `1` Refused: bad arguments, a Dockerfile with no FROM line, or a variable nothing resolves.
+
+## qits artifacts publish docs
+
+A documentation bundle, at (site, version).
+
+## qits artifacts publish docs submit
+
+Publish a documentation bundle at (site, version).
+
+--openapi publishes one OpenAPI document instead of an archive: it is packed as the bundle's only entry, openapi.yml (or openapi.json for a .json file). That is the platform's @apidocs publish.
+
+The store explodes the archive into per-file blobs and keeps no archive digest, so an occupied version cannot be verified: it is skipped, with a WARN naming the degradation, rather than reported as a plain success.
+
+```
+qits artifacts publish docs submit [--archive <tgz>...] [--meta <key=value>...] [--openapi <file>...] [--site <name>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--archive <tgz>...` | The gzipped tar archive to publish. Exclusive with --openapi. |
+| `--meta <key=value>...` | A metadata header, sent as X-Artifacts-Meta-<key>. Repeatable. |
+| `--openapi <file>...` | An OpenAPI document (.yml, .yaml or .json) to publish as the whole bundle. Exclusive with --archive. |
+| `--site <name>...` | The docs site's name. |
+| `--version <version>...` | The version. |
+
+### Examples
+
+```
+qits artifacts publish docs submit --site @apidocs/qits-ci --version 2026.906.1 --archive apidocs.tgz --meta git.commit.hash=deadbeef
+qits artifacts publish docs submit --site @apidocs/qits-projects --version 2026.1002.1 --openapi docs/openapi.yml
+```
+
+### Exit codes
+
+- `0` Published, or already published (see above: not verified in that case).
+- `1` Refused: bad arguments, or a 4xx that is not the store's "already there".
+- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+
+## qits artifacts publish daemon
+
+A daemon binary, at (name, version).
+
+## qits artifacts publish daemon submit
+
+Publish a daemon binary at (name, version).
+
+Daemon versions are immutable: a re-publish always answers 409, even for identical bytes. The stored digest decides whether that is a re-fire of a run that already succeeded, or two builds claiming one version.
+
+```
+qits artifacts publish daemon submit [--file <bin>...] [--name <name>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--file <bin>...` | The binary to publish. |
+| `--name <name>...` | The daemon's name. |
+| `--version <version>...` | The version. |
+
+### Examples
+
+```
+qits artifacts publish daemon submit --name qits-platform-access-cli --version 2026.906.1 --file target/qits
+```
+
+### Exit codes
+
+- `0` Published, or already published with the same bytes.
+- `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
+- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
 
 ## qits artifacts publish exists
 

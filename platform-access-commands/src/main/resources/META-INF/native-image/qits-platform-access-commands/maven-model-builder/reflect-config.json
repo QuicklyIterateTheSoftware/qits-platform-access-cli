@@ -1,0 +1,54 @@
+[
+  {
+    "name": "org.apache.maven.model.Model",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.ModelBase",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.Parent",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.Build",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.BuildBase",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.PluginConfiguration",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.PluginContainer",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.Organization",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.Scm",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.IssueManagement",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.CiManagement",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.DistributionManagement",
+    "allPublicMethods": true
+  },
+  {
+    "name": "org.apache.maven.model.Prerequisites",
+    "allPublicMethods": true
+  }
+]

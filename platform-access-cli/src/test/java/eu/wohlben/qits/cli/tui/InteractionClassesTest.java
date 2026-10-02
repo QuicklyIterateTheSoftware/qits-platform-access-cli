@@ -254,10 +254,11 @@ class InteractionClassesTest {
                 .getCommandSpec().userObject();
         assertThat(eu.wohlben.qits.cli.tui.api.TuiCommands.interactionOf(skill)).isEqualTo(Interaction.LOCAL);
 
-        // The live streams run on their own and hold their query; every other parent only leads.
+        // The live streams run on their own and hold their query; `artifacts publish npm` publishes
+        // and keeps its npm subcommands (epic qits-620); every other parent only leads.
         List<String> runnableParents = new ArrayList<>();
         collectRunnableParents(qits, "", runnableParents);
-        assertThat(runnableParents).containsExactlyInAnyOrder("events", "observe");
+        assertThat(runnableParents).containsExactlyInAnyOrder("events", "observe", "artifacts publish npm");
         assertThat(qits.child("events").child("query").interaction()).isEqualTo(Interaction.PLAIN);
         assertThat(qits.child("observe").child("query").interaction()).isEqualTo(Interaction.PLAIN);
     }

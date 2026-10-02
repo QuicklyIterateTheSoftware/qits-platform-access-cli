@@ -126,6 +126,61 @@ final class Store {
     return root + "/" + safe("--site", site) + "/-/" + version(version);
   }
 
+  /**
+   * {@code /artifacts/content-hashes/<maven|npm>/<name>/-/<version|newest>}: the version's stored
+   * content hash, or the newest version by version order and its hash. Both read the hosted
+   * repository; the store fills in the repository segment itself.
+   */
+  String contentHash(String type, String name, String versionOrNewest) {
+    if (!type.equals("maven") && !type.equals("npm")) {
+      throw CliException.policy("unknown package type '" + type + "'; content hashes are kept for maven and npm");
+    }
+    return origin()
+        + "/artifacts/content-hashes/"
+        + type
+        + "/"
+        + safe("--name", name)
+        + "/-/"
+        + version(versionOrNewest);
+  }
+
+  /** The hosted maven repository root — {@code QITS_MAVEN_REGISTRY_URL}, which carries its own path. */
+  String mavenRegistry() {
+    return trim(
+        env.require(
+            "QITS_MAVEN_REGISTRY_URL",
+            "the hosted maven repository is where an eu.wohlben.qits artifact is published"));
+  }
+
+  /**
+   * {@code <maven root>/<g with dots as slashes>/<a>/<v>/<file>}. Each segment is checked on its
+   * own, so a group cannot smuggle a traversal in between its dots.
+   */
+  String mavenFile(String groupId, String artifactId, String version, String file) {
+    return mavenFileUnder(mavenRegistry(), groupId, artifactId, version, file);
+  }
+
+  /** The same path under any maven root: the hosted repository, or the proxy a BOM is read from. */
+  static String mavenFileUnder(String root, String groupId, String artifactId, String version, String file) {
+    StringBuilder url = new StringBuilder(trim(root));
+    for (String segment : groupId.split("\\.", -1)) {
+      url.append('/').append(segment(("--name"), segment));
+    }
+    url.append('/').append(segment("--name", artifactId));
+    url.append('/').append(version(version));
+    url.append('/').append(segment("--name", file));
+    return url.toString();
+  }
+
+  /** One path segment: a coordinate character string with no slash in it. */
+  private static String segment(String what, String value) {
+    String checked = safe(what, value);
+    if (checked.contains("/")) {
+      throw CliException.policy(what + " '" + value + "' is not a single path segment");
+    }
+    return checked;
+  }
+
   /** The hosted npm registry root — {@code QITS_NPM_REGISTRY_URL}, which carries its own path. */
   String npmRegistry() {
     return trim(

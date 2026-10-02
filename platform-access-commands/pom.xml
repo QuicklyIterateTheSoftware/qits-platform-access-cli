@@ -73,6 +73,15 @@
         </dependency>
 
         <dependency>
+            <!-- `qits artifacts publish maven` reads a reactor's effective models (parents, BOM
+                 imports, interpolation) the way the reactor build did, and writes the flattened pom
+                 with MavenXpp3Writer. maven's own builder, the 3.9 line every wrapper pins, rather than
+                 a second reading of the pom rules; the version is quarkus-bom's. -->
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model-builder</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>

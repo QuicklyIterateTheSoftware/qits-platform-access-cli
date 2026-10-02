@@ -112,6 +112,13 @@ final class Http {
         url);
   }
 
+  /** A PUT of bytes already in hand: a jar or a publish document the CLI built itself. */
+  Response putBytes(String url, byte[] bytes, String contentType, Map<String, String> headers) {
+    return send(
+        request(url, headers, contentType).PUT(HttpRequest.BodyPublishers.ofByteArray(bytes)).build(),
+        url);
+  }
+
   Response get(String url) {
     return send(request(url, Map.of(), null).GET().build(), url);
   }

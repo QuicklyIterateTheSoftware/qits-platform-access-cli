@@ -11,7 +11,8 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "artifacts", mixinStandardHelpOptions = true,
         subcommands = {PublishCommand.class},
         description = "The platform's artifacts store. `qits artifacts publish` is a CI release step's "
-                + "publish client: an sbom, a docs bundle, a daemon binary, or an npm decision.")
+                + "publish client: a maven module, an npm package, a contract package, an sbom, a docs bundle or "
+                + "a daemon binary.")
 public class ArtifactsCommand implements Runnable {
 
     @CommandLine.Spec

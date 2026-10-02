@@ -42,6 +42,10 @@ shape qits-ci-daemon's root has, and it lists four modules, in this order:
                                 Deploys nothing (`maven.deploy.skip`); consumed in this reactor.
                                 Also builds a test jar, so the MCP service's tests run against the
                                 same fakes (`FakePlatform`, `FakeSocketServer`).
+                                maven-model-builder (quarkus-bom's 3.9 line) is here for
+                                `publish maven`'s effective models; its super pom and the model
+                                classes its interpolator reflects on are declared under
+                                META-INF/native-image/qits-platform-access-commands/maven-model-builder/.
     platform-access-mcp-service the MCP service (`eu.wohlben.qits:qits-platform-access-mcp-service`,
                                 application `qits-platform-access-mcp-service`): the commands served
                                 as MCP tools at `/mcp`. quarkus-mcp-server-http, quarkus-oidc (bearer
@@ -144,6 +148,13 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                classes, kept as they were; the picocli commands and PublishArgs (the
                argument-grammar checks Args used to do) are new. Touches no session file — see
                Conventions.
+               Since epic qits-620 it also owns maven and npm publishing: ContentHash (the
+               `v1:sha256:` value; HashManifest, SbomCanonical, CanonicalJson, pinned by
+               ContentHashGoldenTest's fixtures F1-F5: a rule change is `v2`, never an edit of a
+               fixture), Decision (the if-changed flow over the store's content-hash reads,
+               ContentHashes), MavenPublisher (flatten + bundle + link over maven-model-builder's
+               effective models, MavenReactor), NpmPublisher (the tarball and publish document),
+               ContractPackager and ContractDocs, and Archives (the deterministic jar and tar.gz).
     mcp/       qits mcp-credential: Claude's MCP headers helper (interim, retired by qits-684)
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
     complete/  the five platform sources behind the TUI's dropdowns (projects, repositories,
