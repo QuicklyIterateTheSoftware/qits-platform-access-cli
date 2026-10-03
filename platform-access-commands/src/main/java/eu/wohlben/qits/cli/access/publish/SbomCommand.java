@@ -37,7 +37,7 @@ public class SbomCommand implements Runnable {
             exitCodeList = {
                     "0:Published, or already published with the same bytes.",
                     "1:Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.",
-                    "2:Could not ask: no store configured, an I/O failure, or a 5xx."})
+                    "2:Could not ask: the store unreachable, an I/O failure, or a 5xx."})
     public static class SubmitCommand extends AbstractPublishCommand {
 
         @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true,
@@ -68,7 +68,7 @@ public class SbomCommand implements Runnable {
             String name = PublishArgs.requiredOnce(this.name, "--name");
             String version = PublishArgs.requiredOnce(this.version, "--version");
             String file = PublishArgs.requiredOnce(this.file, "--file");
-            Publisher publisher = new Publisher(http(), Store.from(env, console), console);
+            Publisher publisher = new Publisher(http(), store(env), console);
             return publisher.sbomSubmit(Store.normalizeType(type), name, version, Path.of(file));
         }
     }

@@ -10,14 +10,13 @@ import java.util.Optional;
 /**
  * {@code qits artifacts publish npm} — publish one npm package: the tarball is built here, in Java,
  * and uploaded with the registry's publish document. Its subcommands are the npm reasoning that
- * stays outside a publish ({@code dist-tag}, {@code rewrite-lockfile-origin}) and {@code plan},
+ * stays outside a publish ({@code dist-tag}) and {@code plan},
  * which the build-only npm-library archetype no longer calls and a later release deletes.
  */
 @CommandLine.Command(name = "npm",
         // Not mixinStandardHelpOptions: this command has its own --version (the package version);
         // see PlanCommand's note.
-        subcommands = {NpmCommand.PlanCommand.class, NpmCommand.DistTagCommand.class,
-                NpmCommand.RewriteLockfileOriginCommand.class},
+        subcommands = {NpmCommand.PlanCommand.class, NpmCommand.DistTagCommand.class},
         description = {"Publish one npm package from its built directory: the tarball is packed here "
                 + "(deterministic: sorted entries, fixed mode, owner and mtime) and PUT with the registry's "
                 + "publish document. Prints exactly one line on stdout: `published <version>` or "
@@ -44,7 +43,7 @@ import java.util.Optional;
                 "1:Refused: bad arguments, a package.json that is not --name at --version, an unsupported "
                         + ".npmignore, a "
                         + "4xx, or this version already holds other content.",
-                "2:Could not ask: no registry configured, an I/O failure, a 5xx, or an unreadable answer; "
+                "2:Could not ask: the registry unreachable, an I/O failure, a 5xx, or an unreadable answer; "
                         + "never read as unchanged."})
 public class NpmCommand extends AbstractPublishCommand {
 
@@ -85,7 +84,7 @@ public class NpmCommand extends AbstractPublishCommand {
         if (!unmatched.isEmpty() && !unmatched.get(0).startsWith("-")) {
             // A bare word here is a subcommand nobody declared, refused the way picocli refuses one.
             throw new CommandLine.ParameterException(spec.commandLine(), "Unknown subcommand '" + unmatched.get(0)
-                    + "'; name one of plan, dist-tag or rewrite-lockfile-origin, or publish with --name and --version.");
+                    + "'; name one of plan or dist-tag, or publish with --name and --version.");
         }
         if (unmatched.isEmpty() && name.isEmpty() && version.isEmpty() && path.isEmpty() && sbom.isEmpty()
                 && include.isEmpty() && !ifChanged) {
@@ -98,7 +97,7 @@ public class NpmCommand extends AbstractPublishCommand {
         Path dir = Path.of(PublishArgs.optionalOnce(this.path, "--path", "."));
         Optional<Path> sbom = Optional.ofNullable(PublishArgs.optionalOnce(this.sbom, "--sbom", null)).map(Path::of);
         PublishArgs.ifChangedNeedsSbom(ifChanged, sbom.isPresent(), include);
-        NpmPublisher publisher = new NpmPublisher(http(), Store.from(env, console), console);
+        NpmPublisher publisher = new NpmPublisher(http(), store(env), console);
         Decision.Outcome outcome = publisher.publish(NpmPublisher.pack(dir, name, version), sbom, include, ifChanged,
                 true);
         console.answer(outcome.line());
@@ -123,7 +122,7 @@ public class NpmCommand extends AbstractPublishCommand {
             exitCodeList = {
                     "0:Decided (the word is on stdout).",
                     "1:Refused: bad arguments, or a 4xx.",
-                    "2:Could not ask: no registry configured, an I/O failure, or a 5xx; never read as "
+                    "2:Could not ask: the registry unreachable, an I/O failure, or a 5xx; never read as "
                             + "\"publish\"."})
     public static class PlanCommand extends AbstractPublishCommand {
 
@@ -145,7 +144,7 @@ public class NpmCommand extends AbstractPublishCommand {
             PublishArgs.noExtras(unmatched);
             String pkg = PublishArgs.requiredOnce(this.pkg, "--package");
             String version = PublishArgs.requiredOnce(this.version, "--version");
-            Npm npm = new Npm(http(), Store.from(env, console), console);
+            Npm npm = new Npm(http(), store(env), console);
             return npm.plan(pkg, version);
         }
     }
@@ -162,7 +161,7 @@ public class NpmCommand extends AbstractPublishCommand {
             exitCodeList = {
                     "0:The tag now names that version.",
                     "1:Refused: bad arguments, or a 4xx (for example a backwards move of latest).",
-                    "2:Could not ask: no registry configured, an I/O failure, or a 5xx."})
+                    "2:Could not ask: the registry unreachable, an I/O failure, or a 5xx."})
     public static class DistTagCommand extends AbstractPublishCommand {
 
         @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true,
@@ -187,41 +186,8 @@ public class NpmCommand extends AbstractPublishCommand {
             String pkg = PublishArgs.requiredOnce(this.pkg, "--package");
             String version = PublishArgs.requiredOnce(this.version, "--version");
             String tag = PublishArgs.requiredOnce(this.tag, "--tag");
-            Npm npm = new Npm(http(), Store.from(env, console), console);
+            Npm npm = new Npm(http(), store(env), console);
             return npm.distTag(pkg, version, tag);
-        }
-    }
-
-    @CommandLine.Command(name = "rewrite-lockfile-origin", mixinStandardHelpOptions = true,
-            description = {"Repoint every \"resolved\" URL in a lockfile at the registries this "
-                    + "container can reach, keeping the path (and so the integrity hash's meaning) exactly "
-                    + "as it was.",
-                    "An entry under the hosted registry's own path is an @qits tarball and gets the "
-                            + "hosted origin; every other entry gets the npmjs proxy's. Running this twice "
-                            + "changes nothing the second time."},
-            footerHeading = "%nExamples:%n",
-            footer = "  qits artifacts publish npm rewrite-lockfile-origin --lockfile package-lock.json",
-            exitCodeListHeading = "%nExit codes:%n",
-            exitCodeList = {
-                    "0:Rewritten, or already correct.",
-                    "1:Refused: bad arguments.",
-                    "2:Could not ask: the npm registry variables are not set, or the file cannot be "
-                            + "read or written."})
-    public static class RewriteLockfileOriginCommand extends AbstractPublishCommand {
-
-        @CommandLine.Option(names = "--lockfile", paramLabel = "<path>",
-                description = "The lockfile to rewrite in place. Default: package-lock.json.")
-        List<String> lockfile = new ArrayList<>();
-
-        @CommandLine.Unmatched
-        List<String> unmatched = new ArrayList<>();
-
-        @Override
-        protected int run(Env env, Console console) {
-            PublishArgs.noExtras(unmatched);
-            String lockfile = PublishArgs.optionalOnce(this.lockfile, "--lockfile", "package-lock.json");
-            Npm npm = new Npm(http(), Store.from(env, console), console);
-            return npm.rewriteLockfileOrigin(Path.of(lockfile));
         }
     }
 }

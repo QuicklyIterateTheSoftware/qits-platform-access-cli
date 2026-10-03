@@ -25,6 +25,14 @@ abstract class AbstractPublishCommand extends PlatformCommand {
 
     private PublishCredential credential;
 
+    /**
+     * Where the store and the mirror are, when the suite says so; null, as in every real run, means
+     * composed from {@code QITS_DOMAIN}. Package-private and set only by the test harness's factory:
+     * the seam is a field rather than a variable on purpose, so nothing a step container carries can
+     * point a publish anywhere but the platform's public names.
+     */
+    Store.Hosts hosts;
+
     @Override
     protected final int execute(CliContext context) throws CliFailure {
         Env env = new Env(context.env());
@@ -46,6 +54,11 @@ abstract class AbstractPublishCommand extends PlatformCommand {
      */
     protected final Http http() {
         return new Http(credential);
+    }
+
+    /** The store this command talks to: the platform's public hosts, from {@code QITS_DOMAIN}. */
+    protected final Store store(Env env) {
+        return hosts != null ? new Store(hosts) : Store.from(env);
     }
 
     protected abstract int run(Env env, Console console);

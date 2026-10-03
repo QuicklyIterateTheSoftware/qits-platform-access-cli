@@ -35,7 +35,7 @@ import java.util.Optional;
                 "0:Published, already published at this version with the same content, or unchanged.",
                 "1:Refused: bad arguments, a module that is not --name at --version, a bundling conflict, a "
                         + "4xx, or this version already holds other content.",
-                "2:Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never "
+                "2:Could not ask: the store unreachable, an I/O failure, a 5xx, or an unreadable answer; never "
                         + "read as unchanged."})
 public class MavenCommand extends AbstractPublishCommand {
 
@@ -87,7 +87,7 @@ public class MavenCommand extends AbstractPublishCommand {
         Optional<Path> sbom = Optional.ofNullable(PublishArgs.optionalOnce(this.sbom, "--sbom", null))
                 .map(root::resolve);
         PublishArgs.ifChangedNeedsSbom(ifChanged, sbom.isPresent(), include);
-        Decision.Outcome outcome = new MavenPublisher(http(), Store.from(env, console), env, console)
+        Decision.Outcome outcome = new MavenPublisher(http(), store(env), console)
                 .publish(root, name, version, path, sbom, include, link, ifChanged);
         console.answer(outcome.line());
         return ExitCode.OK;

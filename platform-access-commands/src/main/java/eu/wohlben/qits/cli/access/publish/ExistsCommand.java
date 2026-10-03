@@ -21,7 +21,7 @@ import java.util.List;
         exitCodeList = {
                 "0:Published.",
                 "1:Not published, or the arguments are wrong.",
-                "2:Could not ask: no store configured, an I/O failure, or a 5xx."})
+                "2:Could not ask: the store unreachable, an I/O failure, or a 5xx."})
 public class ExistsCommand extends AbstractPublishCommand {
 
     @CommandLine.Parameters(index = "0..*", paramLabel = "<type> <name> <version>",
@@ -40,7 +40,7 @@ public class ExistsCommand extends AbstractPublishCommand {
         if (positionals.size() > 3) {
             throw CliException.policy("unexpected argument " + positionals.get(3));
         }
-        Publisher publisher = new Publisher(http(), Store.from(env, console), console);
+        Publisher publisher = new Publisher(http(), store(env), console);
         return publisher.exists(type, name, version);
     }
 

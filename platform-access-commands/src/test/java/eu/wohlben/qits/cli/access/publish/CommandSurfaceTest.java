@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class CommandSurfaceTest {
 
-    private final Harness cli = new Harness().with("QITS_ARTIFACTS_URL", "http://127.0.0.1:1");
+    private final Harness cli = new Harness();
 
     @Test
     void noCommandIsRefusedByPicocliTheWayEveryOtherCommandGroupHereIs() {
@@ -35,7 +35,7 @@ class CommandSurfaceTest {
         Harness.Run run = cli.run("--help");
         assertEquals(0, run.code());
         assertTrue(run.out().contains("Exit codes:"), run.out());
-        assertTrue(run.out().contains("QITS_ARTIFACTS_URL"), run.out());
+        assertTrue(run.out().contains("registry.qits.$QITS_DOMAIN"), run.out());
     }
 
     @Test

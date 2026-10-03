@@ -40,7 +40,7 @@ public class DocsCommand implements Runnable {
             exitCodeList = {
                     "0:Published, or already published (see above: not verified in that case).",
                     "1:Refused: bad arguments, or a 4xx that is not the store's \"already there\".",
-                    "2:Could not ask: no store configured, an I/O failure, or a 5xx."})
+                    "2:Could not ask: the store unreachable, an I/O failure, or a 5xx."})
     public static class SubmitCommand extends AbstractPublishCommand {
 
         @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true,
@@ -83,7 +83,7 @@ public class DocsCommand implements Runnable {
             if (archive == null && openapi == null) {
                 throw CliException.policy("--archive or --openapi is required");
             }
-            Publisher publisher = new Publisher(http(), Store.from(env, console), console);
+            Publisher publisher = new Publisher(http(), store(env), console);
             if (archive != null) {
                 return publisher.docsSubmit(site, version, Path.of(archive), meta);
             }

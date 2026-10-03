@@ -167,8 +167,7 @@ class PublishCredentialTest {
         store.on("GET", "/artifacts/npm/npm/@qits/ui-components",
                 StubStore.Reply.of(200, "{\"versions\":{},\"dist-tags\":{}}"));
 
-        Harness.Run run = new Harness()
-                .with("QITS_NPM_REGISTRY_URL", store.url() + "/artifacts/npm/npm")
+        Harness.Run run = new Harness().store(store)
                 .with(PublishCredential.TOKEN, "a-token")
                 .run("npm", "plan", "--package", "@qits/ui-components", "--version", "2026.906.1");
 
@@ -181,8 +180,7 @@ class PublishCredentialTest {
         store.on("PUT", "/artifacts/npm/npm/-/package/@qits/ui-components/dist-tags/main",
                 StubStore.Reply.of(200, "{}"));
 
-        Harness.Run run = new Harness()
-                .with("QITS_NPM_REGISTRY_URL", store.url() + "/artifacts/npm/npm")
+        Harness.Run run = new Harness().store(store)
                 .with(PublishCredential.TOKEN, "a-token")
                 .run("npm", "dist-tag", "--package", "@qits/ui-components", "--version", "2026.906.1",
                         "--tag", "main");

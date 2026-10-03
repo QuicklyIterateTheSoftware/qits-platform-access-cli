@@ -130,7 +130,7 @@ class SbomSubmitTest {
   }
 
   @Test
-  void noStoreAddressIsCouldNotAskRatherThanRefused() {
+  void anUnreachableStoreIsCouldNotAskRatherThanRefused() {
     Harness.Run run =
         new Harness()
             .run(
@@ -138,23 +138,6 @@ class SbomSubmitTest {
                 document.toString());
 
     assertEquals(ExitCode.TRANSPORT, run.code());
-    assertTrue(run.errContains("QITS_ARTIFACTS_URL is not set"), run.err());
-  }
-
-  @Test
-  void theStoreRootIsDerivedFromTheNpmRegistryWithAWarnWhileTheVariableIsMissing() {
-    store.on("PUT", PATH, StubStore.Reply.of(201, "{\"digest\":\"x\",\"sizeBytes\":1}"));
-
-    Harness.Run run =
-        new Harness()
-            .with("QITS_NPM_REGISTRY_URL", store.url() + "/artifacts/npm/npm")
-            .run(
-                "sbom", "submit", "--type", "docker", "--name", "qits/qits-ci", "--version",
-                "2026.906.1", "--file", document.toString());
-
-    assertEquals(ExitCode.OK, run.code());
-    assertTrue(run.errContains("QITS_ARTIFACTS_URL is not set; deriving"), run.err());
-    assertEquals("PUT " + PATH, store.paths().get(0));
   }
 
   private Harness.Run submit() {

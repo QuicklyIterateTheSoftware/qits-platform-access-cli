@@ -112,22 +112,6 @@ class DocsSubmitTest {
     assertTrue(store.requests().isEmpty());
   }
 
-  @Test
-  void anExplicitDocsRootWinsOverTheDerivedOne() {
-    store.on("PUT", "/somewhere/else/@apidocs/qits-ci/-/1", StubStore.Reply.of(201, "{}"));
-
-    Harness.Run run =
-        new Harness()
-            .store(store)
-            .with("QITS_DOCS_URL", store.url() + "/somewhere/else")
-            .run(
-                "docs", "submit", "--site", "@apidocs/qits-ci", "--version", "1", "--archive",
-                archive.toString());
-
-    assertEquals(ExitCode.OK, run.code());
-    assertEquals(List.of("PUT /somewhere/else/@apidocs/qits-ci/-/1"), store.paths());
-  }
-
   private Harness.Run submit() {
     return cli.run(
         "docs", "submit", "--site", "@apidocs/qits-ci", "--version", "2026.906.1", "--archive",

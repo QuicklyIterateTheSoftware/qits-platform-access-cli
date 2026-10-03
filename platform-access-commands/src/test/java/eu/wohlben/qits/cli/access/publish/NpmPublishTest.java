@@ -38,7 +38,7 @@ class NpmPublishTest {
   @BeforeEach
   void setUp() throws IOException {
     store = new StubStore();
-    cli = new Harness().store(store).with("QITS_NPM_REGISTRY_URL", store.url() + "/artifacts/npm/npm");
+    cli = new Harness().store(store);
     pkg = work.resolve("dist");
     Files.createDirectories(pkg.resolve("lib"));
     Files.writeString(pkg.resolve("package.json"),

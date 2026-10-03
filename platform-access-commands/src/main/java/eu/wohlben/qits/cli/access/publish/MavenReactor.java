@@ -36,8 +36,7 @@ import java.util.Properties;
  * pins): parents merged, properties interpolated, imported BOMs expanded and managed versions
  * injected, exactly what the reactor build saw. A parent is read from the reactor on disk; an
  * external parent or an imported BOM is fetched over {@link Http} from the hosted maven repository
- * ({@code QITS_MAVEN_REGISTRY_URL}) and then the proxy ({@code QITS_MAVEN_PROXY_URL}), with the
- * run's bearer. Nothing here runs {@code mvn}.
+ * and then qits-mirror's Maven Central cache ({@link Store#mavenReadRoots}), with the run's bearer. Nothing here runs {@code mvn}.
  */
 final class MavenReactor {
 
@@ -62,11 +61,11 @@ final class MavenReactor {
     }
 
     /** Walks {@code <modules>} from {@code root/pom.xml}, recursively. */
-    static MavenReactor read(Path root, Http http, Env env) {
+    static MavenReactor read(Path root, Http http, List<String> remoteRoots) {
         Path normal = root.toAbsolutePath().normalize();
         Map<String, Module> modules = new LinkedHashMap<>();
         walk(normal, modules);
-        return new MavenReactor(normal, modules, new HttpResolver(http, env, modules));
+        return new MavenReactor(normal, modules, new HttpResolver(http, remoteRoots, modules));
     }
 
     private static void walk(Path dir, Map<String, Module> into) {
@@ -157,12 +156,12 @@ final class MavenReactor {
     private static final class HttpResolver implements ModelResolver {
 
         private final Http http;
-        private final Env env;
+        private final List<String> remoteRoots;
         private final Map<String, Module> modules;
 
-        HttpResolver(Http http, Env env, Map<String, Module> modules) {
+        HttpResolver(Http http, List<String> remoteRoots, Map<String, Module> modules) {
             this.http = http;
-            this.env = env;
+            this.remoteRoots = remoteRoots;
             this.modules = modules;
         }
 
@@ -183,11 +182,7 @@ final class MavenReactor {
             }
             String coordinate = groupId + ":" + artifactId + ":" + version;
             List<String> tried = new ArrayList<>();
-            for (String variable : new String[] {"QITS_MAVEN_REGISTRY_URL", "QITS_MAVEN_PROXY_URL"}) {
-                String root = env.get(variable);
-                if (root == null) {
-                    continue;
-                }
+            for (String root : remoteRoots) {
                 String url = Store.mavenFileUnder(root, groupId, artifactId, version,
                         artifactId + "-" + version + ".pom");
                 Http.Response response = http.get(url);
@@ -200,10 +195,6 @@ final class MavenReactor {
                     throw response.status() >= 500 ? CliException.transport(message) : CliException.policy(message);
                 }
                 tried.add(url);
-            }
-            if (tried.isEmpty()) {
-                throw CliException.transport("the pom of " + coordinate + " is not in this reactor, and neither "
-                        + "QITS_MAVEN_REGISTRY_URL nor QITS_MAVEN_PROXY_URL is set to read it from");
             }
             throw CliException.policy("the pom of " + coordinate + " is in neither the reactor nor the store ("
                     + String.join(", ", tried) + " answered 404)");

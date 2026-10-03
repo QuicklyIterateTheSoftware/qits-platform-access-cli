@@ -1122,13 +1122,13 @@ Every publish follows one rule, for every surface: absent, PUT it and say what l
 - This command never signs in and never reads or writes what `qits login` keeps: it runs in a CI step container with no person. `qits login` and `qits git-login` do not apply to it.
 - Only a CI run may publish to qits-artifacts, so every request carries a bearer. The token comes from the first of these the environment has: QITS_PUBLISH_TOKEN_COMMAND (an executable that prints a fresh token, re-run for every request), QITS_PUBLISH_TOKEN (a token), or QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET (minted at the idp). With none of them the request still goes out, unauthenticated, and the store answers 401: the store decides who may write, not this client.
 - Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as `qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.
-- QITS_ARTIFACTS_URL names the store; every command that talks to it needs the variable set (or derivable from QITS_NPM_REGISTRY_URL or QITS_MAVEN_REGISTRY_URL, with a warning). QITS_DOCS_URL, QITS_NPM_REGISTRY_URL and QITS_NPM_PROXY_URL name the docs root and the two npm registries; a CI step sets what each command needs.
+- The store is https://registry.qits.$QITS_DOMAIN and the Maven Central cache https://mirror.qits.$QITS_DOMAIN; QITS_DOMAIN defaults to wohlben.eu. No other variable names an address: the hosted npm and maven repositories, the docs, sbom and daemon stores are fixed paths under the store's host.
 
 ### Exit codes
 
 - `0` Published, or already published with the same bytes.
 - `1` Refused, and re-running will not help: invalid arguments, a 4xx, or the coordinate already holds different bytes.
-- `2` Could not ask, or could not be answered: no store configured, an I/O failure, or a 5xx. A step may retry a 2 and must not retry a 1.
+- `2` Could not ask, or could not be answered: the store unreachable, an I/O failure, or a 5xx. A step may retry a 2 and must not retry a 1.
 
 ## qits artifacts publish maven
 
@@ -1163,7 +1163,7 @@ qits artifacts publish maven --name eu.wohlben.qits:qits-registries-npm --path n
 
 - `0` Published, already published at this version with the same content, or unchanged.
 - `1` Refused: bad arguments, a module that is not --name at --version, a bundling conflict, a 4xx, or this version already holds other content.
-- `2` Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
+- `2` Could not ask: the store unreachable, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
 
 ## qits artifacts publish npm
 
@@ -1198,7 +1198,7 @@ qits artifacts publish npm --name @qits/ui-components --path dist/qits-spa-ui-co
 
 - `0` Published, already published at this version with the same content, or unchanged.
 - `1` Refused: bad arguments, a package.json that is not --name at --version, an unsupported .npmignore, a 4xx, or this version already holds other content.
-- `2` Could not ask: no registry configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
+- `2` Could not ask: the registry unreachable, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
 
 ## qits artifacts publish npm plan
 
@@ -1227,7 +1227,7 @@ plan=$(qits artifacts publish npm plan --package @qits/ui-components --version 2
 
 - `0` Decided (the word is on stdout).
 - `1` Refused: bad arguments, or a 4xx.
-- `2` Could not ask: no registry configured, an I/O failure, or a 5xx; never read as "publish".
+- `2` Could not ask: the registry unreachable, an I/O failure, or a 5xx; never read as "publish".
 
 ## qits artifacts publish npm dist-tag
 
@@ -1253,33 +1253,7 @@ qits artifacts publish npm dist-tag --package @qits/ui-components --version 2026
 
 - `0` The tag now names that version.
 - `1` Refused: bad arguments, or a 4xx (for example a backwards move of latest).
-- `2` Could not ask: no registry configured, an I/O failure, or a 5xx.
-
-## qits artifacts publish npm rewrite-lockfile-origin
-
-Repoint every "resolved" URL in a lockfile at the registries this container can reach, keeping the path (and so the integrity hash's meaning) exactly as it was.
-
-An entry under the hosted registry's own path is an @qits tarball and gets the hosted origin; every other entry gets the npmjs proxy's. Running this twice changes nothing the second time.
-
-```
-qits artifacts publish npm rewrite-lockfile-origin [--lockfile <path>...]
-```
-
-| Name | What it does |
-|---|---|
-| `--lockfile <path>...` | The lockfile to rewrite in place. Default: package-lock.json. |
-
-### Examples
-
-```
-qits artifacts publish npm rewrite-lockfile-origin --lockfile package-lock.json
-```
-
-### Exit codes
-
-- `0` Rewritten, or already correct.
-- `1` Refused: bad arguments.
-- `2` Could not ask: the npm registry variables are not set, or the file cannot be read or written.
+- `2` Could not ask: the registry unreachable, an I/O failure, or a 5xx.
 
 ## qits artifacts publish contract
 
@@ -1316,7 +1290,7 @@ qits artifacts publish contract --kind pacts --ecosystem maven --name eu.wohlben
 
 - `0` Published, already published at this version with the same content, or unchanged.
 - `1` Refused: bad arguments, an empty --from (for pacts: no *_<provider>.json in it), a 4xx, or this version already holds other content.
-- `2` Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
+- `2` Could not ask: the store unreachable, an I/O failure, a 5xx, or an unreadable answer; never read as unchanged.
 
 ## qits artifacts publish contract-docs
 
@@ -1346,7 +1320,7 @@ qits artifacts publish contract-docs --application qits-projects --from golden-m
 
 - `0` Published, already published, or unchanged.
 - `1` Refused: bad arguments, a package with no published version, or a 4xx.
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+- `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
 
 ## qits artifacts publish sbom
 
@@ -1377,7 +1351,7 @@ qits artifacts publish sbom submit --type docker --name qits/qits-ci --version 2
 
 - `0` Published, or already published with the same bytes.
 - `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+- `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
 
 ## qits artifacts publish sbom from-dockerfile
 
@@ -1444,7 +1418,7 @@ qits artifacts publish docs submit --site @apidocs/qits-projects --version 2026.
 
 - `0` Published, or already published (see above: not verified in that case).
 - `1` Refused: bad arguments, or a 4xx that is not the store's "already there".
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+- `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
 
 ## qits artifacts publish daemon
 
@@ -1476,7 +1450,7 @@ qits artifacts publish daemon submit --name qits-platform-access-cli --version 2
 
 - `0` Published, or already published with the same bytes.
 - `1` Refused: bad arguments, a 4xx, or the coordinate already holds different bytes.
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+- `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
 
 ## qits artifacts publish exists
 
@@ -1504,7 +1478,7 @@ qits artifacts publish exists npm @qits/ui-components 2026.906.1
 
 - `0` Published.
 - `1` Not published, or the arguments are wrong.
-- `2` Could not ask: no store configured, an I/O failure, or a 5xx.
+- `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
 
 ## qits tui
 

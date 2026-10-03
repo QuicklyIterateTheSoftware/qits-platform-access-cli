@@ -42,9 +42,7 @@ class ContractPublishTest {
   @BeforeEach
   void setUp() throws IOException {
     store = new StubStore();
-    cli = new Harness().store(store)
-        .with("QITS_MAVEN_REGISTRY_URL", store.url() + "/artifacts/maven/maven")
-        .with("QITS_NPM_REGISTRY_URL", store.url() + "/artifacts/npm/npm");
+    cli = new Harness().store(store);
     tree = work.resolve("golden-masters");
     Files.createDirectories(tree.resolve("states"));
     Files.writeString(tree.resolve("index.json"), "{\"formatVersion\":1}\n");

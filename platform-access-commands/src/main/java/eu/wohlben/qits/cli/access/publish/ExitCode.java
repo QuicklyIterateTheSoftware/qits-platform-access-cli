@@ -30,7 +30,7 @@ final class ExitCode {
    */
   static final int POLICY = 1;
 
-  /** Could not ask, or could not be answered: no store configured, an I/O failure, a 5xx. */
+  /** Could not ask, or could not be answered: the store unreachable, an I/O failure, a 5xx. */
   static final int TRANSPORT = 2;
 
   private ExitCode() {}

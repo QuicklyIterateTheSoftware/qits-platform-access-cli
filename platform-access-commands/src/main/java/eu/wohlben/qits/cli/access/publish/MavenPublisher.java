@@ -52,14 +52,12 @@ final class MavenPublisher {
 
     private final Http http;
     private final Store store;
-    private final Env env;
     private final Console console;
     private final ContentHashes hashes;
 
-    MavenPublisher(Http http, Store store, Env env, Console console) {
+    MavenPublisher(Http http, Store store, Console console) {
         this.http = http;
         this.store = store;
-        this.env = env;
         this.console = console;
         this.hashes = new ContentHashes(http, store);
     }
@@ -100,7 +98,7 @@ final class MavenPublisher {
             }
         }
 
-        MavenReactor reactor = MavenReactor.read(root, http, env);
+        MavenReactor reactor = MavenReactor.read(root, http, store.mavenReadRoots());
         Path dir = reactor.root().resolve(path).normalize();
         MavenReactor.Module module = reactor.moduleAt(dir).orElseThrow(() -> CliException.policy(
                 "--path '" + path + "' is not a module of the reactor at " + reactor.root()

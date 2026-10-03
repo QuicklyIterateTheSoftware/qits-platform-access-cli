@@ -36,7 +36,7 @@ import java.util.Optional;
                 "0:Published, already published at this version with the same content, or unchanged.",
                 "1:Refused: bad arguments, an empty --from (for pacts: no *_<provider>.json in it), a 4xx, or "
                         + "this version already holds other content.",
-                "2:Could not ask: no store configured, an I/O failure, a 5xx, or an unreadable answer; never "
+                "2:Could not ask: the store unreachable, an I/O failure, a 5xx, or an unreadable answer; never "
                         + "read as unchanged."})
 public class ContractCommand extends AbstractPublishCommand {
 
@@ -88,9 +88,9 @@ public class ContractCommand extends AbstractPublishCommand {
             throw CliException.policy("--provider means nothing for golden masters, which are the provider's own");
         }
         String description = ContractPackager.description(kind, application, provider);
-        Store store = Store.from(env, console);
+        Store store = store(env);
         Decision.Outcome outcome = switch (ecosystem) {
-            case "maven" -> new MavenPublisher(http(), store, env, console)
+            case "maven" -> new MavenPublisher(http(), store, console)
                     .publishContract(name, version, ContractPackager.jar(from, kind, provider), description);
             case "npm" -> new NpmPublisher(http(), store, console).publish(
                     ContractPackager.npm(from, kind, provider, name, version, description), Optional.empty(), List.of(), true,

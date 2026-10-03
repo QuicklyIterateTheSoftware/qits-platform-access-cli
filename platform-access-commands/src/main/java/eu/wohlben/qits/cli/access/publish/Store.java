@@ -1,89 +1,97 @@
 package eu.wohlben.qits.cli.access.publish;
 
+import eu.wohlben.qits.cli.access.idp.IdpUrl;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 /**
- * Where qits-artifacts is, and how a coordinate becomes a URL.
+ * Where qits-artifacts and qits-mirror are, and how a coordinate becomes a URL.
  *
- * <p><b>No address is spelled in a repository.</b> Every root arrives as environment, and this class
- * is the one place that turns those roots plus a declared coordinate into a path — which is exactly
- * the consolidation the release-slots plan is for: the fleet derived the SBOM base by chopping three
- * different variables three different ways, and the three spellings disagreed about the trailing
- * slash.
+ * <p><b>No address is spelled in a repository, and none arrives as configuration either.</b> Every
+ * root is code plus the platform's public domain: {@code https://<label>.qits.$QITS_DOMAIN}, the
+ * label {@code registry} for qits-artifacts (hosted npm, hosted maven, the sbom, docs, daemon and
+ * content-hash stores) and {@code mirror} for qits-mirror (the npmjs and Maven Central caches). The
+ * paths under each are the services' own routes, constants here exactly as qits-ci's {@code
+ * StepAddressPlane} spells them, so a root composed here is byte for byte the one a step used to be
+ * handed as {@code QITS_ARTIFACTS_URL}, {@code QITS_DOCS_URL} or {@code QITS_*_REGISTRY_URL}.
  *
- * <h2>The roots</h2>
+ * <h2>The one input</h2>
  *
- * <ul>
- *   <li>{@code QITS_ARTIFACTS_URL} — the store's origin, and the only variable this program wants.
- *       qits-ci injects it into every step container.
- *   <li>{@code QITS_DOCS_URL} — the docs root <em>including</em> its {@code docs} repository
- *       segment, because the docs wire has one and the sbom and daemon wires do not. Derived from
- *       the origin when absent.
- *   <li>{@code QITS_NPM_REGISTRY_URL} / {@code QITS_NPM_PROXY_URL} — the hosted npm registry the
- *       {@code @qits} scope lives in, and the pull-through cache everything else resolves through.
- *       Two services since the byte plane was split, so neither can be derived from the other.
- * </ul>
+ * <p>{@code QITS_DOMAIN}, the bare public domain ({@code wohlben.eu}), folded the way qits-ci folds
+ * it: trimmed, lower-cased, leading and trailing dots dropped. Absent, it is {@value
+ * #DEFAULT_DOMAIN}, the same default {@code IdpUrl} falls back to. <b>Never an internal address</b>:
+ * the public names resolve and answer from inside the platform network too (the edge hairpins), and
+ * an internal fallback is exactly the class of address that stopped resolving every time a wire
+ * alias moved. The public hosts answer 401 anonymously, which is why every request here goes out
+ * through {@link AbstractPublishCommand#http()} with a credential.
  *
- * <h2>The one derivation, and why it is still here</h2>
- *
- * <p>A deployment whose qits-ci has not yet been taught {@code QITS_ARTIFACTS_URL} still injects the
- * npm and maven registry roots, and the store is a sibling path inside the same service — which is
- * precisely the {@code ${QITS_NPM_REGISTRY_URL%%/artifacts/*}} chop the fleet hand-wrote thirty
- * times. It survives here, once, behind a WARN: one derivation in one binary is the plan's answer,
- * and deleting it before every deployment carries the variable would make this binary useless in the
- * containers that need it first — including the ones that publish this binary.
+ * <p>The old {@code QITS_*_URL} variables are not read, so a step container that still carries them
+ * is simply not listening to them: the addresses they named and the ones composed here are the
+ * same.
  */
 final class Store {
 
-  /** The package types the sbom store serves. Its own whitelist, refused client-side first. */
+  /** The domain a CLI with no {@code QITS_DOMAIN} talks to: the live estate's. */
+  static final String DEFAULT_DOMAIN = "wohlben.eu";
+
+  /** qits-artifacts' host label, {@code host: registry} in its deployments.yml. */
+  static final String REGISTRY_HOST = "registry";
+
+  /** qits-mirror's host label. */
+  static final String MIRROR_HOST = "mirror";
+
+  /** qits-artifacts' hosted npm repository, the one {@code @qits/*} is published to. */
+  static final String NPM_HOSTED_PATH = "/artifacts/npm/npm";
+
+  /** qits-artifacts' hosted maven repository. */
+  static final String MAVEN_HOSTED_PATH = "/artifacts/maven/maven";
+
+  /** qits-mirror's Maven Central pull-through, where an external parent or BOM is read. */
+  static final String MAVEN_CENTRAL_MIRROR_PATH = "/mirror/maven/central";
+
+  /** qits-artifacts' docs repository, its {@code docs} namespace segment included. */
+  static final String DOCS_PATH = "/artifacts/docs/docs";
+
+  /** The sbom store's package types. Its own whitelist, refused client-side first. */
   static final Set<String> SBOM_PACKAGE_TYPES = Set.of("npm", "maven", "docker", "daemon");
 
-  private final String origin;
-  private final String docsRoot;
-  private final Env env;
-  private final Console console;
+  /**
+   * The two origins everything else is a path under, no trailing slash. A value of its own so the
+   * suite can point both at a local stub ({@link AbstractPublishCommand#hosts}) without a production
+   * variable that could do the same in a step container.
+   */
+  record Hosts(String registry, String mirror) {
 
-  private Store(String origin, String docsRoot, Env env, Console console) {
-    this.origin = origin;
-    this.docsRoot = docsRoot;
-    this.env = env;
-    this.console = console;
+    /** {@code https://registry.qits.<domain>} and {@code https://mirror.qits.<domain>}. */
+    static Hosts of(Env env) {
+      String domain = domain(env.get("QITS_DOMAIN"));
+      return new Hosts(origin(REGISTRY_HOST, domain), origin(MIRROR_HOST, domain));
+    }
+
+    private static String origin(String host, String domain) {
+      return "https://" + host + "." + IdpUrl.PROJECT + "." + domain;
+    }
+
+    /** Folded as qits-ci's {@code RunnerAddresses.publicOrigin} folds it; blank is the default. */
+    static String domain(String value) {
+      String folded =
+          value == null ? "" : value.strip().toLowerCase(Locale.ROOT).replaceAll("^\\.+|\\.+$", "");
+      return folded.isEmpty() ? DEFAULT_DOMAIN : folded;
+    }
   }
 
-  static Store from(Env env, Console console) {
-    String origin = env.get("QITS_ARTIFACTS_URL");
-    if (origin == null) {
-      origin = derive(env, console);
-    }
-    String docs = env.get("QITS_DOCS_URL");
-    return new Store(trim(origin), trim(docs), env, console);
+  private final Hosts hosts;
+
+  Store(Hosts hosts) {
+    this.hosts = new Hosts(trim(hosts.registry()), trim(hosts.mirror()));
   }
 
-  private static String derive(Env env, Console console) {
-    for (String name : new String[] {"QITS_NPM_REGISTRY_URL", "QITS_MAVEN_REGISTRY_URL"}) {
-      String value = env.get(name);
-      int at = value == null ? -1 : value.indexOf("/artifacts/");
-      if (at > 0) {
-        String derived = value.substring(0, at);
-        console.warn(
-            "QITS_ARTIFACTS_URL is not set; deriving the store root "
-                + derived
-                + " from "
-                + name
-                + ". That derivation is a transition shim for a deployment whose qits-ci does not"
-                + " inject the variable yet — it lives here once rather than in every pipeline, and"
-                + " it goes when every deployment carries it.");
-        return derived;
-      }
-    }
-    return null;
+  static Store from(Env env) {
+    return new Store(Hosts.of(env));
   }
 
   private static String trim(String url) {
-    if (url == null) {
-      return null;
-    }
     String text = url;
     while (text.endsWith("/")) {
       text = text.substring(0, text.length() - 1);
@@ -92,12 +100,7 @@ final class Store {
   }
 
   private String origin() {
-    if (origin == null) {
-      throw CliException.transport(
-          "QITS_ARTIFACTS_URL is not set — this command talks to the artifacts store and no address"
-              + " could be derived from QITS_NPM_REGISTRY_URL or QITS_MAVEN_REGISTRY_URL either");
-    }
-    return origin;
+    return hosts.registry();
   }
 
   /** {@code /artifacts/sboms/<packageType>/<packageName>/-/<version>}. */
@@ -118,12 +121,11 @@ final class Store {
   }
 
   /**
-   * {@code <docs root>/<site>/-/<version>}. The docs wire <em>does</em> carry a repository segment
-   * ({@code docs}), which is why {@code QITS_DOCS_URL} is a root of its own rather than a suffix.
+   * {@code /artifacts/docs/docs/<site>/-/<version>}. The docs wire <em>does</em> carry a repository
+   * segment ({@code docs}), which the sbom and daemon wires do not.
    */
   String docsBundle(String site, String version) {
-    String root = docsRoot != null ? docsRoot : origin() + "/artifacts/docs/docs";
-    return root + "/" + safe("--site", site) + "/-/" + version(version);
+    return origin() + DOCS_PATH + "/" + safe("--site", site) + "/-/" + version(version);
   }
 
   /**
@@ -144,12 +146,17 @@ final class Store {
         + version(versionOrNewest);
   }
 
-  /** The hosted maven repository root — {@code QITS_MAVEN_REGISTRY_URL}, which carries its own path. */
+  /** The hosted maven repository root, where an eu.wohlben.qits artifact is published. */
   String mavenRegistry() {
-    return trim(
-        env.require(
-            "QITS_MAVEN_REGISTRY_URL",
-            "the hosted maven repository is where an eu.wohlben.qits artifact is published"));
+    return origin() + MAVEN_HOSTED_PATH;
+  }
+
+  /**
+   * Where a pom outside the reactor is read, in order: the hosted repository, then qits-mirror's
+   * Maven Central cache.
+   */
+  List<String> mavenReadRoots() {
+    return List.of(mavenRegistry(), hosts.mirror() + MAVEN_CENTRAL_MIRROR_PATH);
   }
 
   /**
@@ -181,19 +188,9 @@ final class Store {
     return checked;
   }
 
-  /** The hosted npm registry root — {@code QITS_NPM_REGISTRY_URL}, which carries its own path. */
+  /** The hosted npm registry root, where an @qits package is published and read. */
   String npmRegistry() {
-    return trim(
-        env.require(
-            "QITS_NPM_REGISTRY_URL",
-            "the hosted npm registry is where an @qits package is published and read"));
-  }
-
-  String npmProxy() {
-    return trim(
-        env.require(
-            "QITS_NPM_PROXY_URL",
-            "the npmjs pull-through cache is where every other package is resolved"));
+    return origin() + NPM_HOSTED_PATH;
   }
 
   /** The packument, which is how "is this version published" and "what is latest" are both asked. */
@@ -203,7 +200,7 @@ final class Store {
 
   /**
    * {@code <registry>/-/package/<pkg>/dist-tags/<tag>}. Note the order: the repository segment is
-   * already inside {@code QITS_NPM_REGISTRY_URL}, and the {@code /-/} namespace comes after it.
+   * already inside the registry root, and the {@code /-/} namespace comes after it.
    */
   String npmDistTag(String packageName, String tag) {
     return npmRegistry() + "/-/package/" + safe("--package", packageName) + "/dist-tags/" + safe("--tag", tag);

@@ -48,10 +48,8 @@ class MavenPublishTest {
   @BeforeEach
   void setUp() throws Exception {
     store = new StubStore();
-    cli = new Harness().store(store)
-        .with("QITS_MAVEN_REGISTRY_URL", store.url() + "/artifacts/maven/maven")
-        .with("QITS_MAVEN_PROXY_URL", store.url() + "/maven/proxy");
-    store.on("GET", "/maven/proxy/org/example/example-bom/1.0/example-bom-1.0.pom", StubStore.Reply.of(200, """
+    cli = new Harness().store(store);
+    store.on("GET", "/mirror/maven/central/org/example/example-bom/1.0/example-bom-1.0.pom", StubStore.Reply.of(200, """
         <project xmlns="http://maven.apache.org/POM/4.0.0">
           <modelVersion>4.0.0</modelVersion>
           <groupId>org.example</groupId><artifactId>example-bom</artifactId><version>1.0</version>
@@ -394,7 +392,7 @@ class MavenPublishTest {
 
   @Test
   void a5xxOnAnExternalBomIsExit2() {
-    store.on("GET", "/maven/proxy/org/example/example-bom/1.0/example-bom-1.0.pom", StubStore.Reply.of(502, "down"));
+    store.on("GET", "/mirror/maven/central/org/example/example-bom/1.0/example-bom-1.0.pom", StubStore.Reply.of(502, "down"));
 
     Harness.Run run = publish("client", "qits-foo-client");
 

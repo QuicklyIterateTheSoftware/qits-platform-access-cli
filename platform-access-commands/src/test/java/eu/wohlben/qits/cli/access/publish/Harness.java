@@ -23,6 +23,14 @@ final class Harness {
 
     private final Map<String, String> env = new LinkedHashMap<>();
 
+    /**
+     * Where the store and the mirror are for this run. Production composes both from {@code
+     * QITS_DOMAIN}, which would dial the live estate from a unit test, so the harness always sets the
+     * command's test seam ({@link AbstractPublishCommand#hosts}) — to a port nothing listens on until
+     * {@link #store} names a stub.
+     */
+    private Store.Hosts hosts = new Store.Hosts("http://127.0.0.1:1", "http://127.0.0.1:1");
+
     /** What one invocation produced. */
     record Run(int code, String out, String err) {
 
@@ -36,9 +44,10 @@ final class Harness {
         return this;
     }
 
-    /** The variable almost every command needs, pointed at a stub. */
+    /** The store and the mirror both, pointed at one stub: the paths under each do not collide. */
     Harness store(StubStore store) {
-        return with("QITS_ARTIFACTS_URL", store.url());
+        hosts = new Store.Hosts(store.url(), store.url());
+        return this;
     }
 
     Run run(String... argv) {
@@ -56,6 +65,9 @@ final class Harness {
                     K made = CommandLine.defaultFactory().create(type);
                     if (made instanceof PlatformCommand command) {
                         command.useContext(context);
+                    }
+                    if (made instanceof AbstractPublishCommand command) {
+                        command.hosts = hosts;
                     }
                     return made;
                 }

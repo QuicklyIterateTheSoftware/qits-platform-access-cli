@@ -1,17 +1,10 @@
 package eu.wohlben.qits.cli.access.publish;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * The npm half: what to do before publishing, what to do after it, and the lockfile edit every
- * frontend repository copied.
+ * The npm half: what to do before publishing, and what to do after it.
+
  *
  * <p>Nothing here runs {@code npm}. The publish itself is {@link NpmPublisher} now (epic qits-620),
  * which builds the tarball and calls {@link #distTag} after it; {@code plan} stays until the
@@ -113,133 +106,6 @@ final class Npm {
     }
     throw refusal(
         "pointing the " + tag + " dist-tag at " + packageName + "@" + version, url, response);
-  }
-
-  // --- rewrite-lockfile-origin -------------------------------------------------------------------
-
-  /** The {@code "resolved": "<url>"} pins npm writes into a lockfile, and nothing else in the file. */
-  private static final Pattern RESOLVED =
-      Pattern.compile("(\"resolved\"\\s*:\\s*\")(https?://[^\"]*)(\")");
-
-  /**
-   * Repoint every {@code resolved} URL in a lockfile at the registries this container can actually
-   * reach, keeping the path — and therefore the integrity hash's meaning — exactly as it was.
-   *
-   * <p>npm pins a full resolved URL per package and the lockfile is generated on a deployment host,
-   * so every entry names an address that does not exist in a step container: {@code npm ci} fetches
-   * by that URL and never asks the configured registry, so the install dies on connection refused.
-   * The paths are identical on every address, so replacing the origin and keeping the path is all it
-   * takes, and the integrity hashes are what make that safe — bytes from another address must still
-   * hash the same.
-   *
-   * <p><b>The byte plane is two services, which is why the path decides.</b> qits-platform-mirror
-   * holds the npmjs pull-through cache; qits-artifacts hosts the {@code @qits} scope. No single
-   * origin serves both, so an entry under the hosted registry's own pathname is an {@code @qits}
-   * tarball and gets the hosted origin, and every other entry gets the proxy's. Flattening all of
-   * them to one origin sends every {@code @qits} tarball to a mirror that has never held one.
-   *
-   * <p>This replaces a two-expression {@code sed} whose correctness rested on the order of its
-   * {@code -e} flags — the broad swap first, the path-anchored one correcting it after — copied
-   * verbatim into forty-five files. Deciding per URL rather than per substitution removes the
-   * ordering hazard altogether, and rewriting only the origin inside the matched pin keeps the rest
-   * of the file byte-identical, so running this twice is a no-op and a diff shows only what moved.
-   */
-  int rewriteLockfileOrigin(Path lockfile) {
-    String hostedRoot = store.npmRegistry();
-    String proxyRoot = store.npmProxy();
-    URI hosted = URI.create(hostedRoot);
-    URI proxy = URI.create(proxyRoot);
-    String hostedOrigin = originOf(hosted, "QITS_NPM_REGISTRY_URL");
-    String proxyOrigin = originOf(proxy, "QITS_NPM_PROXY_URL");
-    String hostedPath = hosted.getPath() == null ? "" : stripTrailingSlash(hosted.getPath());
-
-    String before;
-    try {
-      before = Files.readString(lockfile, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw CliException.transport("cannot read " + lockfile + ": " + e.getMessage(), e);
-    }
-
-    StringBuilder after = new StringBuilder(before.length());
-    Matcher matcher = RESOLVED.matcher(before);
-    int rewritten = 0;
-    int hostedCount = 0;
-    while (matcher.find()) {
-      String pin = matcher.group(2);
-      String replacement = pin;
-      URI parsed = tryParse(pin);
-      if (parsed != null && parsed.getPath() != null) {
-        boolean isHosted = !hostedPath.isEmpty() && parsed.getPath().startsWith(hostedPath);
-        String origin = isHosted ? hostedOrigin : proxyOrigin;
-        replacement = origin + parsed.getRawPath() + suffixOf(parsed);
-        if (isHosted) {
-          hostedCount++;
-        }
-      }
-      if (!replacement.equals(pin)) {
-        rewritten++;
-      }
-      matcher.appendReplacement(
-          after, Matcher.quoteReplacement(matcher.group(1) + replacement + matcher.group(3)));
-    }
-    matcher.appendTail(after);
-
-    String result = after.toString();
-    if (result.equals(before)) {
-      console.info(lockfile + " already resolves through this deployment's registries — unchanged");
-      return ExitCode.OK;
-    }
-    try {
-      Files.writeString(lockfile, result, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw CliException.transport("cannot write " + lockfile + ": " + e.getMessage(), e);
-    }
-    console.info(
-        "repointed "
-            + rewritten
-            + " resolved URLs in "
-            + lockfile
-            + " ("
-            + hostedCount
-            + " to the hosted registry at "
-            + hostedOrigin
-            + ", the rest to the proxy at "
-            + proxyOrigin
-            + ")");
-    return ExitCode.OK;
-  }
-
-  private static String originOf(URI uri, String variable) {
-    if (uri.getScheme() == null || uri.getHost() == null) {
-      throw CliException.transport(variable + " is not an absolute http(s) address: " + uri);
-    }
-    return uri.getScheme()
-        + "://"
-        + uri.getHost()
-        + (uri.getPort() < 0 ? "" : ":" + uri.getPort());
-  }
-
-  private static String suffixOf(URI uri) {
-    String query = uri.getRawQuery();
-    String fragment = uri.getRawFragment();
-    return (query == null ? "" : "?" + query) + (fragment == null ? "" : "#" + fragment);
-  }
-
-  private static String stripTrailingSlash(String path) {
-    String text = path;
-    while (text.length() > 1 && text.endsWith("/")) {
-      text = text.substring(0, text.length() - 1);
-    }
-    return text.equals("/") ? "" : text;
-  }
-
-  private static URI tryParse(String url) {
-    try {
-      URI uri = new URI(url);
-      return uri.getHost() == null ? null : uri;
-    } catch (Exception e) {
-      return null;
-    }
   }
 
   private static CliException refusal(String what, String url, Http.Response response) {

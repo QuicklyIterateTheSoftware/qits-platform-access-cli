@@ -1098,15 +1098,17 @@ Commands:
     qits artifacts publish exists <daemon|docs|npm|sbom> <name> <version>
     qits artifacts publish npm plan --package <n> --version <v>
     qits artifacts publish npm dist-tag --package <n> --version <v> --tag <t>
-    qits artifacts publish npm rewrite-lockfile-origin [--lockfile package-lock.json]
 
 `qits artifacts publish <command> --help` shows a command's options, examples and exit codes;
 `qits help skill` includes them all.
 
-**Environment**: `QITS_ARTIFACTS_URL` (the store's origin; required by everything that talks to it),
-`QITS_DOCS_URL` (the docs root, including its `docs` repository segment; derived from the origin
-when unset), `QITS_NPM_REGISTRY_URL` (the hosted npm registry, the `@qits` scope) and
-`QITS_NPM_PROXY_URL` (the npmjs pull-through cache). A CI step sets what each command needs.
+**Addresses are code, not configuration.** The one input is `QITS_DOMAIN`, the platform's bare public
+domain (default `wohlben.eu`). The store is `https://registry.qits.$QITS_DOMAIN` — hosted npm under
+`/artifacts/npm/npm`, hosted maven under `/artifacts/maven/maven`, docs under `/artifacts/docs/docs`,
+and the sbom, daemon and content-hash stores beside them — and a pom outside the reactor is read from
+there, then from qits-mirror's Maven Central cache at
+`https://mirror.qits.$QITS_DOMAIN/mirror/maven/central`. No `QITS_*_URL` variable is read, and a
+lockfile is never rewritten: it names the public hosts, which answer inside the platform too.
 
 **Credentials**: a bearer on every request. Only a CI run may publish to qits-artifacts — the store
 refuses an anonymous publish — and its reads want a bearer too, so every PUT, GET and HEAD this

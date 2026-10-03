@@ -35,16 +35,16 @@ import picocli.CommandLine;
                 "- Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs "
                         + "exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as "
                         + "`qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.",
-                "- QITS_ARTIFACTS_URL names the store; every command that talks to it needs the variable set (or "
-                        + "derivable from QITS_NPM_REGISTRY_URL or QITS_MAVEN_REGISTRY_URL, with a warning). "
-                        + "QITS_DOCS_URL, QITS_NPM_REGISTRY_URL and QITS_NPM_PROXY_URL name the docs root and the "
-                        + "two npm registries; a CI step sets what each command needs."},
+                "- The store is https://registry.qits.$QITS_DOMAIN and the Maven Central cache "
+                        + "https://mirror.qits.$QITS_DOMAIN; QITS_DOMAIN defaults to wohlben.eu. No other variable "
+                        + "names an address: the hosted npm and maven repositories, the docs, sbom and daemon "
+                        + "stores are fixed paths under the store's host."},
         exitCodeListHeading = "%nExit codes:%n",
         exitCodeList = {
                 "0:Published, or already published with the same bytes.",
                 "1:Refused, and re-running will not help: invalid arguments, a 4xx, or the coordinate already "
                         + "holds different bytes.",
-                "2:Could not ask, or could not be answered: no store configured, an I/O failure, or a 5xx. A "
+                "2:Could not ask, or could not be answered: the store unreachable, an I/O failure, or a 5xx. A "
                         + "step may retry a 2 and must not retry a 1."})
 public class PublishCommand implements Runnable {
 

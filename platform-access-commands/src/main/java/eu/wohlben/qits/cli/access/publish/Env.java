@@ -24,17 +24,4 @@ record Env(Map<String, String> values) {
     String value = values.get(name);
     return value == null || value.isEmpty() ? null : value;
   }
-
-  /**
-   * The value, or a refusal naming the variable and what it is for. {@link ExitCode#TRANSPORT}
-   * rather than {@code POLICY}: a missing address means the question could not be put, and a step
-   * that retries after its deployment is configured is doing the right thing.
-   */
-  String require(String name, String what) {
-    String value = get(name);
-    if (value == null) {
-      throw CliException.transport(name + " is not set — " + what);
-    }
-    return value;
-  }
 }

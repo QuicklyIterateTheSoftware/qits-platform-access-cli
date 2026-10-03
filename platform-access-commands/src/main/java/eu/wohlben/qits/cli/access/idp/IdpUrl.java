@@ -16,7 +16,7 @@ import java.util.Map;
 public final class IdpUrl {
 
     /** The platform's own project slug, the label between the app and the domain. */
-    static final String PROJECT = "qits";
+    public static final String PROJECT = "qits";
     static final String DEFAULT = "https://idp." + PROJECT + ".wohlben.eu/idp";
 
     private IdpUrl() {

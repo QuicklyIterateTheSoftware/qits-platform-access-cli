@@ -24,7 +24,7 @@ import java.util.List;
         exitCodeList = {
                 "0:Published, already published, or unchanged.",
                 "1:Refused: bad arguments, a package with no published version, or a 4xx.",
-                "2:Could not ask: no store configured, an I/O failure, or a 5xx."})
+                "2:Could not ask: the store unreachable, an I/O failure, or a 5xx."})
 public class ContractDocsCommand extends AbstractPublishCommand {
 
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Show this help message and exit.")
@@ -58,7 +58,7 @@ public class ContractDocsCommand extends AbstractPublishCommand {
         Path from = Path.of(PublishArgs.requiredOnce(this.from, "--from"));
         String version = PublishArgs.requiredOnce(this.version, "--version");
         List<ContractDocs.PackageRef> refs = packages.stream().map(ContractDocs.PackageRef::parse).toList();
-        String line = new ContractDocs(http(), Store.from(env, console), console)
+        String line = new ContractDocs(http(), store(env), console)
                 .publish(application, from, version, refs, meta);
         console.answer(line);
         return ExitCode.OK;
