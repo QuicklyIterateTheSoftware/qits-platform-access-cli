@@ -226,7 +226,7 @@ Work items of every archetype - epics, tickets, features, tasks and campaigns - 
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
-Statuses (epics, tickets and campaigns; features and tasks have none): REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. IMPLEMENTING sits between REFINED and IMPLEMENTED, and VERIFYING between IMPLEMENTED and VERIFIED, for epics and tickets; campaigns never enter either. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. `status` names the moves open from where an item stands.
+Every archetype has a lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. Features and tasks walk the same eight words as epics and tickets; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. `status` names the moves open from where an item stands.
 
 ### Notes
 
@@ -370,7 +370,7 @@ echo '{"assignee":null}' | qits work update --entity qits-100 -o json
 
 Reshape a work item into another archetype (a ticket into an epic, a feature into a task, ...), keeping its id, its number and its thread.
 
-The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, ticketType, impetus, assignee, supersededBy, repositoryId, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/entities/transition.
+The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/entities/transition.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/entities/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
 
@@ -403,7 +403,7 @@ echo '{"membership":{"parent":"6f0c2d1e-0000-4000-8000-000000000001"}}' | qits w
 
 ## qits work status
 
-Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Features and tasks have no lifecycle, and so no status. IMPLEMENTING sits between REFINED and IMPLEMENTED, and VERIFYING between IMPLEMENTED and VERIFIED, for epics and tickets; campaigns never enter either. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING.
+Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING.
 
 Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/entities/{id}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
@@ -432,7 +432,7 @@ echo '{"target":"REFINED"}' | qits work --entity qits-100 status
 
 - `0` The item moved, or nothing was put in and the legal targets are printed.
 - `1` The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --entity, an item whose archetype has no lifecycle, or a payload that is not a JSON object), not signed in, or the session ended.
+- `2` Used wrongly (for example no --entity, an item on a service whose registry has not yet given its archetype a lifecycle, or a payload that is not a JSON object), not signed in, or the session ended.
 
 ## qits work comment
 

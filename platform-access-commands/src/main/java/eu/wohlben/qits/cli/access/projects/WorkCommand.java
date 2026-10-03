@@ -45,13 +45,13 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or "
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
                         + "served by the service for that archetype.",
-                "Statuses (epics, tickets and campaigns; features and tasks have none): REPORTED, REFINED, "
-                        + "IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision "
-                        + "was taken not to do. IMPLEMENTING sits between REFINED and IMPLEMENTED, and VERIFYING "
-                        + "between IMPLEMENTED and VERIFIED, for epics and tickets; campaigns never enter either. "
-                        + "A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, "
-                        + "and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. `status` names the "
-                        + "moves open from where an item stands."},
+                "Every archetype has a lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, "
+                        + "VERIFIED, DONE, and DROPPED for work a decision was taken not to do. Features and "
+                        + "tasks walk the same eight words as epics and tickets; campaigns keep a shorter walk "
+                        + "and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets REFINED move "
+                        + "straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to "
+                        + "VERIFIED, bypassing VERIFYING. `status` names the moves open from where an item "
+                        + "stands."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --entity, --output and --projects-url may come before or after the command.",
@@ -345,7 +345,7 @@ public class WorkCommand implements Runnable {
                     + "task, ...), keeping its id, its number and its thread.",
                     "The door is full-state: what the request leaves out is cleared. So the command starts from the "
                             + "item as it stands (title, description, status, ticketType, impetus, assignee, "
-                            + "supersededBy, repositoryId, implementedAt, dependsOn, and membership {parent, "
+                            + "supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, "
                             + "position} if it has a parent), merges the JSON object on stdin over it as a merge "
                             + "patch (null clears), sets \"archetype\", and drops every property the target "
                             + "archetype's schema has no slot for, naming them on stderr. It sends the result to "
@@ -429,9 +429,8 @@ public class WorkCommand implements Runnable {
 
     @CommandLine.Command(name = "status", mixinStandardHelpOptions = true,
             description = {"Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, "
-                    + "VERIFYING, VERIFIED, DONE, or DROPPED. Features and tasks have no lifecycle, and so no "
-                    + "status. IMPLEMENTING sits between REFINED and IMPLEMENTED, and VERIFYING between "
-                    + "IMPLEMENTED and VERIFIED, for epics and tickets; campaigns never enter either. A SKIP "
+                    + "VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks "
+                    + "included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP "
                     + "transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and "
                     + "IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING.",
                     "Reads {\"target\":\"<STATUS>\"} on stdin and sends it unchanged to POST "
@@ -452,8 +451,9 @@ public class WorkCommand implements Runnable {
                     "1:The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles "
                             + "or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be "
                             + "reached.",
-                    "2:Used wrongly (for example no --entity, an item whose archetype has no lifecycle, or a payload "
-                            + "that is not a JSON object), not signed in, or the session ended."})
+                    "2:Used wrongly (for example no --entity, an item on a service whose registry has not yet given "
+                            + "its archetype a lifecycle, or a payload that is not a JSON object), not signed in, "
+                            + "or the session ended."})
     @TuiCommand(input = Input.PAYLOAD)
     public static class StatusCommand extends PlatformCommand {
 
@@ -475,7 +475,8 @@ public class WorkCommand implements Runnable {
             if (declared == null || !declared.path("lifecycle").isArray() || declared.path("lifecycle").isEmpty()) {
                 throw new CliFailure(SafeText.line(text(entity, "qualifiedId").isEmpty() ? wanted
                         : text(entity, "qualifiedId")) + " is a " + SafeText.line(kind)
-                        + ", and that archetype has no lifecycle, so no status. Nothing was sent.", CliFailure.USAGE);
+                        + ", and the service's archetype registry gives it no lifecycle, so no status. Nothing "
+                        + "was sent.", CliFailure.USAGE);
             }
             if (payload == null) {
                 String current = text(entity, "status");

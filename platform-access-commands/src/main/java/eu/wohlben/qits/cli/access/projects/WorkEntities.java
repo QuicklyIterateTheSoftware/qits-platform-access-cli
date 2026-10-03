@@ -29,7 +29,7 @@ final class WorkEntities {
      * and whatever it does not list is dropped.
      */
     static final List<String> CARRIED = List.of("title", "description", "status", "ticketType", "impetus", "assignee",
-            "supersededBy", "repositoryId", "implementedAt", "dependsOn");
+            "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn");
 
     private static final Pattern UUID = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");

@@ -581,15 +581,15 @@ service yet.
 any: it calls the service's archetype-agnostic doors, and every payload schema it shows is served by
 the service per archetype and door, built from the same table the service validates against.
 
-Epics, tickets and campaigns walk one lifecycle: `REPORTED` (somebody said what is wrong or could be
-better), `REFINED` (it says what to do), `IMPLEMENTING` (an epic or ticket is being worked;
-campaigns never enter it), `IMPLEMENTED` (released and deployed, not merely merged), `VERIFYING`
-(the platform's own verify dispatch was pressed; campaigns never enter it either), `VERIFIED`
-(somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit for work a
-decision was taken not to do. A SKIP transition lets `REFINED` move straight to `IMPLEMENTED`,
-bypassing `IMPLEMENTING`, and `IMPLEMENTED` move straight to `VERIFIED`, bypassing `VERIFYING`.
-Features and tasks have no status. A ticket is also blocked or not: the phase its status belongs to
-cannot proceed.
+Every archetype walks one lifecycle: `REPORTED` (somebody said what is wrong or could be
+better), `REFINED` (it says what to do), `IMPLEMENTING` (an epic, ticket, feature or task is being
+worked; campaigns never enter it), `IMPLEMENTED` (released and deployed, not merely merged),
+`VERIFYING` (the platform's own verify dispatch was pressed; campaigns never enter it either),
+`VERIFIED` (somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit
+for work a decision was taken not to do. A SKIP transition lets `REFINED` move straight to
+`IMPLEMENTED`, bypassing `IMPLEMENTING`, and `IMPLEMENTED` move straight to `VERIFIED`, bypassing
+`VERIFYING`. Features and tasks walk the same eight words as epics and tickets; campaigns keep a
+shorter walk. A ticket is also blocked or not: the phase its status belongs to cannot proceed.
 
 Reading takes `qits:admin` or `qits:agent`, and so does writing, an agent in its own project only.
 An epic's status move takes `qits:admin`: an agent is answered HTTP 403, and the command prints the
@@ -618,7 +618,7 @@ bare schema.
 - `transition --archetype <B>` reshapes the item into another archetype. The door (`POST
   /projects/api/entities/transition`) is full-state: what the request leaves out is cleared. So the
   command starts from the item as it stands (`title`, `description`, `status`, `ticketType`,
-  `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementedAt`, `dependsOn`, and
+  `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementingAt`, `implementedAt`, `dependsOn`, and
   `membership {parent, position}` when it has a parent), merges the payload over it (RFC 7396),
   sets `archetype`, and drops every property B's `transition` schema has no slot for, naming them
   on stderr (`impetus, ticketType have no slot on EPIC and are not carried.`). `{}` carries the item
@@ -628,7 +628,8 @@ bare schema.
 - `status` sends `{"target": "<STATUS>"}` unchanged to `POST /projects/api/entities/{id}/status`.
   With nothing put in, it prints a schema whose `target` enum is the moves the service's archetype
   registry (`GET /projects/api/entities/archetypes`) opens from the item's current status. An item
-  whose archetype has no lifecycle is a usage error. A move the lifecycle does not allow is HTTP 409.
+  on a service whose registry has not yet given its archetype a lifecycle is a usage error. A move
+  the lifecycle does not allow is HTTP 409.
 - `comment create` sends the payload (`{"body": "..."}`, Markdown) to `POST
   /projects/api/entities/{id}/comments`. `comment update --comment <id>` first reads the item's
   thread and refuses a comment that is not on it (exit code 2, nothing sent), then sends the payload

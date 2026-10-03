@@ -48,6 +48,7 @@ class WorkCommandsTest {
     private static final String TICKET = "45a14f8e-f550-45bb-a117-6b34d8c472e3";
     private static final String EPIC = "6f0c2d1e-0000-4000-8000-000000000002";
     private static final String FEATURE = "7a7a7a7a-0000-4000-8000-000000000003";
+    private static final String TASK = "8b8b8b8b-0000-4000-8000-000000000004";
     private static final String ENTITIES = "/projects/api/entities";
     private static final String LIST = "/projects/api/projects/qits/entities";
     private static final String REGISTRY = "/projects/api/entities/archetypes";
@@ -64,9 +65,16 @@ class WorkCommandsTest {
 
     private static final String FEATURE_ROW = """
             {"id":"%s","archetype":"FEATURE","projectId":"%s","number":601,"qualifiedId":"qits-601",
-             "title":"Retry","description":"d","status":null,"dependsOn":null,"parent":"%s","position":2,
+             "title":"Retry","description":"d","status":"REFINED","dependsOn":null,"parent":"%s","position":2,
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
             """.formatted(FEATURE, PROJECT, EPIC);
+
+    /** A TASK as an old, not-yet-migrated service still answers it: no status, no lifecycle. */
+    private static final String STALE_TASK_ROW = """
+            {"id":"%s","archetype":"TASK","projectId":"%s","number":602,"qualifiedId":"qits-602",
+             "title":"Old task","status":null,"parent":"%s","position":1,
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
+            """.formatted(TASK, PROJECT, FEATURE);
 
     private static final String EPIC_ROW = """
             {"id":"%s","archetype":"EPIC","projectId":"%s","number":120,"qualifiedId":"qits-120",
@@ -111,7 +119,16 @@ class WorkCommandsTest {
               {"archetype":"TICKET","lifecycle":["REPORTED","REFINED","IMPLEMENTED","VERIFIED","DONE"],
                "transitions":{"REPORTED":[{"to":"REFINED","kind":"FORWARD"},{"to":"DROPPED","kind":"EXIT"}],
                               "REFINED":[{"to":"IMPLEMENTED","kind":"FORWARD"}]}},
-              {"archetype":"FEATURE","lifecycle":[],"transitions":{}}]}
+              {"archetype":"FEATURE","lifecycle":["REPORTED","REFINED","IMPLEMENTED","VERIFIED","DONE"],
+               "transitions":{"REFINED":[{"to":"IMPLEMENTED","kind":"FORWARD"},{"to":"DROPPED","kind":"EXIT"}]}}]}
+            """;
+
+    /** The registry an old, not-yet-migrated service serves: TASK still carries an empty lifecycle. */
+    private static final String ARCHETYPES_STALE_TASK = """
+            {"archetypes":[
+              {"archetype":"EPIC","lifecycle":["REPORTED","REFINED","IMPLEMENTED","VERIFIED","DONE"],
+               "transitions":{"REFINED":[{"to":"IMPLEMENTED","kind":"FORWARD"},{"to":"DROPPED","kind":"EXIT"}]}},
+              {"archetype":"TASK","lifecycle":[],"transitions":{}}]}
             """;
 
     @TempDir
@@ -401,7 +418,7 @@ class WorkCommandsTest {
                 .contains("Not carried: ticketType, impetus, assignee have no slot on EPIC.");
 
         Result featureToEpic = run("work", "--entity", "qits-601", "transition", "--archetype", "epic");
-        assertThat(featureToEpic.out()).contains("Required and missing (the item does not carry them yet): status.");
+        assertThat(featureToEpic.out()).contains("Required and missing (the item does not carry them yet): nothing.");
 
         assertThat(anyWrite()).isFalse();
     }
@@ -445,11 +462,16 @@ class WorkCommandsTest {
 
     @Test
     void anArchetypeWithoutALifecycleIsAUsageErrorThatSaysSo() {
-        Result r = run("work", "--entity", "qits-601", "status");
-        assertThat(r.exit()).isEqualTo(2);
-        assertThat(r.err()).contains("qits-601 is a FEATURE").contains("no lifecycle");
+        // Every archetype has a lifecycle now; the guard still fires against an old service that has not
+        // finished the migration and still serves one with none.
+        platform.answer("GET", REGISTRY, ARCHETYPES_STALE_TASK);
+        platform.answer("GET", ENTITIES + "/qits-602", STALE_TASK_ROW);
 
-        Result piped = runWithInput("{\"target\":\"DONE\"}", "work", "--entity", "qits-601", "status");
+        Result r = run("work", "--entity", "qits-602", "status");
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("qits-602 is a TASK").contains("no lifecycle");
+
+        Result piped = runWithInput("{\"target\":\"DONE\"}", "work", "--entity", "qits-602", "status");
         assertThat(piped.exit()).isEqualTo(2);
         assertThat(anyWrite()).isFalse();
     }
