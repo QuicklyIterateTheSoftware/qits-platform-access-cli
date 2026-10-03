@@ -583,11 +583,13 @@ the service per archetype and door, built from the same table the service valida
 
 Epics, tickets and campaigns walk one lifecycle: `REPORTED` (somebody said what is wrong or could be
 better), `REFINED` (it says what to do), `IMPLEMENTING` (an epic or ticket is being worked;
-campaigns never enter it), `IMPLEMENTED` (released and deployed, not merely merged), `VERIFIED`
+campaigns never enter it), `IMPLEMENTED` (released and deployed, not merely merged), `VERIFYING`
+(the platform's own verify dispatch was pressed; campaigns never enter it either), `VERIFIED`
 (somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit for work a
 decision was taken not to do. A SKIP transition lets `REFINED` move straight to `IMPLEMENTED`,
-bypassing `IMPLEMENTING`. Features and tasks have no status. A ticket is also blocked or not: the
-phase its status belongs to cannot proceed.
+bypassing `IMPLEMENTING`, and `IMPLEMENTED` move straight to `VERIFIED`, bypassing `VERIFYING`.
+Features and tasks have no status. A ticket is also blocked or not: the phase its status belongs to
+cannot proceed.
 
 Reading takes `qits:admin` or `qits:agent`, and so does writing, an agent in its own project only.
 An epic's status move takes `qits:admin`: an agent is answered HTTP 403, and the command prints the

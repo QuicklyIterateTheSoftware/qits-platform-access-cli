@@ -226,7 +226,7 @@ Work items of every archetype - epics, tickets, features, tasks and campaigns - 
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
-Statuses (epics, tickets and campaigns; features and tasks have none): REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. IMPLEMENTING sits between REFINED and IMPLEMENTED for epics and tickets; campaigns never enter it. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING. `status` names the moves open from where an item stands.
+Statuses (epics, tickets and campaigns; features and tasks have none): REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. IMPLEMENTING sits between REFINED and IMPLEMENTED, and VERIFYING between IMPLEMENTED and VERIFIED, for epics and tickets; campaigns never enter either. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. `status` names the moves open from where an item stands.
 
 ### Notes
 
@@ -403,7 +403,7 @@ echo '{"membership":{"parent":"6f0c2d1e-0000-4000-8000-000000000001"}}' | qits w
 
 ## qits work status
 
-Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFIED, DONE, or DROPPED. Features and tasks have no lifecycle, and so no status. IMPLEMENTING sits between REFINED and IMPLEMENTED for epics and tickets; campaigns never enter it. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING.
+Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Features and tasks have no lifecycle, and so no status. IMPLEMENTING sits between REFINED and IMPLEMENTED, and VERIFYING between IMPLEMENTED and VERIFIED, for epics and tickets; campaigns never enter either. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING.
 
 Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/entities/{id}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
