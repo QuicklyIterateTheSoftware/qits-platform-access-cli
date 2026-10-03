@@ -39,7 +39,10 @@ release-request:
   - image: qits/build-images/maven-base:latest
     timeout-seconds: 1800
     script: |
-      export QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}"
+      # The addresses are code under the platform's public domain (qits-731); `wohlben.eu` covers a
+      # qits-ci too old to inject $QITS_DOMAIN.
+      qits_domain=${QITS_DOMAIN:-wohlben.eu}
+      export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central"
       ./mvnw -B -ntp -s .qits-maven-settings.xml verify
 
     # Then the shipping forms: the static musl binary and the MCP service image, on the platform's
@@ -48,8 +51,8 @@ release-request:
     build: true
     timeout-seconds: 5400
     script: |
-      : "${QITS_MAVEN_REGISTRY_URL:?}"
-      maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
+      qits_domain=${QITS_DOMAIN:-wohlben.eu}
+      maven_root="https://registry.qits.$qits_domain/artifacts/maven/maven"
       musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
       zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)
       : "${musl_url:?docker/Dockerfile declares no ARG MUSL_URL}"
@@ -79,7 +82,7 @@ release-request:
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
         $tarball_auth \
-        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --opt build-arg:QITS_DOMAIN="$qits_domain" \
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret \
         --output type=local,dest=out
@@ -107,7 +110,7 @@ release-request:
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
         $tarball_auth \
-        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --opt build-arg:QITS_DOMAIN="$qits_domain" \
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret
 
@@ -118,8 +121,8 @@ release:
     build: true
     timeout-seconds: 5400
     script: |
-      : "${QITS_MAVEN_REGISTRY_URL:?}"
-      maven_root="${QITS_MAVEN_REGISTRY_URL%/}"
+      qits_domain=${QITS_DOMAIN:-wohlben.eu}
+      maven_root="https://registry.qits.$qits_domain/artifacts/maven/maven"
       musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
       zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)
       : "${musl_url:?docker/Dockerfile declares no ARG MUSL_URL}"
@@ -141,7 +144,7 @@ release:
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
         $tarball_auth \
-        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --opt build-arg:QITS_DOMAIN="$qits_domain" \
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret \
         --output type=local,dest=out
@@ -151,17 +154,17 @@ release:
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
         $tarball_auth \
-        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --opt build-arg:QITS_DOMAIN="$qits_domain" \
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret \
         --output type=local,dest=out
       # THE MCP SERVICE IMAGE, pushed: `push=true` IS THE PUBLISH, from the builder straight to the
-      # registry. The coordinate is the java-service archetype's, spelled the same way:
-      # `$QITS_BUILD_REGISTRY` is the registry as the builder resolves it, and the declaration's
-      # `qits/` namespace is re-supplied as `$QITS_IMAGE_REPOSITORY`. Before the daemon submit, so the
-      # order is: binary built, image pushed, binary submitted. The postlude then submits both
-      # declared SBOMs, out/sbom.json and out/service/sbom.json, from this step.
-      ref="$QITS_BUILD_REGISTRY/$QITS_IMAGE_REPOSITORY/qits-platform-access-mcp-service:$QITS_VERSION"
+      # registry. The host is code under the platform's public domain (qits-731), the same as
+      # `maven_root` above; the declaration's `qits/` namespace is re-supplied as
+      # `$QITS_IMAGE_REPOSITORY`. Before the daemon submit, so the order is: binary built, image
+      # pushed, binary submitted. The postlude then submits both declared SBOMs, out/sbom.json and
+      # out/service/sbom.json, from this step.
+      ref="registry.qits.$qits_domain/$QITS_IMAGE_REPOSITORY/qits-platform-access-mcp-service:$QITS_VERSION"
       echo "releasing $ref"
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
@@ -169,7 +172,7 @@ release:
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
         $tarball_auth \
-        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --opt build-arg:QITS_DOMAIN="$qits_domain" \
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret \
         --output "type=image,name=$ref,push=true"
@@ -179,7 +182,7 @@ release:
         --opt build-arg:MUSL_URL="$musl_url" \
         --opt build-arg:ZLIB_URL="$zlib_url" \
         $tarball_auth \
-        --opt build-arg:QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+        --opt build-arg:QITS_DOMAIN="$qits_domain" \
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret \
         --output type=local,dest=out/service
@@ -201,11 +204,12 @@ release:
       # NO LONGER A DEPLOY: the CLI publishes this coordinate from the postlude, off the jar
       # this step leaves in target/. This step only has to build it. The QITS_MAVEN_* prefix
       # stays: `-am` still resolves the parent and junit off qits-maven's mirror of Central.
-      QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+      qits_domain=${QITS_DOMAIN:-wohlben.eu}
+      QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central" \
       QITS_MAVEN_AUTH_USR="${QITS_COMMISSIONED_CLIENT_ID:-${QITS_MAVEN_AUTH_USR-}}" \
       QITS_MAVEN_AUTH_PSW="${QITS_COMMISSIONED_CLIENT_SECRET:-${QITS_MAVEN_AUTH_PSW-}}" \
       ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -am package -DskipTests
-      QITS_MAVEN_CENTRAL_URL="${QITS_MAVEN_PROXY_URL:-}" \
+      QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central" \
       ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -DskipTests \
         org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeBom \
         -DoutputFormat=json -DoutputName=sbom -DschemaVersion=1.6

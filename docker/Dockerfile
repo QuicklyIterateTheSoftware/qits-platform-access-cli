@@ -94,14 +94,11 @@ WORKDIR /qits-build
 # .dockerignore keeps target/, .git and out/ out, so a stale host build cannot shadow this one.
 COPY . .
 
-# Maven Central through the platform mirror's in-network route when CI passes it. Empty (the
-# default, and every hand build) switches off .qits-maven-settings.xml's profile: Central directly.
-# On a remote runner that route is the public mirror, which answers anonymously 401, so the mvnw RUN
-# mounts the two CI secrets and exports them as QITS_MAVEN_AUTH_USR/PSW for `qits-central-proxy`;
-# in-network the mirror never challenges and Maven never sends them. qits-ci-daemon's
-# docker/Dockerfile has the measurement; absent secrets (a hand build) leave both empty.
-ARG QITS_MAVEN_CENTRAL_URL=
-ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
+# Maven Central through qits-mirror's cache, https://mirror.qits.$QITS_DOMAIN/mirror/maven/central,
+# derived inside the mvnw RUN below from the one platform input. The host answers 401 anonymously,
+# so the same RUN mounts the two CI secrets and exports them as QITS_MAVEN_AUTH_USR/PSW for
+# `qits-central-proxy`; a hand build with no secrets leaves both empty and fails at the first 401.
+ARG QITS_DOMAIN=wohlben.eu
 
 # - additional-build-args-APPEND: the pom's native profile sets additional-build-args (Pkce's
 #   run-time initialisation), and a second value for that key would replace it, not add to it.
@@ -125,6 +122,7 @@ RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
+    export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
     ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
       -pl platform-access-cli -am \
       -Dquarkus.native.container-build=false \
@@ -163,12 +161,12 @@ FROM ${BUILDER_IMAGE} AS service-build
 USER root
 WORKDIR /qits-build
 COPY . .
-ARG QITS_MAVEN_CENTRAL_URL=
-ENV QITS_MAVEN_CENTRAL_URL=$QITS_MAVEN_CENTRAL_URL
+ARG QITS_DOMAIN=wohlben.eu
 RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
+    export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
     ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
       -pl platform-access-mcp-service -am \
       -Dquarkus.native.container-build=false \
