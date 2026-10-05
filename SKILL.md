@@ -7,6 +7,8 @@ description: "Use for any work on the qits platform from a terminal: signing in,
 
 Each command calls the platform through its edge, with the session of `qits login`, except `qits artifacts publish`, which runs in a CI step container with no person and never touches that session. `qits <command> --help` shows a command's options, examples and exit codes.
 
+A workspace on a runner node is the token home: with QITS_TOKEN set, every command sends that token as it is, to the public vhosts https://<app>.qits.<QITS_DOMAIN>. It wins over the session and the commissioned pair, nothing is minted or written to disk, and a 401 means the token was deleted with the workspace's container. QITS_URL_<APP> still overrides an address.
+
 ## Platform rules
 
 - Sign in once with `qits login`, and keep `qits session-daemon` running so the session stays fresh.
@@ -1059,6 +1061,8 @@ On a workstation `qits git-login` sets it up: get prints that sign-in's access t
 
 Inside the platform there is no sign-in and none is needed: get answers the injected git host (QITS_GIT_AUTH_HOST) from the container's own credential, and answers no other host. store and erase do nothing there, and no file is written.
 
+With a workspace token (QITS_TOKEN) get answers https://githost.qits.<QITS_DOMAIN> with that token, and answers no other host; store and erase do nothing and no file is written.
+
 ```
 qits git-credential <get|store|erase>
 ```
@@ -1086,7 +1090,7 @@ Inside the platform Git is set up for every host at once, so the injected host i
 
 The headers helper of Claude's MCP entry for the qits MCP server. Claude runs it; a person does not.
 
-Prints {"Authorization":"Bearer <token>"} on stdout: inside the platform the container's own credential, on a workstation the session of `qits login`, refreshed first when needed.
+Prints {"Authorization":"Bearer <token>"} on stdout: inside the platform the container's own credential, on a workstation the session of `qits login`, refreshed first when needed, and with a workspace token (QITS_TOKEN) that token as it is.
 
 Interim: once every workspace has a long-lived token of its own (qits-684) the entry carries it as a plain header and this command goes.
 
@@ -1101,6 +1105,8 @@ qits mcp-credential
 ```
 
 The example is the entry in Claude's MCP configuration. Do not run it yourself: it prints a token on stdout, because that is what a headers helper does.
+
+With QITS_TOKEN set the header carries that token, so an entry rendered with this helper keeps working on a runner node; the url there is the public vhost, not the wire alias.
 
 ### Exit codes
 

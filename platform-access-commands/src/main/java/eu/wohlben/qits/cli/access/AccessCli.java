@@ -47,7 +47,12 @@ import picocli.CommandLine;
                         + "pushes to the platform's git host, and publishing release artifacts from a CI step.",
                 "Each command calls the platform through its edge, with the session of `qits login`, except "
                         + "`qits artifacts publish`, which runs in a CI step container with no person and never touches that "
-                        + "session. `qits <command> --help` shows a command's options, examples and exit codes."},
+                        + "session. `qits <command> --help` shows a command's options, examples and exit codes.",
+                "A workspace on a runner node is the token home: with QITS_TOKEN set, every command sends that "
+                        + "token as it is, to the public vhosts https://<app>.qits.<QITS_DOMAIN>. It wins over the "
+                        + "session and the commissioned pair, nothing is minted or written to disk, and a 401 means "
+                        + "the token was deleted with the workspace's container. QITS_URL_<APP> still overrides an "
+                        + "address."},
         footerHeading = "%nPlatform rules:%n",
         footer = {
                 "- Sign in once with `qits login`, and keep `qits session-daemon` running so the session stays fresh.",

@@ -6,6 +6,7 @@ import eu.wohlben.qits.cli.session.AgentCredential;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.session.Mode;
 import eu.wohlben.qits.cli.session.RequestCredential;
+import eu.wohlben.qits.cli.session.TokenCredential;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,37 @@ class CliContextTest {
         assertThat(context(Map.of("XDG_CONFIG_HOME", "/nonexistent")).credential()).isInstanceOf(AccessTokens.class);
         assertThat(context(Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret")).credential())
                 .isInstanceOf(AgentCredential.class);
+    }
+
+    /** The token wins over the pair, and is sent as it is, stripped, with nothing minted. */
+    @Test
+    void aWorkspaceTokenIsTheCredentialAndTheIdpIsItsVhost() throws Exception {
+        CliContext runner = context(Map.of(Mode.TOKEN, " the workspace token\n", "QITS_DOMAIN", "wohlben.eu",
+                Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret", "XDG_CONFIG_HOME", "/nonexistent"));
+
+        assertThat(runner.mode()).isEqualTo(Mode.EDGE_TOKEN);
+        assertThat(runner.credential()).isInstanceOf(TokenCredential.class);
+        assertThat(runner.credential().bearer()).isEqualTo("the workspace token");
+        assertThat(runner.idpUrl()).isEqualTo("https://idp.qits.wohlben.eu/idp");
+    }
+
+    @Test
+    void theTokenNamesItsHolderAndExplainsADeletedToken() throws Exception {
+        Credential named = context(Map.of(Mode.TOKEN, "t", "QITS_TOKEN_SUBJECT", "workspace-352")).credential();
+        Credential unnamed = context(Map.of(Mode.TOKEN, "t")).credential();
+
+        assertThat(named.who()).isEqualTo("agent (qits:agent) via token workspace-352");
+        assertThat(unnamed.who()).isEqualTo("agent (qits:agent) via token workspace");
+        assertThat(named.explain(401)).contains("deleted").contains("recreated");
+        assertThat(named.explain(403)).contains("qits:agent");
+        assertThat(named.explain(500)).isNull();
+    }
+
+    @Test
+    void theTokenHomeRefusesADomainItCannotDial() {
+        assertThatThrownBy(() -> context(Map.of(Mode.TOKEN, "t", "QITS_DOMAIN", "dev.localhost")).idpUrl())
+                .isInstanceOf(CliFailure.class)
+                .hasMessageContaining("QITS_DOMAIN");
     }
 
     @Test

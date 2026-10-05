@@ -106,6 +106,18 @@ class McpCredentialCommandTest {
         });
     }
 
+    /** The token as it is: nothing minted, no session read, even with the pair beside it. */
+    @Test
+    void withAWorkspaceTokenItPrintsThatToken() throws Exception {
+        inPlatform();
+        env.put(Mode.TOKEN, "the workspace token");
+
+        Result r = run();
+
+        assertThat(r).isEqualTo(new Result(0, "{\"Authorization\":\"Bearer the workspace token\"}\n", ""));
+        assertThat(idp.requests).as("nothing is minted").isEmpty();
+    }
+
     @Test
     void onAWorkstationItPrintsTheSessionsAccessToken() throws Exception {
         store.write(new Session(idp.url(), "qits-cli", FakeIdp.SECRET + "access-0", T0.plus(Duration.ofMinutes(10)),

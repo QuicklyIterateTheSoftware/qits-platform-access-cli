@@ -15,6 +15,10 @@ import java.util.Map;
  * all: the container network answers wire aliases, and nothing else. That is a second set of
  * addresses, not a second code path, which is why both live here.
  * <p>
+ * A workspace on a runner node is the third home ({@link Mode#EDGE_TOKEN}): the wire aliases do not
+ * resolve there either, so it dials the same public vhosts a workstation does, with the domain read
+ * from {@code QITS_DOMAIN} rather than off a session it does not have.
+ * <p>
  * Every service is a rule: {@code http://<env>-qits-<app>:8080}, where {@code <env>} comes from
  * {@code QITS_ENV}, else from the host of whichever platform URL the container carries, else
  * {@code dev}.
@@ -55,6 +59,9 @@ public final class PlatformEndpoints {
 
     static final String DEFAULT_ENVIRONMENT = "dev";
 
+    /** The estate's public domain, {@code wohlben.eu}: what the token home's vhosts hang off. */
+    static final String DOMAIN = "QITS_DOMAIN";
+
     private final Mode mode;
     private final Map<String, String> env;
     private final String idpUrl;
@@ -70,7 +77,7 @@ public final class PlatformEndpoints {
 
     /**
      * The base URL of {@code app} — {@code projects}, {@code ci}, {@code idp} — without its path
-     * prefix. {@code QITS_URL_<APP>} overrides it in either home, which is the escape hatch when a
+     * prefix. {@code QITS_URL_<APP>} overrides it in every home, which is the escape hatch when a
      * name moves.
      */
     public String base(String app) throws CliFailure {
@@ -87,7 +94,38 @@ public final class PlatformEndpoints {
         if (override != null && !override.isBlank()) {
             return trim(override);
         }
+        if (mode.edgeToken()) {
+            return edge(app, env);
+        }
         return mode.inPlatform() ? wire(app) : vhost(app, refusal);
+    }
+
+    /**
+     * {@code https://projects.qits.wohlben.eu}, from {@code QITS_DOMAIN}: the shape of {@link
+     * #vhost}, fed from the environment instead of a session.
+     * <p>
+     * A domain that cannot be a public one is refused rather than dialled. Blank or undotted gives a
+     * host nothing resolves, and {@code *.localhost} is a name curl and the JVM send to the loopback
+     * whatever DNS says — on a runner node that is the node itself, not the platform.
+     */
+    public static String edge(String app, Map<String, String> env) throws CliFailure {
+        return "https://" + app + ".qits." + domain(env);
+    }
+
+    /** {@code wohlben.eu}, or a usage failure naming {@code QITS_DOMAIN}. */
+    public static String domain(Map<String, String> env) throws CliFailure {
+        String told = env.get(DOMAIN);
+        String domain = told == null ? "" : told.strip();
+        while (domain.endsWith(".")) {
+            domain = domain.substring(0, domain.length() - 1);
+        }
+        String lower = domain.toLowerCase(Locale.ROOT);
+        if (domain.isEmpty() || !domain.contains(".") || lower.endsWith(".localhost")) {
+            throw new CliFailure(DOMAIN + " is " + (domain.isEmpty() ? "not set" : "'" + domain + "'")
+                    + ", which is not a public domain the edge answers on. A workspace token (" + Mode.TOKEN
+                    + ") reaches the platform at https://<app>.qits.<" + DOMAIN + ">.", CliFailure.USAGE);
+        }
+        return domain;
     }
 
     /**

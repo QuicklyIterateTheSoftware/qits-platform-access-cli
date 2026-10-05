@@ -48,6 +48,36 @@ class ModeTest {
         assertThat(Mode.of(saysNo)).isEqualTo(Mode.WORKSTATION);
     }
 
+    /** The token, then the pair, then the session file; and the override never beats a token. */
+    @Test
+    void aTokenWinsOverThePairWhichWinsOverTheSession() {
+        Map<String, String> both = new HashMap<>(CONTAINER);
+        both.put(Mode.TOKEN, "the workspace token");
+        assertThat(Mode.of(both)).isEqualTo(Mode.EDGE_TOKEN);
+        assertThat(Mode.of(Map.of(Mode.TOKEN, "t"))).isEqualTo(Mode.EDGE_TOKEN);
+        assertThat(Mode.of(CONTAINER)).isEqualTo(Mode.IN_PLATFORM);
+        assertThat(Mode.of(Map.of())).isEqualTo(Mode.WORKSTATION);
+
+        both.put(Mode.TOKEN, "  ");
+        assertThat(Mode.of(both)).as("a blank token is no token").isEqualTo(Mode.IN_PLATFORM);
+    }
+
+    @Test
+    void theOverrideDoesNotBeatAToken() {
+        assertThat(Mode.of(Map.of(Mode.TOKEN, "t", Mode.OVERRIDE, "false"))).isEqualTo(Mode.EDGE_TOKEN);
+        assertThat(Mode.of(Map.of(Mode.TOKEN, "t", Mode.OVERRIDE, "true"))).isEqualTo(Mode.EDGE_TOKEN);
+    }
+
+    @Test
+    void eachHomeAnswersOnlyItsOwnPredicate() {
+        assertThat(Mode.EDGE_TOKEN.edgeToken()).isTrue();
+        assertThat(Mode.EDGE_TOKEN.inPlatform()).isFalse();
+        assertThat(Mode.IN_PLATFORM.inPlatform()).isTrue();
+        assertThat(Mode.IN_PLATFORM.edgeToken()).isFalse();
+        assertThat(Mode.WORKSTATION.inPlatform()).isFalse();
+        assertThat(Mode.WORKSTATION.edgeToken()).isFalse();
+    }
+
     @Test
     void aWorkstationDialsThePublicVhosts() throws CliFailure {
         PlatformEndpoints outside = endpoints(Map.of(), IDP);

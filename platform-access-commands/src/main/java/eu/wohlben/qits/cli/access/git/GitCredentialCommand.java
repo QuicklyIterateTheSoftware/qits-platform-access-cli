@@ -4,6 +4,7 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
+import eu.wohlben.qits.cli.session.PlatformEndpoints;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
@@ -27,7 +28,8 @@ import java.util.Optional;
  * It has the CLI's two homes like every other command. On a workstation the sign-in of
  * {@code qits git-login} answers, from {@code git.json}. Inside the platform there is no sign-in to
  * read — {@code qits git-login} needs a browser and is refused there — so the container's own
- * credential answers instead, for the injected git host and no other.
+ * credential answers instead, for the injected git host and no other. On a runner node the
+ * workspace token answers, for the public git host {@code githost.qits.<QITS_DOMAIN>} and no other.
  */
 @TuiCommand(interaction = Interaction.LOCAL)
 @CommandLine.Command(name = "git-credential", mixinStandardHelpOptions = true,
@@ -38,7 +40,9 @@ import java.util.Optional;
                         + "and keeps the sign-in.",
                 "Inside the platform there is no sign-in and none is needed: get answers the injected git host "
                         + "(QITS_GIT_AUTH_HOST) from the container's own credential, and answers no other host. "
-                        + "store and erase do nothing there, and no file is written."},
+                        + "store and erase do nothing there, and no file is written.",
+                "With a workspace token (QITS_TOKEN) get answers https://githost.qits.<QITS_DOMAIN> with that "
+                        + "token, and answers no other host; store and erase do nothing and no file is written."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
                 "  git config --global --get-all credential.https://githost.qits.wohlben.eu.helper",
@@ -75,6 +79,9 @@ public class GitCredentialCommand extends PlatformCommand {
             origin = GitOrigin.fromGitRequest(protocol, request.get("host"));
         } catch (IllegalArgumentException notAnHttpHost) {
             return 0;
+        }
+        if (context.mode().edgeToken()) {
+            return withToken(context, origin);
         }
         if (context.mode().inPlatform()) {
             return insidePlatform(context, protocol, origin);
@@ -120,6 +127,31 @@ public class GitCredentialCommand extends PlatformCommand {
             // is not this command's failure: it says why on stderr, prints nothing, and exits 0 so
             // Git is free to ask its other helpers. A refusal never holds the token or the secret.
             context.err().println(noCredential.getMessage());
+            context.err().flush();
+        }
+        return 0;
+    }
+
+    /**
+     * The token home's answer: the workspace token, for the public git host of {@code QITS_DOMAIN}
+     * only. The same global helper runs for every remote here too, so a domain that cannot be read
+     * answers nothing rather than any host, and the host is checked before the token is touched.
+     */
+    private int withToken(CliContext context, String origin) throws InterruptedException {
+        String githost;
+        try {
+            githost = GitOrigin.normalize(PlatformEndpoints.edge("githost", context.env()));
+        } catch (CliFailure | IllegalArgumentException noDomain) {
+            return 0;
+        }
+        if (!"get".equals(action) || !githost.equals(origin)) {
+            return 0;
+        }
+        try {
+            context.out().print("username=oauth2\npassword=" + context.credential().bearer() + "\n\n");
+            context.out().flush();
+        } catch (CliFailure noToken) {
+            context.err().println(noToken.getMessage());
             context.err().flush();
         }
         return 0;

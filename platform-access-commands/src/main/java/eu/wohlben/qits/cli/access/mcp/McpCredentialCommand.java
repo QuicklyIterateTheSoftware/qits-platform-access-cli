@@ -21,13 +21,17 @@ import picocli.CommandLine;
  * in a long session; a helper Claude runs when it connects does not. Follow-up qits-684 gives every
  * workspace a long-lived token of its own, which the MCP entry then carries as a plain header, and
  * this command goes. Keep it this small so that is one deletion.
+ * <p>
+ * In the token home ({@code QITS_TOKEN}) the bearer is that token, unchanged: the code path is the
+ * same, only the credential the context picks is different.
  */
 @TuiCommand(interaction = Interaction.LOCAL)
 @CommandLine.Command(name = "mcp-credential", mixinStandardHelpOptions = true,
         description = {
                 "The headers helper of Claude's MCP entry for the qits MCP server. Claude runs it; a person does not.",
                 "Prints {\"Authorization\":\"Bearer <token>\"} on stdout: inside the platform the container's own "
-                        + "credential, on a workstation the session of `qits login`, refreshed first when needed.",
+                        + "credential, on a workstation the session of `qits login`, refreshed first when needed, and "
+                        + "with a workspace token (QITS_TOKEN) that token as it is.",
                 "Interim: once every workspace has a long-lived token of its own (qits-684) the entry carries it "
                         + "as a plain header and this command goes."},
         footerHeading = HelpText.EXAMPLES,
@@ -36,7 +40,10 @@ import picocli.CommandLine;
                         + "\"headersHelper\": \"qits mcp-credential\"}",
                 "",
                 "The example is the entry in Claude's MCP configuration. Do not run it yourself: it prints a token "
-                        + "on stdout, because that is what a headers helper does."},
+                        + "on stdout, because that is what a headers helper does.",
+                "",
+                "With QITS_TOKEN set the header carries that token, so an entry rendered with this helper keeps "
+                        + "working on a runner node; the url there is the public vhost, not the wire alias."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Printed.",
                 "1:No token to be had (not signed in, the session ended, or the idp refused or cannot be reached): "

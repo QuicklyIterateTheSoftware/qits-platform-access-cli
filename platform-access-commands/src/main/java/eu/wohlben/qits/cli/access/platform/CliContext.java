@@ -8,6 +8,7 @@ import eu.wohlben.qits.cli.session.AgentCredential;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.session.Mode;
 import eu.wohlben.qits.cli.session.PlatformEndpoints;
+import eu.wohlben.qits.cli.session.TokenCredential;
 
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
@@ -58,9 +59,11 @@ public record CliContext(
             Map<String, String> environment = env;
             Clock time = clock;
             Function<String, TokenClient> idps = idpFor;
-            credentials = () -> Mode.of(environment).inPlatform()
-                    ? AgentCredential.of(environment, time)
-                    : new AccessTokens(SessionFile.fromEnvironment(environment), time, idps);
+            credentials = () -> switch (Mode.of(environment)) {
+                case EDGE_TOKEN -> new TokenCredential(environment);
+                case IN_PLATFORM -> AgentCredential.of(environment, time);
+                case WORKSTATION -> new AccessTokens(SessionFile.fromEnvironment(environment), time, idps);
+            };
         }
     }
 
@@ -102,9 +105,9 @@ public record CliContext(
 
     /**
      * What this process calls the platform with: the session file outside, the workspace
-     * credential inside, unless the context was built with a credential of its own. The two homes
-     * are never mixed — in-platform never opens the session file, and a workstation never mints
-     * with a client secret.
+     * credential inside, the workspace token on a runner node, unless the context was built with a
+     * credential of its own. The homes are never mixed — in-platform never opens the session file,
+     * a workstation never mints with a client secret, and the token home does neither.
      */
     public Credential credential() {
         return credentials.get();
@@ -113,10 +116,15 @@ public record CliContext(
     /**
      * The session's idp address, which is where a workstation's service addresses come from. Null
      * inside the platform, where they come from the wire aliases instead and there is no session to
-     * read.
+     * read. In the token home it is the idp's public vhost, {@code https://idp.qits.<QITS_DOMAIN>/idp},
+     * so every address derived from it is the vhost a workstation would derive.
      */
     public String idpUrl() throws CliFailure, InterruptedException {
-        return mode().inPlatform() ? null : tokens().session().idpUrl();
+        Mode mode = mode();
+        if (mode.edgeToken()) {
+            return PlatformEndpoints.edge("idp", env) + "/idp";
+        }
+        return mode.inPlatform() ? null : tokens().session().idpUrl();
     }
 
     /**
@@ -142,7 +150,7 @@ public record CliContext(
         }
     }
 
-    /** Which of the CLI's two homes this is. Decided from the environment, which does not change. */
+    /** Which of the CLI's three homes this is. Decided from the environment, which does not change. */
     public Mode mode() {
         return Mode.of(env);
     }
