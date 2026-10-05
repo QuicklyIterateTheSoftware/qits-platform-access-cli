@@ -412,10 +412,11 @@ public class ReleaseRequestCommand implements Runnable {
         List<List<String>> gates = new ArrayList<>();
         request.path("gates").forEach(g -> gates.add(List.of(
                 Table.cell(text(g, "kind"), 20),
-                Table.cell(text(g, "state"), 12))));
+                Table.cell(text(g, "state"), 12),
+                Table.cell(text(g, "detail"), 80))));
         if (!gates.isEmpty()) {
             out.println("Gates:");
-            Table.print(out, "  ", List.of("KIND", "STATE"), gates);
+            Table.print(out, "  ", List.of("KIND", "STATE", "REASON"), gates);
         }
         List<List<String>> sources = new ArrayList<>();
         request.path("sources").forEach(s -> sources.add(List.of(

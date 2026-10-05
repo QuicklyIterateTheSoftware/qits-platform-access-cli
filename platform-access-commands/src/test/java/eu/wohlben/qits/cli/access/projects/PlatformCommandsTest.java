@@ -406,7 +406,8 @@ class PlatformCommandsTest {
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":"99999999-2222-3333-4444-555555555555",
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
-                  "gates":[{"kind":"PUBLISH","state":"FAILED"},{"kind":"APPROVAL","state":"PASSED"}],
+                  "gates":[{"kind":"PUBLISH","state":"FAILED"},
+                           {"kind":"APPROVAL","state":"PASSED","detail":"configured by manual-review"}],
                   "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
                 """.formatted(CI));
 
@@ -417,9 +418,30 @@ class PlatformCommandsTest {
         assertThat(r.out()).contains("  state          OBSOLETE")
                 .contains("  superseded by  99999999")
                 .contains("Gates:")
-                .contains("KIND      STATE")
-                .contains("PUBLISH   FAILED")
-                .contains("APPROVAL  PASSED");
+                .contains("KIND      STATE   REASON")
+                .contains("PUBLISH   FAILED  -")
+                .contains("APPROVAL  PASSED  configured by manual-review");
+    }
+
+    @Test
+    void leavesTheGatesReasonBlankWhenAnOlderServiceOmitsIt() throws Exception {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
+                  "supersededBy":null,
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "gates":[{"kind":"APPROVAL","state":"PASSED"}],
+                  "sources":[]}}
+                """.formatted(CI));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("Gates:")
+                .contains("KIND      STATE   REASON")
+                .contains("APPROVAL  PASSED  -");
     }
 
     @Test
