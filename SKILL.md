@@ -683,7 +683,7 @@ A release request's gating runs build its backing branch release/<request id> an
 - Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.
 - To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.
 - --project, --repository, --output and the two -url options may come before or after the command.
-- A release request's QA run carries release reports: which tests failed, with their class, name and message, and more kinds to come. `qits ci report show <run id>` lists them.
+- A release request's QA run carries release reports: which tests failed, with their class, name and message, and the line coverage of the tree and of the change, with more kinds to come. `qits ci report show <run id>` lists them.
 
 ## qits ci runs
 
@@ -803,7 +803,7 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
 Release reports: what a release request's QA run found, beside its verdict. show lists a run's reports with their highlights, and prints one kind's whole report. submit is what every QA step runs after its script: it collects the reports from the step's files and uploads them.
 
-Kinds today: test-results (every test run, and each failing test with its class, name, file and message). A kind or a run with nothing to report shows nothing; a report never fails or holds a release.
+Kinds today: test-results (every test run, and each failing test with its class, name, file and message) and coverage (line coverage of the whole tree, its change against the baseline, and the coverage of the lines the change touched). A kind or a run with nothing to report shows nothing; a report never fails or holds a release.
 
 ### Notes
 
@@ -814,7 +814,7 @@ Kinds today: test-results (every test run, and each failing test with its class,
 
 Collect this CI step's release reports from its files and upload them to qits-ci. Run in a QA step, after the step's own script, with that script's exit code.
 
-For each kind: find its inputs under --root, parse them, compare with the baseline's report of the same kind, and PUT the result to the run's step. A kind with no inputs is not reported, and nothing is sent for it. One line per kind on stdout: `test-results: submitted (412 tests, 3 failed)` or `test-results: not reported (no inputs)`.
+For each kind: find its inputs under --root, parse them, compare with the baseline's report of the same kind, and PUT the result to the run's step. A kind with no inputs is not reported, and nothing is sent for it. One line per kind on stdout: `test-results: submitted (412 tests, 3 failed)`, `coverage: submitted (10031 lines, 80.9% covered)` or `coverage: not reported (no inputs)`.
 
 ```
 qits ci report submit --exit-code <n> [--root <dir>]
@@ -833,6 +833,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 ```
 
 - test-results reads **/target/surefire-reports/TEST-*.xml, **/target/failsafe-reports/TEST-*.xml and .qits-reports/vitest-*.xml. A file that does not parse is skipped with a warning.
+- coverage reads .qits-reports/jacoco.exec (JaCoCo 0.8.14's format) against every **/target/classes, and coverage/**/coverage-final.json or .qits-reports/coverage/**/coverage-final.json (istanbul's json, as vitest writes it). With a baseline it fetches the baseline's tag (git fetch --depth=1 "$QITS_CI_REPOSITORY_URL" refs/tags/<version>) and measures the lines `git diff -U0 <version> HEAD` names; when git cannot, the diff coverage is left out, with one warning.
 - The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no option names another address.
 - The bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.
 - No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without the comparison.
@@ -849,7 +850,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 
 Show a CI run's release reports: each kind, its version, the step that submitted it, and its highlights ("3 tests failed").
 
---kind also prints that kind's whole report as JSON: for test-results, the totals, the suites, and each failing test with its file, class, name, shape and message.
+--kind also prints that kind's whole report as JSON: for test-results, the totals, the suites, and each failing test with its file, class, name, shape and message; for coverage, the total, the baseline's total, the changed lines' coverage with the uncovered ones, and a line per file.
 
 ```
 qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <run id>
@@ -859,7 +860,7 @@ qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--pr
 |---|---|
 | `<run id>` | The run: its id, or its start when --project and --repository name its repository. |
 | `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
-| `--kind <kind>` | Only this kind of report (test-results), and print the whole of it. |
+| `--kind <kind>` | Only this kind of report (test-results, coverage), and print the whole of it. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
@@ -870,6 +871,7 @@ qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--pr
 ```
 qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17
 qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results
+qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind coverage
 qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 -o json
 ```
 

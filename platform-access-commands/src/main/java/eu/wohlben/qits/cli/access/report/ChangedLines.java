@@ -7,7 +7,7 @@ import java.util.Set;
  * measured over. Computed lazily and at most once per submit, and only when there is a baseline; any
  * failure to compute it makes it {@link #available() unavailable}, never wrong and never thrown.
  * <p>
- * Only {@link #unavailable()} exists yet. The git implementation comes with the coverage kind.
+ * {@link GitChangedLines} is the one that measures; {@link #unavailable()} is every other case.
  */
 public interface ChangedLines {
 

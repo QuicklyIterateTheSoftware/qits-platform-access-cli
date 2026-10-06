@@ -17,12 +17,23 @@ import java.util.Optional;
  * @param changedLines the lines the fold changed against the baseline's tag; unavailable without a
  *                     baseline
  * @param locators     where a failing test case sits in its file
+ * @param baselineTag  the baseline's tag in the step's tree, fetched on first use: for a kind that
+ *                     reads a file as it was at the baseline. {@link BaselineTag#none()} without one
  */
 public record StepContext(
         Path root, String runId, int stepIndex, RepositoryRef repository, String commitSha, int exitCode,
         Optional<Baseline> baseline,
         ChangedLines changedLines,
-        TestCaseLocators locators) {
+        TestCaseLocators locators,
+        BaselineTag baselineTag) {
+
+    /** A step with no baseline tag to read files at; the kinds that diff use {@link #changedLines}. */
+    public StepContext(Path root, String runId, int stepIndex, RepositoryRef repository, String commitSha,
+                       int exitCode, Optional<Baseline> baseline, ChangedLines changedLines,
+                       TestCaseLocators locators) {
+        this(root, runId, stepIndex, repository, commitSha, exitCode, baseline, changedLines, locators,
+                BaselineTag.none());
+    }
 
     /** {@code file} relative to {@link #root}, with forward slashes, as the payloads spell a path. */
     public String relative(Path file) {

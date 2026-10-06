@@ -47,8 +47,9 @@ public final class ReportKinds {
      */
     public static ReportKinds standard(Consumer<String> warnings) {
         return new ReportKinds(
-                List.of(new TestResultsKind(warnings)),
-                List.of(new SurefireXmlParser(), new FailsafeXmlParser(), new VitestJunitParser()));
+                List.of(new TestResultsKind(warnings), new CoverageKind(warnings)),
+                List.of(new SurefireXmlParser(), new FailsafeXmlParser(), new VitestJunitParser(),
+                        new JacocoExecParser(), new IstanbulJsonParser()));
     }
 
     public List<ReportKind<?>> kinds() {

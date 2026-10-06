@@ -12,7 +12,8 @@ Commands:
   and `qits release-request … list|create|join|withdraw` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
-  failed, and why); `qits ci report submit` is the CI step's side that collects and uploads them.
+  failed, and why; the line coverage of the tree and of the change); `qits ci report submit` is the
+  CI step's side that collects and uploads them.
 - `qits events` prints the platform's domain events as they happen; `qits events query` prints the
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
@@ -757,19 +758,29 @@ start of it, looked up among that repository's runs.
 `report show` lists a run's release reports: the structured results a release request's QA run
 produces beside its verdict, one per kind and step, with their highlights ("3 tests failed").
 `--kind` also prints that kind's whole report as JSON, and `-o json` prints the service's answer.
-Today's kind is `test-results`: the totals, a line per tool and module, and every failing test with
-its language, tool, file, class, name, shape (`ASSERTION`, `ERROR`, `TIMEOUT`, `SETUP`) and message.
+Today's kinds are `test-results`: the totals, a line per tool and module, and every failing test with
+its language, tool, file, class, name, shape (`ASSERTION`, `ERROR`, `TIMEOUT`, `SETUP`) and message;
+and `coverage`: the total line coverage and the baseline's, the diff coverage (the coverable lines the
+change added or touched against the baseline's tag, how many of them are covered, and the uncovered
+ones as line ranges per file), and a line per file.
 
 `report submit` is what the hook qits-ci composes after every QA step runs, whatever the step's
 script exited with (`--exit-code`). It reads the step's files (`**/target/surefire-reports`,
-`**/target/failsafe-reports`, `.qits-reports/vitest-*.xml`), compares with the baseline (the same
+`**/target/failsafe-reports`, `.qits-reports/vitest-*.xml` for tests; `.qits-reports/jacoco.exec`
+read against every `**/target/classes`, and `coverage/**/coverage-final.json` or
+`.qits-reports/coverage/**/coverage-final.json` for coverage), compares with the baseline (the same
 kind in the QA run of the release request that produced the newest released version), and PUTs one
 report per kind to `https://ci.qits.$QITS_DOMAIN`, with the publish chain's bearer. It takes the run
 from `QITS_CI_RUN_ID`, `QITS_CI_STEP_INDEX`, `QITS_CI_SHA`, `QITS_CI_REPO_NAME` and
 `QITS_CI_PROJECT_ID`, gives up after 120 seconds, and never changes the step's verdict: the hook
 ignores its exit code. A kind is one implementation in `report/`, listed in `ReportKinds`.
+With a baseline, the coverage kind fetches the baseline's tag into the step's shallow clone
+(`git fetch --depth=1 "$QITS_CI_REPOSITORY_URL" refs/tags/<version>:refs/tags/<version>`, with the
+step's own git credentials) and diffs it against `HEAD`; when git cannot, the diff coverage is left
+out with one warning, never wrong.
 
     qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results
+    qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind coverage
 
 ### qits maintenance
 

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
@@ -89,7 +90,8 @@ class SubmitCommandTest {
         Result result = submit("--exit-code", "1", "--root", root.toString());
 
         assertThat(result.exit()).as(result.err()).isZero();
-        assertThat(result.out()).isEqualTo("test-results: submitted (18 tests, 10 failed)\n");
+        assertThat(result.out()).isEqualTo("test-results: submitted (18 tests, 10 failed)\n"
+                + "coverage: not reported (no inputs)\n");
         assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN + ")");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path())
                 .containsExactly("GET " + BASELINE, "GET " + BASELINE_REPORTS, "PUT " + PUT);
@@ -111,6 +113,77 @@ class SubmitCommandTest {
                         ChangedLines.unavailable(), TestCaseLocators.registered()),
                 ReportKinds.standard(line -> { }).parsersOf("test-results")).orElseThrow();
         assertThat(body.path("payload")).isEqualTo(JSON.readTree(ReportJson.MAPPER.writeValueAsString(expected)));
+    }
+
+    @Test
+    void coverageGoesWithItsTotalItsBaselinesTotalAndTheDiffAgainstTheBaselineTag() throws Exception {
+        Path root = Fixtures.coverageTree(work);
+        String clock = Files.readString(root.resolve("src/app/clock.ts"));
+        Files.delete(root.resolve("src/app/clock.ts"));
+        GitChangedLinesTest.git(root, "init", "--quiet");
+        GitChangedLinesTest.git(root, "add", "-A");
+        GitChangedLinesTest.git(root, "commit", "--quiet", "-m", "the baseline");
+        GitChangedLinesTest.git(root, "tag", "2026.1003.52637");
+        Files.writeString(root.resolve("src/app/clock.ts"), clock);
+        GitChangedLinesTest.git(root, "add", "-A");
+        GitChangedLinesTest.git(root, "commit", "--quiet", "-m", "the fold");
+        ci.answer("GET", BASELINE, """
+                {"baseline":{"version":"2026.1003.52637","runId":"%s","releaseRequestId":"rr-1","tagSha":"abc"}}
+                """.formatted(BASE_RUN));
+        ci.answer("GET", BASELINE + "/reports/coverage", """
+                [{"id":"r-2","kind":"coverage","kindVersion":1,"stepIndex":2,"highlights":[],
+                  "payload":{"sources":[],"total":{"linesCovered":4,"linesTotal":10,"percent":40.0},
+                             "baselineTotal":null,"diff":null,"files":[]}}]
+                """);
+        String put = "/ci/api/runs/" + RUN + "/steps/2/reports/coverage";
+        ci.answer("PUT", put, 204, "");
+
+        Result result = submit("--exit-code", "0", "--root", root.toString());
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
+                + "coverage: submitted (13 lines, 30.8% covered)\n");
+        assertThat(result.err()).doesNotContain("WARN");
+        JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
+        assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
+        assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
+                [{"severity":"warn","text":"diff coverage 0.0% (0/3 changed lines)","metric":"coverage.diff",
+                  "value":0.0,"delta":null},
+                 {"severity":"info","text":"coverage 30.8% (-9.2)","metric":"coverage.total","value":30.77,
+                  "delta":-9.23}]
+                """));
+        assertThat(body.path("payload")).isEqualTo(JSON.readTree("""
+                {"sources":[{"language":"typescript","tool":"vitest-coverage"}],
+                 "total":{"linesCovered":4,"linesTotal":13,"percent":30.77},
+                 "baselineTotal":{"version":"2026.1003.52637","percent":40.0},
+                 "diff":{"baselineVersion":"2026.1003.52637","linesChanged":3,"linesCovered":0,"percent":0.0,
+                         "uncovered":[{"file":"src/app/clock.ts","ranges":[[2,3],[5,5]]}]},
+                 "files":[{"file":"src/app/clock.ts","linesCovered":0,"linesTotal":3},
+                          {"file":"src/app/ledger.ts","linesCovered":4,"linesTotal":10}]}
+                """));
+    }
+
+    @Test
+    void coverageWithABaselineButNoTagToDiffAgainstGoesWithoutTheDiffAndOneWarning() throws Exception {
+        Path root = Fixtures.coverageTree(work);
+        ci.answer("GET", BASELINE, """
+                {"baseline":{"version":"2026.1003.52637","runId":"%s","releaseRequestId":"rr-1","tagSha":"abc"}}
+                """.formatted(BASE_RUN));
+        String put = "/ci/api/runs/" + RUN + "/steps/2/reports/coverage";
+        ci.answer("PUT", put, 204, "");
+
+        Result result = submit("--exit-code", "0", "--root", root.toString());
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.err().lines().filter(l -> l.startsWith("WARN"))).singleElement().asString()
+                .startsWith("WARN: baseline tag 2026.1003.52637: could not be fetched");
+        JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
+        assertThat(body.path("payload").path("diff").isNull()).isTrue();
+        assertThat(body.path("payload").path("baselineTotal").isNull()).isTrue();
+        assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
+                [{"severity":"info","text":"coverage 30.8% (no baseline)","metric":"coverage.total","value":30.77,
+                  "delta":null}]
+                """));
     }
 
     @Test
@@ -168,7 +241,8 @@ class SubmitCommandTest {
         Result result = submit("--exit-code", "0", "--root", root.toString());
 
         assertThat(result.exit()).isEqualTo(1);
-        assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 403)\n");
+        assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 403)\n"
+                + "coverage: not reported (no inputs)\n");
         assertThat(result.err()).contains("HTTP 403").contains("this token belongs to another run")
                 .doesNotContain(TOKEN);
     }
@@ -180,7 +254,8 @@ class SubmitCommandTest {
         Result result = submit("--exit-code", "0", "--root", root.toString());
 
         assertThat(result.exit()).isEqualTo(1);
-        assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 404)\n");
+        assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 404)\n"
+                + "coverage: not reported (no inputs)\n");
     }
 
     @Test
@@ -188,7 +263,8 @@ class SubmitCommandTest {
         Result result = submit("--exit-code", "3", "--root", work.toString());
 
         assertThat(result.exit()).as(result.err()).isZero();
-        assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n");
+        assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
+                + "coverage: not reported (no inputs)\n");
         assertThat(ci.requests("PUT", PUT)).isEmpty();
     }
 
@@ -200,7 +276,8 @@ class SubmitCommandTest {
         Result result = submit("--exit-code", "0", "--root", root.toString());
 
         assertThat(result.exit()).isEqualTo(1);
-        assertThat(result.out()).isEqualTo("test-results: not submitted (qits-ci could not be reached)\n");
+        assertThat(result.out()).isEqualTo("test-results: not submitted (qits-ci could not be reached)\n"
+                + "coverage: not reported (no inputs)\n");
         assertThat(result.err()).contains("WARN: baseline: could not be read, so none");
     }
 
@@ -285,7 +362,8 @@ class SubmitCommandTest {
         Result result = submit("--exit-code", "0", "--root", work.toString());
 
         assertThat(result.exit()).isZero();
-        assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n");
+        assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
+                + "coverage: not reported (no inputs)\n");
         assertThat(ci.requests).isEmpty();
     }
 

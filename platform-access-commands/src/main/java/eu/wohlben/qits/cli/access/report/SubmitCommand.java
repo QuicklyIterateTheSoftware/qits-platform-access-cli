@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * {@code qits ci report submit}: a QA step's reports, collected from its tree and uploaded to qits-ci.
@@ -45,13 +46,20 @@ import java.util.concurrent.TimeoutException;
                 "For each kind: find its inputs under --root, parse them, compare with the baseline's report of "
                         + "the same kind, and PUT the result to the run's step. A kind with no inputs is not "
                         + "reported, and nothing is sent for it. One line per kind on stdout: `test-results: "
-                        + "submitted (412 tests, 3 failed)` or `test-results: not reported (no inputs)`."},
+                        + "submitted (412 tests, 3 failed)`, `coverage: submitted (10031 lines, 80.9%% covered)` or "
+                        + "`coverage: not reported (no inputs)`."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits ci report submit --exit-code \"$qits_step_exit\"",
                 "  qits ci report submit --exit-code 1 --root /workspace/checkout",
                 "",
                 "- test-results reads **/target/surefire-reports/TEST-*.xml, **/target/failsafe-reports/TEST-*.xml "
                         + "and .qits-reports/vitest-*.xml. A file that does not parse is skipped with a warning.",
+                "- coverage reads .qits-reports/jacoco.exec (JaCoCo 0.8.14's format) against every "
+                        + "**/target/classes, and coverage/**/coverage-final.json or "
+                        + ".qits-reports/coverage/**/coverage-final.json (istanbul's json, as vitest writes it). "
+                        + "With a baseline it fetches the baseline's tag (git fetch --depth=1 "
+                        + "\"$QITS_CI_REPOSITORY_URL\" refs/tags/<version>) and measures the lines `git diff -U0 "
+                        + "<version> HEAD` names; when git cannot, the diff coverage is left out, with one warning.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no "
@@ -207,9 +215,14 @@ public class SubmitCommand extends PlatformCommand {
         PrintStream out = context.out();
         PrintStream err = context.err();
         Optional<Baseline> baseline = baseline(ci, step.runId(), err);
+        Consumer<String> warnings = line -> err.println("WARN: " + line);
+        // Both lazy: nothing touches git unless a kind that found inputs asks for the baseline's tree.
+        BaselineTag tag = baseline.isPresent()
+                ? BaselineTag.in(tree, baseline, step.repositoryUrl(), warnings) : BaselineTag.none();
+        ChangedLines changed = baseline.isPresent() ? new GitChangedLines(tag, warnings) : ChangedLines.unavailable();
         StepContext stepContext = new StepContext(tree, step.runId(), step.stepIndex(), step.repository(),
-                step.commitSha(), exitCode, baseline, ChangedLines.unavailable(), TestCaseLocators.registered());
-        ReportKinds kinds = ReportKinds.standard(line -> err.println("WARN: " + line));
+                step.commitSha(), exitCode, baseline, changed, TestCaseLocators.registered(), tag);
+        ReportKinds kinds = ReportKinds.standard(warnings);
         boolean allStored = true;
         for (ReportKind<?> kind : kinds.kinds()) {
             allStored &= submit(kind, kinds, stepContext, ci, out, err);
@@ -265,7 +278,8 @@ public class SubmitCommand extends PlatformCommand {
         }
         Optional<P> baseline = step.baseline().isPresent()
                 ? baselinePayload(kind, step, ci, err) : Optional.empty();
-        List<Highlight> highlights = kind.highlight(report.get(), baseline, step);
+        P compared = kind.compared(report.get(), baseline, step);
+        List<Highlight> highlights = kind.highlight(compared, baseline, step);
         if (highlights.size() > Highlight.MAX_PER_REPORT) {
             highlights = highlights.subList(0, Highlight.MAX_PER_REPORT);
         }
@@ -279,7 +293,7 @@ public class SubmitCommand extends PlatformCommand {
         } else {
             submission.putNull("baseline");
         }
-        submission.set("payload", ReportJson.MAPPER.valueToTree(report.get()));
+        submission.set("payload", ReportJson.MAPPER.valueToTree(compared));
         try {
             ci.putReport(step.runId(), step.stepIndex(), kind.id(), submission);
         } catch (CliFailure refused) {
@@ -291,7 +305,7 @@ public class SubmitCommand extends PlatformCommand {
             err.println(refused.getMessage());
             return false;
         }
-        String said = kind.describe(report.get());
+        String said = kind.describe(compared);
         out.println(kind.id() + ": submitted" + (said.isEmpty() ? "" : " (" + said + ")"));
         return true;
     }

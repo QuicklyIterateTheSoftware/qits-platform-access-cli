@@ -26,11 +26,27 @@ final class Fixtures {
     private Fixtures() {
     }
 
+    /** Where vitest ran when it wrote the coverage tree's {@code coverage-final.json}; the copy puts the root there. */
+    static final String VITEST_ROOT = "/builds/qits-fx-app";
+
     /** The fixture tree, copied to {@code into}, with {@code target.fixture} named {@code target}. */
     static Path tree(Path into) {
+        return tree("tree", into);
+    }
+
+    /**
+     * The coverage tree: an Angular project's {@code coverage/<project>/coverage-final.json}, real
+     * output of vitest 4.1's v8 provider for {@code src/app/ledger.ts} (partly tested) and
+     * {@code src/app/clock.ts} (never), with its absolute paths pointed at {@code into}.
+     */
+    static Path coverageTree(Path into) {
+        return tree("coverage-tree", into);
+    }
+
+    private static Path tree(String name, Path into) {
         Path source;
         try {
-            source = Path.of(Fixtures.class.getResource("/report/tree").toURI());
+            source = Path.of(Fixtures.class.getResource("/report/" + name).toURI());
         } catch (URISyntaxException impossible) {
             throw new IllegalStateException(impossible);
         }
@@ -39,6 +55,9 @@ final class Fixtures {
                 Path to = into.resolve(source.relativize(from).toString().replace("target.fixture", "target"));
                 if (Files.isDirectory(from)) {
                     Files.createDirectories(to);
+                } else if (from.getFileName().toString().equals("coverage-final.json")) {
+                    Files.writeString(to, Files.readString(from).replace(VITEST_ROOT,
+                            into.toAbsolutePath().normalize().toString()));
                 } else {
                     Files.copy(from, to);
                 }

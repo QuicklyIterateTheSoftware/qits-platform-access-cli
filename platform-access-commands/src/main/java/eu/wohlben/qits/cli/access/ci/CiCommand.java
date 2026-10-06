@@ -46,7 +46,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.",
                 "- --project, --repository, --output and the two -url options may come before or after the command.",
                 "- A release request's QA run carries release reports: which tests failed, with their class, name "
-                        + "and message, and more kinds to come. `qits ci report show <run id>` lists them."})
+                        + "and message, and the line coverage of the tree and of the change, with more kinds to "
+                        + "come. `qits ci report show <run id>` lists them."})
 public class CiCommand implements Runnable {
 
     /** A run id as qits-ci makes it: a UUID. A shorter id is the start of one. */

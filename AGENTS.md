@@ -135,7 +135,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
                and parsers (ReportKinds: a new kind is one entry there plus its class), the
                test-results kind (TestResultsKind over SurefireXmlParser, FailsafeXmlParser and
-               VitestJunitParser, all JUnit XML read with StAX), and the commands: submit (CI-step
+               VitestJunitParser, all JUnit XML read with StAX), the coverage kind (CoverageKind
+               over JacocoExecParser, org.jacoco.core pinned to the archetypes' agent version, and
+               IstanbulJsonParser; diff coverage from GitChangedLines), BaselineTag (the one
+               shallow fetch of the baseline's tag, for every kind that reads the baseline's
+               files), and the commands: submit (CI-step
                only: the publish chain's bearer through PublishCredential.forCiStep, qits-ci at
                Store.publicOrigin("ci"), its own 120 s deadline) and show. Payload records carry
                @RegisterForReflection all the way down; Jackson writes and reads them back

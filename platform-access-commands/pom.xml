@@ -46,6 +46,10 @@
         <assertj.version>3.27.4</assertj.version>
         <!-- The house's Jandex plugin (qits-integrations-quarkus-javalib, qits-registries-javalib). -->
         <jandex-plugin.version>3.4.0</jandex-plugin.version>
+        <!-- The coverage kind reads the exec file the archetypes' JaCoCo agent writes. The SAME version
+             as that agent (qits-ci's archetypes pin it), so the exec format matches; 0.8.14 is the
+             first that reads JDK 25 class files. Not in any BOM, so it is pinned here. -->
+        <jacoco.version>0.8.14</jacoco.version>
 
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
@@ -80,6 +84,16 @@
                  a second reading of the pom rules; the version is quarkus-bom's. -->
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model-builder</artifactId>
+        </dependency>
+
+        <dependency>
+            <!-- `qits ci report submit`'s coverage kind: ExecFileLoader and Analyzer over a
+                 reactor's target/classes, so no `report` goal is needed. Plain ASM underneath, no
+                 reflection, so the native binary needs no configuration for it. ASM's version is
+                 quarkus-bom's. -->
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.core</artifactId>
+            <version>${jacoco.version}</version>
         </dependency>
 
         <dependency>

@@ -33,6 +33,15 @@ public interface ReportKind<P> {
     Optional<P> collect(StepContext step, List<ReportParser<?>> parsers) throws IOException;
 
     /**
+     * The report as it is submitted, now that the baseline's payload of this kind is known: for a kind
+     * that keeps a comparison in its payload ({@code coverage}'s {@code baselineTotal}). Called once,
+     * after {@link #collect} and before {@link #highlight}. Unchanged by default.
+     */
+    default P compared(P report, Optional<P> baseline, StepContext step) {
+        return report;
+    }
+
+    /**
      * Summarises into at most 10 highlights, comparing with the baseline's payload of this kind when
      * one exists. A highlight is never a verdict: a report never fails or holds a release.
      */
