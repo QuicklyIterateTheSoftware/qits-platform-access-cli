@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="eu.wohlben.qits.fx4.LegacyTest" time="0.013" tests="1" errors="1" skipped="0" failures="0">
+  <testcase name="" classname="eu.wohlben.qits.fx4.LegacyTest" time="0.003">
+    <error message="Invalid test class &apos;eu.wohlben.qits.fx4.LegacyTest&apos;:&#10;  1. Test class should have exactly one public zero-argument constructor" type="org.junit.runners.model.InvalidTestClassError"><![CDATA[org.junit.runners.model.InvalidTestClassError: 
+Invalid test class 'eu.wohlben.qits.fx4.LegacyTest':
+  1. Test class should have exactly one public zero-argument constructor
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:214)
+	at java.base/java.util.ArrayList$ArrayListSpliterator.tryAdvance(ArrayList.java:1693)
+	at java.base/java.util.stream.ReferencePipeline.forEachWithCancel(ReferencePipeline.java:147)
+	at java.base/java.util.stream.AbstractPipeline.copyIntoWithCancel(AbstractPipeline.java:588)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:574)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:560)
+	at java.base/java.util.stream.FindOps$FindOp.evaluateSequential(FindOps.java:150)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:265)
+	at java.base/java.util.stream.ReferencePipeline.findFirst(ReferencePipeline.java:683)
+]]></error>
+  </testcase>
+</testsuite>

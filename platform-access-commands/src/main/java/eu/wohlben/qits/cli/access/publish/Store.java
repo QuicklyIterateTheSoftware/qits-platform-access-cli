@@ -30,7 +30,7 @@ import java.util.Set;
  * is simply not listening to them: the addresses they named and the ones composed here are the
  * same.
  */
-final class Store {
+public final class Store {
 
   /** The domain a CLI with no {@code QITS_DOMAIN} talks to: the live estate's. */
   static final String DEFAULT_DOMAIN = "wohlben.eu";
@@ -79,6 +79,16 @@ final class Store {
           value == null ? "" : value.strip().toLowerCase(Locale.ROOT).replaceAll("^\\.+|\\.+$", "");
       return folded.isEmpty() ? DEFAULT_DOMAIN : folded;
     }
+  }
+
+  /**
+   * {@code https://<label>.qits.<QITS_DOMAIN>}, with the domain folded and defaulted exactly as the
+   * store's own two hosts are. For a CI-step command outside this package that dials another
+   * service on the same public names, so the rule stays in one place: {@code qits ci report submit}
+   * reaches qits-ci as label {@code ci}.
+   */
+  public static String publicOrigin(String label, java.util.Map<String, String> env) {
+    return Hosts.origin(label, Hosts.domain(new Env(env).get("QITS_DOMAIN")));
   }
 
   private final Hosts hosts;

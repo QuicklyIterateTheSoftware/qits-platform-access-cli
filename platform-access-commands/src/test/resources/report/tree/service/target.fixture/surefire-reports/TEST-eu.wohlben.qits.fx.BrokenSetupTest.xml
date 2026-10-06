@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="eu.wohlben.qits.fx.BrokenSetupTest" time="0.011" tests="1" errors="1" skipped="0" failures="0">
+  <testcase name="" classname="eu.wohlben.qits.fx.BrokenSetupTest" time="0.011">
+    <error message="the database did not start" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the database did not start
+	at eu.wohlben.qits.fx.BrokenSetupTest.startTheDatabase(BrokenSetupTest.java:10)
+]]></error>
+  </testcase>
+</testsuite>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="eu.wohlben.qits.fx.LedgerTest" time="0.058" tests="0" errors="0" skipped="0" failures="0">
+  <testcase name="skipsForNow" classname="eu.wohlben.qits.fx.LedgerTest" time="0.0">
+    <skipped message="not yet"/>
+  </testcase>
+  <testcase name="readsTheLedger" classname="eu.wohlben.qits.fx.LedgerTest" time="0.004">
+    <error message="Cannot invoke &quot;Object.toString()&quot; because &quot;ledger&quot; is null" type="java.lang.NullPointerException"><![CDATA[java.lang.NullPointerException: Cannot invoke "Object.toString()" because "ledger" is null
+	at eu.wohlben.qits.fx.LedgerTest.readsTheLedger(LedgerTest.java:24)
+]]></error>
+  </testcase>
+  <testcase name="addsTwoEntries" classname="eu.wohlben.qits.fx.LedgerTest" time="0.006"/>
+  <testcase name="refusesAnotherRunsToken" classname="eu.wohlben.qits.fx.LedgerTest" time="0.007">
+    <failure message="the door must refuse another run&apos;s token ==&gt; expected: &lt;403&gt; but was: &lt;204&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: the door must refuse another run's token ==> expected: <403> but was: <204>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:590)
+	at eu.wohlben.qits.fx.LedgerTest.refusesAnotherRunsToken(LedgerTest.java:18)
+]]></failure>
+  </testcase>
+  <testcase name="hasNoBalance" classname="eu.wohlben.qits.fx.LedgerTest$WhenEmpty" time="0.006"/>
+  <testcase name="refusesAWithdrawal" classname="eu.wohlben.qits.fx.LedgerTest$WhenEmpty" time="0.008">
+    <failure message="expected: &lt;refused&gt; but was: &lt;accepted&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: expected: <refused> but was: <accepted>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:179)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1188)
+	at eu.wohlben.qits.fx.LedgerTest$WhenEmpty.refusesAWithdrawal(LedgerTest.java:42)
+]]></failure>
+  </testcase>
+</testsuite>

@@ -186,6 +186,19 @@ class McpToolCatalogTest {
     }
 
     @Test
+    void theReportSubmitIsCiOnlyAndTheReportShowIsATool() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(byCommand.get("qits ci report submit")).isNotNull();
+        assertThat(byCommand.get("qits ci report submit").reason()).isEqualTo("CI-step only, reads local files");
+        assertThat(catalog.tool("ci_report_submit")).isEmpty();
+        assertThat(catalog.tool("ci_report")).isEmpty();
+        assertThat(properties(tool("ci_report_show"))).containsKeys("run-id", "kind", "project", "repository", "output");
+        assertThat(required(tool("ci_report_show"))).containsExactly("run-id");
+    }
+
+    @Test
     void theQueriesAreToolsUnderTheirStreamsAndTheLocalCommandsAreNot() {
         assertThat(catalog.tool("events_query")).isPresent();
         assertThat(catalog.tool("observe_query")).isPresent();

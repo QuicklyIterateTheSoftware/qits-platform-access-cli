@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="6" failures="3" errors="0" time="0.117775432">
+    <testsuite name="src/app/broken.spec.ts" timestamp="2026-10-06T19:57:11.554Z" hostname="bf2a6422e630" tests="1" failures="1" errors="0" skipped="0" time="0">
+        <testcase classname="src/app/broken.spec.ts" name="src/app/broken.spec.ts" time="0">
+            <failure message="Cannot find module &apos;./does-not-exist&apos; imported from /tmp/vfx/src/app/broken.spec.ts" type="Error">
+Error: Cannot find module &apos;./does-not-exist&apos; imported from /tmp/vfx/src/app/broken.spec.ts
+ ❯ src/app/broken.spec.ts:2:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: &apos;ERR_MODULE_NOT_FOUND&apos; }
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/ledger.spec.ts" timestamp="2026-10-06T19:57:11.565Z" hostname="bf2a6422e630" tests="5" failures="2" errors="0" skipped="1" time="0.117775432">
+        <testcase classname="src/app/ledger.spec.ts" name="Ledger &gt; adds two entries" time="0.00196655">
+        </testcase>
+        <testcase classname="src/app/ledger.spec.ts" name="Ledger &gt; when empty &gt; refuses a withdrawal" time="0.007844001">
+            <failure message="expected &apos;accepted&apos; to be &apos;refused&apos; // Object.is equality" type="AssertionError">
+AssertionError: expected &apos;accepted&apos; to be &apos;refused&apos; // Object.is equality
+
+Expected: &quot;refused&quot;
+Received: &quot;accepted&quot;
+
+ ❯ src/app/ledger.spec.ts:10:26
+            </failure>
+        </testcase>
+        <testcase classname="src/app/ledger.spec.ts" name="Ledger &gt; waits too long" time="0.105293319">
+            <failure message="Test timed out in 100ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;." type="Error">
+Error: Test timed out in 100ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with &quot;testTimeout&quot;.
+ ❯ src/app/ledger.spec.ts:14:3
+            </failure>
+        </testcase>
+        <testcase classname="src/app/ledger.spec.ts" name="Ledger &gt; is not written yet" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/app/ledger.spec.ts" name="sits at the top level" time="0.000311367">
+        </testcase>
+    </testsuite>
+</testsuites>

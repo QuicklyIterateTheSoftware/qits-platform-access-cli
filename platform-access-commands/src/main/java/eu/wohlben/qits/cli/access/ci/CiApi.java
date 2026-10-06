@@ -43,6 +43,39 @@ public final class CiApi {
         return client.post(uri("/ci/api/runs/" + segment(runId) + "/retry"));
     }
 
+    /**
+     * {@code {"runId", "commitSha", "releaseRequestId", "baseline", "reports":[…]}}: the run's
+     * release reports, as summaries with their highlights and without their payloads.
+     */
+    public JsonNode reports(String runId) throws CliFailure, InterruptedException {
+        return client.get(uri("/ci/api/runs/" + segment(runId) + "/reports"));
+    }
+
+    /** One report: its summary and its {@code payload}, which only the kind that wrote it understands. */
+    public JsonNode report(String runId, String reportId) throws CliFailure, InterruptedException {
+        return client.get(uri("/ci/api/runs/" + segment(runId) + "/reports/" + segment(reportId)));
+    }
+
+    /** {@code {"baseline": {version, runId, releaseRequestId, tagSha} | null}}: what the run compares against. */
+    public JsonNode baseline(String runId) throws CliFailure, InterruptedException {
+        return client.get(uri("/ci/api/runs/" + segment(runId) + "/baseline"));
+    }
+
+    /** {@code [report, …]}: the baseline run's reports of one kind, payloads included; empty when it has none. */
+    public JsonNode baselineReports(String runId, String kind) throws CliFailure, InterruptedException {
+        return client.get(uri("/ci/api/runs/" + segment(runId) + "/baseline/reports/" + segment(kind)));
+    }
+
+    /**
+     * Stores one step's report of one kind, replacing an earlier one: {@code 204}. Only the run's own
+     * {@code ci-run} token may, and only while the run is {@code RUNNING}.
+     */
+    public void putReport(String runId, int stepIndex, String kind, JsonNode submission)
+            throws CliFailure, InterruptedException {
+        client.put(uri("/ci/api/runs/" + segment(runId) + "/steps/" + stepIndex + "/reports/" + segment(kind)),
+                submission);
+    }
+
     private URI uri(String path) throws CliFailure {
         try {
             URI uri = URI.create(base + path);

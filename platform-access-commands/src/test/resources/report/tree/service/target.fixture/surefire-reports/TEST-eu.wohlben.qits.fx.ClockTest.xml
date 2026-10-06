@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="eu.wohlben.qits.fx.ClockTest" time="0.306" tests="2" errors="1" skipped="0" failures="0">
+  <testcase name="ticks" classname="eu.wohlben.qits.fx.ClockTest" time="0.041"/>
+  <testcase name="waitsTooLong" classname="eu.wohlben.qits.fx.ClockTest" time="0.238">
+    <error message="waitsTooLong() timed out after 200 milliseconds" type="java.util.concurrent.TimeoutException"><![CDATA[java.util.concurrent.TimeoutException: waitsTooLong() timed out after 200 milliseconds
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	Suppressed: java.lang.InterruptedException: sleep interrupted
+		at java.base/java.lang.Thread.sleepNanos0(Native Method)
+		at java.base/java.lang.Thread.sleepNanos(Thread.java:509)
+		at java.base/java.lang.Thread.sleep(Thread.java:540)
+		at eu.wohlben.qits.fx.ClockTest.waitsTooLong(ClockTest.java:18)
+]]></error>
+  </testcase>
+</testsuite>

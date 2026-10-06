@@ -2,15 +2,18 @@ package eu.wohlben.qits.cli.access.publish;
 
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.session.AgentCredential;
+import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.session.Mode;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -43,8 +46,12 @@ import java.util.concurrent.TimeUnit;
  * <p><b>Nothing here ever prints a token.</b> A refusal names the command or the idp's own status
  * and {@code error}, and never what came back on stdout, because what came back on stdout is the
  * token.
+ *
+ * <p><b>Other CI-step commands use the same chain</b>, through {@link #forCiStep}, rather than a copy
+ * of it: {@code qits ci report submit} runs in the same step container, beside the same variables,
+ * and presents the same credential to qits-ci.
  */
-final class PublishCredential {
+public final class PublishCredential {
 
     /** An executable that prints a fresh token on stdout. */
     static final String TOKEN_COMMAND = "QITS_PUBLISH_TOKEN_COMMAND";
@@ -63,6 +70,52 @@ final class PublishCredential {
         this.env = env;
         this.console = console;
         this.clock = clock;
+    }
+
+    /**
+     * This chain as the {@link Credential} the platform commands' client takes, for a CI-step command
+     * that calls a platform service rather than the store. The sources and their order are the ones
+     * above, asked again for every request.
+     *
+     * <p>Unlike a publish, a call with no credential at all is not sent: the platform client always
+     * presents a bearer, so the absence is said here, as a usage error naming the variables, and
+     * nothing goes out. A token command that fails, or an idp that cannot be reached, is a failure
+     * of the call (exit 1); its message never holds a token.
+     *
+     * @param err where the chain's warnings go (a token command that is not executable)
+     */
+    public static Credential forCiStep(Map<String, String> env, PrintStream err, Clock clock) {
+        PublishCredential chain = new PublishCredential(new Env(env), new Console(err, err), clock);
+        return new Credential() {
+            @Override
+            public String bearer() throws CliFailure {
+                Optional<String> token;
+                try {
+                    token = chain.bearer();
+                } catch (CliException failed) {
+                    throw failed.code() == ExitCode.TRANSPORT
+                            ? CliFailure.retryable(failed.getMessage())
+                            : new CliFailure(failed.getMessage(), CliFailure.FAILED);
+                }
+                if (token.isEmpty()) {
+                    throw new CliFailure("No CI credential in this environment: set " + TOKEN_COMMAND + ", " + TOKEN
+                            + ", or " + Mode.CLIENT_ID + " and " + Mode.CLIENT_SECRET + ".", CliFailure.USAGE);
+                }
+                return token.get();
+            }
+
+            @Override
+            public String explain(int status) {
+                return status == 401
+                        ? "401 - the CI step's credential was not accepted: it expired, or it is not a CI run's"
+                        : null;
+            }
+
+            @Override
+            public String toString() {
+                return "PublishCredential.forCiStep";
+            }
+        };
     }
 
     /** The token to present, or empty when this environment holds no credential at all. */

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-failsafe-plugin/xsd/failsafe-test-report.xsd" version="3.0.2" name="eu.wohlben.qits.fx.LedgerIT" time="0.07" tests="2" errors="0" skipped="0" failures="1">
+  <testcase name="servesTheLedger" classname="eu.wohlben.qits.fx.LedgerIT" time="0.037">
+    <failure message="GET /ledger ==&gt; expected: &lt;200&gt; but was: &lt;503&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: GET /ledger ==> expected: <200> but was: <503>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:152)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:590)
+	at eu.wohlben.qits.fx.LedgerIT.servesTheLedger(LedgerIT.java:15)
+]]></failure>
+  </testcase>
+  <testcase name="startsTheApplication" classname="eu.wohlben.qits.fx.LedgerIT" time="0.008"/>
+</testsuite>

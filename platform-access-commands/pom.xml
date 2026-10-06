@@ -30,8 +30,9 @@
 
          quarkus-arc FOR THE ANNOTATIONS, NOT FOR A CONTAINER OF ITS OWN: the completion sources are
          @ApplicationScoped beans the screen looks up through CDI, PlatformMode is a @Singleton, and
-         three answer records carry @RegisterForReflection. Nothing here starts Quarkus, and every
-         test in this module is plain JUnit.
+         the records Jackson binds (the session, the release reports' payloads) carry
+         @RegisterForReflection. Nothing here starts Quarkus, and every test in this module is plain
+         JUnit.
 
          NEVER DEPLOYED TO A MAVEN REPOSITORY. Consumed in this reactor only; the owner's call
          (2026-10-01) is that it stays internal until a real consumer outside this repository

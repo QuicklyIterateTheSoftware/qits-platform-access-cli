@@ -16,7 +16,9 @@ import eu.wohlben.qits.cli.access.complete.ProjectSource;
 import eu.wohlben.qits.cli.access.complete.ReleaseRequestSource;
 import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.access.complete.RunSource;
+import eu.wohlben.qits.cli.access.report.ReportCommand;
 import eu.wohlben.qits.cli.tui.api.Completes;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -28,10 +30,12 @@ import java.util.stream.Collectors;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
-@CommandLine.Command(name = "ci", mixinStandardHelpOptions = true,
-        subcommands = {CiCommand.RunsCommand.class, CiCommand.RunCommand.class, CiCommand.RetryCommand.class},
+@CommandLine.Command(name = "ci", mixinStandardHelpOptions = true, modelTransformer = CiCommand.StepCommands.class,
+        subcommands = {CiCommand.RunsCommand.class, CiCommand.RunCommand.class, CiCommand.RetryCommand.class,
+                ReportCommand.class},
         description = {"The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and "
-                        + "their logs, and retry runs a finished run again.",
+                        + "their logs, retry runs a finished run again, and report shows a run's release reports "
+                        + "(report submit is the CI step's side, which collects and uploads them).",
                 "A release request's gating runs build its backing branch release/<request id> and carry the "
                         + "request's id. Statuses: QUEUED and RUNNING (not finished), SUCCESS, FAILED (the code's "
                         + "verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code)."},
@@ -40,7 +44,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.",
                 "- To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict "
                         + "also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.",
-                "- --project, --repository, --output and the two -url options may come before or after the command."})
+                "- --project, --repository, --output and the two -url options may come before or after the command.",
+                "- A release request's QA run carries release reports: which tests failed, with their class, name "
+                        + "and message, and more kinds to come. `qits ci report show <run id>` lists them."})
 public class CiCommand implements Runnable {
 
     /** A run id as qits-ci makes it: a UUID. A shorter id is the start of one. */
@@ -81,6 +87,78 @@ public class CiCommand implements Runnable {
     @Override
     public void run() {
         throw new CommandLine.ParameterException(spec.commandLine(), "Name a command.");
+    }
+
+    /**
+     * Takes the inherited options off the commands that run in a CI step ({@code report submit}).
+     * They take the run from {@code QITS_CI_*} and the address from {@code QITS_DOMAIN}, so a
+     * {@code --project}, a {@code --repository} or an address would only be refused; listed in their
+     * help, they would read as if they did something. Inheritance happens as the tree is built, so
+     * this runs on {@code ci}, once its commands are in place.
+     */
+    @RegisterForReflection
+    public static final class StepCommands implements CommandLine.IModelTransformer {
+
+        @Override
+        public CommandLine.Model.CommandSpec transform(CommandLine.Model.CommandSpec ci) {
+            CommandLine report = ci.subcommands().get("report");
+            CommandLine submit = report == null ? null : report.getSubcommands().get("submit");
+            if (submit != null) {
+                CommandLine.Model.CommandSpec spec = submit.getCommandSpec();
+                for (CommandLine.Model.OptionSpec option : List.copyOf(spec.options())) {
+                    if (option.inherited()) {
+                        spec.remove(option);
+                    }
+                }
+            }
+            return ci;
+        }
+    }
+
+    /** The run a command under {@code qits ci report} names, and the ci service that holds it. */
+    public record Target(CiApi ci, String runId, boolean lookedUp) {
+
+        /** A 404 on this run: say so, and how a short id is found. */
+        public CliFailure noSuchRun() {
+            return CiCommand.noSuchRun(runId, lookedUp);
+        }
+    }
+
+    /**
+     * For the commands under {@code qits ci report}, which live in their own package: the run
+     * {@code wanted} names, its whole id or, with --project and --repository, its start, as
+     * {@code qits ci run} reads it.
+     */
+    public Target target(CliContext context, String wanted) throws CliFailure, InterruptedException {
+        boolean lookedUp = repositoryNamed();
+        Apis apis = connect(context);
+        return new Target(apis.ci(), runId(context, apis, wanted), lookedUp);
+    }
+
+    /** {@code --output}, as given; null when it was not. */
+    public String output() {
+        return output;
+    }
+
+    /**
+     * The inherited options that name an address, a project or a repository and were given. A CI
+     * step's command takes all of that from its environment instead, and refuses them.
+     */
+    public List<String> addressingOptionsGiven() {
+        List<String> given = new ArrayList<>();
+        if (!blank(project)) {
+            given.add("--project");
+        }
+        if (!blank(repository)) {
+            given.add("--repository");
+        }
+        if (!blank(ciUrl)) {
+            given.add("--ci-url");
+        }
+        if (!blank(projectsUrl)) {
+            given.add("--projects-url");
+        }
+        return given;
     }
 
     /** The session, the client that carries its token, and the ci service. */

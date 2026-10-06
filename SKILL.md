@@ -674,7 +674,7 @@ qits release-request --project qits --repository qits-ci-service withdraw --requ
 
 ## qits ci
 
-The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, and retry runs a finished run again.
+The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, retry runs a finished run again, and report shows a run's release reports (report submit is the CI step's side, which collects and uploads them).
 
 A release request's gating runs build its backing branch release/<request id> and carry the request's id. Statuses: QUEUED and RUNNING (not finished), SUCCESS, FAILED (the code's verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code).
 
@@ -683,6 +683,7 @@ A release request's gating runs build its backing branch release/<request id> an
 - Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.
 - To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.
 - --project, --repository, --output and the two -url options may come before or after the command.
+- A release request's QA run carries release reports: which tests failed, with their class, name and message, and more kinds to come. `qits ci report show <run id>` lists them.
 
 ## qits ci runs
 
@@ -796,6 +797,90 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
 - `0` The new run is queued.
 - `1` The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
+- `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
+
+## qits ci report
+
+Release reports: what a release request's QA run found, beside its verdict. show lists a run's reports with their highlights, and prints one kind's whole report. submit is what every QA step runs after its script: it collects the reports from the step's files and uploads them.
+
+Kinds today: test-results (every test run, and each failing test with its class, name, file and message). A kind or a run with nothing to report shows nothing; a report never fails or holds a release.
+
+### Notes
+
+- Each kind and its highlights are computed by the CLI that submitted them; qits-ci keeps them as they came, keyed by run, step and kind.
+- A report compares with its baseline: the same kind in the QA run of the release request that produced the repository's newest released version. A first release has none.
+
+## qits ci report submit
+
+Collect this CI step's release reports from its files and upload them to qits-ci. Run in a QA step, after the step's own script, with that script's exit code.
+
+For each kind: find its inputs under --root, parse them, compare with the baseline's report of the same kind, and PUT the result to the run's step. A kind with no inputs is not reported, and nothing is sent for it. One line per kind on stdout: `test-results: submitted (412 tests, 3 failed)` or `test-results: not reported (no inputs)`.
+
+```
+qits ci report submit --exit-code <n> [--root <dir>]
+```
+
+| Name | What it does |
+|---|---|
+| `--exit-code <n>` | Required. What the step's own script exited with. Kept with the report; a non-zero code with no failing test is a highlight of its own. |
+| `--root <dir>` | Where the step's tree is: the reports are looked for, and file paths are relative to, this directory. Default: the working directory. |
+
+### Examples
+
+```
+qits ci report submit --exit-code "$qits_step_exit"
+qits ci report submit --exit-code 1 --root /workspace/checkout
+```
+
+- test-results reads **/target/surefire-reports/TEST-*.xml, **/target/failsafe-reports/TEST-*.xml and .qits-reports/vitest-*.xml. A file that does not parse is skipped with a warning.
+- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no option names another address.
+- The bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.
+- No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without the comparison.
+- Gives up after 120 seconds in all, whatever is still waiting.
+- The exit code says whether the reports were stored, never whether the tests passed. The hook that runs this ignores it, so a report never changes a step's verdict.
+
+### Exit codes
+
+- `0` Every kind that found inputs was stored, or no kind found any.
+- `1` qits-ci refused a report (the message names the status: 403 for another run's token, 409 for a run that is not running, 404 for a qits-ci without the doors), could not be reached, or did not answer within 120 seconds.
+- `2` Used wrongly: --exit-code missing, a QITS_CI_* variable missing, --root not a directory, or no credential in the environment.
+
+## qits ci report show
+
+Show a CI run's release reports: each kind, its version, the step that submitted it, and its highlights ("3 tests failed").
+
+--kind also prints that kind's whole report as JSON: for test-results, the totals, the suites, and each failing test with its file, class, name, shape and message.
+
+```
+qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <run id>
+```
+
+| Name | What it does |
+|---|---|
+| `<run id>` | The run: its id, or its start when --project and --repository name its repository. |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `--kind <kind>` | Only this kind of report (test-results), and print the whole of it. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17
+qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results
+qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 -o json
+```
+
+- A release request's QA run is the one with reports: `qits ci runs --release-request <id>` finds it.
+- <run id> is the run's whole id, or its start when --project and --repository name the repository.
+- -o json prints the service's answer: the summaries, or with --kind the whole reports of that kind.
+
+### Exit codes
+
+- `0` Done, whatever the reports say, and also when the run has none.
+- `1` The platform refused (for example no such run, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
 ## qits maintenance

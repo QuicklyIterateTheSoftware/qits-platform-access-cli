@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.access.platform;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 import eu.wohlben.qits.cli.session.Credential;
 
@@ -122,6 +123,10 @@ public final class PlatformClient {
             HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
             int status = response.statusCode();
             try (InputStream body = response.body()) {
+                if (status == 204) {
+                    // A write that answers nothing (a stored report) has nothing to parse.
+                    return NullNode.getInstance();
+                }
                 if (status < 200 || status >= 300) {
                     String text = new String(body.readNBytes(REFUSAL_BODY_LIMIT), StandardCharsets.UTF_8);
                     throw explained(status, refusal(method, uri, status, response.headers(), text));

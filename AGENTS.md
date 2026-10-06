@@ -6,8 +6,8 @@ The `qits` command: access to the qits platform from a Linux or WSL workstation.
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
 that session fresh), `qits projects|repositories|work|release-request` (the projects service;
-`work` is every work item, of every archetype), `qits ci runs|run|retry` (qits-ci's runs, a run's
-step logs, a retry), `qits events` (the live event
+`work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
+run's step logs, a retry, a run's release reports), `qits events` (the live event
 stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
@@ -36,7 +36,7 @@ shape qits-ci-daemon's root has, and it lists four modules, in this order:
                                 `qits tui`. A plain jar on plain picocli — never quarkus-picocli,
                                 which would make every consumer a command-mode application, and no
                                 JLine. quarkus-arc is there for the annotations (the completion
-                                sources are beans, three records carry @RegisterForReflection).
+                                sources are beans, the records Jackson binds carry @RegisterForReflection).
                                 picocli-codegen writes the tree's native-image reflection config
                                 into the jar, and a Jandex index lets Quarkus see its classes.
                                 Deploys nothing (`maven.deploy.skip`); consumed in this reactor.
@@ -131,6 +131,15 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                its OpenAPI document (comment doors), through WorkPayload; the CLI keeps no copy of
                a schema and no route per archetype
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
+    report/    qits ci report: release reports. The framework (ReportKind, ReportParser,
+               StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
+               and parsers (ReportKinds: a new kind is one entry there plus its class), the
+               test-results kind (TestResultsKind over SurefireXmlParser, FailsafeXmlParser and
+               VitestJunitParser, all JUnit XML read with StAX), and the commands: submit (CI-step
+               only: the publish chain's bearer through PublishCredential.forCiStep, qits-ci at
+               Store.publicOrigin("ci"), its own 120 s deadline) and show. Payload records carry
+               @RegisterForReflection all the way down; Jackson writes and reads them back
+               (ReportJson). The server never learns what a kind means.
     events/    qits events: the SSE parser and the reconnecting stream; `query` under it pages the
                events log over a window (EventsQueryCommand)
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-

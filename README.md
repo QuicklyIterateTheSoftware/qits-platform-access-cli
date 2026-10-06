@@ -11,7 +11,8 @@ Commands:
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
   and `qits release-request … list|create|join|withdraw` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
-  and runs a finished run again.
+  and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
+  failed, and why); `qits ci report submit` is the CI step's side that collects and uploads them.
 - `qits events` prints the platform's domain events as they happen; `qits events query` prints the
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
@@ -473,6 +474,8 @@ Installing it is not part of this version.
         [--status <STATUS>] [--release-request <id>] [--limit <n>]
     qits ci run <run id> [--logs] [--project <project> --repository <repository>]
     qits ci retry <run id> [--project <project> --repository <repository>]
+    qits ci report show <run id> [--kind <kind>] [--project <project> --repository <repository>]
+    qits ci report submit --exit-code <n> [--root <dir>]          (in a CI step only)
     qits events [--filter=<names>]
     qits events query [--filter=<names>] [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
@@ -750,6 +753,23 @@ start of it, looked up among that repository's runs.
     qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0
     qits ci run 5f2c0a9e --project qits --repository qits-ci-service --logs
     qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
+
+`report show` lists a run's release reports: the structured results a release request's QA run
+produces beside its verdict, one per kind and step, with their highlights ("3 tests failed").
+`--kind` also prints that kind's whole report as JSON, and `-o json` prints the service's answer.
+Today's kind is `test-results`: the totals, a line per tool and module, and every failing test with
+its language, tool, file, class, name, shape (`ASSERTION`, `ERROR`, `TIMEOUT`, `SETUP`) and message.
+
+`report submit` is what the hook qits-ci composes after every QA step runs, whatever the step's
+script exited with (`--exit-code`). It reads the step's files (`**/target/surefire-reports`,
+`**/target/failsafe-reports`, `.qits-reports/vitest-*.xml`), compares with the baseline (the same
+kind in the QA run of the release request that produced the newest released version), and PUTs one
+report per kind to `https://ci.qits.$QITS_DOMAIN`, with the publish chain's bearer. It takes the run
+from `QITS_CI_RUN_ID`, `QITS_CI_STEP_INDEX`, `QITS_CI_SHA`, `QITS_CI_REPO_NAME` and
+`QITS_CI_PROJECT_ID`, gives up after 120 seconds, and never changes the step's verdict: the hook
+ignores its exit code. A kind is one implementation in `report/`, listed in `ReportKinds`.
+
+    qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results
 
 ### qits maintenance
 
