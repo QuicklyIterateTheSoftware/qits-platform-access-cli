@@ -27,6 +27,17 @@ artifacts:
   # qits-ci submits this `sbom:` from whichever release step holds the file — the maven step below,
   # where `makeBom` writes it — and checks on the last step that it reached the store.
   - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary, sbom: platform-access-cli-binary/target/sbom.json }
+# THE CONSUMER PACT (epic qits-965): what the `qits work` commands ask qits-projects' /work doors,
+# written by ProjectsPactFileTest from qits-projects' golden masters and committed at
+# pacts/qits-platform-access-cli_qits-projects-service.json. The platform packs it as
+# `eu.wohlben.qits:qits-platform-access-cli-pacts-qits-projects-service` (the coordinate is named by
+# this repository and the provider's), only when it changed, from the release slot's LAST step — the
+# pin jar's step below — exactly as for an archetype recipe: qits-ci reads `contracts:` from this file
+# whichever recipe the slots come from. qits-projects pins that jar and verifies it.
+contracts:
+  application: qits-platform-access-cli
+  pacts:
+    qits-projects-service: { packages: [maven] }
 
 # THE daemon ARCHETYPE'S OWN HEADER NAMES THIS REPOSITORY AS THE ONE THAT RIDES ITS OWN RECIPES, and
 # the reason is the build: there is no `docker/Dockerfile.musl-builder` here, so the archetype's
@@ -43,7 +54,11 @@ release-request:
       # qits-ci too old to inject $QITS_DOMAIN.
       qits_domain=${QITS_DOMAIN:-wohlben.eu}
       export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central"
-      ./mvnw -B -ntp -s .qits-maven-settings.xml verify
+      # The platform's own Maven, for qits-projects' golden masters jar, which the commands' consumer
+      # pact test reads (the java-service archetype's QA step passes it the same way).
+      export QITS_MAVEN_REPOSITORY_URL="https://registry.qits.$qits_domain/artifacts/maven/maven"
+      ./mvnw -B -ntp -s .qits-maven-settings.xml verify \
+        -Dqits.maven.repository.url="$QITS_MAVEN_REPOSITORY_URL"
 
     # Then the shipping forms: the static musl binary and the MCP service image, on the platform's
     # builder, with no socket. Two native compiles, hence the release step's 5400.

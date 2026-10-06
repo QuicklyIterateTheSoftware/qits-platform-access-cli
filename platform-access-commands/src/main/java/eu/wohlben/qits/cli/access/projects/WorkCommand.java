@@ -57,8 +57,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --entity, --output and --projects-url may come before or after the command.",
-                "- --entity is the item's id or its qualified id (qits-100); the service resolves either. update "
-                        + "and transition look the item up first and send its id.",
+                "- --entity is the item's qualified id (qits-100) or its id, sent to the service as it is; the "
+                        + "service resolves either. So is every id inside a payload (parent, membership.parent, "
+                        + "supersededBy, dependsOn).",
                 "- Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which "
                         + "takes qits:admin. An agent writes only in its own project.",
                 "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "
@@ -169,8 +170,8 @@ public class WorkCommand implements Runnable {
             boolean json = json(work.options.output);
             String wanted = RepositoriesCommand.required(project, RepositoriesCommand.NAME_THE_PROJECT);
             ProjectsApi api = work.api(context);
-            String parentId = parent == null || parent.isBlank() ? null : WorkEntities.uuid(api, parent.strip());
-            JsonNode answer = api.entities(wanted, upper(archetype), upper(status), parentId);
+            String parentEntity = parent == null || parent.isBlank() ? null : parent.strip();
+            JsonNode answer = api.projectWork(wanted, upper(archetype), upper(status), parentEntity);
             if (json) {
                 SafeJson.print(context.out(), answer);
                 return 0;
@@ -210,10 +211,9 @@ public class WorkCommand implements Runnable {
             boolean json = json(work.options.output);
             String wanted = work.entity();
             ProjectsApi api = work.api(context);
-            JsonNode entity = api.entity(wanted);
-            String id = text(entity, "id");
-            List<JsonNode> comments = ProjectsApi.entries(api.entityComments(id), "comment");
-            List<JsonNode> children = WorkEntities.list(api.entities(text(entity, "projectId"), null, null, id));
+            JsonNode entity = api.work(wanted);
+            List<JsonNode> comments = ProjectsApi.entries(api.workComments(wanted), "comment");
+            List<JsonNode> children = WorkEntities.children(api.workChildren(wanted));
             if (json) {
                 ObjectNode all = JsonNodeFactory.instance.objectNode();
                 all.set("entity", entity);
@@ -234,12 +234,12 @@ public class WorkCommand implements Runnable {
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"File a new work item of an archetype.",
                     "Reads the payload, a JSON object, on stdin, sets its \"archetype\" from --archetype, and sends "
-                            + "it to POST /projects/api/entities. A root item names its \"project\" (id or slug), a "
-                            + "child its \"parent\" (id or qualified id). The item starts REPORTED if its archetype "
+                            + "it to POST /projects/api/work. A root item names its \"project\" (id or slug), a "
+                            + "child its \"parent\" (qualified id or id). The item starts REPORTED if its archetype "
                             + "has a lifecycle. The command prints the new item, its qualified id first.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the "
                             + "payload's JSON schema, served by the service at "
-                            + "GET /projects/api/entities/archetypes/{archetype}/schemas/create, and exits with 0."},
+                            + "GET /projects/api/work/archetypes/{archetype}/schemas/create, and exits with 0."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work create --archetype ticket </dev/null",
@@ -287,7 +287,7 @@ public class WorkCommand implements Runnable {
             }
             ObjectNode body = payload.deepCopy();
             body.put("archetype", kind);
-            JsonNode answer = api.createEntity(body);
+            JsonNode answer = api.createWork(body);
             WorkEntities.printAnswer(context.out(), json, answer);
             return 0;
         }
@@ -297,13 +297,13 @@ public class WorkCommand implements Runnable {
 
     @CommandLine.Command(name = "update", mixinStandardHelpOptions = true,
             description = {"Edit a work item's fields.",
-                    "Looks the item up (for its id and archetype), then reads a JSON merge patch on stdin and sends "
-                            + "it unchanged to PATCH /projects/api/entities/{id} as application/merge-patch+json: a "
-                            + "property left out stays as it is, null clears it. Status and archetype are not "
-                            + "edited here; see status and transition.",
-                    "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the "
-                            + "patch's JSON schema for the item's archetype, served by the service at "
-                            + "GET /projects/api/entities/archetypes/{archetype}/schemas/update, and exits with 0."},
+                    "Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/work/{entity} "
+                            + "as application/merge-patch+json: a property left out stays as it is, null clears it. "
+                            + "Status and archetype are not edited here; see status and transition.",
+                    "With nothing on stdin (a terminal, or empty) it sends nothing, looks the item up for its "
+                            + "archetype, prints this usage and the patch's JSON schema for that archetype, served by "
+                            + "the service at GET /projects/api/work/archetypes/{archetype}/schemas/update, and exits "
+                            + "with 0."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 update </dev/null",
@@ -330,13 +330,12 @@ public class WorkCommand implements Runnable {
             ObjectNode patch = WorkPayload.read(context);
             String wanted = work.entity();
             ProjectsApi api = work.api(context);
-            JsonNode entity = api.entity(wanted);
             if (patch == null) {
-                String kind = text(entity, "archetype");
+                String kind = text(api.work(wanted), "archetype");
                 usageAndSchema(context, spec, json, schema(api, kind, "update"), from(kind, "update"), List.of());
                 return 0;
             }
-            JsonNode answer = api.patchEntity(text(entity, "id"), patch);
+            JsonNode answer = api.patchWork(wanted, patch);
             WorkEntities.printAnswer(context.out(), json, answer);
             return 0;
         }
@@ -353,20 +352,20 @@ public class WorkCommand implements Runnable {
                             + "position} if it has a parent), merges the JSON object on stdin over it as a merge "
                             + "patch (null clears), sets \"archetype\", and drops every property the target "
                             + "archetype's schema has no slot for, naming them on stderr. It sends the result to "
-                            + "POST /projects/api/entities/transition.",
+                            + "POST /projects/api/work/transition, keyed by --entity as it was given.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's "
-                            + "JSON schema, served at GET /projects/api/entities/archetypes/{archetype}/schemas/"
+                            + "JSON schema, served at GET /projects/api/work/archetypes/{archetype}/schemas/"
                             + "transition, names the required properties the item does not carry yet and the ones "
                             + "that would be dropped, and exits with 0."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 transition --archetype epic </dev/null",
                     "  echo '{}' | qits work --entity qits-100 transition --archetype epic",
-                    "  echo '{\"membership\":{\"parent\":\"6f0c2d1e-0000-4000-8000-000000000001\"}}' "
+                    "  echo '{\"membership\":{\"parent\":\"qits-120\"}}' "
                             + "| qits work --entity qits-100 transition --archetype feature",
                     "",
-                    "- {} carries the item over as it stands. membership.parent is the parent's id, not its "
-                            + "qualified id."},
+                    "- {} carries the item over as it stands. membership.parent, supersededBy and dependsOn take a "
+                            + "qualified id or an id."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item is reshaped, or nothing was put in and the schema is printed.",
                     "1:The platform refused (for example a state it does not take, HTTP 400, your roles or another "
@@ -395,7 +394,7 @@ public class WorkCommand implements Runnable {
             String wanted = work.entity();
             String target = archetype(archetype);
             ProjectsApi api = work.api(context);
-            JsonNode entity = api.entity(wanted);
+            JsonNode entity = api.work(wanted);
             JsonNode schema = schema(api, target, "transition");
             ObjectNode current = WorkEntities.currentState(entity);
             if (payload == null) {
@@ -420,11 +419,11 @@ public class WorkCommand implements Runnable {
                 dropped.forEach(state::remove);
             }
             state.put("archetype", target);
-            String id = text(entity, "id");
+            // Keyed by the entity as it was given: the service answers keyed exactly as it was asked.
             ObjectNode body = JsonNodeFactory.instance.objectNode();
-            body.set(id, state);
-            JsonNode answer = api.transitionEntities(body);
-            WorkEntities.printAnswer(context.out(), json, json ? answer : answer.path(id));
+            body.set(wanted, state);
+            JsonNode answer = api.transitionWork(body);
+            WorkEntities.printAnswer(context.out(), json, json ? answer : answer.path(wanted));
             return 0;
         }
     }
@@ -440,11 +439,11 @@ public class WorkCommand implements Runnable {
                     + "or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own "
                     + "`qits` CLI sign-in, or the browser; an agent credential is refused.",
                     "Reads {\"target\":\"<STATUS>\"} on stdin and sends it unchanged to POST "
-                            + "/projects/api/entities/{id}/status. The service refuses a move its lifecycle does not "
+                            + "/projects/api/work/{entity}/status. The service refuses a move its lifecycle does not "
                             + "allow (HTTP 409).",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the "
                             + "payload's schema, whose target enum is the moves open from the item's current status "
-                            + "as the service's archetype registry (GET /projects/api/entities/archetypes) states "
+                            + "as the service's archetype registry (GET /projects/api/work/archetypes) states "
                             + "them, and exits with 0."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
@@ -477,7 +476,7 @@ public class WorkCommand implements Runnable {
             ObjectNode payload = WorkPayload.read(context);
             String wanted = work.entity();
             ProjectsApi api = work.api(context);
-            JsonNode entity = api.entity(wanted);
+            JsonNode entity = api.work(wanted);
             String kind = text(entity, "archetype");
             JsonNode declared = WorkEntities.declared(api.archetypes(), kind);
             if (declared == null || !declared.path("lifecycle").isArray() || declared.path("lifecycle").isEmpty()) {
@@ -506,7 +505,7 @@ public class WorkCommand implements Runnable {
                                         WorkEntities.texts(targets))) + "."));
                 return 0;
             }
-            JsonNode answer = api.moveStatus(text(entity, "id"), payload);
+            JsonNode answer = api.setWorkStatus(wanted, payload);
             WorkEntities.printAnswer(context.out(), json, answer);
             return 0;
         }

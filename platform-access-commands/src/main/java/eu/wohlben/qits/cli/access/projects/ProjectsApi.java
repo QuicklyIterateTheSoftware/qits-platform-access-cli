@@ -124,77 +124,96 @@ public final class ProjectsApi {
     }
 
     /**
-     * {@code {"entries":[{"comment":{…}}]}}, oldest first: the thread of any work entity. {@code
-     * entity} is its id or its qualified id ({@code qits-100}); the service resolves either.
+     * Where one work item is addressed: {@code /projects/api/work/{entity}}. {@code entity} is its
+     * qualified id ({@code qits-100}) or its id, and goes as it was given: the service resolves
+     * either, so the CLI never looks an item up to find its UUID.
      */
-    public JsonNode entityComments(String entity) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/entities/" + segment(entity) + "/comments"));
+    static String workPath(String entity) {
+        return WORK + "/" + segment(entity);
+    }
+
+    /** The work family's root: every item of every archetype, by qualified id. */
+    public static final String WORK = "/projects/api/work";
+
+    /** {@code {"entries":[{"comment":{…}}]}}, oldest first: the thread of a work item of any archetype. */
+    public JsonNode workComments(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity) + "/comments"));
     }
 
     /**
      * {@code {"comment":{…}}}: the new comment. The payload goes as the caller wrote it; the service
      * is the one that says what it may hold, and takes the author from the caller's identity.
      */
-    public JsonNode createEntityComment(String entity, JsonNode payload) throws CliFailure, InterruptedException {
-        return client.post(uri("/projects/api/entities/" + segment(entity) + "/comments"), payload);
+    public JsonNode addWorkComment(String entity, JsonNode payload) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/comments"), payload);
     }
 
-    /** {@code {"comment":{…}}}: the comment with the merge patch applied, sent as it was written. */
-    public JsonNode patchComment(String commentId, JsonNode mergePatch) throws CliFailure, InterruptedException {
-        return client.patch(uri("/projects/api/comments/" + segment(commentId)), mergePatch, MERGE_PATCH);
+    /**
+     * {@code {"comment":{…}}}: the comment with the merge patch applied, sent as it was written. The
+     * path names the item and the comment together, so a comment on another item's thread is the
+     * service's 404, the same answer as one that does not exist.
+     */
+    public JsonNode editWorkComment(String entity, String commentId, JsonNode mergePatch)
+            throws CliFailure, InterruptedException {
+        return client.patch(uri(workPath(entity) + "/comments/" + segment(commentId)), mergePatch, MERGE_PATCH);
     }
 
     /** Where one archetype's payload schema for one door is served; {@code door} is create, update or transition. */
     public static String schemaPath(String archetype, String door) {
-        return "/projects/api/entities/archetypes/" + segment(archetype) + "/schemas/" + segment(door);
+        return ARCHETYPES + "/" + segment(archetype) + "/schemas/" + segment(door);
     }
 
     /** Where the archetype registry is served: lifecycles and the legal moves of every status. */
-    public static final String ARCHETYPES = "/projects/api/entities/archetypes";
+    public static final String ARCHETYPES = WORK + "/archetypes";
 
-    /**
-     * A work entity of any archetype, flat: {@code {id, archetype, qualifiedId, status, parent, …}}.
-     * {@code entity} is its id or its qualified id ({@code qits-100}); the service resolves either.
-     */
-    public JsonNode entity(String entity) throws CliFailure, InterruptedException {
-        return client.get(uri("/projects/api/entities/" + segment(entity)));
+    /** A work item of any archetype, flat: {@code {id, archetype, qualifiedId, status, parent, …}}. */
+    public JsonNode work(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity)));
+    }
+
+    /** {@code {"children":[…]}}: an epic's features or a feature's tasks; empty for any other kind. */
+    public JsonNode workChildren(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity) + "/children"));
     }
 
     /**
-     * {@code {"entities":[…]}}: a project's work entities, every archetype, in the service's order.
-     * {@code project} is its id or its slug. Each filter is left out when null.
+     * {@code {"entities":[…]}}: a project's work items, every archetype, in the service's order.
+     * {@code project} is its id or its slug, {@code parent} a qualified id or an id. Each filter is
+     * left out when null.
      */
-    public JsonNode entities(String project, String archetype, String status, String parent)
+    public JsonNode projectWork(String project, String archetype, String status, String parent)
             throws CliFailure, InterruptedException {
         List<String> query = new ArrayList<>();
         addQuery(query, "archetype", archetype);
         addQuery(query, "status", status);
         addQuery(query, "parent", parent);
-        return client.get(uri("/projects/api/projects/" + segment(project) + "/entities"
+        return client.get(uri("/projects/api/projects/" + segment(project) + "/work"
                 + (query.isEmpty() ? "" : "?" + String.join("&", query))));
     }
 
-    /** The new entity, flat. The body is the caller's payload with {@code archetype} set. */
-    public JsonNode createEntity(JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri("/projects/api/entities"), body);
+    /** The new item, flat. The body is the caller's payload with {@code archetype} set. */
+    public JsonNode createWork(JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(WORK), body);
     }
 
-    /** The entity with the merge patch applied, sent as it was written. {@code id} is the UUID. */
-    public JsonNode patchEntity(String id, JsonNode mergePatch) throws CliFailure, InterruptedException {
-        return client.patch(uri("/projects/api/entities/" + segment(id)), mergePatch, MERGE_PATCH);
+    /** The item with the merge patch applied, sent as it was written. */
+    public JsonNode patchWork(String entity, JsonNode mergePatch) throws CliFailure, InterruptedException {
+        return client.patch(uri(workPath(entity)), mergePatch, MERGE_PATCH);
     }
 
     /**
-     * {@code {<uuid>: entity}}. The body is {@code {<uuid>: full state}}: the door is full-state, so
-     * a property the state leaves out is cleared.
+     * {@code {<key>: item}}, keyed exactly as the request was. The body is {@code {<key>: full
+     * state}}, each key a qualified id or an id: the door is full-state, so a property the state
+     * leaves out is cleared. Every id inside a state ({@code membership.parent}, {@code
+     * supersededBy}, {@code dependsOn}) may be a qualified id too.
      */
-    public JsonNode transitionEntities(JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri("/projects/api/entities/transition"), body);
+    public JsonNode transitionWork(JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(WORK + "/transition"), body);
     }
 
-    /** The entity in its new status, {@code statusBefore} filled. The body is {@code {"target": …}}. */
-    public JsonNode moveStatus(String entity, JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri("/projects/api/entities/" + segment(entity) + "/status"), body);
+    /** The item in its new status, {@code statusBefore} filled. The body is {@code {"target": …}}. */
+    public JsonNode setWorkStatus(String entity, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/status"), body);
     }
 
     /** A JSON Schema: what the door takes for this archetype, as the service validates it. */

@@ -44,13 +44,13 @@ public class WorkCommentCommand implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Name a command.");
     }
 
-    static final String CREATE_PATH = "/projects/api/entities/{id}/comments";
-    static final String UPDATE_PATH = "/projects/api/comments/{commentId}";
+    static final String CREATE_PATH = ProjectsApi.WORK + "/{entity}/comments";
+    static final String UPDATE_PATH = ProjectsApi.WORK + "/{entity}/comments/{commentId}";
 
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"Add a comment to a work entity's thread.",
                     "Reads the payload, a JSON object such as {\"body\":\"...\"}, on stdin and sends it unchanged "
-                            + "to POST /projects/api/entities/{id}/comments. The body is Markdown. You are its "
+                            + "to POST /projects/api/work/{entity}/comments. The body is Markdown. You are its "
                             + "author. The command prints the comment once filed.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema "
                             + "from the service's OpenAPI document (/projects/q/openapi) with the required fields "
@@ -88,7 +88,7 @@ public class WorkCommentCommand implements Runnable {
             }
             String entity = work.entity();
             JsonNode answer = ProjectsApi.connect(context, work.options.projectsUrl)
-                    .createEntityComment(entity, payload);
+                    .addWorkComment(entity, payload);
             print(context.out(), json, answer, "createdAt", "CREATED");
             return 0;
         }
@@ -97,9 +97,9 @@ public class WorkCommentCommand implements Runnable {
     @CommandLine.Command(name = "update", mixinStandardHelpOptions = true,
             description = {"Edit a comment on a work entity's thread.",
                     "Reads a JSON merge patch, such as {\"body\":\"...\"}, on stdin and sends it unchanged to PATCH "
-                            + "/projects/api/comments/{commentId} as application/merge-patch+json. Before that it "
-                            + "reads the entity's thread, and refuses a comment that is not on it. The author stays "
-                            + "who it was.",
+                            + "/projects/api/work/{entity}/comments/{commentId} as application/merge-patch+json. The "
+                            + "path names the entity and the comment together, so the service answers a comment "
+                            + "that is not on the entity's thread with HTTP 404. The author stays who it was.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints the patch's JSON schema "
                             + "from the service's OpenAPI document (/projects/q/openapi) with the required fields "
                             + "named, and exits with 0."},
@@ -113,11 +113,11 @@ public class WorkCommentCommand implements Runnable {
                     "- -o json prints the service's answer; the table prints the comment's id, author and time."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The comment is edited, or nothing was put in and the schema is printed.",
-                    "1:The platform refused (for example your roles, HTTP 403, an entity it does not know, HTTP "
-                            + "404, or a patch it does not take, HTTP 400), cannot be reached, or its OpenAPI "
-                            + "document does not describe the patch.",
-                    "2:Used wrongly (for example a patch that is not a JSON object, no --entity or --comment, or a "
-                            + "comment that is not on the entity's thread), not signed in, or the session ended."})
+                    "1:The platform refused (for example your roles, HTTP 403, an entity it does not know or a "
+                            + "comment that is not on its thread, HTTP 404, or a patch it does not take, HTTP 400), "
+                            + "cannot be reached, or its OpenAPI document does not describe the patch.",
+                    "2:Used wrongly (for example a patch that is not a JSON object, or no --entity or --comment), "
+                            + "not signed in, or the session ended."})
     @TuiCommand(input = Input.PAYLOAD)
     public static class UpdateCommand extends PlatformCommand {
 
@@ -140,14 +140,8 @@ public class WorkCommentCommand implements Runnable {
             }
             String entity = work.entity();
             String id = RepositoriesCommand.required(commentId, "Name the comment: --comment <id>.");
-            ProjectsApi api = ProjectsApi.connect(context, work.options.projectsUrl);
-            boolean onThread = ProjectsApi.entries(api.entityComments(entity), "comment").stream()
-                    .anyMatch(c -> id.equals(text(c, "id")));
-            if (!onThread) {
-                throw new CliFailure("Comment " + SafeText.line(id) + " is not on the thread of " + SafeText.line(entity)
-                        + ". Nothing was sent.", CliFailure.USAGE);
-            }
-            JsonNode answer = api.patchComment(id, patch);
+            JsonNode answer = ProjectsApi.connect(context, work.options.projectsUrl)
+                    .editWorkComment(entity, id, patch);
             print(context.out(), json, answer, "updatedAt", "UPDATED");
             return 0;
         }

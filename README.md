@@ -595,12 +595,17 @@ Reading takes `qits:admin` or `qits:agent`, and so does writing, an agent in its
 An epic's status move takes `qits:admin`: an agent is answered HTTP 403, and the command prints the
 service's sentence as it came.
 
+**Every call is on the service's `/work` family, by qualified id.** `--entity` (and `--parent`, and
+every id inside a payload) goes to the service as it was given, a qualified id like `qits-100` or an
+id: the service resolves either, so the CLI never looks an item up to learn its UUID.
+
 **Reads.** `list --project <p>` shows a project's items in the service's order (`GET
-/projects/api/projects/{p}/entities`): qualified id, archetype, status, a `BLOCKED` column when a
+/projects/api/projects/{p}/work`): qualified id, archetype, status, a `BLOCKED` column when a
 ticket is blocked, title and when it last changed. `--archetype`, `--status` and `--parent` narrow
-it; the first two are case-insensitive, and `--parent` takes an id or a qualified id. `details`
-shows one item (`GET /projects/api/entities/{id}`): its fields, its description, its comment thread
-and its children. `-o json` prints `{"entity": …, "comments": […], "children": […]}`.
+it; the first two are case-insensitive, and `--parent` takes a qualified id or an id. `details`
+shows one item (`GET /projects/api/work/{entity}`): its fields, its description, its comment thread
+(`…/comments`) and its children (`…/children`: an epic's features, a feature's tasks). `-o json`
+prints `{"entity": …, "comments": […], "children": […]}`.
 
 **Writes read a JSON payload on stdin.** A payload that is not one JSON object is a usage error
 (exit code 2), and nothing is sent. With nothing put in - stdin a terminal, or empty, as with
@@ -609,38 +614,39 @@ JSON schema with its required fields named and its source, and exits with 0. `-o
 bare schema.
 
 - `create --archetype <A>` sets `archetype` on the payload and sends it to `POST
-  /projects/api/entities`. The schema is `GET /projects/api/entities/archetypes/{A}/schemas/create`:
+  /projects/api/work`. The schema is `GET /projects/api/work/archetypes/{A}/schemas/create`:
   a root item names its `project` (id or slug), a child its `parent`. A payload whose own
   `archetype` disagrees with `--archetype` is a usage error.
-- `update` looks the item up, then sends the payload unchanged as a JSON merge patch to `PATCH
-  /projects/api/entities/{uuid}` (`application/merge-patch+json`): left out is unchanged, `null`
-  clears. The schema is the item's archetype's `update` schema.
+- `update` sends the payload unchanged as a JSON merge patch to `PATCH /projects/api/work/{entity}`
+  (`application/merge-patch+json`): left out is unchanged, `null` clears. With nothing put in it
+  looks the item up for its archetype and prints that archetype's `update` schema.
 - `transition --archetype <B>` reshapes the item into another archetype. The door (`POST
-  /projects/api/entities/transition`) is full-state: what the request leaves out is cleared. So the
+  /projects/api/work/transition`) is full-state: what the request leaves out is cleared. So the
   command starts from the item as it stands (`title`, `description`, `status`, `ticketType`,
   `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementingAt`, `implementedAt`, `dependsOn`, and
   `membership {parent, position}` when it has a parent), merges the payload over it (RFC 7396),
   sets `archetype`, and drops every property B's `transition` schema has no slot for, naming them
   on stderr (`impetus, ticketType have no slot on EPIC and are not carried.`). `{}` carries the item
-  over as it is. With nothing put in, it prints B's schema and names the required properties the
+  over as it is. The request is keyed by `--entity` as it was given, and so is the service's answer;
+  `membership.parent`, `supersededBy` and `dependsOn` take a qualified id as well. With nothing put in, it prints B's schema and names the required properties the
   item does not carry yet (`membership.parent` for a ticket becoming a feature) and the ones that
   would be dropped.
-- `status` sends `{"target": "<STATUS>"}` unchanged to `POST /projects/api/entities/{id}/status`.
+- `status` sends `{"target": "<STATUS>"}` unchanged to `POST /projects/api/work/{entity}/status`.
   With nothing put in, it prints a schema whose `target` enum is the moves the service's archetype
-  registry (`GET /projects/api/entities/archetypes`) opens from the item's current status. An item
+  registry (`GET /projects/api/work/archetypes`) opens from the item's current status. An item
   on a service whose registry has not yet given its archetype a lifecycle is a usage error. A move
   the lifecycle does not allow is HTTP 409.
 - `comment create` sends the payload (`{"body": "..."}`, Markdown) to `POST
-  /projects/api/entities/{id}/comments`. `comment update --comment <id>` first reads the item's
-  thread and refuses a comment that is not on it (exit code 2, nothing sent), then sends the payload
-  as a JSON merge patch to `PATCH /projects/api/comments/{id}`. The author is the caller and an edit
+  /projects/api/work/{entity}/comments`. `comment update --comment <id>` sends the payload as a JSON
+  merge patch to `PATCH /projects/api/work/{entity}/comments/{id}`: the path names the item and the
+  comment together, so a comment that is not on the item's thread is the service's HTTP 404. The author is the caller and an edit
   leaves it as it was; deleting a comment takes `qits:admin` and has no command here. Their schemas
   come from the service's OpenAPI document (`/projects/q/openapi?format=json`), from the operation's
   request body with every `$ref` resolved.
 
-`update` and `transition` look the item up first (`GET /projects/api/entities/{id}`) and send its
-UUID, because those doors take no qualified id. The service's 400, 403 and 409 answers are printed
-with the service's own sentence, exit code 1.
+`transition` and `status` read the item first (`GET /projects/api/work/{entity}`), for its current
+state and its archetype's lifecycle; neither turns the qualified id into a UUID. The service's 400,
+403, 404 and 409 answers are printed with the service's own sentence, exit code 1.
 
 The table prints the item's qualified id, archetype, status, title and time; `-o json` prints the
 service's answer. An item's text is written by people and agents, so, as for `qits ci`, the table

@@ -11,7 +11,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
@@ -31,15 +30,7 @@ final class WorkEntities {
     static final List<String> CARRIED = List.of("title", "description", "status", "ticketType", "impetus", "assignee",
             "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn", "acceptanceCriteria");
 
-    private static final Pattern UUID = Pattern.compile(
-            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
-
     private WorkEntities() {
-    }
-
-    /** The UUID of an entity named by its id or its qualified id; a qualified id is looked up. */
-    static String uuid(ProjectsApi api, String entity) throws CliFailure, InterruptedException {
-        return UUID.matcher(entity).matches() ? entity : text(api.entity(entity), "id");
     }
 
     /** The row as the full state the transition door takes: what it carries now, nothing else. */
@@ -148,8 +139,17 @@ final class WorkEntities {
 
     /** The entities of a list answer, {@code {"entities":[…]}}. */
     static List<JsonNode> list(JsonNode answer) {
+        return objects(answer.path("entities"));
+    }
+
+    /** The children of a children answer, {@code {"children":[…]}}. */
+    static List<JsonNode> children(JsonNode answer) {
+        return objects(answer.path("children"));
+    }
+
+    private static List<JsonNode> objects(JsonNode array) {
         List<JsonNode> all = new ArrayList<>();
-        answer.path("entities").forEach(e -> {
+        array.forEach(e -> {
             if (e.isObject()) {
                 all.add(e);
             }

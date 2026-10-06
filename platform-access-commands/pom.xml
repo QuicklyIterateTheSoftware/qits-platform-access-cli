@@ -92,6 +92,21 @@
             <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <!-- qits-projects' recorded answers (golden-masters/index.json + one JSON per state and
+                 operation), read by contracts/GoldenMasters for ProjectsConsumerPactTest and
+                 ProjectsPactFileTest. Pinned in the root pom. -->
+            <groupId>eu.wohlben.qits</groupId>
+            <artifactId>qits-projects-golden-masters</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- The consumer half of the qits-projects contract, plain JUnit 5. Test scope, so its
+                 Kotlin/ktor/netty tree never reaches the commands jar, the binary or the service. -->
+            <groupId>au.com.dius.pact.consumer</groupId>
+            <artifactId>junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

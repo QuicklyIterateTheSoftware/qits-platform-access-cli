@@ -233,7 +233,7 @@ Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING,
 ### Notes
 
 - --entity, --output and --projects-url may come before or after the command.
-- --entity is the item's id or its qualified id (qits-100); the service resolves either. update and transition look the item up first and send its id.
+- --entity is the item's qualified id (qits-100) or its id, sent to the service as it is; the service resolves either. So is every id inside a payload (parent, membership.parent, supersededBy, dependsOn).
 - Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which takes qits:admin. An agent writes only in its own project.
 - REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; an agent credential is refused (HTTP 409, or HTTP 403 for an epic).
 
@@ -306,9 +306,9 @@ qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json
 
 File a new work item of an archetype.
 
-Reads the payload, a JSON object, on stdin, sets its "archetype" from --archetype, and sends it to POST /projects/api/entities. A root item names its "project" (id or slug), a child its "parent" (id or qualified id). The item starts REPORTED if its archetype has a lifecycle. The command prints the new item, its qualified id first.
+Reads the payload, a JSON object, on stdin, sets its "archetype" from --archetype, and sends it to POST /projects/api/work. A root item names its "project" (id or slug), a child its "parent" (qualified id or id). The item starts REPORTED if its archetype has a lifecycle. The command prints the new item, its qualified id first.
 
-With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's JSON schema, served by the service at GET /projects/api/entities/archetypes/{archetype}/schemas/create, and exits with 0.
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's JSON schema, served by the service at GET /projects/api/work/archetypes/{archetype}/schemas/create, and exits with 0.
 
 ```
 qits work create [--archetype <archetype>] [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -341,9 +341,9 @@ jq -n --rawfile d plan.md '{parent:"qits-120",title:"Retry",description:$d}' | q
 
 Edit a work item's fields.
 
-Looks the item up (for its id and archetype), then reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/entities/{id} as application/merge-patch+json: a property left out stays as it is, null clears it. Status and archetype are not edited here; see status and transition.
+Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/work/{entity} as application/merge-patch+json: a property left out stays as it is, null clears it. Status and archetype are not edited here; see status and transition.
 
-With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the patch's JSON schema for the item's archetype, served by the service at GET /projects/api/entities/archetypes/{archetype}/schemas/update, and exits with 0.
+With nothing on stdin (a terminal, or empty) it sends nothing, looks the item up for its archetype, prints this usage and the patch's JSON schema for that archetype, served by the service at GET /projects/api/work/archetypes/{archetype}/schemas/update, and exits with 0.
 
 ```
 qits work update [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -373,9 +373,9 @@ echo '{"assignee":null}' | qits work update --entity qits-100 -o json
 
 Reshape a work item into another archetype (a ticket into an epic, a feature into a task, ...), keeping its id, its number and its thread.
 
-The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/entities/transition.
+The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/work/transition, keyed by --entity as it was given.
 
-With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/entities/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/work/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
 
 ```
 qits work transition [--archetype <archetype>] [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -393,10 +393,10 @@ qits work transition [--archetype <archetype>] [--entity <entity>] [--output tab
 ```
 qits work --entity qits-100 transition --archetype epic </dev/null
 echo '{}' | qits work --entity qits-100 transition --archetype epic
-echo '{"membership":{"parent":"6f0c2d1e-0000-4000-8000-000000000001"}}' | qits work --entity qits-100 transition --archetype feature
+echo '{"membership":{"parent":"qits-120"}}' | qits work --entity qits-100 transition --archetype feature
 ```
 
-- {} carries the item over as it stands. membership.parent is the parent's id, not its qualified id.
+- {} carries the item over as it stands. membership.parent, supersededBy and dependsOn take a qualified id or an id.
 
 ### Exit codes
 
@@ -408,9 +408,9 @@ echo '{"membership":{"parent":"6f0c2d1e-0000-4000-8000-000000000001"}}' | qits w
 
 Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused.
 
-Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/entities/{id}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
+Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/work/{entity}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
-With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/entities/archetypes) states them, and exits with 0.
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/work/archetypes) states them, and exits with 0.
 
 ```
 qits work status [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -453,7 +453,7 @@ Both read a JSON document on stdin and send it as it is. With nothing on stdin t
 
 Add a comment to a work entity's thread.
 
-Reads the payload, a JSON object such as {"body":"..."}, on stdin and sends it unchanged to POST /projects/api/entities/{id}/comments. The body is Markdown. You are its author. The command prints the comment once filed.
+Reads the payload, a JSON object such as {"body":"..."}, on stdin and sends it unchanged to POST /projects/api/work/{entity}/comments. The body is Markdown. You are its author. The command prints the comment once filed.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) with the required fields named, and exits with 0.
 
@@ -488,7 +488,7 @@ qits work --entity qits-100 comment create </dev/null
 
 Edit a comment on a work entity's thread.
 
-Reads a JSON merge patch, such as {"body":"..."}, on stdin and sends it unchanged to PATCH /projects/api/comments/{commentId} as application/merge-patch+json. Before that it reads the entity's thread, and refuses a comment that is not on it. The author stays who it was.
+Reads a JSON merge patch, such as {"body":"..."}, on stdin and sends it unchanged to PATCH /projects/api/work/{entity}/comments/{commentId} as application/merge-patch+json. The path names the entity and the comment together, so the service answers a comment that is not on the entity's thread with HTTP 404. The author stays who it was.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints the patch's JSON schema from the service's OpenAPI document (/projects/q/openapi) with the required fields named, and exits with 0.
 
@@ -516,8 +516,8 @@ qits work --entity qits-100 comment update </dev/null
 ### Exit codes
 
 - `0` The comment is edited, or nothing was put in and the schema is printed.
-- `1` The platform refused (for example your roles, HTTP 403, an entity it does not know, HTTP 404, or a patch it does not take, HTTP 400), cannot be reached, or its OpenAPI document does not describe the patch.
-- `2` Used wrongly (for example a patch that is not a JSON object, no --entity or --comment, or a comment that is not on the entity's thread), not signed in, or the session ended.
+- `1` The platform refused (for example your roles, HTTP 403, an entity it does not know or a comment that is not on its thread, HTTP 404, or a patch it does not take, HTTP 400), cannot be reached, or its OpenAPI document does not describe the patch.
+- `2` Used wrongly (for example a patch that is not a JSON object, or no --entity or --comment), not signed in, or the session ended.
 
 ## qits release-request
 

@@ -26,7 +26,7 @@ import java.util.Set;
  * service is the one that says what a payload may hold, so nothing here knows a field. When nothing
  * is put in, the command shows the payload's schema instead, and that too is the service's: the
  * entity doors read the schema the service serves per archetype and door
- * ({@code /projects/api/entities/archetypes/{A}/schemas/{door}}), the comment doors the OpenAPI
+ * ({@code /projects/api/work/archetypes/{A}/schemas/{door}}), the comment doors the OpenAPI
  * document the running service serves. Never a copy kept here, so it cannot describe a payload the
  * service no longer takes.
  */

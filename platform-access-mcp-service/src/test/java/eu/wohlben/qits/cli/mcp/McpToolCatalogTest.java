@@ -454,14 +454,14 @@ class McpToolCatalogTest {
                 .satisfies(sent -> assertThat(sent.authorization()).isEqualTo("Bearer " + AGENT));
     }
 
-    private static final String THREAD = "/projects/api/entities/qits-100/comments";
+    private static final String THREAD = "/projects/api/work/qits-100/comments";
     private static final String DOCUMENT = """
             {"openapi":"3.1.0",
              "components":{"schemas":{
                "CreateCommentRequest":{"type":"object","required":["body"],
                  "properties":{"body":{"type":"string"}}}}},
              "paths":{
-               "/projects/api/entities/{entityId}/comments":{
+               "/projects/api/work/{qualifiedId}/comments":{
                  "post":{"requestBody":{"required":true,"content":{"application/json":
                    {"schema":{"$ref":"#/components/schemas/CreateCommentRequest"}}}}}}}}
             """;

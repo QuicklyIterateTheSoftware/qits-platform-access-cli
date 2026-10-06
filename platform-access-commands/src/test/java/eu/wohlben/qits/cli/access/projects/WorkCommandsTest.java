@@ -49,12 +49,12 @@ class WorkCommandsTest {
     private static final String EPIC = "6f0c2d1e-0000-4000-8000-000000000002";
     private static final String FEATURE = "7a7a7a7a-0000-4000-8000-000000000003";
     private static final String TASK = "8b8b8b8b-0000-4000-8000-000000000004";
-    private static final String ENTITIES = "/projects/api/entities";
-    private static final String LIST = "/projects/api/projects/qits/entities";
-    private static final String REGISTRY = "/projects/api/entities/archetypes";
-    private static final String SCHEMAS = "/projects/api/entities/archetypes/";
+    private static final String WORK = "/projects/api/work";
+    private static final String LIST = "/projects/api/projects/qits/work";
+    private static final String REGISTRY = "/projects/api/work/archetypes";
+    private static final String SCHEMAS = "/projects/api/work/archetypes/";
 
-    /** A ticket as GET /entities/{id} answers it. Its title carries an escape sequence, as anybody can write one. */
+    /** A ticket as GET /work/{id} answers it. Its title carries an escape sequence, as anybody can write one. */
     private static final String TICKET_ROW = """
             {"id":"%s","archetype":"TICKET","projectId":"%s","number":548,"qualifiedId":"qits-548",
              "title":"One group \\u001b[2Jfor work","slug":"one-group","description":"The brief.","status":"REPORTED",
@@ -207,27 +207,28 @@ class WorkCommandsTest {
     }
 
     private void answers() {
-        platform.answer("GET", ENTITIES + "/qits-548", TICKET_ROW);
-        platform.answer("GET", ENTITIES + "/" + TICKET, TICKET_ROW);
-        platform.answer("GET", ENTITIES + "/qits-601", FEATURE_ROW);
-        platform.answer("GET", ENTITIES + "/qits-120", EPIC_ROW);
+        platform.answer("GET", WORK + "/qits-548", TICKET_ROW);
+        platform.answer("GET", WORK + "/" + TICKET, TICKET_ROW);
+        platform.answer("GET", WORK + "/qits-601", FEATURE_ROW);
+        platform.answer("GET", WORK + "/qits-120", EPIC_ROW);
         platform.answer("GET", REGISTRY, ARCHETYPES);
         platform.answer("GET", SCHEMAS + "TICKET/schemas/create", TICKET_CREATE);
         platform.answer("GET", SCHEMAS + "TICKET/schemas/update", TICKET_UPDATE);
         platform.answer("GET", SCHEMAS + "EPIC/schemas/transition", EPIC_TRANSITION);
         platform.answer("GET", SCHEMAS + "FEATURE/schemas/transition", FEATURE_TRANSITION);
-        platform.answer("GET", ENTITIES + "/" + EPIC + "/comments", "{\"entries\":[]}");
-        platform.answer("GET", ENTITIES + "/" + TICKET + "/comments", """
+        platform.answer("GET", WORK + "/qits-120/comments", "{\"entries\":[]}");
+        platform.answer("GET", WORK + "/qits-120/children", "{\"children\":[]}");
+        platform.answer("GET", WORK + "/qits-548/children", "{\"children\":[]}");
+        platform.answer("GET", WORK + "/qits-548/comments", """
                 {"entries":[{"comment":{"id":"c1","entityId":"%s","author":"carol","body":"Seen \\u001b[31mit",
                   "createdAt":"2026-09-29T09:30:00Z","updatedAt":"2026-09-29T09:30:00Z"}}]}
                 """.formatted(TICKET));
-        platform.answer("GET", "/projects/api/projects/" + PROJECT + "/entities", "{\"entities\":[]}");
         platform.answer("GET", LIST, "{\"entities\":[" + TICKET_ROW + "," + EPIC_ROW + "]}");
-        platform.answer("POST", ENTITIES, 201, TICKET_ROW.replace("qits-548", "qits-600"));
-        platform.answer("PATCH", ENTITIES + "/" + TICKET, TICKET_ROW);
-        platform.answer("POST", ENTITIES + "/transition", "{\"" + TICKET + "\":"
+        platform.answer("POST", WORK, 201, TICKET_ROW.replace("qits-548", "qits-600"));
+        platform.answer("PATCH", WORK + "/qits-548", TICKET_ROW);
+        platform.answer("POST", WORK + "/transition", "{\"qits-548\":"
                 + TICKET_ROW.replace("\"archetype\":\"TICKET\"", "\"archetype\":\"EPIC\"") + "}");
-        platform.answer("POST", ENTITIES + "/" + TICKET + "/status",
+        platform.answer("POST", WORK + "/qits-548/status",
                 TICKET_ROW.replace("\"status\":\"REPORTED\"", "\"status\":\"REFINED\",\"statusBefore\":\"REPORTED\""));
     }
 
@@ -247,7 +248,7 @@ class WorkCommandsTest {
         assertThat(r.exit()).as(r.err()).isZero();
         ObjectNode expected = (ObjectNode) JSON.readTree(payload);
         expected.put("archetype", "TICKET");
-        assertThat(sent("POST", ENTITIES)).isEqualTo(expected);
+        assertThat(sent("POST", WORK)).isEqualTo(expected);
         // A payload needs no schema.
         assertThat(platform.requests("GET", SCHEMAS + "TICKET/schemas/create")).isEmpty();
         assertThat(r.out().lines().toList().getFirst()).startsWith("ID").contains("ARCHETYPE").contains("STATUS");
@@ -264,7 +265,7 @@ class WorkCommandsTest {
                 .contains("Usage: qits work create")
                 .contains("Nothing on stdin, so nothing was sent.")
                 .contains("Required: title, ticketType, impetus, project.")
-                .contains("From the service: GET /projects/api/entities/archetypes/TICKET/schemas/create")
+                .contains("From the service: GET /projects/api/work/archetypes/TICKET/schemas/create")
                 .contains("\"additionalProperties\" : false");
         assertThat(r.out().indexOf("Usage:")).isLessThan(r.out().indexOf("Required:"));
     }
@@ -338,17 +339,28 @@ class WorkCommandsTest {
     // --- update ---
 
     @Test
-    void updateResolvesTheQualifiedIdAndPatchesTheUuidWithThePayloadUnchanged() throws Exception {
+    void updatePatchesTheQualifiedIdAsGivenWithThePayloadUnchangedAndLooksNothingUp() throws Exception {
         String patch = "{\"title\":\"new\",\"assignee\":null,\"extra\":{\"kept\":[1]}}";
         Result r = runWithInput(patch, "work", "--entity", "qits-548", "update");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(platform.requests("GET", ENTITIES + "/qits-548")).hasSize(1);
-        FakePlatform.Request sent = platform.requests("PATCH", ENTITIES + "/" + TICKET).getFirst();
+        FakePlatform.Request sent = platform.requests("PATCH", WORK + "/qits-548").getFirst();
         assertThat(sent.contentType()).isEqualTo("application/merge-patch+json");
         assertThat(JSON.readTree(sent.body())).isEqualTo(JSON.readTree(patch));
-        assertThat(platform.requests("PATCH", ENTITIES + "/qits-548")).isEmpty();
+        // No client-side resolution: the service takes the qualified id itself.
+        assertThat(platform.requests("GET", WORK + "/qits-548")).isEmpty();
+        assertThat(platform.requests("PATCH", WORK + "/" + TICKET)).isEmpty();
         assertThat(r.out()).contains("qits-548");
+    }
+
+    @Test
+    void updatePassesAUuidThroughAsItIs() throws Exception {
+        platform.answer("PATCH", WORK + "/" + TICKET, TICKET_ROW);
+
+        Result r = runWithInput("{\"title\":\"new\"}", "work", "--entity", TICKET, "update");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("PATCH", WORK + "/" + TICKET)).hasSize(1);
     }
 
     @Test
@@ -358,7 +370,7 @@ class WorkCommandsTest {
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(r.out()).contains("Usage: qits work update")
                 .contains("Required: nothing.")
-                .contains("From the service: GET /projects/api/entities/archetypes/TICKET/schemas/update")
+                .contains("From the service: GET /projects/api/work/archetypes/TICKET/schemas/update")
                 .contains("absent = unchanged, null = clear");
         assertThat(anyWrite()).isFalse();
     }
@@ -380,10 +392,10 @@ class WorkCommandsTest {
                 "work", "--entity", "qits-548", "transition", "--archetype", "epic");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        JsonNode body = sent("POST", ENTITIES + "/transition");
-        // Keyed by the UUID, never the qualified id; the full state, with archetype set.
-        assertThat(body.properties()).extracting(java.util.Map.Entry::getKey).containsExactly(TICKET);
-        assertThat(body.get(TICKET)).isEqualTo(JSON.readTree(
+        JsonNode body = sent("POST", WORK + "/transition");
+        // Keyed by the entity as it was given, never resolved to a UUID; the full state, with archetype set.
+        assertThat(body.properties()).extracting(java.util.Map.Entry::getKey).containsExactly("qits-548");
+        assertThat(body.get("qits-548")).isEqualTo(JSON.readTree(
                 "{\"title\":\"Now an epic\",\"status\":\"REPORTED\",\"archetype\":\"EPIC\"}"));
         assertThat(r.err()).contains("ticketType, impetus, assignee have no slot on EPIC and are not carried.");
         assertThat(r.out()).contains("qits-548").contains("EPIC");
@@ -393,7 +405,7 @@ class WorkCommandsTest {
     void transitionCarriesMembershipAndANullClearsIt() throws Exception {
         Result kept = runWithInput("{}", "work", "--entity", "qits-601", "transition", "--archetype", "feature");
         assertThat(kept.exit()).as(kept.err()).isZero();
-        assertThat(sent("POST", ENTITIES + "/transition").get(FEATURE)).isEqualTo(JSON.readTree(
+        assertThat(sent("POST", WORK + "/transition").get("qits-601")).isEqualTo(JSON.readTree(
                 "{\"title\":\"Retry\",\"description\":\"d\",\"membership\":{\"parent\":\"" + EPIC
                         + "\",\"position\":2},\"archetype\":\"FEATURE\"}"));
         platform.requests.clear();
@@ -401,7 +413,7 @@ class WorkCommandsTest {
         Result root = runWithInput("{\"membership\":null,\"status\":\"REPORTED\"}",
                 "work", "--entity", "qits-601", "transition", "--archetype", "epic");
         assertThat(root.exit()).as(root.err()).isZero();
-        assertThat(sent("POST", ENTITIES + "/transition").get(FEATURE)).isEqualTo(JSON.readTree(
+        assertThat(sent("POST", WORK + "/transition").get("qits-601")).isEqualTo(JSON.readTree(
                 "{\"title\":\"Retry\",\"description\":\"d\",\"status\":\"REPORTED\",\"archetype\":\"EPIC\"}"));
         assertThat(root.err()).doesNotContain("no slot");
     }
@@ -410,18 +422,20 @@ class WorkCommandsTest {
     void transitionCarriesAcceptanceCriteriaWhenTheTargetHasASlotAndDropsItOtherwise() throws Exception {
         Result kept = runWithInput("{}", "work", "--entity", "qits-120", "transition", "--archetype", "epic");
         assertThat(kept.exit()).as(kept.err()).isZero();
-        assertThat(sent("POST", ENTITIES + "/transition").get(EPIC)).isEqualTo(JSON.readTree(
+        assertThat(sent("POST", WORK + "/transition").get("qits-120")).isEqualTo(JSON.readTree(
                 "{\"title\":\"The epic\",\"status\":\"REFINED\","
                         + "\"acceptanceCriteria\":[\"Loads under 200ms\",\"Shows an empty state when there is nothing\"],"
                         + "\"archetype\":\"EPIC\"}"));
         assertThat(kept.err()).doesNotContain("no slot");
         platform.requests.clear();
 
-        Result dropped = runWithInput("{\"membership\":{\"parent\":\"" + EPIC + "\"}}",
+        Result dropped = runWithInput("{\"membership\":{\"parent\":\"qits-7\"}}",
                 "work", "--entity", "qits-120", "transition", "--archetype", "feature");
         assertThat(dropped.exit()).as(dropped.err()).isZero();
         assertThat(dropped.err()).contains("status, acceptanceCriteria have no slot on FEATURE and are not carried.");
-        JsonNode featureState = sent("POST", ENTITIES + "/transition").get(EPIC);
+        JsonNode featureState = sent("POST", WORK + "/transition").get("qits-120");
+        // A qualified id in membership.parent goes through as it was written.
+        assertThat(featureState.path("membership").path("parent").asText()).isEqualTo("qits-7");
         assertThat(featureState.has("acceptanceCriteria")).isFalse();
         assertThat(featureState.has("status")).isFalse();
     }
@@ -434,7 +448,7 @@ class WorkCommandsTest {
                 .contains("Required: title, membership.")
                 .contains("Required and missing (the item does not carry them yet): membership.parent.")
                 .contains("Not carried: status, ticketType, impetus, assignee have no slot on FEATURE.")
-                .contains("From the service: GET /projects/api/entities/archetypes/FEATURE/schemas/transition");
+                .contains("From the service: GET /projects/api/work/archetypes/FEATURE/schemas/transition");
 
         Result toEpic = run("work", "--entity", "qits-548", "transition", "--archetype", "epic");
         assertThat(toEpic.out()).contains("Required and missing (the item does not carry them yet): nothing.")
@@ -448,7 +462,7 @@ class WorkCommandsTest {
 
     @Test
     void aConflictOnTransitionIsTheServicesAnswer() {
-        platform.answer("POST", ENTITIES + "/transition", 409, "{\"message\":\"the row moved under you\"}");
+        platform.answer("POST", WORK + "/transition", 409, "{\"message\":\"the row moved under you\"}");
 
         Result r = runWithInput("{}", "work", "--entity", "qits-548", "transition", "--archetype", "epic");
 
@@ -465,7 +479,7 @@ class WorkCommandsTest {
         assertThat(table.out()).contains("Usage: qits work status")
                 .contains("Required: target.")
                 .contains("Current status: REPORTED. Open moves: REFINED, DROPPED.")
-                .contains("From the service: GET /projects/api/entities/archetypes");
+                .contains("From the service: GET /projects/api/work/archetypes");
 
         Result json = run("work", "--entity", "qits-548", "status", "-o", "json");
         assertThat(JSON.readTree(json.out()).path("properties").path("target"))
@@ -474,11 +488,11 @@ class WorkCommandsTest {
     }
 
     @Test
-    void statusSendsThePayloadUnchangedToTheUuid() throws Exception {
+    void statusSendsThePayloadUnchangedToTheEntityAsGiven() throws Exception {
         Result r = runWithInput("{\"target\":\"REFINED\"}", "work", "--entity", "qits-548", "status");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(sent("POST", ENTITIES + "/" + TICKET + "/status"))
+        assertThat(sent("POST", WORK + "/qits-548/status"))
                 .isEqualTo(JSON.readTree("{\"target\":\"REFINED\"}"));
         assertThat(r.out()).contains("REFINED");
     }
@@ -488,7 +502,7 @@ class WorkCommandsTest {
         // Every archetype has a lifecycle now; the guard still fires against an old service that has not
         // finished the migration and still serves one with none.
         platform.answer("GET", REGISTRY, ARCHETYPES_STALE_TASK);
-        platform.answer("GET", ENTITIES + "/qits-602", STALE_TASK_ROW);
+        platform.answer("GET", WORK + "/qits-602", STALE_TASK_ROW);
 
         Result r = run("work", "--entity", "qits-602", "status");
         assertThat(r.exit()).isEqualTo(2);
@@ -501,13 +515,13 @@ class WorkCommandsTest {
 
     @Test
     void aRefusedStatusMoveIsTheServicesAnswer() {
-        platform.answer("POST", ENTITIES + "/" + EPIC + "/status", 403,
+        platform.answer("POST", WORK + "/qits-120/status", 403,
                 "{\"message\":\"this credential is qits:agent, which reads but does not write\"}");
         Result forbidden = runWithInput("{\"target\":\"IMPLEMENTED\"}", "work", "--entity", "qits-120", "status");
         assertThat(forbidden.exit()).isEqualTo(1);
         assertThat(forbidden.err()).contains("HTTP 403").contains("this credential is qits:agent");
 
-        platform.answer("POST", ENTITIES + "/" + TICKET + "/status", 409,
+        platform.answer("POST", WORK + "/qits-548/status", 409,
                 "{\"message\":\"REPORTED cannot move to DONE\"}");
         Result illegal = runWithInput("{\"target\":\"DONE\"}", "work", "--entity", "qits-548", "status");
         assertThat(illegal.exit()).isEqualTo(1);
@@ -531,11 +545,12 @@ class WorkCommandsTest {
     }
 
     @Test
-    void listByParentResolvesAQualifiedIdToTheUuid() {
+    void listByParentPassesTheQualifiedIdThrough() {
         Result r = run("work", "list", "--project", "qits", "--parent", "qits-548", "-o", "json");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(platform.requests("GET", LIST).getFirst().query()).isEqualTo("parent=" + TICKET);
+        assertThat(platform.requests("GET", LIST).getFirst().query()).isEqualTo("parent=qits-548");
+        assertThat(platform.requests("GET", WORK + "/qits-548")).isEmpty();
         assertThat(r.out()).doesNotContain(String.valueOf(ESC)).contains("\\u001B[2J");
     }
 
@@ -549,13 +564,12 @@ class WorkCommandsTest {
 
     @Test
     void detailsShowsTheItemItsThreadAndItsChildren() throws Exception {
-        platform.answer("GET", "/projects/api/projects/" + PROJECT + "/entities", "{\"entities\":[" + FEATURE_ROW + "]}");
+        platform.answer("GET", WORK + "/qits-548/children", "{\"children\":[" + FEATURE_ROW + "]}");
 
         Result r = run("work", "--entity", "qits-548", "details");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(platform.requests("GET", "/projects/api/projects/" + PROJECT + "/entities").getFirst().query())
-                .isEqualTo("parent=" + TICKET);
+        assertThat(platform.requests("GET", WORK + "/qits-548/children")).hasSize(1);
         assertThat(r.out()).contains("TICKET qits-548  (" + TICKET + ")")
                 .contains("impetus").contains("The CLI drifted.")
                 .contains("Description:").contains("The brief.")

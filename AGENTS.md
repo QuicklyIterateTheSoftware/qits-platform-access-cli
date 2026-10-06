@@ -347,6 +347,19 @@ RFC 6455 handshake; text, ping, pong and close frames), one script per connectio
 JDK, so a native proof can run it from `target/test-classes`. `PlatformCommandsTest` runs picocli in the test's process with its own
 `CliContext` (environment, stdout, stderr, clock), so a command test needs no second process.
 
+**The consumer pact with qits-projects** (epic qits-965). `pacts/qits-platform-access-cli_qits-projects-service.json`
+at the repository root is what the `qits work` commands ask qits-projects' `/work` doors, and it is
+written, never hand-edited: `projects/ProjectsContract` (test) is the one table of (command, state,
+operation) rows, `ProjectsConsumerPactTest` runs each row's `ProjectsApi` call against a pact-jvm
+mock server, and `ProjectsPactFileTest` compares the committed file byte for byte (rewrite it with
+`-Dgolden.update=true` and review the diff). Every answer comes from qits-projects' golden masters
+(`contracts/GoldenMasters`, reading the jar `eu.wohlben.qits:qits-projects-golden-masters`, pinned by
+`qits.projects-golden-masters.version` in the root pom and bumped by qits-maintenance), so a row
+names a provider state the provider records; every interaction carries `qits-call` and a
+`qits-trigger` of kind `command` naming the command (`qits work details`). A new `/work` call on
+`ProjectsApi` needs its row, which `theContractCoversEveryWorkCallOfTheCommandsAndNothingElse`
+enforces. `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
+
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.
 
