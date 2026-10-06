@@ -22,17 +22,28 @@ public final class MaintenanceApi {
     }
 
     /**
-     * {@code {"id":…}}: the bump that renders one release request's screenshot baselines. HTTP 409
-     * when the request takes no branch or one is already running for it.
+     * {@code {requestId, foldSha, automations:[{kind, label, state, detail, bumpId, runIds, branch,
+     * resultSha, updatedAt}]}}: the release request's release-request automations, at {@code foldSha}
+     * when one is given, else the request's newest fold.
      */
-    public JsonNode screenshotBaselines(String repositoryName, String requestId, String workItem)
-            throws CliFailure, InterruptedException {
+    public JsonNode automations(String requestId, String foldSha) throws CliFailure, InterruptedException {
+        String query = foldSha == null || foldSha.isBlank() ? ""
+                : "?foldSha=" + URLEncoder.encode(foldSha.strip(), StandardCharsets.UTF_8);
+        return client.get(uri("/maintenance/api/release-requests/" + segment(requestId) + "/automations" + query));
+    }
+
+    /**
+     * {@code {"id":…}}: the bump that re-runs one kind on the request's current fold, skipping
+     * carry-over and applicability. HTTP 404 for an unknown kind or repository; HTTP 409 when one is
+     * already running for (request, kind), the request takes no branch, or bumping is off.
+     */
+    public JsonNode runAutomation(String requestId, String kind, String workItem) throws CliFailure, InterruptedException {
         ObjectNode body = JsonNodeFactory.instance.objectNode();
         if (workItem != null && !workItem.isBlank()) {
             body.put("workItem", workItem.strip());
         }
-        return client.post(uri("/maintenance/api/repositories/" + segment(repositoryName) + "/release-requests/"
-                + segment(requestId) + "/screenshot-baselines"), body);
+        return client.post(uri("/maintenance/api/release-requests/" + segment(requestId) + "/automations/"
+                + segment(kind) + "/runs"), body);
     }
 
     /** One bump: its mode, status, message and the commit it left. */

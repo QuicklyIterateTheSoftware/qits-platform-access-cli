@@ -34,8 +34,11 @@ class MaintenanceCommandsTest {
     private static final String REQUEST = "4f2a91c0-2222-3333-4444-555555555555";
     private static final String OTHER = "9e9e9e9e-2222-3333-4444-555555555555";
     private static final String JOB = "6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f";
-    private static final String DOOR = "/maintenance/api/repositories/qits-landing-app/release-requests/" + REQUEST
-            + "/screenshot-baselines";
+    private static final String FOLD = "abc123def4567890abc123def4567890abc123d";
+    private static final String RUN_1 = "11111111-2222-3333-4444-555555555555";
+    private static final String RUN_2 = "22222222-3333-4444-5555-666666666666";
+    private static final String AUTOMATIONS_DOOR = "/maintenance/api/release-requests/" + REQUEST + "/automations";
+    private static final String RUN_DOOR = AUTOMATIONS_DOOR + "/screenshot-baselines/runs";
 
     @TempDir
     Path home;
@@ -67,11 +70,18 @@ class MaintenanceCommandsTest {
         platform.answer("GET", "/projects/api/repositories/" + LANDING + "/release-requests", """
                 {"requests":[{"id":"%s","state":"REJECTED"},{"id":"%s","state":"RELEASED"}]}
                 """.formatted(REQUEST, OTHER));
-        platform.answer("POST", DOOR, 202, "{\"id\":\"" + JOB + "\"}");
+        platform.answer("GET", AUTOMATIONS_DOOR, """
+                {"requestId":"%s","foldSha":"%s","automations":[{"kind":"screenshot-baselines",
+                 "label":"Screenshot baselines","state":"RUNNING",
+                 "detail":"Waiting for automations at %s: Screenshot baselines running","bumpId":"%s",
+                 "runIds":["%s","%s"],"branch":"maintenance/automations/screenshot-baselines/%s","resultSha":null,
+                 "updatedAt":"2026-10-02T10:05:00Z"}]}
+                """.formatted(REQUEST, FOLD, FOLD, JOB, RUN_1, RUN_2, REQUEST));
+        platform.answer("POST", RUN_DOOR, 202, "{\"id\":\"" + JOB + "\"}");
         platform.answer("GET", "/maintenance/api/bumps/" + JOB, """
-                {"id":"%s","mode":"BASELINES","repository":"qits-landing-app",
-                 "branch":"maintenance/baselines/%s","status":"SUCCEEDED",
-                 "message":"new baselines on maintenance/baselines/%s at abc, joined to release request %s",
+                {"id":"%s","mode":"AUTOMATION","repository":"qits-landing-app",
+                 "branch":"maintenance/automations/screenshot-baselines/%s","status":"SUCCEEDED",
+                 "message":"new baselines on maintenance/automations/screenshot-baselines/%s at abc, joined to release request %s",
                  "resultSha":"abc","releaseRequestId":"%s"}
                 """.formatted(JOB, REQUEST, REQUEST, REQUEST, REQUEST));
     }
@@ -93,44 +103,99 @@ class MaintenanceCommandsTest {
     }
 
     @Test
-    void aShortRequestIdIsFoundAndTheJobIsRequested() {
+    void automationsListsEachKindWithItsNewestRun() {
         Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
-                "screenshot-baselines", "--request", "4f2a", "--work-item", "qits-112");
+                "automations", "--request", "4f2a");
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).contains("job " + JOB).contains("qits maintenance bump " + JOB);
-        assertThat(platform.requests("POST", DOOR)).hasSize(1);
-        assertThat(platform.requests("POST", DOOR).getFirst().body()).contains("\"workItem\":\"qits-112\"");
-        assertThat(platform.requests("POST", DOOR).getFirst().authorization())
-                .isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
+        assertThat(r.out()).contains("KIND").contains("STATE").contains("FOLD").contains("RUN").contains("DETAIL")
+                .contains("screenshot-baselines").contains("RUNNING").contains(FOLD.substring(0, 8))
+                .contains(RUN_2.substring(0, 8)).doesNotContain(RUN_1.substring(0, 8))
+                .contains("Waiting for automations");
+        assertThat(platform.requests("GET", AUTOMATIONS_DOOR)).hasSize(1);
+        assertThat(platform.requests("GET", AUTOMATIONS_DOOR).getFirst().query()).isNull();
     }
 
     @Test
-    void withoutAWorkItemTheBodyNamesNone() {
-        Result r = run("maintenance", "screenshot-baselines", "--project", "qits", "--repository", "qits-landing-app",
-                "--request", REQUEST);
+    void automationsWithAFoldSendsItAsAQueryParameter() {
+        Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automations", "--request", REQUEST, "--fold", FOLD);
 
         assertThat(r.exit()).isZero();
-        assertThat(platform.requests("POST", DOOR).getFirst().body()).isEqualTo("{}");
+        assertThat(platform.requests("GET", AUTOMATIONS_DOOR).getFirst().query()).isEqualTo("foldSha=" + FOLD);
+    }
+
+    @Test
+    void automationsJsonPrintsTheAnswerAsIs() {
+        Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automations", "--request", REQUEST, "-o", "json");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("\"requestId\"").contains("\"foldSha\"").contains("\"runIds\"");
+    }
+
+    @Test
+    void anEmptyListSaysNoAutomationApplies() {
+        platform.answer("GET", AUTOMATIONS_DOOR, "{\"requestId\":\"" + REQUEST + "\",\"foldSha\":\"" + FOLD
+                + "\",\"automations\":[]}");
+        Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automations", "--request", REQUEST);
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("No release-request automation applies to qits-landing-app");
     }
 
     @Test
     void anUnknownRequestIsAUsageError() {
         Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
-                "screenshot-baselines", "--request", "ffff");
+                "automations", "--request", "ffff");
 
         assertThat(r.exit()).isEqualTo(2);
         assertThat(r.err()).contains("no release request whose id starts with 'ffff'");
-        assertThat(platform.requests("POST", DOOR)).isEmpty();
+        assertThat(platform.requests("GET", AUTOMATIONS_DOOR)).isEmpty();
     }
 
     @Test
-    void aRefusalIsPassedOn() {
-        platform.answer("POST", DOOR, 409, "{\"message\":\"the release request is RELEASED and takes no branch\"}");
+    void automationRunRequestsAJobAndPrintsItsId() {
         Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
-                "screenshot-baselines", "--request", REQUEST);
+                "automation", "run", "--request", "4f2a", "--kind", "screenshot-baselines", "--work-item", "qits-112");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("job " + JOB).contains("qits maintenance bump " + JOB);
+        assertThat(platform.requests("POST", RUN_DOOR)).hasSize(1);
+        assertThat(platform.requests("POST", RUN_DOOR).getFirst().body()).contains("\"workItem\":\"qits-112\"");
+        assertThat(platform.requests("POST", RUN_DOOR).getFirst().authorization())
+                .isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
+    }
+
+    @Test
+    void automationRunWithoutAWorkItemSendsNone() {
+        Result r = run("maintenance", "automation", "run", "--project", "qits", "--repository", "qits-landing-app",
+                "--request", REQUEST, "--kind", "screenshot-baselines");
+
+        assertThat(r.exit()).isZero();
+        assertThat(platform.requests("POST", RUN_DOOR).getFirst().body()).isEqualTo("{}");
+    }
+
+    @Test
+    void automationRunOfAnUnknownKindIsRefused() {
+        platform.answer("POST", RUN_DOOR, 404, "{\"message\":\"no automation 'screenshot-baselines' on this "
+                + "repository\"}");
+        Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automation", "run", "--request", REQUEST, "--kind", "screenshot-baselines");
 
         assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("no automation 'screenshot-baselines'");
+    }
+
+    @Test
+    void automationRunRefusalIsPassedOn() {
+        platform.answer("POST", RUN_DOOR, 409, "{\"message\":\"one is already running for this request and kind\"}");
+        Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automation", "run", "--request", REQUEST, "--kind", "screenshot-baselines");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("one is already running");
     }
 
     @Test
@@ -138,6 +203,14 @@ class MaintenanceCommandsTest {
         Result r = run("maintenance", "bump", JOB);
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).contains("BASELINES").contains("SUCCEEDED").contains("joined to release request " + REQUEST);
+        assertThat(r.out()).contains("AUTOMATION").contains("SUCCEEDED").contains("joined to release request " + REQUEST);
+    }
+
+    @Test
+    void theHelpNamesBothCommandsAndNotScreenshotBaselines() {
+        Result r = run("maintenance", "--help");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("automations").contains("automation").doesNotContain("screenshot-baselines");
     }
 }
