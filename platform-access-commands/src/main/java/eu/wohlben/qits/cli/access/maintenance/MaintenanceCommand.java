@@ -11,6 +11,7 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
+import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
@@ -24,10 +25,10 @@ import java.util.stream.Collectors;
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "maintenance", mixinStandardHelpOptions = true,
-        subcommands = {MaintenanceCommand.ScreenshotBaselinesCommand.class, MaintenanceCommand.BumpCommand.class},
-        description = {"Jobs of qits-maintenance: screenshot-baselines renders a release request's screenshot "
-                        + "references in the CI image and joins them to the request, and bump shows how one job "
-                        + "went."},
+        subcommands = {MaintenanceCommand.AutomationsCommand.class, AutomationCommand.class, MaintenanceCommand.BumpCommand.class},
+        description = {"Jobs of qits-maintenance: automations lists a release request's release-request "
+                        + "automations and their state, automation run re-runs one kind, and bump shows how one "
+                        + "job went."},
         footerHeading = "%nNotes:%n",
         footer = {"- --project, --repository, --output and the two -url options may come before or after the command."})
 public class MaintenanceCommand implements Runnable {
@@ -64,12 +65,12 @@ public class MaintenanceCommand implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Name a command.");
     }
 
-    private MaintenanceApi maintenance(CliContext context) throws CliFailure, InterruptedException {
+    MaintenanceApi maintenance(CliContext context) throws CliFailure, InterruptedException {
         PlatformClient client = new PlatformClient(context.credential());
         return new MaintenanceApi(client, PlatformUrls.maintenance(maintenanceUrl, context.env(), context.idpUrl()));
     }
 
-    private boolean json() throws CliFailure {
+    boolean json() throws CliFailure {
         if (output == null || output.isBlank() || output.equalsIgnoreCase("table")) {
             return false;
         }
@@ -79,7 +80,7 @@ public class MaintenanceCommand implements Runnable {
         throw new CliFailure("--output is table or json, not '" + output + "'.", CliFailure.USAGE);
     }
 
-    private static String required(String value, String message) throws CliFailure {
+    static String required(String value, String message) throws CliFailure {
         if (value == null || value.isBlank()) {
             throw new CliFailure(message, CliFailure.USAGE);
         }
@@ -97,29 +98,49 @@ public class MaintenanceCommand implements Runnable {
         }
     }
 
-    @CommandLine.Command(name = "screenshot-baselines", mixinStandardHelpOptions = true,
-            description = {"Render a release request's screenshot tests in the CI image, and join the reference "
-                    + "images that changed to the request.",
-                    "The job starts from the request's fold (release/<request id>), runs "
-                            + "`UPDATE_SNAPSHOT=all npm run test:browser`, commits only __screenshots__/ files onto "
-                            + "maintenance/baselines/<request id> and joins that branch to the request. Missing "
-                            + "references are written too, so a repository's first baselines come from here. It "
-                            + "prints the job's id; `qits maintenance bump <id>` shows how it went: SUCCEEDED "
-                            + "(joined), NOTHING_TO_DO (every image already matched) or FAILED."},
+    /** The repository's request whose id starts with {@code wanted}, of any state. */
+    static String requestId(ProjectsApi projects, String repoId, String repoName, String wanted)
+            throws CliFailure, InterruptedException {
+        String start = wanted.toLowerCase(Locale.ROOT);
+        List<JsonNode> matches = new ArrayList<>();
+        projects.releaseRequests(repoId, "all").path("requests").forEach(r -> {
+            if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
+                matches.add(r);
+            }
+        });
+        if (matches.isEmpty()) {
+            throw new CliFailure("Repository " + repoName + " has no release request whose id starts with '"
+                    + wanted + "'.", CliFailure.USAGE);
+        }
+        if (matches.size() > 1) {
+            throw new CliFailure("'" + wanted + "' is the start of more than one release request of " + repoName
+                    + ": " + matches.stream().map(r -> text(r, "id")).collect(Collectors.joining(", "))
+                    + ". Give more of the id.", CliFailure.USAGE);
+        }
+        return text(matches.getFirst(), "id");
+    }
+
+    /** The id or sha, shortened to the first 8 characters a table has room for. */
+    static String shortId(String value) {
+        return value.length() <= 8 ? value : value.substring(0, 8);
+    }
+
+    @CommandLine.Command(name = "automations", mixinStandardHelpOptions = true,
+            description = {"List a release request's release-request automations and their state: the "
+                    + "regenerations that must be fresh before the request can proceed, each one a kind the "
+                    + "platform decided applies to this repository.",
+                    "The request holds until every automation that applies to the repository is fresh for its "
+                            + "merged commit. --fold reads an older fold; without it, the request's newest one."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
-                    "  qits maintenance --project qits --repository qits-landing-app screenshot-baselines "
+                    "  qits maintenance --project qits --repository qits-landing-app automations "
                             + "--request 4f2a91c0",
-                    "  qits maintenance --project qits --repository qits-landing-app screenshot-baselines "
-                            + "--request 4f2a91c0 --work-item qits-112",
                     "",
-                    "- The request must be open. Run this after the screenshots changed on purpose; the request's "
-                            + "gate compares against the references and fails on a difference.",
-                    "- --work-item is the commit subject's scope (chore(<work item>): update screenshot baselines). "
-                            + "Without it, the newest one named on the request's own commits is used."},
+                    "- RUN is the newest run of the kind's current attempt. `qits maintenance automation run` "
+                            + "re-runs one; `qits ci run <id> --logs` shows a run."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
-    public static class ScreenshotBaselinesCommand extends PlatformCommand {
+    public static class AutomationsCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
         MaintenanceCommand parent;
@@ -130,9 +151,9 @@ public class MaintenanceCommand implements Runnable {
                         + "(`qits release-request list` shows 8 characters).")
         String request;
 
-        @CommandLine.Option(names = "--work-item", paramLabel = "<id>",
-                description = "The work item the commit names, for example qits-112.")
-        String workItem;
+        @CommandLine.Option(names = "--fold", paramLabel = "<sha>",
+                description = "The fold to read; without it, the request's newest.")
+        String fold;
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
@@ -145,37 +166,36 @@ public class MaintenanceCommand implements Runnable {
             JsonNode repo = projects.repository(foundProject, wantedRepository);
             String requestId = requestId(projects, text(repo, "id"), text(repo, "name"), wantedRequest);
 
-            JsonNode answer = parent.maintenance(context).screenshotBaselines(text(repo, "name"), requestId, workItem);
+            JsonNode answer = parent.maintenance(context).automations(requestId, fold);
             if (json) {
                 ProjectsApi.printJson(context.out(), answer);
                 return 0;
             }
-            String id = text(answer, "id");
-            context.out().println("Requested screenshot baselines for release request " + requestId + ": job " + id);
-            context.out().println("Follow it with `qits maintenance bump " + id + "`.");
+            List<JsonNode> automations = new ArrayList<>();
+            answer.path("automations").forEach(automations::add);
+            if (automations.isEmpty()) {
+                context.out().println("No release-request automation applies to " + text(repo, "name") + ".");
+                return 0;
+            }
+            String foldSha = text(answer, "foldSha");
+            Table.print(context.out(), "", List.of("KIND", "STATE", "FOLD", "RUN", "DETAIL"),
+                    automations.stream().map(a -> List.of(
+                            cell(text(a, "kind"), 24),
+                            cell(text(a, "state"), 12),
+                            cell(shortId(foldSha), 8),
+                            cell(shortId(newestRun(a)), 8),
+                            cell(text(a, "detail"), 60))).toList());
             return 0;
         }
 
-        /** The repository's request whose id starts with {@code wanted}, of any state. */
-        private static String requestId(ProjectsApi projects, String repoId, String repoName, String wanted)
-                throws CliFailure, InterruptedException {
-            String start = wanted.toLowerCase(Locale.ROOT);
-            List<JsonNode> matches = new ArrayList<>();
-            projects.releaseRequests(repoId, "all").path("requests").forEach(r -> {
-                if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
-                    matches.add(r);
-                }
-            });
-            if (matches.isEmpty()) {
-                throw new CliFailure("Repository " + repoName + " has no release request whose id starts with '"
-                        + wanted + "'.", CliFailure.USAGE);
-            }
-            if (matches.size() > 1) {
-                throw new CliFailure("'" + wanted + "' is the start of more than one release request of " + repoName
-                        + ": " + matches.stream().map(r -> text(r, "id")).collect(Collectors.joining(", "))
-                        + ". Give more of the id.", CliFailure.USAGE);
-            }
-            return text(matches.getFirst(), "id");
+        /** The newest of a kind's runs: the one whose outcome the state reflects. */
+        private static String newestRun(JsonNode automation) {
+            JsonNode runIds = automation.path("runIds");
+            return runIds.isArray() && !runIds.isEmpty() ? runIds.get(runIds.size() - 1).asText("") : "";
+        }
+
+        private static String cell(String value, int max) {
+            return Table.cell(SafeText.line(value), max);
         }
     }
 

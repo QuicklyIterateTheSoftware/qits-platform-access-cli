@@ -786,19 +786,27 @@ out with one warning, never wrong.
 
 Jobs of qits-maintenance. `--project` and `--repository` are as for `release-request`.
 
-`screenshot-baselines --request <id>` renders a release request's screenshot tests in the CI image
-(`node-browser-base`, the one the `app` gate compares in) and joins the reference images that
-changed to the request. The job starts from the request's fold, runs
-`UPDATE_SNAPSHOT=all npm run test:browser`, commits only `__screenshots__/` files onto
-`maintenance/baselines/<request id>` and joins that branch to the request. Missing references are
-written too, so a repository's first baselines come from here. `--request` takes the id or its
-start; `--work-item` is the commit subject's scope (default: the newest one on the request's own
-commits). The request must be open (HTTP 409 otherwise). Any of the three roles may ask, the agent
-credential included, as for every maintenance door.
+`automations --request <id>` lists a release request's release-request automations and their
+state: the regenerations that must land inside the request before it can proceed, such as
+`estate-pins` (a wrapper's gitlink bumps) and `screenshot-baselines` (a repository whose
+screenshots follow the `@qits/angular` vitest-browser convention). The request holds until every
+automation that applies to the repository is fresh for its merged commit. `--fold` reads an older
+fold; without it, the request's newest one. The table's columns are kind, state, fold, run (the
+newest of that kind's runs) and detail (the hold reason, when there is one).
 
-`bump <id>` shows a job: SUCCEEDED (joined), NOTHING_TO_DO (unchanged) or FAILED, with the reason.
+`automation run --request <id> --kind <kind>` re-runs one kind on the request's current fold. It
+skips carry-over and applicability, so a repository's first screenshot references come from here;
+the kind's own precondition (no `test:browser` script, for example) still refuses the run with a
+sentence. `--work-item` is the commit subject's scope (default: the newest one named on the
+request's own commits). 404 means the kind or the repository is not one the platform knows; 409
+means one is already running for this (request, kind), the request takes no branch, or bumping is
+off. Any of the three roles may ask, the agent credential included, as for every maintenance door.
 
-    qits maintenance --project qits --repository qits-landing-app screenshot-baselines --request 4f2a91c0
+`bump <id>` shows a job: SUCCEEDED (joined, or ff-pushed), NOTHING_TO_DO (unchanged) or FAILED,
+with the reason.
+
+    qits maintenance --project qits --repository qits-landing-app automations --request 4f2a91c0
+    qits maintenance --project qits --repository qits-landing-app automation run --request 4f2a91c0 --kind screenshot-baselines
     qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 
 ### qits events
