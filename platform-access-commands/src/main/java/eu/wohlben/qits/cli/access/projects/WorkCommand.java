@@ -45,20 +45,24 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or "
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
                         + "served by the service for that archetype.",
-                "Every archetype has a lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, "
-                        + "VERIFIED, DONE, and DROPPED for work a decision was taken not to do. Features and "
-                        + "tasks walk the same eight words as epics and tickets; campaigns keep a shorter walk "
-                        + "and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets REFINED move "
-                        + "straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to "
-                        + "VERIFIED, bypassing VERIFYING. `status` names the moves open from where an item "
-                        + "stands."},
+                "Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, "
+                        + "VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. "
+                        + "Features and tasks walk the same nine words as epics and tickets; campaigns keep a "
+                        + "shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets "
+                        + "READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED "
+                        + "move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or "
+                        + "drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own "
+                        + "`qits` CLI sign-in, or the browser; an agent credential is refused. `status` names "
+                        + "the moves open from where an item stands."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --entity, --output and --projects-url may come before or after the command.",
                 "- --entity is the item's id or its qualified id (qits-100); the service resolves either. update "
                         + "and transition look the item up first and send its id.",
                 "- Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which "
-                        + "takes qits:admin. An agent writes only in its own project."})
+                        + "takes qits:admin. An agent writes only in its own project.",
+                "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "
+                        + "an agent credential is refused (HTTP 409, or HTTP 403 for an epic)."})
 public class WorkCommand implements Runnable {
 
     static final String NAME_THE_ENTITY = "Name the entity: --entity <id or qualified id, like qits-100>.";
@@ -428,11 +432,13 @@ public class WorkCommand implements Runnable {
     // --- status ---
 
     @CommandLine.Command(name = "status", mixinStandardHelpOptions = true,
-            description = {"Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, "
-                    + "VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks "
-                    + "included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP "
-                    + "transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and "
-                    + "IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING.",
+            description = {"Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, "
+                    + "IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and "
+                    + "tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A "
+                    + "SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and "
+                    + "IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward "
+                    + "or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own "
+                    + "`qits` CLI sign-in, or the browser; an agent credential is refused.",
                     "Reads {\"target\":\"<STATUS>\"} on stdin and sends it unchanged to POST "
                             + "/projects/api/entities/{id}/status. The service refuses a move its lifecycle does not "
                             + "allow (HTTP 409).",
@@ -445,7 +451,9 @@ public class WorkCommand implements Runnable {
                     "  qits work --entity qits-100 status </dev/null",
                     "  echo '{\"target\":\"REFINED\"}' | qits work --entity qits-100 status",
                     "",
-                    "- An epic's status move takes qits:admin; an agent is answered HTTP 403."},
+                    "- An epic's status move takes qits:admin; an agent is answered HTTP 403.",
+                    "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "
+                            + "an agent credential is refused (HTTP 409, or HTTP 403 for an epic)."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item moved, or nothing was put in and the legal targets are printed.",
                     "1:The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles "

@@ -228,13 +228,14 @@ Work items of every archetype - epics, tickets, features, tasks and campaigns - 
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
-Every archetype has a lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. Features and tasks walk the same eight words as epics and tickets; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. `status` names the moves open from where an item stands.
+Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. Features and tasks walk the same nine words as epics and tickets; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
 
 ### Notes
 
 - --entity, --output and --projects-url may come before or after the command.
 - --entity is the item's id or its qualified id (qits-100); the service resolves either. update and transition look the item up first and send its id.
 - Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which takes qits:admin. An agent writes only in its own project.
+- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; an agent credential is refused (HTTP 409, or HTTP 403 for an epic).
 
 ## qits work list
 
@@ -405,7 +406,7 @@ echo '{"membership":{"parent":"6f0c2d1e-0000-4000-8000-000000000001"}}' | qits w
 
 ## qits work status
 
-Move a work item along its lifecycle: REPORTED, REFINED, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets REFINED move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING.
+Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused.
 
 Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/entities/{id}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
@@ -429,6 +430,7 @@ echo '{"target":"REFINED"}' | qits work --entity qits-100 status
 ```
 
 - An epic's status move takes qits:admin; an agent is answered HTTP 403.
+- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; an agent credential is refused (HTTP 409, or HTTP 403 for an epic).
 
 ### Exit codes
 

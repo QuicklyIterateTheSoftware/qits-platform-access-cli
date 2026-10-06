@@ -29,7 +29,7 @@ final class WorkEntities {
      * and whatever it does not list is dropped.
      */
     static final List<String> CARRIED = List.of("title", "description", "status", "ticketType", "impetus", "assignee",
-            "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn");
+            "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn", "acceptanceCriteria");
 
     private static final Pattern UUID = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
@@ -220,6 +220,7 @@ final class WorkEntities {
         } else {
             lines(out, "  ", description);
         }
+        acceptanceCriteria(out, e);
         if (comments.isEmpty()) {
             out.println("Comments: none.");
         } else {
@@ -234,6 +235,20 @@ final class WorkEntities {
         } else {
             out.println("Children (" + children.size() + "):");
             printRows(out, "  ", children);
+        }
+    }
+
+    /** Acceptance criteria, one numbered Markdown line each; nothing printed when the archetype carries none. */
+    private static void acceptanceCriteria(PrintStream out, JsonNode e) {
+        JsonNode criteria = e.path("acceptanceCriteria");
+        if (!criteria.isArray() || criteria.isEmpty()) {
+            return;
+        }
+        out.println("Acceptance criteria:");
+        int n = 1;
+        for (JsonNode item : criteria) {
+            out.println("  " + n + ". " + SafeText.line(item.asText()));
+            n++;
         }
     }
 

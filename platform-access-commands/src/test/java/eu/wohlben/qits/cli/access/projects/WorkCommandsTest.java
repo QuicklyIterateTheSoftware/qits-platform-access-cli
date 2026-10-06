@@ -79,6 +79,7 @@ class WorkCommandsTest {
     private static final String EPIC_ROW = """
             {"id":"%s","archetype":"EPIC","projectId":"%s","number":120,"qualifiedId":"qits-120",
              "title":"The epic","status":"REFINED","parent":null,"position":null,
+             "acceptanceCriteria":["Loads under 200ms","Shows an empty state when there is nothing"],
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
             """.formatted(EPIC, PROJECT);
 
@@ -101,6 +102,7 @@ class WorkCommandsTest {
             {"title":"EPIC transition","type":"object","additionalProperties":false,"required":["title","status"],
              "properties":{"title":{"type":"string"},"description":{"type":"string"},"status":{"type":"string"},
                "supersededBy":{"type":"string"},"implementedAt":{"type":"string","format":"date-time"},
+               "acceptanceCriteria":{"type":"array","items":{"type":"string"}},
                "membership":{"type":"object","required":["parent"],
                  "properties":{"parent":{"type":"string"},"position":{"type":"integer"}}}}}
             """;
@@ -214,6 +216,7 @@ class WorkCommandsTest {
         platform.answer("GET", SCHEMAS + "TICKET/schemas/update", TICKET_UPDATE);
         platform.answer("GET", SCHEMAS + "EPIC/schemas/transition", EPIC_TRANSITION);
         platform.answer("GET", SCHEMAS + "FEATURE/schemas/transition", FEATURE_TRANSITION);
+        platform.answer("GET", ENTITIES + "/" + EPIC + "/comments", "{\"entries\":[]}");
         platform.answer("GET", ENTITIES + "/" + TICKET + "/comments", """
                 {"entries":[{"comment":{"id":"c1","entityId":"%s","author":"carol","body":"Seen \\u001b[31mit",
                   "createdAt":"2026-09-29T09:30:00Z","updatedAt":"2026-09-29T09:30:00Z"}}]}
@@ -404,6 +407,26 @@ class WorkCommandsTest {
     }
 
     @Test
+    void transitionCarriesAcceptanceCriteriaWhenTheTargetHasASlotAndDropsItOtherwise() throws Exception {
+        Result kept = runWithInput("{}", "work", "--entity", "qits-120", "transition", "--archetype", "epic");
+        assertThat(kept.exit()).as(kept.err()).isZero();
+        assertThat(sent("POST", ENTITIES + "/transition").get(EPIC)).isEqualTo(JSON.readTree(
+                "{\"title\":\"The epic\",\"status\":\"REFINED\","
+                        + "\"acceptanceCriteria\":[\"Loads under 200ms\",\"Shows an empty state when there is nothing\"],"
+                        + "\"archetype\":\"EPIC\"}"));
+        assertThat(kept.err()).doesNotContain("no slot");
+        platform.requests.clear();
+
+        Result dropped = runWithInput("{\"membership\":{\"parent\":\"" + EPIC + "\"}}",
+                "work", "--entity", "qits-120", "transition", "--archetype", "feature");
+        assertThat(dropped.exit()).as(dropped.err()).isZero();
+        assertThat(dropped.err()).contains("status, acceptanceCriteria have no slot on FEATURE and are not carried.");
+        JsonNode featureState = sent("POST", ENTITIES + "/transition").get(EPIC);
+        assertThat(featureState.has("acceptanceCriteria")).isFalse();
+        assertThat(featureState.has("status")).isFalse();
+    }
+
+    @Test
     void transitionWithNothingOnStdinMarksTheRequiredPropertiesTheItemLacks() {
         Result toFeature = run("work", "--entity", "qits-548", "transition", "--archetype", "feature");
         assertThat(toFeature.exit()).as(toFeature.err()).isZero();
@@ -548,6 +571,20 @@ class WorkCommandsTest {
     }
 
     @Test
+    void detailsNumbersEachAcceptanceCriterionAndOmitsTheSectionWhenThereAreNone() {
+        Result epic = run("work", "--entity", "qits-120", "details");
+
+        assertThat(epic.exit()).as(epic.err()).isZero();
+        assertThat(epic.out()).contains("Acceptance criteria:")
+                .contains("1. Loads under 200ms")
+                .contains("2. Shows an empty state when there is nothing");
+
+        Result ticket = run("work", "--entity", "qits-548", "details");
+        assertThat(ticket.exit()).as(ticket.err()).isZero();
+        assertThat(ticket.out()).doesNotContain("Acceptance criteria:");
+    }
+
+    @Test
     void anUnknownEntityIsTheServicesAnswer() {
         Result r = run("work", "--entity", "qits-9999", "details");
         assertThat(r.exit()).isEqualTo(1);
@@ -558,5 +595,30 @@ class WorkCommandsTest {
     void theOldGroupsAreGone() {
         assertThat(run("ticket", "list").exit()).isEqualTo(2);
         assertThat(run("epic", "list").exit()).isEqualTo(2);
+    }
+
+    // --- help ---
+
+    @Test
+    void theWalkInHelpNamesReadyForDevAndTheHumanApprovalItNeeds() {
+        Result group = run("work", "--help");
+        assertThat(group.exit()).isZero();
+        // picocli wraps the prose at the terminal width, turning some of the spaces this checks
+        // for into line breaks; a single space normalizes either back to the words that matter.
+        String groupText = group.out().replace('\n', ' ');
+        assertThat(groupText).contains("REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED")
+                .contains("READY_FOR_DEV move straight to IMPLEMENTED")
+                .contains("IMPLEMENTING only moves forward or drops; it never moves back.")
+                .contains("REFINED to READY_FOR_DEV needs a person")
+                .contains("an agent credential is refused");
+
+        Result status = run("work", "status", "--help");
+        assertThat(status.exit()).isZero();
+        String statusText = status.out().replace('\n', ' ');
+        assertThat(statusText).contains("REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED")
+                .contains("READY_FOR_DEV move straight to IMPLEMENTED")
+                .contains("IMPLEMENTING only moves forward or drops; it never moves back.")
+                .contains("REFINED to READY_FOR_DEV needs a person")
+                .contains("an agent credential is refused (HTTP 409, or HTTP 403 for an epic).");
     }
 }
