@@ -567,7 +567,7 @@
           "content": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "additionalProperties": false,
-            "description": "The body of POST /projects/api/entities, less its archetype (\"archetype\": \"TICKET\" is added beside these). The status is minted REPORTED by the writer.",
+            "description": "The body of POST /projects/api/work, less its archetype (\"archetype\": \"TICKET\" is added beside these). The status is minted REPORTED by the writer.",
             "properties": {
               "acceptanceCriteria": {
                 "description": "What the work is accepted against, in order: short Markdown statements. The whole list is written at once; an empty list (or null on a patch) clears it. Frozen from READY_FOR_DEV on: restating the same list passes, a changed one is a 409.",
