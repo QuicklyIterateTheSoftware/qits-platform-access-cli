@@ -98,6 +98,11 @@ COPY . .
 # derived inside the mvnw RUN below from the one platform input. The host answers 401 anonymously,
 # so the same RUN mounts the two CI secrets and exports them as QITS_MAVEN_AUTH_USR/PSW for
 # `qits-central-proxy`; a hand build with no secrets leaves both empty and fails at the first 401.
+#
+# The platform's own Maven, https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven, derived the same
+# way, for the one artifact the reactor takes from it: qits-projects' golden masters jar, a TEST
+# dependency of the commands (their consumer pact). `-DskipTests` still compiles the tests, so the
+# jar is still resolved here; the same two secrets authenticate `qits-maven-network`.
 ARG QITS_DOMAIN=wohlben.eu
 
 # - additional-build-args-APPEND: the pom's native profile sets additional-build-args (Pkce's
@@ -123,7 +128,9 @@ RUN --mount=type=secret,id=qits-client-id \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
+    export QITS_MAVEN_REPOSITORY_URL="https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven"; \
     ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
+      -Dqits.maven.repository.url="$QITS_MAVEN_REPOSITORY_URL" \
       -pl platform-access-cli -am \
       -Dquarkus.native.container-build=false \
       -Dquarkus.native.additional-build-args-append=--static,--libc=musl \
@@ -167,7 +174,9 @@ RUN --mount=type=secret,id=qits-client-id \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
+    export QITS_MAVEN_REPOSITORY_URL="https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven"; \
     ./mvnw -B -ntp -s .qits-maven-settings.xml package -Dnative -DskipTests \
+      -Dqits.maven.repository.url="$QITS_MAVEN_REPOSITORY_URL" \
       -pl platform-access-mcp-service -am \
       -Dquarkus.native.container-build=false \
       -Dquarkus.native.additional-build-args-append=--static,--libc=musl \

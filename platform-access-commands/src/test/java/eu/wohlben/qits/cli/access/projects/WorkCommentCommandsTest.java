@@ -42,9 +42,9 @@ class WorkCommentCommandsTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String EPIC = "qits-100";
     private static final String TASK = "dddd5555-0000-4000-8000-000000000005";
-    private static final String THREAD = "/projects/api/entities/" + EPIC + "/comments";
+    private static final String THREAD = "/projects/api/work/" + EPIC + "/comments";
     private static final String C1 = "eeee1111-0000-4000-8000-000000000001";
-    private static final String PATCH_C1 = "/projects/api/comments/" + C1;
+    private static final String PATCH_C1 = THREAD + "/" + C1;
     private static final String OPENAPI = "/projects/q/openapi";
     private static final char ESC = 0x1B;
 
@@ -57,11 +57,11 @@ class WorkCommentCommandsTest {
                "CommentPatch":{"type":"object","properties":{"body":{"type":"string","pattern":"\\\\S"}}},
                "Markdown":{"type":"string","pattern":"\\\\S"}}},
              "paths":{
-               "/projects/api/entities/{entityId}/comments":{
+               "/projects/api/work/{qualifiedId}/comments":{
                  "get":{"responses":{"200":{"description":"OK"}}},
                  "post":{"requestBody":{"required":true,"content":{"application/json":
                    {"schema":{"$ref":"#/components/schemas/CreateCommentRequest"}}}}}},
-               "/projects/api/comments/{commentId}":{
+               "/projects/api/work/{qualifiedId}/comments/{commentId}":{
                  "patch":{"requestBody":{"required":true,"content":{
                    "application/json":{"schema":{"type":"string"}},
                    "application/merge-patch+json":{"schema":{"$ref":"#/components/schemas/CommentPatch"}}}}}}}}
@@ -176,7 +176,7 @@ class WorkCommentCommandsTest {
 
     @Test
     void theEntityMayComeAfterTheCommandAndAUuidIsPassedAsItIs() throws Exception {
-        String path = "/projects/api/entities/" + TASK + "/comments";
+        String path = "/projects/api/work/" + TASK + "/comments";
         platform.answer("POST", path, "{\"comment\":{\"id\":\"c4\",\"entityId\":\"" + TASK + "\",\"author\":\"a\"}}");
 
         Result r = runWithInput("{\"body\":\"x\"}", "work", "comment", "create", "--entity", TASK, "-o", "json");
@@ -205,7 +205,7 @@ class WorkCommentCommandsTest {
         assertThat(r.out())
                 .contains("nothing was sent")
                 .contains("Required: body.")
-                .contains("POST /projects/api/entities/{id}/comments, application/json")
+                .contains("POST /projects/api/work/{entity}/comments, application/json")
                 // The reference is resolved: the property's own schema is printed, not a pointer.
                 .contains("\"pattern\" : \"\\\\S\"")
                 .doesNotContain("$ref");
@@ -237,7 +237,7 @@ class WorkCommentCommandsTest {
         Result r = run("work", "--entity", EPIC, "comment", "create");
 
         assertThat(r.exit()).isEqualTo(1);
-        assertThat(r.err()).contains("describes no request body for POST /projects/api/entities/{id}/comments")
+        assertThat(r.err()).contains("describes no request body for POST /projects/api/work/{entity}/comments")
                 .contains("may not be deployed yet");
         assertThat(anyWrite()).isFalse();
     }
@@ -288,19 +288,22 @@ class WorkCommentCommandsTest {
         FakePlatform.Request sent = platform.requests("PATCH", PATCH_C1).getFirst();
         assertThat(sent.contentType()).isEqualTo("application/merge-patch+json");
         assertThat(JSON.readTree(sent.body())).isEqualTo(JSON.readTree(patch));
-        assertThat(platform.requests("GET", THREAD)).hasSize(1);
+        // The path names the entity and the comment together: no thread is read first.
+        assertThat(platform.requests("GET", THREAD)).isEmpty();
         assertThat(r.out().lines().toList().getFirst()).contains("UPDATED");
         assertThat(r.out()).contains(C1).contains("alice");
     }
 
     @Test
-    void updateOfACommentNotOnTheEntityIsRefusedAndNothingIsSent() {
-        Result r = runWithInput("{\"body\":\"edited\"}", "work", "--entity", EPIC, "comment", "update",
-                "--comment", "ffff9999-0000-4000-8000-000000000009");
+    void updateOfACommentNotOnTheEntityIsTheServicesNotFound() {
+        String other = "ffff9999-0000-4000-8000-000000000009";
+        platform.answer("PATCH", THREAD + "/" + other, 404, "{\"message\":\"no comment " + other + " on " + EPIC + "\"}");
 
-        assertThat(r.exit()).isEqualTo(2);
-        assertThat(r.err()).contains("is not on the thread of " + EPIC).contains("Nothing was sent.");
-        assertThat(anyWrite()).isFalse();
+        Result r = runWithInput("{\"body\":\"edited\"}", "work", "--entity", EPIC, "comment", "update",
+                "--comment", other);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("HTTP 404").contains("no comment " + other);
     }
 
     @Test
@@ -308,7 +311,7 @@ class WorkCommentCommandsTest {
         Result r = run("work", "--entity", EPIC, "comment", "update", "--comment", C1);
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).contains("PATCH /projects/api/comments/{commentId}, application/merge-patch+json")
+        assertThat(r.out()).contains("PATCH /projects/api/work/{entity}/comments/{commentId}, application/merge-patch+json")
                 .contains("Required: nothing.");
         assertThat(anyWrite()).isFalse();
         assertThat(platform.requests("GET", THREAD)).isEmpty();

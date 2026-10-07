@@ -3,11 +3,13 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
   <mirrors>
-    <!-- The platform's hosted Maven, https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven, if
-         any module here ever declares a `qits-maven` repository. Maven cannot compute a string, so
-         the URL would arrive derived, the way docker/Dockerfile's mvnw RUNs derive
-         QITS_MAVEN_CENTRAL_URL below. Exact repository-id matches win over Maven's
-         external:http:* blocker without permitting arbitrary HTTP repositories. -->
+    <!-- The platform's hosted Maven, https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven, for
+         the `qits-maven` repository the root pom declares (since qits-965, for qits-projects'
+         golden masters jar, a test dependency of the commands). Maven cannot compute a string, so
+         the URL arrives derived: docker/Dockerfile's mvnw RUNs and release.yml's QA step export
+         QITS_MAVEN_REPOSITORY_URL, as they do QITS_MAVEN_CENTRAL_URL below. Exact repository-id
+         matches win over Maven's external:http:* blocker without permitting arbitrary HTTP
+         repositories. -->
     <mirror>
       <id>qits-maven-network</id>
       <mirrorOf>qits-maven</mirrorOf>
