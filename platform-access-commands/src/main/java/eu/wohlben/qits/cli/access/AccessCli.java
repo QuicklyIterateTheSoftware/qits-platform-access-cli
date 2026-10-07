@@ -5,6 +5,7 @@ import eu.wohlben.qits.cli.access.checkout.CheckoutDaemonCommand;
 import eu.wohlben.qits.cli.access.ci.CiCommand;
 import eu.wohlben.qits.cli.access.maintenance.MaintenanceCommand;
 import eu.wohlben.qits.cli.access.daemon.SessionDaemonCommand;
+import eu.wohlben.qits.cli.access.database.DatabaseCommand;
 import eu.wohlben.qits.cli.access.events.EventsCommand;
 import eu.wohlben.qits.cli.access.git.GitCredentialCommand;
 import eu.wohlben.qits.cli.access.git.GitLoginCommand;
@@ -35,7 +36,7 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class,
-                ReleaseRequestCommand.class, CiCommand.class, MaintenanceCommand.class, EventsCommand.class,
+                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
                 ArtifactsCommand.class,
                 HelpCommand.class},

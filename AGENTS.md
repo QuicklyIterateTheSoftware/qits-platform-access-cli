@@ -7,7 +7,8 @@ command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
 that session fresh), `qits projects|repositories|work|release-request` (the projects service;
 `work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
-run's step logs, a retry, a run's release reports), `qits events` (the live event
+run's step logs, a retry, a run's release reports), `qits database diagram` (a repository's entity
+diagram, generated from its compiled classes), `qits events` (the live event
 stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
@@ -147,6 +148,16 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                Store.publicOrigin("ci"), its own 120 s deadline) and show. Payload records carry
                @RegisterForReflection all the way down; Jackson writes and reads them back
                (ReportJson). The server never learns what a kind means.
+    database/  qits database diagram: the entity diagram under docs/database/ (epic qits-760).
+               EntityModelSource (one per language/ORM, listed in EntityModelSources) gives UnitModels
+               of TableModel/ColumnModel/RelationModel; EntityDiagramFormat renders and parses them
+               (MermaidEntityDiagramFormat, which the entity-changes report kind parses back).
+               JpaEntityModelSource is the jpa one: JpaInputs (the reactor's target/classes indexed
+               with Jandex, the classpath files' jars listed and indexed lazily), JpaUnits (the units
+               the reactor's own config declares) and JpaMapping (the mapping, Hibernate's naming).
+               JpaMappingConformanceTest holds JpaMapping against Hibernate's Metadata over the
+               fixtures under database/fixtures; Hibernate is a test dependency only. The golden
+               files are rewritten with -Dgolden.update=true, as the pact file is.
     events/    qits events: the SSE parser and the reconnecting stream; `query` under it pages the
                events log over a window (EventsQueryCommand)
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-

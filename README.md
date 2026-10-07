@@ -798,6 +798,49 @@ out with one warning, never wrong.
     qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind coverage
     qits ci report show 5f2c0a9e --project qits --repository qits-landing-app --kind contracts
 
+### qits database diagram
+
+    qits database diagram [--root <dir>] [--out <dir>] [--check]
+
+The entity diagram of a maven repository's JPA mapping (epic qits-760): one Markdown file with a
+Mermaid `erDiagram` per persistence unit, under `docs/database/`, generated from the **compiled**
+classes. The entity-diagram release-request automation runs it on every fold; a person runs it the
+same way, after building the inputs:
+
+    ./mvnw -q -Dmaven.test.skip=true test-compile dependency:build-classpath \
+        -Dmdep.outputFile=target/qits-classpath.txt -Dmdep.includeScope=runtime
+    qits database diagram
+
+`test-compile` with `-Dmaven.test.skip=true` rather than `compile`: `dependency:build-classpath`
+resolves the test scope, and a reactor whose module depends on another module's test jar
+(qits-projects-service) cannot resolve it at `compile`. No test is compiled either way.
+
+What it reads. Every reactor module's `target/classes` (found by walking `<modules>` from the root
+`pom.xml`), indexed with Jandex, and the jars each module's `target/qits-classpath.txt` names, of
+which only the classes in a unit's packages and their superclasses are ever indexed. Nothing is
+loaded or run. A unit is an unprofiled `quarkus.hibernate-orm.<unit>.packages` key
+(`quarkus.hibernate-orm.packages` is `<default>`, written to `default.md`) in a reactor module's own
+`application.properties` or `META-INF/microprofile-config.properties` — never a jar's, so
+qits-eventstream-javalib's unit is drawn there and not in its consumers. A unit holds every
+`@Entity` in its packages and sub-packages, the reactor's or a library's; each table's `%%` line
+names its class and its origin (the module, or the library jar's artifactId). A reactor entity no
+unit lists is drawn in `docs/database/<java.package>.md`.
+
+Names are Hibernate's: JPA's implicit naming and, since Quarkus sets no physical naming strategy of
+its own, every name as the mapping spells it (`AuditEntry` stays `AuditEntry`). A unit whose
+`physical-naming-strategy` key names `CamelCaseToUnderscoresNamingStrategy` gets snake_case.
+`JpaMappingConformanceTest` holds the reading against Hibernate's own `Metadata` under both, with
+Hibernate in test scope only. Constructs it does not draw (`@OneToOne`, `@ManyToMany`,
+`@EmbeddedId`, `@Inheritance`, `@SecondaryTable`, `@Formula`, ...) are listed under the diagram as
+`Not drawn`, never refused.
+
+It writes the full set and deletes only the `*.md` files under `--out` that start with its header
+and that it did not write this time; a hand-written file there is left alone. One line per file:
+`written`, `unchanged` or `deleted` (`would write` and `would delete` with `--check`, which writes
+nothing and exits 1 when anything would change). Nothing compiled is exit 2 (`compile first: no
+target/classes under <root>`); no entity at all is `no JPA entities found` and exit 0. The output
+holds no version, time or absolute path, so two runs write the same bytes.
+
 ### qits maintenance
 
 Jobs of qits-maintenance. `--project` and `--repository` are as for `release-request`.

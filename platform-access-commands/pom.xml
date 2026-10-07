@@ -97,6 +97,15 @@
         </dependency>
 
         <dependency>
+            <!-- `qits database diagram` reads a repository's compiled JPA mapping: the reactor's
+                 target/classes and its runtime jars, indexed class by class, never loaded. The
+                 version is quarkus-bom's. Pure bytecode reading, no reflection, so the native binary
+                 needs no configuration for it (proven by running the binary over a fixture). -->
+            <groupId>io.smallrye</groupId>
+            <artifactId>jandex</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -113,6 +122,29 @@
                  ProjectsPactFileTest. Pinned in the root pom. -->
             <groupId>eu.wohlben.qits</groupId>
             <artifactId>qits-projects-golden-masters</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- JpaMappingConformanceTest builds Hibernate's own Metadata over the fixture entities and
+                 holds `qits database diagram`'s reconstruction against it. TEST SCOPE ONLY: Hibernate
+                 never reaches the commands jar, the binary or its SBOM. The version is quarkus-bom's,
+                 the one the estate's services run. -->
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Quarkus applies Bean Validation's @NotNull to the schema; the conformance test does the
+                 same through Hibernate's TypeSafeActivator. Test scope only. -->
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- PanacheEntity and PanacheEntityBase, as the estate's entities extend them: the fixtures
+                 do too, and the generator reads PanacheEntity's id from this jar. Test scope only. -->
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-orm-panache</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

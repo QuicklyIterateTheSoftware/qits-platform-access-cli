@@ -888,6 +888,48 @@ qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 -o json
 - `1` The platform refused (for example no such run, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
+## qits database
+
+A repository's database, read from its compiled code: `qits database diagram` writes the diagram of its entities under docs/database/, one Mermaid file per persistence unit.
+
+## qits database diagram
+
+Write the entity diagram of a maven repository's JPA mapping: one Markdown file with a Mermaid erDiagram per persistence unit it declares, read from its compiled classes.
+
+Compile first: the classes come from every reactor module's target/classes and the libraries from each module's target/qits-classpath.txt, which `dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt -Dmdep.includeScope=runtime` writes. One line per file on stdout: `written docs/database/ci.md`, `unchanged ...` or `deleted ...`.
+
+```
+qits database diagram [--check] [--out <dir>] [--root <dir>]
+```
+
+| Name | What it does |
+|---|---|
+| `--check` | Write and delete nothing; exit 1 when a file would change. Lines say `would write` and `would delete`. |
+| `--out <dir>` | Where the files go. Default: docs/database under --root. |
+| `--root <dir>` | The repository: the directory of its root pom.xml. Default: the working directory. |
+
+### Examples
+
+```
+./mvnw -q -Dmaven.test.skip=true test-compile dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt -Dmdep.includeScope=runtime
+qits database diagram
+qits database diagram --root . --out docs/database --check
+```
+
+- test-compile rather than compile: dependency:build-classpath resolves the test scope too, and in a reactor where one module depends on another's test jar that resolution fails at compile. -Dmaven.test.skip=true still compiles no test.
+- A unit is an unprofiled quarkus.hibernate-orm.<unit>.packages key (quarkus.hibernate-orm.packages is <default>, written to default.md) in a reactor module's own application.properties or META-INF/microprofile-config.properties, never a library's. A profiled key or a ${...} value is ignored, with a warning on stderr.
+- A unit draws every @Entity in its packages and their sub-packages, compiled here or in a library jar; each table names its origin, the reactor module or the library's artifactId. An entity of the repository that no unit lists is drawn in a file named after its Java package.
+- Names are Hibernate's under Quarkus' defaults: JPA's implicit naming, and every name as the mapping spells it, unless the unit's physical-naming-strategy key names CamelCaseToUnderscoresNamingStrategy (then snake_case). A construct the diagram does not draw (@OneToOne, @ManyToMany, @EmbeddedId, @Inheritance, @SecondaryTable, @Formula and others) is listed under it as `Not drawn`, never refused.
+- Deletes only the *.md files under --out that start with the generator's header and were not written this time. A file without the header is never touched.
+- The files hold no version, time or absolute path: two runs over the same classes write the same bytes.
+- Reads local files only: it needs no sign-in and calls no service.
+
+### Exit codes
+
+- `0` Done, or nothing to draw (`no JPA entities found`).
+- `1` With --check: a file would be written or deleted. Otherwise: a file could not be read or written.
+- `2` Used wrongly: --root is not a directory, or nothing is compiled under it (`compile first: no target/classes under <root>`).
+
 ## qits maintenance
 
 Jobs of qits-maintenance: automations lists a release request's release-request automations and their state, automation run re-runs one kind, and bump shows how one job went.
