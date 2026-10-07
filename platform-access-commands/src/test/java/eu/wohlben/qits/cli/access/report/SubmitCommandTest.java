@@ -91,7 +91,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(result.out()).isEqualTo("test-results: submitted (18 tests, 10 failed)\n"
-                + "coverage: not reported (no inputs)\n");
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: not reported (no inputs)\n");
         assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN + ")");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path())
                 .containsExactly("GET " + BASELINE, "GET " + BASELINE_REPORTS, "PUT " + PUT);
@@ -142,7 +143,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
-                + "coverage: submitted (13 lines, 30.8% covered)\n");
+                + "coverage: submitted (13 lines, 30.8% covered)\n"
+                + "contracts: not reported (no inputs)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -161,6 +163,43 @@ class SubmitCommandTest {
                  "files":[{"file":"src/app/clock.ts","linesCovered":0,"linesTotal":3},
                           {"file":"src/app/ledger.ts","linesCovered":4,"linesTotal":10}]}
                 """));
+    }
+
+    @Test
+    void contractsGoWithTheirHighlightsAgainstTheBaselinesContracts() throws Exception {
+        Path root = Fixtures.tree(work);
+        Path pacts = Path.of(SubmitCommandTest.class.getResource("/report/contracts/landing/pacts").toURI());
+        Files.createDirectories(root.resolve("pacts"));
+        try (var files = Files.list(pacts)) {
+            for (Path file : files.toList()) {
+                Files.copy(file, root.resolve("pacts").resolve(file.getFileName().toString()));
+            }
+        }
+        ci.answer("GET", BASELINE, """
+                {"baseline":{"version":"2026.1003.52637","runId":"%s","releaseRequestId":"rr-1","tagSha":"abc"}}
+                """.formatted(BASE_RUN));
+        ci.answer("GET", BASELINE + "/reports/contracts", """
+                [{"id":"r-3","kind":"contracts","kindVersion":1,"stepIndex":2,"highlights":[],
+                  "payload":{"sources":[],"sides":{"consumer":true,"provider":false,"providerStates":false},
+                             "providerStates":null,"pacts":[],"skipped":[],"truncated":false}}]
+                """);
+        ci.answer("PUT", PUT, 204, "");
+        String put = "/ci/api/runs/" + RUN + "/steps/2/reports/contracts";
+        ci.answer("PUT", put, 204, "");
+
+        Result result = submit("--exit-code", "0", "--root", root.toString());
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.out()).isEqualTo("test-results: submitted (18 tests, 10 failed)\n"
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: submitted (5 pacts, 16 interactions, 0 states)\n");
+        JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
+        assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
+        assertThat(body.path("payload").path("pacts")).hasSize(5);
+        assertThat(body.path("highlights")).hasSize(5).allSatisfy(h -> {
+            assertThat(h.path("severity").asText()).isEqualTo("warn");
+            assertThat(h.path("text").asText()).startsWith("new pact: qits-landing-app \u2192 qits-");
+        });
     }
 
     @Test
@@ -242,7 +281,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).isEqualTo(1);
         assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 403)\n"
-                + "coverage: not reported (no inputs)\n");
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: not reported (no inputs)\n");
         assertThat(result.err()).contains("HTTP 403").contains("this token belongs to another run")
                 .doesNotContain(TOKEN);
     }
@@ -255,7 +295,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).isEqualTo(1);
         assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 404)\n"
-                + "coverage: not reported (no inputs)\n");
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: not reported (no inputs)\n");
     }
 
     @Test
@@ -264,7 +305,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
-                + "coverage: not reported (no inputs)\n");
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: not reported (no inputs)\n");
         assertThat(ci.requests("PUT", PUT)).isEmpty();
     }
 
@@ -277,7 +319,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).isEqualTo(1);
         assertThat(result.out()).isEqualTo("test-results: not submitted (qits-ci could not be reached)\n"
-                + "coverage: not reported (no inputs)\n");
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: not reported (no inputs)\n");
         assertThat(result.err()).contains("WARN: baseline: could not be read, so none");
     }
 
@@ -363,7 +406,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).isZero();
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
-                + "coverage: not reported (no inputs)\n");
+                + "coverage: not reported (no inputs)\n"
+                + "contracts: not reported (no inputs)\n");
         assertThat(ci.requests).isEmpty();
     }
 

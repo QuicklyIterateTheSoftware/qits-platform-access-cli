@@ -1,0 +1,175 @@
+{
+  "sources": [
+    {
+      "language": "json",
+      "tool": "pact",
+      "file": "pacts/qits-fx-service_qits-events-service.json",
+      "format": "pact-v4"
+    },
+    {
+      "language": "json",
+      "tool": "pact",
+      "file": "pacts/qits-fx-service_qits-projects-service.json",
+      "format": "pact-v4"
+    },
+    {
+      "language": "java",
+      "tool": "pact-jvm",
+      "file": ".qits-reports/pact-verification/qits-fx-service.json",
+      "format": "pact-jvm-json-report"
+    },
+    {
+      "language": "json",
+      "tool": "qits-golden-masters",
+      "file": "golden-masters/index.json",
+      "format": "golden-master-index-v1"
+    }
+  ],
+  "sides": {
+    "consumer": true,
+    "provider": true,
+    "providerStates": true
+  },
+  "providerStates": {
+    "provider": "qits-fx",
+    "states": [
+      {
+        "name": "one ledger",
+        "operations": [
+          "getLedger"
+        ]
+      },
+      {
+        "name": "two ledgers",
+        "operations": [
+          "listLedgers",
+          "deleteLedger"
+        ]
+      }
+    ]
+  },
+  "pacts": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-events-service",
+      "specification": "4.0",
+      "source": "pacts/qits-fx-service_qits-events-service.json",
+      "interactions": [
+        {
+          "description": "closeLedger: publish",
+          "providerStates": [
+            "a stream exists"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "POST",
+          "path": "/events/api/streams/ledgers",
+          "status": 202,
+          "contentHash": "sha256:ece893d68b4d2bb97eaeb435291eb6b8bf39d987d423166c0f3bac8a27731926",
+          "verified": null
+        }
+      ]
+    },
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-projects-service",
+      "specification": "4.0",
+      "source": "pacts/qits-fx-service_qits-projects-service.json",
+      "interactions": [
+        {
+          "description": "closeLedger: getRepository",
+          "providerStates": [
+            "a repository exists"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/projects/api/repositories/r-1",
+          "status": 200,
+          "contentHash": "sha256:ab2b7bb878ae97c53980e16b9a9b827eac867c81a7299c5c2b69a43c30f59f13",
+          "verified": null
+        },
+        {
+          "description": "closeLedger: listProjects",
+          "providerStates": [],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/projects/api/projects",
+          "status": 200,
+          "contentHash": "sha256:feebd7dd7f2d2d7e6d1d43ba40055bab93d915556149ef74e4ebaf3170be2b4d",
+          "verified": null
+        },
+        {
+          "description": "openLedger: getProject",
+          "providerStates": [
+            "a project exists",
+            "a signed-in user"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/projects/api/projects/p-1",
+          "status": 200,
+          "contentHash": "sha256:b02cf1debe3c7504eedf2e4a23fff2793d6703ee6f2ebe59d40d10ae9d54eff8",
+          "verified": null
+        }
+      ]
+    },
+    {
+      "role": "PROVIDER",
+      "consumer": "qits-landing-app",
+      "provider": "qits-fx-service",
+      "specification": null,
+      "source": ".qits-reports/pact-verification/qits-fx-service.json",
+      "interactions": [
+        {
+          "description": "show-ledgers: getLedger",
+          "providerStates": [
+            "one ledger"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/fx/api/ledgers/l-1",
+          "status": 200,
+          "contentHash": "sha256:2996518bafdbcea09be99a88d30ad7016c3389fb3e12b674f8c753e367218abe",
+          "verified": "FAILED"
+        },
+        {
+          "description": "show-ledgers: listLedgers",
+          "providerStates": [
+            "two ledgers"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/fx/api/ledgers",
+          "status": 200,
+          "contentHash": "sha256:523c70ee0a27c2f9daf3fa5d2fdf7f1630fa5cb30297af10975c6fa0820b732c",
+          "verified": "OK"
+        }
+      ]
+    },
+    {
+      "role": "PROVIDER",
+      "consumer": "qits-workspaces-service",
+      "provider": "qits-fx-service",
+      "specification": null,
+      "source": ".qits-reports/pact-verification/qits-fx-service.json",
+      "interactions": [
+        {
+          "description": "captureWorkspace: listLedgers",
+          "providerStates": [
+            "two ledgers",
+            "a signed-in user"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/fx/api/ledgers",
+          "status": 200,
+          "contentHash": "sha256:523c70ee0a27c2f9daf3fa5d2fdf7f1630fa5cb30297af10975c6fa0820b732c",
+          "verified": "OK"
+        }
+      ]
+    }
+  ],
+  "skipped": [],
+  "truncated": false
+}

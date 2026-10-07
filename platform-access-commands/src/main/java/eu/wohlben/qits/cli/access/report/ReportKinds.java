@@ -1,5 +1,10 @@
 package eu.wohlben.qits.cli.access.report;
 
+import eu.wohlben.qits.cli.access.report.contracts.ContractsReportKind;
+import eu.wohlben.qits.cli.access.report.contracts.GoldenMasterIndexParser;
+import eu.wohlben.qits.cli.access.report.contracts.PactFileParser;
+import eu.wohlben.qits.cli.access.report.contracts.PactJvmVerificationReportParser;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,10 +51,16 @@ public final class ReportKinds {
      * @param warnings where a kind says it skipped something (a file that does not parse); one line each
      */
     public static ReportKinds standard(Consumer<String> warnings) {
+        List<ReportParser<?>> parsers = List.of(new SurefireXmlParser(), new FailsafeXmlParser(),
+                new VitestJunitParser(), new JacocoExecParser(), new IstanbulJsonParser(), new PactFileParser(),
+                new PactJvmVerificationReportParser(), new GoldenMasterIndexParser());
+        // contracts are reported only in a step that ran tests, whichever parsers find those
+        List<ReportParser<?>> testResults = parsers.stream()
+                .filter(p -> p.kind().equals(TestResultsKind.ID)).toList();
         return new ReportKinds(
-                List.of(new TestResultsKind(warnings), new CoverageKind(warnings)),
-                List.of(new SurefireXmlParser(), new FailsafeXmlParser(), new VitestJunitParser(),
-                        new JacocoExecParser(), new IstanbulJsonParser()));
+                List.of(new TestResultsKind(warnings), new CoverageKind(warnings),
+                        new ContractsReportKind(warnings, testResults)),
+                parsers);
     }
 
     public List<ReportKind<?>> kinds() {

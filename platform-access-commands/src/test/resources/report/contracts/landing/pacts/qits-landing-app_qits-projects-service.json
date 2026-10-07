@@ -1,0 +1,319 @@
+{
+  "consumer": {
+    "name": "qits-landing-app"
+  },
+  "interactions": [
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "dispatchEntity"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "dispatch-work-item",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "dispatch-work-item: dispatchEntity",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ready for dev epic",
+          "params": {
+            "epicId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "mode": "FLOW"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "expression": "/projects/api/entities/${epicId}/dispatch",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/entities/00000000-0000-4000-8000-000000000001/dispatch"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "dispatch": {
+              "phase": "implement"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.dispatch.phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "dispatchEntity"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "dispatch-work-item",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "dispatch-work-item: dispatchEntity",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ready for dev ticket",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "ticketId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "mode": "FLOW"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "expression": "/projects/api/entities/${ticketId}/dispatch",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/entities/00000000-0000-4000-8000-000000000002/dispatch"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "dispatch": {
+              "phase": "implement"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.dispatch.phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "dispatchEntity"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "dispatch-work-item",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "dispatch-work-item: dispatchEntity",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a reported epic",
+          "params": {
+            "epicId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "mode": "PHASE"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "expression": "/projects/api/entities/${epicId}/dispatch",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/entities/00000000-0000-4000-8000-000000000001/dispatch"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "dispatch": {
+              "phase": "refine"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.dispatch.phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "17.1.4"
+    },
+    "pactRust": {
+      "ffi": "0.5.8",
+      "models": "1.3.16"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "qits-projects-service"
+  }
+}

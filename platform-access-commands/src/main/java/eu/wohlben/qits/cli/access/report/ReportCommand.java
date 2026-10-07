@@ -14,9 +14,11 @@ import picocli.CommandLine;
                         + "every QA step runs after its script: it collects the reports from the step's files and "
                         + "uploads them.",
                 "Kinds today: test-results (every test run, and each failing test with its class, name, file and "
-                        + "message) and coverage (line coverage of the whole tree, its change against the baseline, "
-                        + "and the coverage of the lines the change touched). A kind or a run with nothing to "
-                        + "report shows nothing; a report never fails or holds a release."},
+                        + "message), coverage (line coverage of the whole tree, its change against the baseline, "
+                        + "and the coverage of the lines the change touched) and contracts (the pacts the repository "
+                        + "holds as consumer or verifies as provider, and the provider states it declares, with the "
+                        + "pacts, interactions and states added or removed since the baseline). A kind or a run with "
+                        + "nothing to report shows nothing; a report never fails or holds a release."},
         footerHeading = "%nNotes:%n",
         footer = {"- Each kind and its highlights are computed by the CLI that submitted them; qits-ci keeps them as "
                 + "they came, keyed by run, step and kind.",

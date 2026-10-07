@@ -1,0 +1,100 @@
+{
+  "consumer": {
+    "name": "qits-fx-app"
+  },
+  "provider": {
+    "name": "qits-fx-service"
+  },
+  "interactions": [
+    {
+      "description": "list ledgers",
+      "providerStates": [
+        {
+          "name": "two ledgers",
+          "params": {
+            "n": 2
+          }
+        },
+        {
+          "name": "a signed-in user"
+        }
+      ],
+      "request": {
+        "method": "get",
+        "path": "/fx/api/ledgers",
+        "query": {
+          "limit": [
+            "10"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "ledgers": [
+            {
+              "id": "l-1"
+            },
+            {
+              "id": "l-2"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "description": "delete a ledger",
+      "providerStates": [
+        {
+          "name": "two ledgers"
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "path": "/fx/api/ledgers/l-1"
+      },
+      "response": {
+        "status": 204
+      }
+    }
+  ],
+  "messages": [
+    {
+      "description": "a ledger closed event",
+      "providerStates": [
+        {
+          "name": "a closed ledger"
+        }
+      ],
+      "contents": {
+        "ledgerId": "l-1",
+        "closedAt": "2026-10-01T00:00:00Z"
+      },
+      "metadata": {
+        "contentType": "application/json"
+      },
+      "matchingRules": {
+        "body": {
+          "$.closedAt": {
+            "matchers": [
+              {
+                "match": "timestamp"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "4.1.0"
+    }
+  }
+}

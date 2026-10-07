@@ -137,7 +137,10 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                test-results kind (TestResultsKind over SurefireXmlParser, FailsafeXmlParser and
                VitestJunitParser, all JUnit XML read with StAX), the coverage kind (CoverageKind
                over JacocoExecParser, org.jacoco.core pinned to the archetypes' agent version, and
-               IstanbulJsonParser; diff coverage from GitChangedLines), BaselineTag (the one
+               IstanbulJsonParser; diff coverage from GitChangedLines), the contracts kind in contracts/
+               (ContractsReportKind over PactFileParser, PactJvmVerificationReportParser and
+               GoldenMasterIndexParser; ContractChanges, the identity rules the ui-components view
+               shares through the fixtures under report/contracts/diff/), BaselineTag (the one
                shallow fetch of the baseline's tag, for every kind that reads the baseline's
                files), and the commands: submit (CI-step
                only: the publish chain's bearer through PublishCredential.forCiStep, qits-ci at

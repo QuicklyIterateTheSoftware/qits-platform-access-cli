@@ -1,0 +1,113 @@
+{
+  "sources": [
+    {
+      "language": "json",
+      "tool": "pact",
+      "file": "pacts/qits-fx-service_qits-githost-service.json",
+      "format": "pact-v4"
+    },
+    {
+      "language": "json",
+      "tool": "pact",
+      "file": "pacts/qits-fx-service_qits-projects-service.json",
+      "format": "pact-v4"
+    },
+    {
+      "language": "json",
+      "tool": "qits-golden-masters",
+      "file": "golden-masters/index.json",
+      "format": "golden-master-index-v1"
+    }
+  ],
+  "sides": {
+    "consumer": true,
+    "provider": false,
+    "providerStates": true
+  },
+  "providerStates": {
+    "provider": "qits-fx",
+    "states": [
+      {
+        "name": "a closed ledger",
+        "operations": [
+          "getLedger"
+        ]
+      },
+      {
+        "name": "two ledgers",
+        "operations": [
+          "listLedgers",
+          "deleteLedger"
+        ]
+      }
+    ]
+  },
+  "pacts": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-githost-service",
+      "specification": "4.0",
+      "source": "pacts/qits-fx-service_qits-githost-service.json",
+      "interactions": [
+        {
+          "description": "countLines: listLoc",
+          "providerStates": [
+            "a repository with counted lines"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/githost/api/loc",
+          "status": 200,
+          "contentHash": "sha256:0300e6741e6bace5f76b68da9862ec2ffe57105916757a61d39fe660a5d15392",
+          "verified": null
+        }
+      ]
+    },
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-projects-service",
+      "specification": "4.0",
+      "source": "pacts/qits-fx-service_qits-projects-service.json",
+      "interactions": [
+        {
+          "description": "closeLedger: getRepository",
+          "providerStates": [
+            "a repository exists"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/projects/api/repositories/r-1",
+          "status": 200,
+          "contentHash": "sha256:ab2b7bb878ae97c53980e16b9a9b827eac867c81a7299c5c2b69a43c30f59f13",
+          "verified": null
+        },
+        {
+          "description": "closeLedger: listProjects",
+          "providerStates": [],
+          "type": "Synchronous/HTTP",
+          "method": "GET",
+          "path": "/projects/api/projects",
+          "status": 200,
+          "contentHash": "sha256:08e684543c8a95fc0cad4658858ba09215121ea116ae4e1f743d45333d9c84c2",
+          "verified": null
+        },
+        {
+          "description": "openLedger: createRepository",
+          "providerStates": [
+            "a project exists"
+          ],
+          "type": "Synchronous/HTTP",
+          "method": "POST",
+          "path": "/projects/api/repositories",
+          "status": 201,
+          "contentHash": "sha256:aa23d66dabeedec09eeddaf5609cc5e9b3345ba347a7e3768ebbf27acf43b800",
+          "verified": null
+        }
+      ]
+    }
+  ],
+  "skipped": [],
+  "truncated": false
+}

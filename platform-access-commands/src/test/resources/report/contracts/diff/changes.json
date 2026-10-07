@@ -1,0 +1,105 @@
+{
+  "newPairs": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-events-service"
+    },
+    {
+      "role": "PROVIDER",
+      "consumer": "qits-workspaces-service",
+      "provider": "qits-fx-service"
+    }
+  ],
+  "removedPairs": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-githost-service"
+    }
+  ],
+  "newInteractions": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-events-service",
+      "description": "closeLedger: publish",
+      "providerStates": [
+        "a stream exists"
+      ]
+    },
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-projects-service",
+      "description": "openLedger: getProject",
+      "providerStates": [
+        "a project exists",
+        "a signed-in user"
+      ]
+    },
+    {
+      "role": "PROVIDER",
+      "consumer": "qits-landing-app",
+      "provider": "qits-fx-service",
+      "description": "show-ledgers: getLedger",
+      "providerStates": [
+        "one ledger"
+      ]
+    },
+    {
+      "role": "PROVIDER",
+      "consumer": "qits-workspaces-service",
+      "provider": "qits-fx-service",
+      "description": "captureWorkspace: listLedgers",
+      "providerStates": [
+        "a signed-in user",
+        "two ledgers"
+      ]
+    }
+  ],
+  "removedInteractions": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-githost-service",
+      "description": "countLines: listLoc",
+      "providerStates": [
+        "a repository with counted lines"
+      ]
+    },
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-projects-service",
+      "description": "openLedger: createRepository",
+      "providerStates": [
+        "a project exists"
+      ]
+    },
+    {
+      "role": "PROVIDER",
+      "consumer": "qits-landing-app",
+      "provider": "qits-fx-service",
+      "description": "show-ledgers: deleteLedger",
+      "providerStates": [
+        "two ledgers"
+      ]
+    }
+  ],
+  "changedInteractions": [
+    {
+      "role": "CONSUMER",
+      "consumer": "qits-fx-service",
+      "provider": "qits-projects-service",
+      "description": "closeLedger: listProjects",
+      "providerStates": []
+    }
+  ],
+  "newStates": [
+    "one ledger"
+  ],
+  "removedStates": [
+    "a closed ledger"
+  ]
+}

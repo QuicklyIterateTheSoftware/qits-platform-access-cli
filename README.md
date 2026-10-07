@@ -12,7 +12,8 @@ Commands:
   and `qits release-request … list|create|join|withdraw` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
-  failed, and why; the line coverage of the tree and of the change); `qits ci report submit` is the
+  failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
+  change adds or removes); `qits ci report submit` is the
   CI step's side that collects and uploads them.
 - `qits events` prints the platform's domain events as they happen; `qits events query` prints the
   ones that already happened in a window of time.
@@ -768,13 +769,21 @@ Today's kinds are `test-results`: the totals, a line per tool and module, and ev
 its language, tool, file, class, name, shape (`ASSERTION`, `ERROR`, `TIMEOUT`, `SETUP`) and message;
 and `coverage`: the total line coverage and the baseline's, the diff coverage (the coverable lines the
 change added or touched against the baseline's tag, how many of them are covered, and the uncovered
-ones as line ranges per file), and a line per file.
+ones as line ranges per file), and a line per file; and `contracts`: the pacts the repository holds as
+consumer (`pacts/*.json`), the pacts it verified as provider (Pact-JVM's JSON verification report), and
+the provider states its golden-master index declares, each interaction without its bodies but with a
+`contentHash`. Its highlights name the pacts, interactions and provider states added or removed since
+the baseline; `ContractChanges` holds the rules, and the fixtures under
+`platform-access-commands/src/test/resources/report/contracts/diff/` pin them for the view in
+`@qits/ui-components`, which copies them verbatim.
 
 `report submit` is what the hook qits-ci composes after every QA step runs, whatever the step's
 script exited with (`--exit-code`). It reads the step's files (`**/target/surefire-reports`,
 `**/target/failsafe-reports`, `.qits-reports/vitest-*.xml` for tests; `.qits-reports/jacoco.exec`
 read against every `**/target/classes`, and `coverage/**/coverage-final.json` or
-`.qits-reports/coverage/**/coverage-final.json` for coverage), compares with the baseline (the same
+`.qits-reports/coverage/**/coverage-final.json` for coverage; `pacts/*.json`,
+`.qits-reports/pact-verification/*.json` and `golden-masters/index.json` for contracts, only in a step
+where test results were found), compares with the baseline (the same
 kind in the QA run of the release request that produced the newest released version), and PUTs one
 report per kind to `https://ci.qits.$QITS_DOMAIN`, with the publish chain's bearer. It takes the run
 from `QITS_CI_RUN_ID`, `QITS_CI_STEP_INDEX`, `QITS_CI_SHA`, `QITS_CI_REPO_NAME` and
@@ -787,6 +796,7 @@ out with one warning, never wrong.
 
     qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results
     qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind coverage
+    qits ci report show 5f2c0a9e --project qits --repository qits-landing-app --kind contracts
 
 ### qits maintenance
 

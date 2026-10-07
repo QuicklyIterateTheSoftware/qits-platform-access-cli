@@ -1,0 +1,849 @@
+{
+  "consumer": {
+    "name": "qits-landing-app"
+  },
+  "interactions": [
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-githost-service",
+            "operationId": "listLoc"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-project-loc",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-project-loc: listLoc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository counted at an older commit",
+          "params": {
+            "repositoryId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/githost/api/loc"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "languages": [
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  }
+                ],
+                "repositoryId": "00000000-0000-4000-8000-000000000001",
+                "status": "STALE"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "arrayContains",
+                  "variants": [
+                    {
+                      "index": 0,
+                      "rules": {
+                        "$.languages": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 4,
+                              "min": 4
+                            }
+                          ]
+                        },
+                        "$.languages[*].category": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.languages[*].language": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.languages[*].mainLines": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.languages[*].testLines": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-githost-service",
+            "operationId": "listLoc"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-project-loc",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-project-loc: listLoc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository not counted yet",
+          "params": {
+            "repositoryId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/githost/api/loc"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "languages": [],
+                "repositoryId": "00000000-0000-4000-8000-000000000001",
+                "status": "PENDING"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "arrayContains",
+                  "variants": [
+                    {
+                      "index": 0,
+                      "rules": {
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-githost-service",
+            "operationId": "listLoc"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-project-loc",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-project-loc: listLoc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with counted lines",
+          "params": {
+            "repositoryId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/githost/api/loc"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "languages": [
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  }
+                ],
+                "repositoryId": "00000000-0000-4000-8000-000000000001",
+                "status": "COUNTED"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "arrayContains",
+                  "variants": [
+                    {
+                      "index": 0,
+                      "rules": {
+                        "$.languages": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 4,
+                              "min": 4
+                            }
+                          ]
+                        },
+                        "$.languages[*].category": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.languages[*].language": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.languages[*].mainLines": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.languages[*].testLines": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-githost-service",
+            "operationId": "listLoc"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-project-loc",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-project-loc: listLoc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with no commit",
+          "params": {
+            "repositoryId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/githost/api/loc"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "languages": [],
+                "repositoryId": "00000000-0000-4000-8000-000000000001",
+                "status": "EMPTY"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "arrayContains",
+                  "variants": [
+                    {
+                      "index": 0,
+                      "rules": {
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-githost-service",
+            "operationId": "listLoc"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-project-loc",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-project-loc: listLoc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "two repositories, one counted",
+          "params": {
+            "countedRepositoryId": "00000000-0000-4000-8000-000000000001",
+            "pendingRepositoryId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/githost/api/loc"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "languages": [
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  },
+                  {
+                    "category": "CODE",
+                    "language": "Java",
+                    "mainLines": 3,
+                    "testLines": 2
+                  }
+                ],
+                "repositoryId": "00000000-0000-4000-8000-000000000001",
+                "status": "COUNTED"
+              },
+              {
+                "languages": [],
+                "repositoryId": "00000000-0000-4000-8000-000000000002",
+                "status": "PENDING"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "arrayContains",
+                  "variants": [
+                    {
+                      "index": 0,
+                      "rules": {
+                        "$.languages": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 4,
+                              "min": 4
+                            }
+                          ]
+                        },
+                        "$.languages[*].category": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.languages[*].language": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.languages[*].mainLines": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.languages[*].testLines": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            },
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "index": 1,
+                      "rules": {
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "17.1.4"
+    },
+    "pactRust": {
+      "ffi": "0.5.8",
+      "models": "1.3.16"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "qits-githost-service"
+  }
+}

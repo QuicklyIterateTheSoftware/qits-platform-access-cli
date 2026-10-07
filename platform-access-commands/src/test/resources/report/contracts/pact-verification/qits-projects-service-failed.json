@@ -1,0 +1,2039 @@
+{
+  "execution": [
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "listProjects"
+            },
+            "qits-trigger": {
+              "app": "qits-landing-app",
+              "interaction": "list-projects",
+              "kind": "ui"
+            }
+          }
+        },
+        "name": "qits-landing-app",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-landing-pacts-qits-projects/2026.1002.163025/qits-landing-pacts-qits-projects-2026.1002.163025.jar!/pacts/qits-landing-app_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "listProjects"
+                },
+                "qits-trigger": {
+                  "app": "qits-landing-app",
+                  "interaction": "list-projects",
+                  "kind": "ui"
+                }
+              }
+            },
+            "description": "list-projects: listProjects",
+            "key": "null",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a project exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "path": "/projects/api/projects"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "entries": [
+                    {
+                      "project": {
+                        "id": "00000000-0000-4000-8000-000000000001",
+                        "name": "Contract project",
+                        "slug": "contract-00000001"
+                      }
+                    }
+                  ]
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.entries": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type",
+                        "min": 1
+                      }
+                    ]
+                  },
+                  "$.entries[*].project.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                      }
+                    ]
+                  },
+                  "$.entries[*].project.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].project.slug": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getProject"
+            },
+            "qits-trigger": {
+              "app": "qits-landing-app",
+              "interaction": "open-project",
+              "kind": "ui"
+            }
+          }
+        },
+        "name": "qits-landing-app",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-landing-pacts-qits-projects/2026.1002.163025/qits-landing-pacts-qits-projects-2026.1002.163025.jar!/pacts/qits-landing-app_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getProject"
+                },
+                "qits-trigger": {
+                  "app": "qits-landing-app",
+                  "interaction": "open-project",
+                  "kind": "ui"
+                }
+              }
+            },
+            "description": "open-project: getProject",
+            "key": "null",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a project exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/projects/${projectId}",
+                  "type": "ProviderState"
+                }
+              },
+              "matchingRules": {
+                "path": {
+                  "combine": "AND",
+                  "matchers": [
+                    {
+                      "match": "type"
+                    }
+                  ]
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "project": {
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "name": "Contract project",
+                    "slug": "contract-00000001"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.project.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                      }
+                    ]
+                  },
+                  "$.project.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.project.slug": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getProject"
+            },
+            "qits-trigger": {
+              "app": "qits-landing-app",
+              "interaction": "open-project",
+              "kind": "ui"
+            }
+          }
+        },
+        "name": "qits-landing-app",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-landing-pacts-qits-projects/2026.1002.163025/qits-landing-pacts-qits-projects-2026.1002.163025.jar!/pacts/qits-landing-app_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getProject"
+                },
+                "qits-trigger": {
+                  "app": "qits-landing-app",
+                  "interaction": "open-project",
+                  "kind": "ui"
+                }
+              }
+            },
+            "description": "open-project: getProject",
+            "key": "null",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "no project with the given id",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/projects/${projectId}",
+                  "type": "ProviderState"
+                }
+              },
+              "matchingRules": {
+                "path": {
+                  "combine": "AND",
+                  "matchers": [
+                    {
+                      "match": "type"
+                    }
+                  ]
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001"
+            },
+            "response": {
+              "status": 404
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "listProjectRepositories"
+            },
+            "qits-trigger": {
+              "app": "qits-landing-app",
+              "interaction": "show-project-repositories",
+              "kind": "ui"
+            }
+          }
+        },
+        "name": "qits-landing-app",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-landing-pacts-qits-projects/2026.1002.163025/qits-landing-pacts-qits-projects-2026.1002.163025.jar!/pacts/qits-landing-app_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "listProjectRepositories"
+                },
+                "qits-trigger": {
+                  "app": "qits-landing-app",
+                  "interaction": "show-project-repositories",
+                  "kind": "ui"
+                }
+              }
+            },
+            "description": "show-project-repositories: listProjectRepositories",
+            "key": "null",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a project with 3 repositories",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/projects/${projectId}/repositories",
+                  "type": "ProviderState"
+                }
+              },
+              "matchingRules": {
+                "path": {
+                  "combine": "AND",
+                  "matchers": [
+                    {
+                      "match": "type"
+                    }
+                  ]
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/repositories"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "entries": [
+                    {},
+                    {},
+                    {},
+                    {}
+                  ]
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.entries": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type",
+                        "max": 4,
+                        "min": 4
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "listProjects"
+            },
+            "qits-trigger": {
+              "app": "qits-landing-app",
+              "interaction": "sign-in-landing",
+              "kind": "ui"
+            }
+          }
+        },
+        "name": "qits-landing-app",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-landing-pacts-qits-projects/2026.1002.163025/qits-landing-pacts-qits-projects-2026.1002.163025.jar!/pacts/qits-landing-app_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "listProjects"
+                },
+                "qits-trigger": {
+                  "app": "qits-landing-app",
+                  "interaction": "sign-in-landing",
+                  "kind": "ui"
+                }
+              }
+            },
+            "description": "sign-in-landing: listProjects",
+            "key": "null",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a project exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "path": "/projects/api/projects"
+            },
+            "response": {
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getRepository"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "captureWorkspace"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getRepository"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "captureWorkspace"
+                }
+              }
+            },
+            "description": "captureWorkspace: getRepository",
+            "key": "30b0898a",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a repository exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001",
+                  "repositoryId": "00000000-0000-4000-8000-000000000002"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/repositories/${repositoryId}",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "repository": {
+                    "archetype": "SERVICE",
+                    "backupUrl": null,
+                    "component": "contract-service",
+                    "id": "00000000-0000-4000-8000-000000000002",
+                    "lastBackup": null,
+                    "mainBranch": "main",
+                    "name": "contract-service",
+                    "projectId": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.component": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "failed",
+            "status": [
+              "expected status of 200 but was 500"
+            ]
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getRepository"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "createWorkspace"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getRepository"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "createWorkspace"
+                }
+              }
+            },
+            "description": "createWorkspace: getRepository",
+            "key": "8a720e5c",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a repository exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001",
+                  "repositoryId": "00000000-0000-4000-8000-000000000002"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/repositories/${repositoryId}",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "repository": {
+                    "archetype": "SERVICE",
+                    "backupUrl": null,
+                    "component": "contract-service",
+                    "id": "00000000-0000-4000-8000-000000000002",
+                    "lastBackup": null,
+                    "mainBranch": "main",
+                    "name": "contract-service",
+                    "projectId": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.component": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getRepository"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "dispatchAgent"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getRepository"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "dispatchAgent"
+                }
+              }
+            },
+            "description": "dispatchAgent: getRepository",
+            "key": "1327c4f6",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a repository exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001",
+                  "repositoryId": "00000000-0000-4000-8000-000000000002"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/repositories/${repositoryId}",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "repository": {
+                    "archetype": "SERVICE",
+                    "backupUrl": null,
+                    "component": "contract-service",
+                    "id": "00000000-0000-4000-8000-000000000002",
+                    "lastBackup": null,
+                    "mainBranch": "main",
+                    "name": "contract-service",
+                    "projectId": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.component": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getRepository"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "dispatchAgent"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getRepository"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "dispatchAgent"
+                }
+              }
+            },
+            "description": "dispatchAgent: getRepository",
+            "key": "251b7485",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "no repository with the given id",
+                "params": {
+                  "repositoryId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/repositories/${repositoryId}",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000001"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "message": "Repository not found: 00000000-0000-4000-8000-000000000001"
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.message": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 404
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "listProjectRepositories"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "dispatchAgent"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "listProjectRepositories"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "dispatchAgent"
+                }
+              }
+            },
+            "description": "dispatchAgent: listProjectRepositories",
+            "key": "8f77aade",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a project with 3 repositories",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/projects/${projectId}/repositories",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/repositories"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "entries": [
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    },
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    },
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    },
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    }
+                  ],
+                  "wrapper": {
+                    "branch": "main",
+                    "entries": [
+                      {
+                        "name": "contract-service",
+                        "path": "components/contract-service/contract-service",
+                        "repositoryId": "00000000-0000-4000-8000-000000000005"
+                      },
+                      {
+                        "name": "contract-service",
+                        "path": "components/contract-service/contract-service",
+                        "repositoryId": "00000000-0000-4000-8000-000000000005"
+                      },
+                      {
+                        "name": "contract-service",
+                        "path": "components/contract-service/contract-service",
+                        "repositoryId": "00000000-0000-4000-8000-000000000005"
+                      }
+                    ],
+                    "repositoryId": "00000000-0000-4000-8000-000000000002"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.entries": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type",
+                        "max": 4,
+                        "min": 4
+                      }
+                    ]
+                  },
+                  "$.entries[*].declared": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.component": {
+                    "combine": "OR",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      },
+                      {
+                        "match": "null"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.wrapper.branch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type",
+                        "max": 3,
+                        "min": 3
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries[*].name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries[*].path": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries[*].repositoryId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.wrapper.repositoryId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getRepository"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "ensureEditor"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getRepository"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "ensureEditor"
+                }
+              }
+            },
+            "description": "ensureEditor: getRepository",
+            "key": "b7f0ba16",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a repository exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001",
+                  "repositoryId": "00000000-0000-4000-8000-000000000002"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/repositories/${repositoryId}",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "repository": {
+                    "archetype": "SERVICE",
+                    "backupUrl": null,
+                    "component": "contract-service",
+                    "id": "00000000-0000-4000-8000-000000000002",
+                    "lastBackup": null,
+                    "mainBranch": "main",
+                    "name": "contract-service",
+                    "projectId": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.component": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "listProjectRepositories"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "ensureEditor"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "listProjectRepositories"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "ensureEditor"
+                }
+              }
+            },
+            "description": "ensureEditor: listProjectRepositories",
+            "key": "55e8b7fe",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a project with 3 repositories",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/projects/${projectId}/repositories",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/repositories"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "entries": [
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    },
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    },
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    },
+                    {
+                      "declared": true,
+                      "repository": {
+                        "archetype": "PROJECT",
+                        "backupUrl": null,
+                        "component": "contract-daemon",
+                        "id": "00000000-0000-4000-8000-000000000002",
+                        "lastBackup": null,
+                        "mainBranch": "main",
+                        "name": "contract-00000001-contract-00000001",
+                        "projectId": "00000000-0000-4000-8000-000000000001"
+                      }
+                    }
+                  ],
+                  "wrapper": {
+                    "branch": "main",
+                    "entries": [
+                      {
+                        "name": "contract-service",
+                        "path": "components/contract-service/contract-service",
+                        "repositoryId": "00000000-0000-4000-8000-000000000005"
+                      },
+                      {
+                        "name": "contract-service",
+                        "path": "components/contract-service/contract-service",
+                        "repositoryId": "00000000-0000-4000-8000-000000000005"
+                      },
+                      {
+                        "name": "contract-service",
+                        "path": "components/contract-service/contract-service",
+                        "repositoryId": "00000000-0000-4000-8000-000000000005"
+                      }
+                    ],
+                    "repositoryId": "00000000-0000-4000-8000-000000000002"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.entries": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type",
+                        "max": 4,
+                        "min": 4
+                      }
+                    ]
+                  },
+                  "$.entries[*].declared": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.component": {
+                    "combine": "OR",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      },
+                      {
+                        "match": "null"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.entries[*].repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.wrapper.branch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type",
+                        "max": 3,
+                        "min": 3
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries[*].name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries[*].path": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.wrapper.entries[*].repositoryId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.wrapper.repositoryId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    },
+    {
+      "consumer": {
+        "comments": {
+          "references": {
+            "qits-call": {
+              "app": "qits-projects-service",
+              "operationId": "getRepository"
+            },
+            "qits-trigger": {
+              "app": "qits-workspaces-service",
+              "kind": "operation",
+              "operationId": "mergeWorkspace"
+            }
+          }
+        },
+        "name": "qits-workspaces-service",
+        "output": [],
+        "source": {
+          "url": "jar:file:/caches/m2/eu/wohlben/qits/qits-workspaces-pacts-qits-projects/2026.1002.170857/qits-workspaces-pacts-qits-projects-2026.1002.170857.jar!/pacts/qits-workspaces-service_qits-projects-service.json"
+        }
+      },
+      "interactions": [
+        {
+          "interaction": {
+            "comments": {
+              "references": {
+                "qits-call": {
+                  "app": "qits-projects-service",
+                  "operationId": "getRepository"
+                },
+                "qits-trigger": {
+                  "app": "qits-workspaces-service",
+                  "kind": "operation",
+                  "operationId": "mergeWorkspace"
+                }
+              }
+            },
+            "description": "mergeWorkspace: getRepository",
+            "key": "a193b5f0",
+            "pending": false,
+            "providerStates": [
+              {
+                "name": "a repository exists",
+                "params": {
+                  "projectId": "00000000-0000-4000-8000-000000000001",
+                  "repositoryId": "00000000-0000-4000-8000-000000000002"
+                }
+              }
+            ],
+            "request": {
+              "generators": {
+                "path": {
+                  "dataType": "RAW",
+                  "expression": "/projects/api/repositories/${repositoryId}",
+                  "type": "ProviderState"
+                }
+              },
+              "method": "GET",
+              "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002"
+            },
+            "response": {
+              "body": {
+                "content": {
+                  "repository": {
+                    "archetype": "SERVICE",
+                    "backupUrl": null,
+                    "component": "contract-service",
+                    "id": "00000000-0000-4000-8000-000000000002",
+                    "lastBackup": null,
+                    "mainBranch": "main",
+                    "name": "contract-service",
+                    "projectId": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "contentType": "application/json",
+                "encoded": false
+              },
+              "headers": {
+                "Content-Type": [
+                  "application/json"
+                ]
+              },
+              "matchingRules": {
+                "body": {
+                  "$.repository.archetype": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.component": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.id": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  },
+                  "$.repository.mainBranch": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.name": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "type"
+                      }
+                    ]
+                  },
+                  "$.repository.projectId": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                      }
+                    ]
+                  }
+                },
+                "header": {
+                  "Content-Type": {
+                    "combine": "AND",
+                    "matchers": [
+                      {
+                        "match": "regex",
+                        "regex": "application/json.*"
+                      }
+                    ]
+                  }
+                }
+              },
+              "status": 200
+            },
+            "type": "Synchronous/HTTP"
+          },
+          "verification": {
+            "result": "OK"
+          }
+        }
+      ],
+      "pending": false
+    }
+  ],
+  "metaData": {
+    "date": "2026-10-07T12:43:39.483194788Z[GMT]",
+    "pactJvmVersion": "4.6.21",
+    "reportFormat": "0.1.0"
+  },
+  "provider": {
+    "name": "qits-projects-service"
+  }
+}

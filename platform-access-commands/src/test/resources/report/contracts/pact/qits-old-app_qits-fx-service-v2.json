@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "qits-old-app"
+  },
+  "provider": {
+    "name": "qits-fx-service"
+  },
+  "interactions": [
+    {
+      "description": "get a ledger",
+      "providerState": "one ledger",
+      "request": {
+        "method": "GET",
+        "path": "/fx/api/ledgers/l-1"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "l-1"
+        }
+      }
+    },
+    {
+      "description": "health",
+      "request": {
+        "method": "GET",
+        "path": "/q/health"
+      },
+      "response": {
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

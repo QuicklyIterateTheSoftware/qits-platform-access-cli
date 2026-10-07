@@ -63,6 +63,10 @@ import java.util.function.Consumer;
                         + "With a baseline it fetches the baseline's tag (git fetch --depth=1 "
                         + "\"$QITS_CI_REPOSITORY_URL\" refs/tags/<version>) and measures the lines `git diff -U0 "
                         + "<version> HEAD` names; when git cannot, the diff coverage is left out, with one warning.",
+                "- contracts reads pacts/*.json (the committed consumer pacts, Pact v2 to v4), "
+                        + ".qits-reports/pact-verification/*.json (Pact-JVM's JSON verification report: the pacts "
+                        + "the provider verified) and golden-masters/index.json (the provider states), and only in "
+                        + "a step where test-results found a file, so a run reports its tree once.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no "
