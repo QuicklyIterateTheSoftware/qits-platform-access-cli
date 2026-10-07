@@ -833,6 +833,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 ```
 
 - test-results reads **/target/surefire-reports/TEST-*.xml, **/target/failsafe-reports/TEST-*.xml and .qits-reports/vitest-*.xml. A file that does not parse is skipped with a warning.
+- A failing test gets the lines it sits on in its file for Java with surefire or failsafe (the JUnit test method, its annotations included) and for TypeScript or JavaScript with vitest (the it/test block); any other failure has none.
 - coverage reads .qits-reports/jacoco.exec (JaCoCo 0.8.14's format) against every **/target/classes, and coverage/**/coverage-final.json or .qits-reports/coverage/**/coverage-final.json (istanbul's json, as vitest writes it). With a baseline it fetches the baseline's tag (git fetch --depth=1 "$QITS_CI_REPOSITORY_URL" refs/tags/<version>) and measures the lines `git diff -U0 <version> HEAD` names; when git cannot, the diff coverage is left out, with one warning.
 - The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no option names another address.
 - The bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.

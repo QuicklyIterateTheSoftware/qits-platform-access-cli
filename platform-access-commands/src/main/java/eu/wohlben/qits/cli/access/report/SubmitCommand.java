@@ -54,6 +54,9 @@ import java.util.function.Consumer;
                 "",
                 "- test-results reads **/target/surefire-reports/TEST-*.xml, **/target/failsafe-reports/TEST-*.xml "
                         + "and .qits-reports/vitest-*.xml. A file that does not parse is skipped with a warning.",
+                "- A failing test gets the lines it sits on in its file for Java with surefire or failsafe (the JUnit "
+                        + "test method, its annotations included) and for TypeScript or JavaScript with vitest (the "
+                        + "it/test block); any other failure has none.",
                 "- coverage reads .qits-reports/jacoco.exec (JaCoCo 0.8.14's format) against every "
                         + "**/target/classes, and coverage/**/coverage-final.json or "
                         + ".qits-reports/coverage/**/coverage-final.json (istanbul's json, as vitest writes it). "

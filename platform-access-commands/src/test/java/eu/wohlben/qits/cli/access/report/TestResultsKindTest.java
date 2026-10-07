@@ -199,6 +199,35 @@ class TestResultsKindTest {
                 .allSatisfy(f -> assertThat(f.coordinates().lineStart()).isNull());
     }
 
+    @Test
+    void theRegisteredLocatorsFillInTheLinesFromTheSourceTree() throws Exception {
+        Path root = Fixtures.tree(work);
+        // A failing class whose source is nowhere in the tree: its file is null, and so are its lines.
+        Files.writeString(root.resolve("service/target/surefire-reports/TEST-eu.wohlben.qits.fx.GoneTest.xml"),
+                "<testsuite name=\"eu.wohlben.qits.fx.GoneTest\"><testcase name=\"vanished\" "
+                        + "classname=\"eu.wohlben.qits.fx.GoneTest\"><failure message=\"m\" "
+                        + "type=\"java.lang.AssertionError\">trace</failure></testcase></testsuite>");
+
+        TestResults report = collect(root).orElseThrow();
+
+        assertThat(report.failures()).extracting(f -> f.coordinates().className() + "#" + f.coordinates().testName()
+                        + " " + f.coordinates().lineStart() + "-" + f.coordinates().lineEnd())
+                .containsExactlyInAnyOrder(
+                        "eu.wohlben.qits.fx.BrokenSetupTest#(setup) null-null",
+                        "eu.wohlben.qits.fx.ClockTest#waitsTooLong 15-19",
+                        "eu.wohlben.qits.fx.GoneTest#vanished null-null",
+                        "eu.wohlben.qits.fx.LedgerTest#readsTheLedger 21-25",
+                        "eu.wohlben.qits.fx.LedgerTest#refusesAnotherRunsToken 16-19",
+                        "eu.wohlben.qits.fx.LedgerTest$WhenEmpty#refusesAWithdrawal 40-43",
+                        "eu.wohlben.qits.fx4.LegacyTest#(setup) null-null",
+                        "eu.wohlben.qits.fx.LedgerIT#servesTheLedger 13-16",
+                        "src/app/broken.spec.ts#(setup) null-null",
+                        "Ledger > when empty#refuses a withdrawal 9-11",
+                        "Ledger#waits too long 14-16");
+        assertThat(report.failures()).filteredOn(f -> f.coordinates().className().endsWith("GoneTest"))
+                .singleElement().satisfies(f -> assertThat(f.coordinates().file()).isNull());
+    }
+
     // --- highlights --------------------------------------------------------------------------------
 
     @Test
