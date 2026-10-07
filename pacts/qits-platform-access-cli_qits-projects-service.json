@@ -4941,20 +4941,34 @@
                 ],
                 "phases": {
                   "DONE": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "DROPPED": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "IMPLEMENTED": {
                     "flow": [
                       {
-                        "endsIn": "VERIFIED",
-                        "enters": "VERIFYING",
-                        "from": "IMPLEMENTED",
-                        "phase": "verify"
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -4967,16 +4981,10 @@
                   "IMPLEMENTING": {
                     "flow": [
                       {
-                        "endsIn": "IMPLEMENTED",
-                        "enters": "VERIFYING",
-                        "from": "IMPLEMENTING",
-                        "phase": "implement"
-                      },
-                      {
-                        "endsIn": "IMPLEMENTED",
-                        "enters": "VERIFYING",
-                        "from": "IMPLEMENTING",
-                        "phase": "implement"
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -4989,16 +4997,10 @@
                   "READY_FOR_DEV": {
                     "flow": [
                       {
-                        "endsIn": "IMPLEMENTED",
+                        "endsIn": "REFINED",
                         "enters": "IMPLEMENTING",
-                        "from": "READY_FOR_DEV",
-                        "phase": "implement"
-                      },
-                      {
-                        "endsIn": "IMPLEMENTED",
-                        "enters": "IMPLEMENTING",
-                        "from": "READY_FOR_DEV",
-                        "phase": "implement"
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -5009,14 +5011,21 @@
                     }
                   },
                   "REFINED": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "REPORTED": {
                     "flow": [
                       {
                         "endsIn": "REFINED",
-                        "enters": null,
+                        "enters": "IMPLEMENTING",
                         "from": "REPORTED",
                         "phase": "refine"
                       }
@@ -5029,16 +5038,23 @@
                     }
                   },
                   "VERIFIED": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "VERIFYING": {
                     "flow": [
                       {
-                        "endsIn": "VERIFIED",
-                        "enters": null,
-                        "from": "VERIFYING",
-                        "phase": "verify"
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -5214,20 +5230,34 @@
                 ],
                 "phases": {
                   "DONE": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "DROPPED": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "IMPLEMENTED": {
                     "flow": [
                       {
-                        "endsIn": "VERIFIED",
-                        "enters": "VERIFYING",
-                        "from": "IMPLEMENTED",
-                        "phase": "verify"
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -5240,16 +5270,10 @@
                   "IMPLEMENTING": {
                     "flow": [
                       {
-                        "endsIn": "IMPLEMENTED",
-                        "enters": "VERIFYING",
-                        "from": "IMPLEMENTING",
-                        "phase": "implement"
-                      },
-                      {
-                        "endsIn": "IMPLEMENTED",
-                        "enters": "VERIFYING",
-                        "from": "IMPLEMENTING",
-                        "phase": "implement"
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -5262,16 +5286,10 @@
                   "READY_FOR_DEV": {
                     "flow": [
                       {
-                        "endsIn": "IMPLEMENTED",
+                        "endsIn": "REFINED",
                         "enters": "IMPLEMENTING",
-                        "from": "READY_FOR_DEV",
-                        "phase": "implement"
-                      },
-                      {
-                        "endsIn": "IMPLEMENTED",
-                        "enters": "IMPLEMENTING",
-                        "from": "READY_FOR_DEV",
-                        "phase": "implement"
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -5282,14 +5300,21 @@
                     }
                   },
                   "REFINED": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "REPORTED": {
                     "flow": [
                       {
                         "endsIn": "REFINED",
-                        "enters": null,
+                        "enters": "IMPLEMENTING",
                         "from": "REPORTED",
                         "phase": "refine"
                       }
@@ -5302,16 +5327,23 @@
                     }
                   },
                   "VERIFIED": {
-                    "flow": [],
+                    "flow": [
+                      {
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
+                      }
+                    ],
                     "next": null
                   },
                   "VERIFYING": {
                     "flow": [
                       {
-                        "endsIn": "VERIFIED",
-                        "enters": null,
-                        "from": "VERIFYING",
-                        "phase": "verify"
+                        "endsIn": "REFINED",
+                        "enters": "IMPLEMENTING",
+                        "from": "REPORTED",
+                        "phase": "refine"
                       }
                     ],
                     "next": {
@@ -6011,13 +6043,100 @@
                 }
               ]
             },
+            "$.archetypes[0].phases.DONE.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DONE.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DONE.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DONE.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DONE.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DROPPED.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DROPPED.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DROPPED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DROPPED.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.DROPPED.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.archetypes[0].phases.IMPLEMENTED.flow": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -6030,10 +6149,13 @@
               ]
             },
             "$.archetypes[0].phases.IMPLEMENTED.flow[*].enters": {
-              "combine": "AND",
+              "combine": "OR",
               "matchers": [
                 {
                   "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -6090,8 +6212,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -6159,8 +6280,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -6173,10 +6293,13 @@
               ]
             },
             "$.archetypes[0].phases.READY_FOR_DEV.flow[*].enters": {
-              "combine": "AND",
+              "combine": "OR",
               "matchers": [
                 {
                   "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -6228,13 +6351,56 @@
                 }
               ]
             },
+            "$.archetypes[0].phases.REFINED.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[0].phases.REFINED.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.REFINED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.REFINED.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.REFINED.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.archetypes[0].phases.REPORTED.flow": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -6243,6 +6409,17 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.REPORTED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -6286,13 +6463,56 @@
                 }
               ]
             },
+            "$.archetypes[0].phases.VERIFIED.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[0].phases.VERIFIED.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.VERIFIED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.VERIFIED.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.VERIFIED.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.archetypes[0].phases.VERIFYING.flow": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -6301,6 +6521,17 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[0].phases.VERIFYING.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -6756,13 +6987,100 @@
                 }
               ]
             },
+            "$.archetypes[1].phases.DONE.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DONE.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DONE.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DONE.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DONE.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DROPPED.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DROPPED.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DROPPED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DROPPED.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.DROPPED.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.archetypes[1].phases.IMPLEMENTED.flow": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -6775,10 +7093,13 @@
               ]
             },
             "$.archetypes[1].phases.IMPLEMENTED.flow[*].enters": {
-              "combine": "AND",
+              "combine": "OR",
               "matchers": [
                 {
                   "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -6835,8 +7156,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -6904,8 +7224,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -6918,10 +7237,13 @@
               ]
             },
             "$.archetypes[1].phases.READY_FOR_DEV.flow[*].enters": {
-              "combine": "AND",
+              "combine": "OR",
               "matchers": [
                 {
                   "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -6973,13 +7295,56 @@
                 }
               ]
             },
+            "$.archetypes[1].phases.REFINED.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[1].phases.REFINED.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.REFINED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.REFINED.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.REFINED.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.archetypes[1].phases.REPORTED.flow": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -6988,6 +7353,17 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.REPORTED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },
@@ -7031,13 +7407,56 @@
                 }
               ]
             },
+            "$.archetypes[1].phases.VERIFIED.flow": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.archetypes[1].phases.VERIFIED.flow[*].endsIn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.VERIFIED.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.VERIFIED.flow[*].from": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.VERIFIED.flow[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.archetypes[1].phases.VERIFYING.flow": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -7046,6 +7465,17 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[1].phases.VERIFYING.flow[*].enters": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
                 }
               ]
             },

@@ -312,6 +312,9 @@ public final class GoldenMasters {
         return responseBody(op, json(op.state(), op.operationId()));
     }
 
+    /** The one operation whose {@code phases.*.flow} arrays {@link #unboundedFlow} rewrites. */
+    private static final String ARCHETYPE_REGISTRY_OPERATION = "listWorkArchetypes";
+
     /** {@link #responseBody(Operation)} over a given recording rather than the jar's. */
     static DslPart responseBody(Operation op, JsonNode recorded) {
         if (!recorded.isObject()) {
@@ -319,7 +322,9 @@ public final class GoldenMasters {
                     + ": only an object body is supported, got " + recorded.getNodeType());
         }
         PactDslJsonBody root = new PactDslJsonBody();
-        fillObject(root, Shape.of(recorded), "$", op);
+        Shape flowTemplate = ARCHETYPE_REGISTRY_OPERATION.equals(op.operationId())
+                ? canonicalFlowStep(op, recorded) : null;
+        fillObject(root, Shape.of(recorded), "$", op, flowTemplate);
         return root;
     }
 
@@ -396,7 +401,14 @@ public final class GoldenMasters {
 
     // --- the answer -----------------------------------------------------------------------------
 
-    private static void fillObject(PactDslJsonBody target, Shape shape, String path, Operation op) {
+    /**
+     * {@code flowTemplate} is non-null only while building {@link #ARCHETYPE_REGISTRY_OPERATION}'s
+     * answer: the one shape {@link #unboundedFlow} gives every {@code phases.*.flow} array,
+     * regardless of what this particular status recorded. It is threaded through rather than
+     * recomputed, because once {@link #array} is reached the original document is gone — only the
+     * {@link Shape} tree survives.
+     */
+    private static void fillObject(PactDslJsonBody target, Shape shape, String path, Operation op, Shape flowTemplate) {
         boolean keyed = op.keys().contains(path);
         for (Map.Entry<String, Shape> field : shape.fields.entrySet()) {
             String name = field.getKey();
@@ -407,7 +419,7 @@ public final class GoldenMasters {
                     throw unsupported(op, path + ".*", "a keyed " + child.kind + "; only object values are");
                 }
                 PactDslJsonBody value = target.eachKeyLike(name);
-                fillObject(value, child, path + ".*", op);
+                fillObject(value, child, path + ".*", op, flowTemplate);
                 value.closeObject();
                 continue;
             }
@@ -420,10 +432,10 @@ public final class GoldenMasters {
                         throw unsupported(op, childPath, "an object that is null in some elements");
                     }
                     PactDslJsonBody nested = target.object(name);
-                    fillObject(nested, child, childPath, op);
+                    fillObject(nested, child, childPath, op, flowTemplate);
                     nested.closeObject();
                 }
-                case ARRAY -> array(target, name, child, childPath, op);
+                case ARRAY -> array(target, name, child, childPath, op, flowTemplate);
                 default -> throw unsupported(op, childPath, "a " + child.kind);
             }
         }
@@ -459,7 +471,13 @@ public final class GoldenMasters {
         }
     }
 
-    private static void array(PactDslJsonBody target, String name, Shape array, String path, Operation op) {
+    private static void array(PactDslJsonBody target, String name, Shape array, String path, Operation op, Shape flowTemplate) {
+        if (flowTemplate != null && name.equals("flow") && path.contains(".phases.")) {
+            // phases.*.flow, listWorkArchetypes only: see unboundedFlow. Bypasses every rule below,
+            // length and recorded content alike — a flow array is never pinned to either.
+            unboundedFlow(target, name, flowTemplate, path, op);
+            return;
+        }
         if (array.nullable) {
             throw unsupported(op, path, "an array that is null in some elements");
         }
@@ -477,14 +495,14 @@ public final class GoldenMasters {
             // Elements one template cannot hold (the registry's archetypes, each with its own
             // statuses): each element is matched in its place, by type, against its own recording.
             PactDslJsonArray positional = target.array(name);
-            positional(positional, array.items, elementPath, op);
+            positional(positional, array.items, elementPath, op, flowTemplate);
             positional.closeArray();
             return;
         }
         switch (element.kind) {
             case OBJECT -> {
                 PactDslJsonBody template = filtered ? target.minArrayLike(name, n, n) : target.minMaxArrayLike(name, n, n, n);
-                fillObject(template, element, elementPath, op);
+                fillObject(template, element, elementPath, op, flowTemplate);
                 DslPart closed = template.closeObject();
                 ((PactDslJsonArray) closed).closeArray();
             }
@@ -498,6 +516,51 @@ public final class GoldenMasters {
             }
             default -> throw unsupported(op, elementPath, "an array of " + element.kind);
         }
+    }
+
+    /**
+     * {@code phases.*.flow}, for {@link #ARCHETYPE_REGISTRY_OPERATION} only (qits-1075):
+     * qits-projects is about to lengthen every lifecycle archetype's flow — {@code REPORTED} from
+     * one step to three, {@code REFINED} from no steps at all to two — so pinning today's length,
+     * the way {@link #array} pins every other array, would fail the moment the provider ships.
+     * Every flow step carries the same four fields no matter how many steps a status has, so the
+     * whole array is matched by type with no length at all ({@code minArrayLike(name, 0, …)}), and
+     * its one template element is {@code flowTemplate}, which {@link #canonicalFlowStep} merges
+     * from every step the recording carries anywhere in the document — so a status recorded with
+     * no steps at all today ({@code REFINED}) still gets an element to match its future steps by
+     * type, borrowed rather than invented.
+     */
+    private static void unboundedFlow(PactDslJsonBody target, String name, Shape flowTemplate, String path, Operation op) {
+        PactDslJsonBody template = target.minArrayLike(name, 0, 1);
+        fillObject(template, flowTemplate, path + "[*]", op, null);
+        DslPart closed = template.closeObject();
+        ((PactDslJsonArray) closed).closeArray();
+    }
+
+    /**
+     * The shape of one flow step, merged ({@link Shape#merge}) from every step {@code
+     * phases.*.flow} carries anywhere in {@code recorded} — both archetypes today, every status.
+     * {@link #unboundedFlow} reuses the one result as the template for every flow array, which is
+     * what lets an empty one (REFINED's, today) match a step it has never recorded: the merge
+     * widens a field that is null in one step and a value in another (REPORTED's {@code refine}
+     * step holds no {@code enters}; READY_FOR_DEV's {@code implement} step does) to type-or-null,
+     * same as {@link #leaf} does for any other field, rather than pinning it to the one recording
+     * happens to hold.
+     */
+    private static Shape canonicalFlowStep(Operation op, JsonNode recorded) {
+        Shape merged = null;
+        for (JsonNode archetype : recorded.path("archetypes")) {
+            for (JsonNode phase : archetype.path("phases")) {
+                for (JsonNode step : phase.path("flow")) {
+                    merged = merged == null ? Shape.of(step) : Shape.merge(merged, Shape.of(step));
+                }
+            }
+        }
+        if (merged == null) {
+            throw unsupported(op, "$.archetypes[*].phases.*.flow",
+                    "empty in every status of every archetype, leaving no flow step to borrow a shape from");
+        }
+        return merged;
     }
 
     /**
@@ -516,7 +579,8 @@ public final class GoldenMasters {
     }
 
     /** Each element in its place, a leaf by type (or by the index's matcher), as recorded. */
-    private static void positional(PactDslJsonArray target, List<Shape> items, String path, Operation op) {
+    private static void positional(
+            PactDslJsonArray target, List<Shape> items, String path, Operation op, Shape flowTemplate) {
         for (Shape item : items) {
             switch (item.kind) {
                 case NULL -> target.nullValue();
@@ -540,12 +604,12 @@ public final class GoldenMasters {
                 }
                 case OBJECT -> {
                     PactDslJsonBody object = target.object();
-                    fillObject(object, item, path, op);
+                    fillObject(object, item, path, op, flowTemplate);
                     object.closeObject();
                 }
                 case ARRAY -> {
                     PactDslJsonArray inner = target.array();
-                    positional(inner, item.items, path + "[*]", op);
+                    positional(inner, item.items, path + "[*]", op, flowTemplate);
                     inner.closeArray();
                 }
                 default -> throw unsupported(op, path, "a " + item.kind);
