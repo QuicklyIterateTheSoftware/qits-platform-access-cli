@@ -1654,25 +1654,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
+                "createdBy": null,
                 "dependsOn": null,
                 "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
+                "impetus": null,
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
+                "implementingAt": null,
                 "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
                 "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
+                "repositoryId": null,
                 "slug": "reported-epic",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
                 "status": "REPORTED",
                 "statusBefore": null,
                 "supersededBy": null,
-                "ticketType": "BUG",
+                "ticketType": null,
                 "title": "Reported epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": "contract-seeder",
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-000000000003",
+                "impetus": "Seeded work.",
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 2,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-2",
+                "repositoryId": null,
+                "slug": "reported-ticket",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "REPORTED",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": "BUG",
+                "title": "Reported ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1681,25 +1708,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-000000000004",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 3,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-3",
+                "repositoryId": null,
+                "slug": "refined-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "REFINED",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Refined epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-000000000005",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 4,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-4",
+                "repositoryId": null,
+                "slug": "refined-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "REFINED",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Refined ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1708,25 +1762,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-000000000006",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 5,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-5",
+                "repositoryId": null,
+                "slug": "ready-for-dev-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "READY_FOR_DEV",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Ready for dev epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-000000000007",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 6,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-6",
+                "repositoryId": null,
+                "slug": "ready-for-dev-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "READY_FOR_DEV",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Ready for dev ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1735,25 +1816,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-000000000008",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 7,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-7",
+                "repositoryId": null,
+                "slug": "implementing-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "IMPLEMENTING",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Implementing epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-000000000009",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 8,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-8",
+                "repositoryId": null,
+                "slug": "implementing-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "IMPLEMENTING",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Implementing ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1762,25 +1870,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-00000000000a",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 9,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-9",
+                "repositoryId": null,
+                "slug": "implemented-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "IMPLEMENTED",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Implemented epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-00000000000b",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 10,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-10",
+                "repositoryId": null,
+                "slug": "implemented-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "IMPLEMENTED",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Implemented ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1789,25 +1924,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-00000000000c",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 11,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-11",
+                "repositoryId": null,
+                "slug": "verifying-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "VERIFYING",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Verifying epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-00000000000d",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 12,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-12",
+                "repositoryId": null,
+                "slug": "verifying-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "VERIFYING",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Verifying ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1816,25 +1978,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-00000000000e",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 13,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-13",
+                "repositoryId": null,
+                "slug": "verified-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "VERIFIED",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Verified epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-00000000000f",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 14,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-14",
+                "repositoryId": null,
+                "slug": "verified-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "VERIFIED",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Verified ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1843,25 +2032,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-000000000010",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 15,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-15",
+                "repositoryId": null,
+                "slug": "done-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "DONE",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Done epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-000000000011",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 16,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-16",
+                "repositoryId": null,
+                "slug": "done-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "DONE",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Done ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1870,25 +2086,52 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": null,
+                "dependsOn": null,
+                "id": "00000000-0000-4000-8000-000000000012",
+                "impetus": null,
+                "implementedAt": null,
+                "implementingAt": null,
+                "number": 17,
+                "parent": null,
+                "position": null,
+                "projectId": "00000000-0000-4000-8000-000000000001",
+                "qualifiedId": "contract-00000001-17",
+                "repositoryId": null,
+                "slug": "dropped-epic",
+                "slugScope": "00000000-0000-4000-8000-000000000001",
+                "status": "DROPPED",
+                "statusBefore": null,
+                "supersededBy": null,
+                "ticketType": null,
+                "title": "Dropped epic",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "assignee": null,
+                "blocked": false,
+                "changedBy": null,
+                "createdAt": "2026-01-01T00:00:00Z",
                 "createdBy": "contract-seeder",
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
+                "id": "00000000-0000-4000-8000-000000000013",
                 "impetus": "Seeded work.",
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 18,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-18",
+                "repositoryId": null,
+                "slug": "dropped-ticket",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "DROPPED",
                 "statusBefore": null,
                 "supersededBy": null,
                 "ticketType": "BUG",
-                "title": "Reported epic",
+                "title": "Dropped ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
@@ -1897,322 +2140,77 @@
                 "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
+                "createdBy": null,
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
+                "id": "00000000-0000-4000-8000-000000000014",
+                "impetus": null,
                 "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
+                "implementingAt": null,
+                "number": 19,
+                "parent": null,
+                "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
+                "qualifiedId": "contract-00000001-19",
+                "repositoryId": null,
+                "slug": "started-epic",
                 "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "status": "IMPLEMENTING",
                 "statusBefore": null,
                 "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
+                "ticketType": null,
+                "title": "Started epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
-                "archetype": "EPIC",
+                "archetype": "FEATURE",
                 "assignee": null,
-                "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
+                "createdBy": null,
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
+                "id": "00000000-0000-4000-8000-000000000015",
+                "impetus": null,
                 "implementedAt": null,
                 "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
+                "number": 20,
                 "parent": "00000000-0000-4000-8000-000000000014",
                 "position": 0,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "qualifiedId": "contract-00000001-20",
+                "repositoryId": null,
+                "slug": "started-feature",
+                "slugScope": "00000000-0000-4000-8000-000000000014",
+                "status": "IMPLEMENTING",
                 "statusBefore": null,
                 "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
+                "ticketType": null,
+                "title": "Started feature",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
               {
-                "archetype": "EPIC",
+                "archetype": "TASK",
                 "assignee": null,
-                "blocked": false,
                 "changedBy": null,
                 "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
+                "createdBy": null,
                 "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
+                "id": "00000000-0000-4000-8000-000000000016",
+                "impetus": null,
                 "implementedAt": null,
                 "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
+                "number": 21,
+                "parent": "00000000-0000-4000-8000-000000000015",
                 "position": 0,
                 "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
+                "qualifiedId": "contract-00000001-21",
                 "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
+                "slug": "started-task",
+                "slugScope": "00000000-0000-4000-8000-000000000015",
+                "status": "IMPLEMENTING",
                 "statusBefore": null,
                 "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
-                "updatedAt": "2026-01-01T00:00:00Z"
-              },
-              {
-                "archetype": "EPIC",
-                "assignee": null,
-                "blocked": false,
-                "changedBy": null,
-                "createdAt": "2026-01-01T00:00:00Z",
-                "createdBy": "contract-seeder",
-                "dependsOn": null,
-                "id": "00000000-0000-4000-8000-000000000002",
-                "impetus": "Seeded work.",
-                "implementedAt": null,
-                "implementingAt": "2026-01-01T00:00:00Z",
-                "number": 1,
-                "parent": "00000000-0000-4000-8000-000000000014",
-                "position": 0,
-                "projectId": "00000000-0000-4000-8000-000000000001",
-                "qualifiedId": "contract-00000001-1",
-                "repositoryId": "00000000-0000-4000-8000-000000000017",
-                "slug": "reported-epic",
-                "slugScope": "00000000-0000-4000-8000-000000000001",
-                "status": "REPORTED",
-                "statusBefore": null,
-                "supersededBy": null,
-                "ticketType": "BUG",
-                "title": "Reported epic",
+                "ticketType": null,
+                "title": "Started task",
                 "updatedAt": "2026-01-01T00:00:00Z"
               }
             ]
@@ -2227,17 +2225,7 @@
         },
         "matchingRules": {
           "body": {
-            "$.entities": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 21,
-                  "min": 21
-                }
-              ]
-            },
-            "$.entities[*].archetype": {
+            "$.entities[0].archetype": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2245,18 +2233,15 @@
                 }
               ]
             },
-            "$.entities[*].blocked": {
-              "combine": "OR",
+            "$.entities[0].blocked": {
+              "combine": "AND",
               "matchers": [
                 {
                   "match": "type"
-                },
-                {
-                  "match": "null"
                 }
               ]
             },
-            "$.entities[*].createdAt": {
+            "$.entities[0].createdAt": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2265,18 +2250,7 @@
                 }
               ]
             },
-            "$.entities[*].createdBy": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].id": {
+            "$.entities[0].id": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2285,30 +2259,7 @@
                 }
               ]
             },
-            "$.entities[*].impetus": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].implementingAt": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].number": {
+            "$.entities[0].number": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2316,30 +2267,7 @@
                 }
               ]
             },
-            "$.entities[*].parent": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].position": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].projectId": {
+            "$.entities[0].projectId": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2348,7 +2276,7 @@
                 }
               ]
             },
-            "$.entities[*].qualifiedId": {
+            "$.entities[0].qualifiedId": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2356,19 +2284,7 @@
                 }
               ]
             },
-            "$.entities[*].repositoryId": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].slug": {
+            "$.entities[0].slug": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2376,7 +2292,7 @@
                 }
               ]
             },
-            "$.entities[*].slugScope": {
+            "$.entities[0].slugScope": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2385,7 +2301,7 @@
                 }
               ]
             },
-            "$.entities[*].status": {
+            "$.entities[0].status": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2393,18 +2309,7 @@
                 }
               ]
             },
-            "$.entities[*].ticketType": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.entities[*].title": {
+            "$.entities[0].title": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2412,7 +2317,2288 @@
                 }
               ]
             },
-            "$.entities[*].updatedAt": {
+            "$.entities[0].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[10].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[10].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[10].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[10].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[10].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[10].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[10].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[10].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[10].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[10].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[10].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[10].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[11].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[11].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[11].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[11].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[11].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[11].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[11].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[12].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[12].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[12].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[12].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[12].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[12].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[12].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[12].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[12].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[12].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[12].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[12].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[13].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[13].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[13].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[13].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[13].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[13].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[13].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[14].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[14].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[14].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[14].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[14].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[14].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[14].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[14].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[14].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[14].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[14].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[14].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[15].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[15].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[15].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[15].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[15].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[15].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[15].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[16].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[16].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[16].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[16].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[16].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[16].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[16].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[16].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[16].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[16].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[16].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[16].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[17].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[17].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[17].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[17].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[17].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[17].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[17].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[18].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[18].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[18].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[18].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[18].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[18].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[18].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[18].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[18].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[18].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[18].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[18].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[19].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[19].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[19].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[19].implementingAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[19].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[19].parent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[19].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[19].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[19].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[19].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[19].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[19].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[19].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[19].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[1].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[1].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[1].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[1].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[1].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[1].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[1].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[20].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[20].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[20].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[20].implementingAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[20].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[20].parent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[20].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[20].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[20].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[20].repositoryId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[20].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[20].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[20].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[20].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[20].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[2].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[2].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[2].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[2].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[2].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[2].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[2].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[2].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[2].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[2].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[2].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[2].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[3].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[3].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[3].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[3].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[3].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[3].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[3].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[4].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[4].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[4].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[4].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[4].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[4].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[4].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[4].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[4].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[4].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[4].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[4].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[5].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[5].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[5].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[5].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[5].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[5].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[5].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[6].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[6].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[6].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[6].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[6].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[6].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[6].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[6].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[6].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[6].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[6].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[6].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[7].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[7].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[7].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[7].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[7].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[7].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[7].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[8].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[8].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[8].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[8].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[8].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[8].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[8].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[8].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[8].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[8].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[8].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[8].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[9].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.entities[9].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[9].impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entities[9].projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[9].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[9].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[9].updatedAt": {
               "combine": "AND",
               "matchers": [
                 {

@@ -59,7 +59,11 @@ import java.util.regex.Pattern;
  * <p>
  * <b>Every other non-empty array is {@code minMaxArrayLike(n, n)}</b> with n the recorded length,
  * its template the merge of every recorded element (a leaf null in one element and a string in
- * another becomes {@code type OR null}).
+ * another becomes {@code type OR null}). <b>Elements that disagree on which keys they carry are
+ * matched element by element instead</b>, each in its place against its own recording: a merged
+ * template requires every key of every element on every element (pact compares a template's keys
+ * as present), so {@code listProjectWork}'s epics and tickets, which carry {@code blocked}, would
+ * otherwise demand it of its features and tasks, which do not (qits-965). Absent is not null.
  * <p>
  * <b>A request body is the recorded one, exactly.</b> A value the recorder wrote as {@code
  * "{param}"} is the state's frozen example here and a provider-state expression ({@code
@@ -305,7 +309,11 @@ public final class GoldenMasters {
 
     /** The recorded answer with the index's matchers, built for {@link #interaction}. */
     static DslPart responseBody(Operation op) {
-        JsonNode recorded = json(op.state(), op.operationId());
+        return responseBody(op, json(op.state(), op.operationId()));
+    }
+
+    /** {@link #responseBody(Operation)} over a given recording rather than the jar's. */
+    static DslPart responseBody(Operation op, JsonNode recorded) {
         if (!recorded.isObject()) {
             throw new IllegalStateException("golden master " + op.state() + "/" + op.operationId()
                     + ": only an object body is supported, got " + recorded.getNodeType());
@@ -493,13 +501,15 @@ public final class GoldenMasters {
     }
 
     /**
-     * Whether one merged template can stand for every element: nothing that is an object or an array
-     * in one element and missing or null in another, and every array beneath mergeable itself.
+     * Whether one merged template can stand for every element: every key present in every element
+     * (a key some element lacks cannot sit in a template that pact requires of each), nothing that is
+     * an object or an array in one element and null in another, and every array beneath mergeable
+     * itself.
      */
     private static boolean expressible(Shape shape) {
         return switch (shape.kind) {
-            case OBJECT -> shape.fields.values().stream().allMatch(f ->
-                    !((f.kind == Shape.Kind.OBJECT || f.kind == Shape.Kind.ARRAY) && f.nullable) && expressible(f));
+            case OBJECT -> shape.fields.values().stream().allMatch(f -> !f.absent
+                    && !((f.kind == Shape.Kind.OBJECT || f.kind == Shape.Kind.ARRAY) && f.nullable) && expressible(f));
             case ARRAY -> shape.mergeable && (shape.element == null || expressible(shape.element));
             default -> true;
         };
@@ -609,6 +619,8 @@ public final class GoldenMasters {
 
         Kind kind;
         boolean nullable;
+        /** A merged object field that some element does not carry at all: absent, not null. */
+        boolean absent;
         JsonNode example;
         final LinkedHashMap<String, Shape> fields = new LinkedHashMap<>();
         Shape element;
@@ -654,16 +666,19 @@ public final class GoldenMasters {
         static Shape merge(Shape a, Shape b) {
             if (a.kind == Kind.NULL) {
                 b.nullable = true;
+                b.absent |= a.absent;
                 return b;
             }
             if (b.kind == Kind.NULL) {
                 a.nullable = true;
+                a.absent |= b.absent;
                 return a;
             }
             if (a.kind != b.kind) {
                 throw new IllegalStateException("golden master array elements disagree: " + a.kind + " and " + b.kind);
             }
             a.nullable |= b.nullable;
+            a.absent |= b.absent;
             switch (a.kind) {
                 case OBJECT -> {
                     List<String> keys = new ArrayList<>(a.fields.keySet());
@@ -676,8 +691,10 @@ public final class GoldenMasters {
                     for (String key : keys) {
                         Shape left = a.fields.get(key);
                         Shape right = b.fields.get(key);
-                        merged.put(key, left == null ? merge(of(null), right)
-                                : right == null ? merge(left, of(null)) : merge(left, right));
+                        Shape field = left == null ? merge(of(null), right)
+                                : right == null ? merge(left, of(null)) : merge(left, right);
+                        field.absent |= left == null || right == null;
+                        merged.put(key, field);
                     }
                     a.fields.clear();
                     a.fields.putAll(merged);
