@@ -1,10 +1,13 @@
 package eu.wohlben.qits.cli.access.report;
 
+import eu.wohlben.qits.cli.access.report.locate.JUnitTestCaseLocator;
+import eu.wohlben.qits.cli.access.report.locate.VitestTestCaseLocator;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-/** The registered {@link TestCaseLocator}s. None yet: the slicers are qits-755's. */
+/** The registered {@link TestCaseLocator}s: JUnit's for Java, vitest's for TypeScript and JavaScript. */
 public final class TestCaseLocators {
 
     private final List<TestCaseLocator> locators;
@@ -13,9 +16,12 @@ public final class TestCaseLocators {
         this.locators = List.copyOf(locators);
     }
 
-    /** What this release registers: nothing, so every failure's lines stay null. */
+    /**
+     * What this release registers: a JUnit test method under surefire or failsafe, and a vitest
+     * {@code it}/{@code test} call. Every other failure's lines stay null.
+     */
     public static TestCaseLocators registered() {
-        return new TestCaseLocators(List.of());
+        return new TestCaseLocators(List.of(new JUnitTestCaseLocator(), new VitestTestCaseLocator()));
     }
 
     /**
