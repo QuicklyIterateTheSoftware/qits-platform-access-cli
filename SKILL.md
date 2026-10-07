@@ -896,7 +896,7 @@ A repository's database, read from its compiled code: `qits database diagram` wr
 
 Write the entity diagram of a maven repository's JPA mapping: one Markdown file with a Mermaid erDiagram per persistence unit it declares, read from its compiled classes.
 
-Compile first: the classes come from every reactor module's target/classes and the libraries from each module's target/qits-classpath.txt, which `dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt -Dmdep.includeScope=runtime` writes. One line per file on stdout: `written docs/database/ci.md`, `unchanged ...` or `deleted ...`.
+Compile first: the classes come from every reactor module's target/classes and the libraries from each module's target/qits-classpath.txt, which `dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt -DincludeScope=runtime` writes. One line per file on stdout: `written docs/database/ci.md`, `unchanged ...` or `deleted ...`.
 
 ```
 qits database diagram [--check] [--out <dir>] [--root <dir>]
@@ -911,12 +911,12 @@ qits database diagram [--check] [--out <dir>] [--root <dir>]
 ### Examples
 
 ```
-./mvnw -q -Dmaven.test.skip=true test-compile dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt -Dmdep.includeScope=runtime
+./mvnw -q -Dmaven.test.skip=true test-compile dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt -DincludeScope=runtime
 qits database diagram
 qits database diagram --root . --out docs/database --check
 ```
 
-- test-compile rather than compile: dependency:build-classpath resolves the test scope too, and in a reactor where one module depends on another's test jar that resolution fails at compile. -Dmaven.test.skip=true still compiles no test.
+- test-compile rather than compile: dependency:build-classpath resolves the test scope too, and in a reactor where one module depends on another's test jar that resolution fails at compile. -Dmaven.test.skip=true still compiles no test. The scope flag is -DincludeScope: the plugin reads no -Dmdep.includeScope, and with it the file lists every scope, the test jars too.
 - A unit is an unprofiled quarkus.hibernate-orm.<unit>.packages key (quarkus.hibernate-orm.packages is <default>, written to default.md) in a reactor module's own application.properties or META-INF/microprofile-config.properties, never a library's. A profiled key or a ${...} value is ignored, with a warning on stderr.
 - A unit draws every @Entity in its packages and their sub-packages, compiled here or in a library jar; each table names its origin, the reactor module or the library's artifactId. An entity of the repository that no unit lists is drawn in a file named after its Java package.
 - Names are Hibernate's under Quarkus' defaults: JPA's implicit naming, and every name as the mapping spells it, unless the unit's physical-naming-strategy key names CamelCaseToUnderscoresNamingStrategy (then snake_case). A construct the diagram does not draw (@OneToOne, @ManyToMany, @EmbeddedId, @Inheritance, @SecondaryTable, @Formula and others) is listed under it as `Not drawn`, never refused.

@@ -99,8 +99,11 @@
         <dependency>
             <!-- `qits database diagram` reads a repository's compiled JPA mapping: the reactor's
                  target/classes and its runtime jars, indexed class by class, never loaded. The
-                 version is quarkus-bom's. Pure bytecode reading, no reflection, so the native binary
-                 needs no configuration for it (proven by running the binary over a fixture). -->
+                 version is quarkus-bom's. Plain bytecode reading; its one reflective call is
+                 Array.newInstance in Index.create (Utils.unfold), for ClassInfo[] and
+                 AnnotationInstance[], which META-INF/native-image/qits-platform-access-commands/jandex/
+                 registers. Without it the binary fails at the first index (proven with the binary
+                 over the fixture project). -->
             <groupId>io.smallrye</groupId>
             <artifactId>jandex</artifactId>
         </dependency>

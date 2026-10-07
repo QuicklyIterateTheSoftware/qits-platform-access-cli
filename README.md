@@ -808,12 +808,15 @@ classes. The entity-diagram release-request automation runs it on every fold; a 
 same way, after building the inputs:
 
     ./mvnw -q -Dmaven.test.skip=true test-compile dependency:build-classpath \
-        -Dmdep.outputFile=target/qits-classpath.txt -Dmdep.includeScope=runtime
+        -Dmdep.outputFile=target/qits-classpath.txt -DincludeScope=runtime
     qits database diagram
 
 `test-compile` with `-Dmaven.test.skip=true` rather than `compile`: `dependency:build-classpath`
 resolves the test scope, and a reactor whose module depends on another module's test jar
-(qits-projects-service) cannot resolve it at `compile`. No test is compiled either way.
+(qits-projects-service) cannot resolve it at `compile`. No test is compiled either way. The scope
+flag is `-DincludeScope`, not `-Dmdep.includeScope`: maven-dependency-plugin reads no such property,
+and with it the file silently lists every scope, test jars included (measured: 210 entries rather
+than 58 for this repository's commands module).
 
 What it reads. Every reactor module's `target/classes` (found by walking `<modules>` from the root
 `pom.xml`), indexed with Jandex, and the jars each module's `target/qits-classpath.txt` names, of

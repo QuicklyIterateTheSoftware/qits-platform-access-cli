@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * The inputs are every reactor module's {@code target/classes} (found by walking {@code <modules>}
  * from the root {@code pom.xml}) and the jars of each module's {@code target/qits-classpath.txt},
  * which {@code dependency:build-classpath -Dmdep.outputFile=target/qits-classpath.txt
- * -Dmdep.includeScope=runtime} writes. Nothing is loaded and nothing of the repository runs.
+ * -DincludeScope=runtime} writes. Nothing is loaded and nothing of the repository runs.
  * <p>
  * One unit per persistence unit the reactor declares ({@link JpaUnits}), holding every {@code @Entity}
  * in its packages and their sub-packages, the reactor's or a jar's. An entity of the reactor that no
