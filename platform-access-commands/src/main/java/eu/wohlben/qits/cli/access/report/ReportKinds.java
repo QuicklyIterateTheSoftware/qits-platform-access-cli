@@ -59,7 +59,7 @@ public final class ReportKinds {
                 .filter(p -> p.kind().equals(TestResultsKind.ID)).toList();
         return new ReportKinds(
                 List.of(new TestResultsKind(warnings), new CoverageKind(warnings),
-                        new ContractsReportKind(warnings, testResults)),
+                        new ContractsReportKind(warnings, testResults), new EntityChangesReportKind(warnings)),
                 parsers);
     }
 

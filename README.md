@@ -13,7 +13,7 @@ Commands:
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
   failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
-  change adds or removes); `qits ci report submit` is the
+  change adds or removes; the entity diagram's tables and columns it changes); `qits ci report submit` is the
   CI step's side that collects and uploads them.
 - `qits events` prints the platform's domain events as they happen; `qits events query` prints the
   ones that already happened in a window of time.
@@ -775,7 +775,16 @@ the provider states its golden-master index declares, each interaction without i
 `contentHash`. Its highlights name the pacts, interactions and provider states added or removed since
 the baseline; `ContractChanges` holds the rules, and the fixtures under
 `platform-access-commands/src/test/resources/report/contracts/diff/` pin them for the view in
-`@qits/ui-components`, which copies them verbatim.
+`@qits/ui-components`, which copies them verbatim. And `entity-changes`: the generated entity diagrams
+under `docs/database/` (see `qits database diagram` below) compared with the same files at the
+baseline's tag, read back with `MermaidEntityDiagramFormat`: per unit (file) its status (`ADDED`,
+`REMOVED`, `CHANGED`, `UNCHANGED`, or `CURRENT` when there is no baseline or the baseline had no
+diagram), the tables added, removed or changed with their columns (`"<type>, <null|not null>[, PK][,
+FK][, UK][, <length>]"`, then `lob`, `version`, `generated`), the relations added and removed, and the
+Mermaid text before (changed and removed units) and after. Above 1 MiB the `after` text of unchanged
+units goes first, then that of current ones, and `truncated` says so. Its highlights count the tables
+added, changed and removed, and the columns removed or narrowed (not null gained, another type, a
+shorter length).
 
 `report submit` is what the hook qits-ci composes after every QA step runs, whatever the step's
 script exited with (`--exit-code`). It reads the step's files (`**/target/surefire-reports`,
@@ -783,20 +792,23 @@ script exited with (`--exit-code`). It reads the step's files (`**/target/surefi
 read against every `**/target/classes`, and `coverage/**/coverage-final.json` or
 `.qits-reports/coverage/**/coverage-final.json` for coverage; `pacts/*.json`,
 `.qits-reports/pact-verification/*.json` and `golden-masters/index.json` for contracts, only in a step
-where test results were found), compares with the baseline (the same
+where test results were found; the generated `docs/database/*.md` for entity-changes, in step 0
+only), compares with the baseline (the same
 kind in the QA run of the release request that produced the newest released version), and PUTs one
 report per kind to `https://ci.qits.$QITS_DOMAIN`, with the publish chain's bearer. It takes the run
 from `QITS_CI_RUN_ID`, `QITS_CI_STEP_INDEX`, `QITS_CI_SHA`, `QITS_CI_REPO_NAME` and
 `QITS_CI_PROJECT_ID`, gives up after 120 seconds, and never changes the step's verdict: the hook
 ignores its exit code. A kind is one implementation in `report/`, listed in `ReportKinds`.
-With a baseline, the coverage kind fetches the baseline's tag into the step's shallow clone
+With a baseline, the coverage and entity-changes kinds fetch the baseline's tag into the step's shallow clone
 (`git fetch --depth=1 "$QITS_CI_REPOSITORY_URL" refs/tags/<version>:refs/tags/<version>`, with the
-step's own git credentials) and diffs it against `HEAD`; when git cannot, the diff coverage is left
-out with one warning, never wrong.
+step's own git credentials), once for both: coverage diffs it against `HEAD`, entity-changes reads
+`docs/database/` there. When git cannot, the diff coverage is left out and the entity diagram reads as
+new, with one warning, never wrong.
 
     qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results
     qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind coverage
     qits ci report show 5f2c0a9e --project qits --repository qits-landing-app --kind contracts
+    qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind entity-changes
 
 ### qits database diagram
 

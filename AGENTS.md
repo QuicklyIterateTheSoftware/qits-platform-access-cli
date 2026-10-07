@@ -141,9 +141,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                IstanbulJsonParser; diff coverage from GitChangedLines), the contracts kind in contracts/
                (ContractsReportKind over PactFileParser, PactJvmVerificationReportParser and
                GoldenMasterIndexParser; ContractChanges, the identity rules the ui-components view
-               shares through the fixtures under report/contracts/diff/), BaselineTag (the one
-               shallow fetch of the baseline's tag, for every kind that reads the baseline's
-               files), and the commands: submit (CI-step
+               shares through the fixtures under report/contracts/diff/), the entity-changes kind
+               (EntityChangesReportKind, fed by no parser: step 0's generated docs/database/*.md
+               against the same files at the baseline's tag, parsed back with the database/
+               package's MermaidEntityDiagramFormat), BaselineTag (the one shallow fetch of the
+               baseline's tag, for every kind that reads the baseline's files: list and read), and
+               the commands: submit (CI-step
                only: the publish chain's bearer through PublishCredential.forCiStep, qits-ci at
                Store.publicOrigin("ci"), its own 120 s deadline) and show. Payload records carry
                @RegisterForReflection all the way down; Jackson writes and reads them back

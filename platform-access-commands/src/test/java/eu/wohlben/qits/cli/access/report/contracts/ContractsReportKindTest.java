@@ -34,7 +34,8 @@ class ContractsReportKindTest {
 
     @Test
     void theRegistryListsTheKindAndItsThreeParsers() {
-        assertThat(kinds.kinds()).extracting(ReportKind::id).containsExactly("test-results", "coverage", "contracts");
+        assertThat(kinds.kinds()).extracting(ReportKind::id).containsExactly("test-results", "coverage", "contracts",
+                "entity-changes");
         assertThat(kinds.parsersOf("contracts")).extracting(ReportParser::language, ReportParser::tool)
                 .containsExactly(tuple("json", "pact"), tuple("java", "pact-jvm"), tuple("json", "qits-golden-masters"));
         assertThat(kind.version()).isEqualTo(1);

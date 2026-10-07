@@ -67,6 +67,10 @@ import java.util.function.Consumer;
                         + ".qits-reports/pact-verification/*.json (Pact-JVM's JSON verification report: the pacts "
                         + "the provider verified) and golden-masters/index.json (the provider states), and only in "
                         + "a step where test-results found a file, so a run reports its tree once.",
+                "- entity-changes reads the generated docs/database/*.md (the files `qits database diagram` wrote; "
+                        + "a hand-written file there is ignored), only in step 0, and compares them with the same "
+                        + "files at the baseline's tag, fetched as for coverage. Without a baseline, or at a "
+                        + "baseline from before the diagrams, every unit is CURRENT: the diagram is new.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no "

@@ -30,12 +30,15 @@ import java.util.List;
                         + "and each failing test with its file, class, name, shape and message; for coverage, the "
                         + "total, the baseline's total, the changed lines' coverage with the uncovered ones, and a "
                         + "line per file; for contracts, the pacts by role (CONSUMER, PROVIDER) and pair with their "
-                        + "interactions, and the provider states with their operations."},
+                        + "interactions, and the provider states with their operations; for entity-changes, each "
+                        + "diagram's unit with its status, the tables, columns and relations that changed, and its "
+                        + "Mermaid text before and after."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17",
                 "  qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results",
                 "  qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind coverage",
                 "  qits ci report show 5f2c0a9e --project qits --repository qits-landing-app --kind contracts",
+                "  qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind entity-changes",
                 "  qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 -o json",
                 "",
                 "- A release request's QA run is the one with reports: `qits ci runs --release-request <id>` "
@@ -60,7 +63,8 @@ public class ShowCommand extends PlatformCommand {
     String runId;
 
     @CommandLine.Option(names = "--kind", paramLabel = "<kind>",
-            description = "Only this kind of report (test-results, coverage, contracts), and print the whole of it.")
+            description = "Only this kind of report (test-results, coverage, contracts, entity-changes), "
+                    + "and print the whole of it.")
     String kind;
 
     @Override

@@ -27,7 +27,8 @@ class TestResultsKindTest {
 
     @Test
     void theRegistryListsTheKindAndItsThreeParsers() {
-        assertThat(kinds.kinds()).extracting(ReportKind::id).containsExactly("test-results", "coverage", "contracts");
+        assertThat(kinds.kinds()).extracting(ReportKind::id).containsExactly("test-results", "coverage", "contracts",
+                "entity-changes");
         assertThat(kinds.parsersOf("test-results")).extracting(ReportParser::tool)
                 .containsExactly("surefire", "failsafe", "vitest");
         assertThat(kind.version()).isEqualTo(1);

@@ -168,6 +168,18 @@ class GitChangedLinesTest {
     void noBaselineIsNoTagAndNoGit() throws Exception {
         assertThat(BaselineTag.none().ref()).isEmpty();
         assertThat(BaselineTag.none().read("README.md")).isEmpty();
+        assertThat(BaselineTag.none().list("service")).isEmpty();
+    }
+
+    @Test
+    void aDirectoryListsItsFilesAsItWasAtTheBaseline() throws Exception {
+        BaselineTag tag = BaselineTag.in(shallowClone(), Optional.of(baseline()), url(), warnings::add);
+
+        assertThat(tag.list("service/src/main/java/fx")).as("Clock.java was added since").containsExactly("Ledger.java");
+        assertThat(tag.list("service/src/main/java/fx/")).containsExactly("Ledger.java");
+        assertThat(tag.list(".")).as("files only, no directories").containsExactly("README.md", "gone.txt");
+        assertThat(tag.list("docs/database")).as("not there").isEmpty();
+        assertThat(warnings).isEmpty();
     }
 
     @Test
