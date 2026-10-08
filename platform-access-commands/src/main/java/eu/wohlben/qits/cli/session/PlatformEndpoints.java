@@ -15,7 +15,8 @@ import java.util.Map;
  * all: the container network answers wire aliases, and nothing else. That is a second set of
  * addresses, not a second code path, which is why both live here.
  * <p>
- * A workspace on a runner node is the third home ({@link Mode#EDGE_TOKEN}): the wire aliases do not
+ * A workspace handed a token of its own is the third home ({@link Mode#EDGE_TOKEN}) — a runner
+ * node, or an admin or editor workspace placed directly on qits-containers: the wire aliases do not
  * resolve there either, so it dials the same public vhosts a workstation does, with the domain read
  * from {@code QITS_DOMAIN} rather than off a session it does not have.
  * <p>
@@ -106,7 +107,7 @@ public final class PlatformEndpoints {
      * <p>
      * A domain that cannot be a public one is refused rather than dialled. Blank or undotted gives a
      * host nothing resolves, and {@code *.localhost} is a name curl and the JVM send to the loopback
-     * whatever DNS says — on a runner node that is the node itself, not the platform.
+     * whatever DNS says — in the token home that is the workspace's own container, not the platform.
      */
     public static String edge(String app, Map<String, String> env) throws CliFailure {
         return "https://" + app + ".qits." + domain(env);

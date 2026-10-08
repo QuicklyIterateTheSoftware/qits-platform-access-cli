@@ -28,8 +28,9 @@ import java.util.Optional;
  * It has the CLI's two homes like every other command. On a workstation the sign-in of
  * {@code qits git-login} answers, from {@code git.json}. Inside the platform there is no sign-in to
  * read — {@code qits git-login} needs a browser and is refused there — so the container's own
- * credential answers instead, for the injected git host and no other. On a runner node the
- * workspace token answers, for the public git host {@code githost.qits.<QITS_DOMAIN>} and no other.
+ * credential answers instead, for the injected git host and no other. In the token home — a runner
+ * node, or an admin or editor workspace placed directly on qits-containers — the workspace token
+ * answers, for the public git host {@code githost.qits.<QITS_DOMAIN>} and no other.
  */
 @TuiCommand(interaction = Interaction.LOCAL)
 @CommandLine.Command(name = "git-credential", mixinStandardHelpOptions = true,

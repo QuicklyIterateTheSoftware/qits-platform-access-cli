@@ -105,7 +105,8 @@ public record CliContext(
 
     /**
      * What this process calls the platform with: the session file outside, the workspace
-     * credential inside, the workspace token on a runner node, unless the context was built with a
+     * credential inside, the workspace token in the token home — a runner node, or an admin or
+     * editor workspace placed directly on qits-containers — unless the context was built with a
      * credential of its own. The homes are never mixed — in-platform never opens the session file,
      * a workstation never mints with a client secret, and the token home does neither.
      */
