@@ -10,6 +10,7 @@ import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.publish.PublishCredential;
 import eu.wohlben.qits.cli.access.publish.Store;
+import eu.wohlben.qits.cli.access.report.screenshots.VitestBrowserScreenshots;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
@@ -71,6 +72,16 @@ import java.util.function.Consumer;
                         + "a hand-written file there is ignored), only in step 0, and compares them with the same "
                         + "files at the baseline's tag, fetched as for coverage. Without a baseline, or at a "
                         + "baseline from before the diagrams, every unit is CURRENT: the diagram is new.",
+                "- screenshots reads the committed screenshot baselines (vitest browser mode's "
+                        + "**/__screenshots__/<spec file>/<name>-<browser>-<platform>.png) from `git ls-tree` at HEAD "
+                        + "and at the baseline's tag, fetched as for coverage, and lists the NEW, CHANGED and "
+                        + "REMOVED ones by path and blob id, never their bytes, with the keys of "
+                        + "**/testing/browser/renderer.txt that changed. Only in a step that rendered them: one on "
+                        + "the renderer image (/etc/qits-renderer-provenance) or with @qits/angular's run record "
+                        + "(node_modules/.cache/@qits/angular/screenshot-references.json); otherwise `screenshots: "
+                        + "not reported (not rendered in this step)`, and `(no screenshot baselines)` when neither "
+                        + "side holds one. QITS_CI_REPO_ID names the repository for the images. Without a "
+                        + "baseline every image is NEW.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no "
@@ -126,6 +137,12 @@ public class SubmitCommand extends PlatformCommand {
 
     /** {@link #DEADLINE}, unless the suite waits less. */
     Duration deadline = DEADLINE;
+
+    /**
+     * The renderer image's provenance record, which says a step rendered screenshots; another path only
+     * when the suite says so, because the machine running it may well be the renderer image.
+     */
+    Path rendererProvenance = VitestBrowserScreenshots.PROVENANCE;
 
     /** What the step's environment says, checked. */
     record Step(String runId, int stepIndex, String commitSha, RepositoryRef repository, String repositoryUrl) {
@@ -233,7 +250,7 @@ public class SubmitCommand extends PlatformCommand {
         ChangedLines changed = baseline.isPresent() ? new GitChangedLines(tag, warnings) : ChangedLines.unavailable();
         StepContext stepContext = new StepContext(tree, step.runId(), step.stepIndex(), step.repository(),
                 step.commitSha(), exitCode, baseline, changed, TestCaseLocators.registered(), tag);
-        ReportKinds kinds = ReportKinds.standard(warnings);
+        ReportKinds kinds = ReportKinds.standard(warnings, context.env()::get, rendererProvenance);
         boolean allStored = true;
         for (ReportKind<?> kind : kinds.kinds()) {
             allStored &= submit(kind, kinds, stepContext, ci, out, err);
@@ -284,7 +301,7 @@ public class SubmitCommand extends PlatformCommand {
             return true;
         }
         if (report.isEmpty()) {
-            out.println(kind.id() + ": not reported (no inputs)");
+            out.println(kind.id() + ": not reported (" + kind.notReported() + ")");
             return true;
         }
         Optional<P> baseline = step.baseline().isPresent()

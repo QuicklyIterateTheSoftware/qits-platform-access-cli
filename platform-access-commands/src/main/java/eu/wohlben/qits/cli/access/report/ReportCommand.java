@@ -17,9 +17,11 @@ import picocli.CommandLine;
                         + "message), coverage (line coverage of the whole tree, its change against the baseline, "
                         + "and the coverage of the lines the change touched), contracts (the pacts the repository "
                         + "holds as consumer or verifies as provider, and the provider states it declares, with the "
-                        + "pacts, interactions and states added or removed since the baseline) and entity-changes "
+                        + "pacts, interactions and states added or removed since the baseline), entity-changes "
                         + "(the generated entity diagrams under docs/database/, with the tables, columns and "
-                        + "relations added, removed or changed since the baseline). A kind or a run with "
+                        + "relations added, removed or changed since the baseline) and screenshots (the committed "
+                        + "screenshot baselines added, changed or removed since the baseline, by path and blob, "
+                        + "for the release request to show before and after). A kind or a run with "
                         + "nothing to report shows nothing; a report never fails or holds a release."},
         footerHeading = "%nNotes:%n",
         footer = {"- Each kind and its highlights are computed by the CLI that submitted them; qits-ci keeps them as "

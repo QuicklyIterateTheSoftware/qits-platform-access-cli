@@ -144,8 +144,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                shares through the fixtures under report/contracts/diff/), the entity-changes kind
                (EntityChangesReportKind, fed by no parser: step 0's generated docs/database/*.md
                against the same files at the baseline's tag, parsed back with the database/
-               package's MermaidEntityDiagramFormat), BaselineTag (the one shallow fetch of the
-               baseline's tag, for every kind that reads the baseline's files: list and read), and
+               package's MermaidEntityDiagramFormat), the screenshots kind in screenshots/
+               (ScreenshotsReportKind, fed by no parser: the committed baseline images at HEAD and
+               at the baseline's tag as `git ls-tree` path -> blob maps, never bytes; where they
+               live is a ScreenshotConvention, one per storage convention, listed in
+               ScreenshotConventions; VitestBrowserScreenshots is the one today), BaselineTag (the
+               one shallow fetch of the baseline's tag, for every kind that reads the baseline's
+               files: list and read; screenshots peels its ref), Git (public for the subpackages'
+               kinds), and
                the commands: submit (CI-step
                only: the publish chain's bearer through PublishCredential.forCiStep, qits-ci at
                Store.publicOrigin("ci"), its own 120 s deadline) and show. Payload records carry

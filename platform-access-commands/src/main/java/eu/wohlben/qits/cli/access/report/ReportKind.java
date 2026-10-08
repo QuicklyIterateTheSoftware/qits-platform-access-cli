@@ -54,4 +54,12 @@ public interface ReportKind<P> {
     default String describe(P report) {
         return "";
     }
+
+    /**
+     * Why the last {@link #collect} answered empty, in the parentheses after "not reported":
+     * {@code no inputs} by default; a kind that can say more ({@code not rendered in this step}) says it.
+     */
+    default String notReported() {
+        return "no inputs";
+    }
 }

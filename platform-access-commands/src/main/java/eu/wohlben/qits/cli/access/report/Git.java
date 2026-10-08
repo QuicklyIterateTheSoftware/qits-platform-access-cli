@@ -13,26 +13,29 @@ import java.util.concurrent.TimeUnit;
  * {@code git}, run in the step's tree, as the step itself would run it: the step's environment is
  * inherited, so its {@code GIT_CONFIG_GLOBAL} authenticates a fetch to the git host and nothing here
  * knows a credential. Never prompts, and never waits longer than it is given.
+ * <p>
+ * Public for the kinds in the subpackages ({@code screenshots} reads trees and blobs with it); the
+ * baseline's tag still comes only from {@link BaselineTag}.
  */
-final class Git {
+public final class Git {
 
     /** What one git command may take, a fetch included. The whole submit has 120 seconds. */
-    static final Duration TIMEOUT = Duration.ofSeconds(60);
+    public static final Duration TIMEOUT = Duration.ofSeconds(60);
 
     /** What git answered. {@code out} is stdout, {@code err} stderr, both as UTF-8. */
-    record Result(int exit, byte[] out, String err) {
+    public record Result(int exit, byte[] out, String err) {
 
-        boolean ok() {
+        public boolean ok() {
             return exit == 0;
         }
 
-        String text() {
+        public String text() {
             return new String(out, StandardCharsets.UTF_8);
         }
     }
 
     /** Git did not run, or did not finish in time. */
-    static final class Failure extends Exception {
+    public static final class Failure extends Exception {
         Failure(String message) {
             super(message);
         }
@@ -42,7 +45,7 @@ final class Git {
     private final String executable;
     private final Duration timeout;
 
-    Git(Path directory) {
+    public Git(Path directory) {
         this(directory, "git", TIMEOUT);
     }
 
@@ -53,7 +56,7 @@ final class Git {
     }
 
     /** Runs {@code git <arguments>} in the directory; stdout and stderr go to files, so neither can block it. */
-    Result run(String... arguments) throws Failure, InterruptedException {
+    public Result run(String... arguments) throws Failure, InterruptedException {
         List<String> command = new ArrayList<>();
         command.add(executable);
         command.add("-c");
@@ -107,7 +110,7 @@ final class Git {
      * What git said on stderr, as one line for a warning: its first {@code fatal:} or {@code error:}
      * line (the advice after it is the same every time), else its last line.
      */
-    static String said(Result result) {
+    public static String said(Result result) {
         String last = null;
         for (String line : result.err().split("\\R")) {
             String text = line.strip();

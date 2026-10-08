@@ -93,7 +93,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: submitted (18 tests, 10 failed)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN + ")");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path())
                 .containsExactly("GET " + BASELINE, "GET " + BASELINE_REPORTS, "PUT " + PUT);
@@ -146,7 +147,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
                 + "coverage: submitted (13 lines, 30.8% covered)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -195,7 +197,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: submitted (18 tests, 10 failed)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: submitted (5 pacts, 16 interactions, 0 states)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
         assertThat(body.path("payload").path("pacts")).hasSize(5);
@@ -233,7 +236,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: submitted (1 unit, 1 changed)\n");
+                + "entity-changes: submitted (1 unit, 1 changed)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -262,7 +266,8 @@ class SubmitCommandTest {
         Result second = submit("--exit-code", "0", "--root", root.toString());
 
         assertThat(second.exit()).as(second.err()).isZero();
-        assertThat(second.out()).endsWith("entity-changes: not reported (no inputs)\n");
+        assertThat(second.out()).endsWith("entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path()).filteredOn(r -> r.startsWith("PUT"))
                 .containsExactly("PUT " + put);
     }
@@ -348,7 +353,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 403)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(result.err()).contains("HTTP 403").contains("this token belongs to another run")
                 .doesNotContain(TOKEN);
     }
@@ -363,7 +369,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not submitted (HTTP 404)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
     }
 
     @Test
@@ -374,7 +381,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(ci.requests("PUT", PUT)).isEmpty();
     }
 
@@ -389,7 +397,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not submitted (qits-ci could not be reached)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(result.err()).contains("WARN: baseline: could not be read, so none");
     }
 
@@ -477,7 +486,8 @@ class SubmitCommandTest {
         assertThat(result.out()).isEqualTo("test-results: not reported (no inputs)\n"
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
-                + "entity-changes: not reported (no inputs)\n");
+                + "entity-changes: not reported (no inputs)\n"
+                + "screenshots: not reported (not rendered in this step)\n");
         assertThat(ci.requests).isEmpty();
     }
 
@@ -487,6 +497,64 @@ class SubmitCommandTest {
                 .isEqualTo("https://ci.qits.example.com");
         assertThat(eu.wohlben.qits.cli.access.publish.Store.publicOrigin("ci", Map.of()))
                 .isEqualTo("https://ci.qits.wohlben.eu");
+    }
+
+    @Test
+    void screenshotsGoAsPathsAndBlobsAgainstTheBaselineTagNeverAsBytes() throws Exception {
+        Path root = Files.createDirectories(work.resolve("app"));
+        byte[] shell = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        byte[] wider = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9};
+        String shot = "src/app/shell/__screenshots__/shell.browser.spec.ts/narrow-open-chromium-linux.png";
+        String gone = "src/app/old/__screenshots__/old.browser.spec.ts/old-chromium-linux.png";
+        String added = "src/app/new/__screenshots__/new.browser.spec.ts/new-chromium-linux.png";
+        Files.createDirectories(root.resolve(shot).getParent());
+        Files.createDirectories(root.resolve(gone).getParent());
+        Files.write(root.resolve(shot), shell);
+        Files.write(root.resolve(gone), new byte[] {1});
+        GitChangedLinesTest.git(root, "init", "--quiet");
+        GitChangedLinesTest.git(root, "add", "-A");
+        GitChangedLinesTest.git(root, "commit", "--quiet", "-m", "the baseline");
+        GitChangedLinesTest.git(root, "tag", "2026.1003.52637");
+        Files.write(root.resolve(shot), wider);
+        Files.delete(root.resolve(gone));
+        Files.createDirectories(root.resolve(added).getParent());
+        Files.write(root.resolve(added), new byte[] {2});
+        GitChangedLinesTest.git(root, "add", "-A");
+        GitChangedLinesTest.git(root, "commit", "--quiet", "-m", "the fold");
+        Files.createDirectories(root.resolve("node_modules/.cache/@qits/angular"));
+        Files.writeString(root.resolve("node_modules/.cache/@qits/angular/screenshot-references.json"), "{}");
+        env.put("QITS_CI_REPO_ID", "488363a1-6ba0-4101-948a-14a8bfcb9e79");
+        ci.answer("GET", BASELINE, """
+                {"baseline":{"version":"2026.1003.52637","runId":"%s","releaseRequestId":"rr-1","tagSha":"abc"}}
+                """.formatted(BASE_RUN));
+        String put = "/ci/api/runs/" + RUN + "/steps/2/reports/screenshots";
+        ci.answer("PUT", put, 204, "");
+
+        Result result = submit("--exit-code", "0", "--root", root.toString());
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.out()).endsWith("entity-changes: not reported (no inputs)\n"
+                + "screenshots: submitted (1 new, 1 changed, 1 removed)\n");
+        assertThat(result.err()).doesNotContain("WARN");
+        FakePlatform.Request request = ci.requests("PUT", put).getFirst();
+        JsonNode body = JSON.readTree(request.body());
+        assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
+        assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
+                [{"severity":"info","text":"1 new, 1 changed, 1 removed screenshots","metric":"screenshots.changes",
+                  "value":3.0,"delta":null}]
+                """));
+        JsonNode payload = body.path("payload");
+        assertThat(payload.path("repositoryId").asText()).isEqualTo("488363a1-6ba0-4101-948a-14a8bfcb9e79");
+        assertThat(payload.path("totals")).isEqualTo(JSON.readTree("""
+                {"screenshots":2,"new":1,"changed":1,"removed":1,"unchanged":0}"""));
+        assertThat(payload.path("entries")).extracting(e -> e.path("status").asText() + " " + e.path("path").asText())
+                .containsExactly("NEW " + added, "CHANGED " + shot, "REMOVED " + gone);
+        assertThat(payload.path("entries").get(1).path("afterBytes").asLong()).isEqualTo(wider.length);
+        // no bytes anywhere: neither image's base64, nor any long base64-looking run
+        String sent = request.body();
+        assertThat(sent).doesNotContain(java.util.Base64.getEncoder().encodeToString(shell))
+                .doesNotContain(java.util.Base64.getEncoder().encodeToString(wider))
+                .doesNotContainPattern("[A-Za-z0-9+/]{48,}={0,2}");
     }
 
     private Result submit(String... args) {
@@ -513,6 +581,8 @@ class SubmitCommandTest {
                 if (made instanceof SubmitCommand submit) {
                     submit.ciOrigin = origin;
                     submit.deadline = deadline;
+                    // this machine may be the renderer image: "rendered here" is the fixture's to say
+                    submit.rendererProvenance = work.resolve("no-renderer-provenance");
                 }
                 return made;
             }
