@@ -86,6 +86,79 @@ class SbomSubmitTest {
   }
 
   @Test
+  void aRebuildThatDiffersOnlyInSerialNumberAndTimestampIsVerified() throws IOException {
+    Files.writeString(document, rebuilt("urn:uuid:2222", "2026-10-08T12:00:00Z", "2.17.2", "aa11"));
+    String storedDocument =
+        "{\n  \"specVersion\": \"1.6\",\n  \"bomFormat\": \"CycloneDX\",\n"
+            + "  \"metadata\": {\"component\": {\"name\": \"qits-ci\"},"
+            + " \"timestamp\": \"2026-09-06T08:00:00Z\"},\n"
+            + "  \"serialNumber\": \"urn:uuid:1111\",\n  \"version\": 1.0,\n"
+            + "  \"components\": [{\"name\": \"jackson\", \"version\": \"2.17.2\","
+            + " \"hashes\": [{\"alg\": \"SHA-256\", \"content\": \"aa11\"}]}]\n}";
+    String other = "sha256:" + "ab".repeat(32);
+    store.on("PUT", PATH, StubStore.Reply.of(200, "{\"alreadyPublished\":true,\"digest\":\"" + other + "\"}"));
+    store.on("GET", PATH, StubStore.Reply.of(200, storedDocument));
+
+    Harness.Run run = submit();
+
+    assertEquals(ExitCode.OK, run.code(), run.err());
+    assertTrue(
+        run.errContains(
+            "the sbom for docker qits/qits-ci@2026.906.1 is already published as "
+                + other
+                + "; this run produced "
+                + Sha256.ofFile(document)
+                + ", which differs only in serialNumber and metadata.timestamp — verified"),
+        run.err());
+  }
+
+  @Test
+  void aRebuildWhoseComponentsDifferStillFailsAsDifferentBytes() throws IOException {
+    Files.writeString(document, rebuilt("urn:uuid:2222", "2026-10-08T12:00:00Z", "2.17.3", "bb22"));
+    String other = "sha256:" + "ab".repeat(32);
+    store.on("PUT", PATH, StubStore.Reply.of(200, "{\"alreadyPublished\":true,\"digest\":\"" + other + "\"}"));
+    store.on(
+        "GET",
+        PATH,
+        StubStore.Reply.of(200, rebuilt("urn:uuid:1111", "2026-09-06T08:00:00Z", "2.17.2", "aa11")));
+
+    Harness.Run run = submit();
+
+    assertEquals(ExitCode.POLICY, run.code());
+    assertTrue(run.errContains("DIFFERENT bytes"), run.err());
+    assertTrue(run.errContains(other), run.err());
+  }
+
+  @Test
+  void aStoredDocumentThatCannotBeReadBackFailsAsDifferentBytes() throws IOException {
+    Files.writeString(document, rebuilt("urn:uuid:2222", "2026-10-08T12:00:00Z", "2.17.2", "aa11"));
+    String other = "sha256:" + "ab".repeat(32);
+    store.on("PUT", PATH, StubStore.Reply.of(200, "{\"alreadyPublished\":true,\"digest\":\"" + other + "\"}"));
+    store.on("GET", PATH, StubStore.Reply.of(500, "the blob store is away"));
+
+    Harness.Run run = submit();
+
+    assertEquals(ExitCode.POLICY, run.code());
+    assertTrue(run.errContains("DIFFERENT bytes"), run.err());
+    assertTrue(run.errContains(other), run.err());
+    assertTrue(run.errContains(Sha256.ofFile(document)), run.err());
+  }
+
+  /** A CycloneDX document in the shape a build writes, with the fields a rebuild may vary. */
+  private static String rebuilt(String serial, String timestamp, String version, String hash) {
+    return "{\"bomFormat\":\"CycloneDX\",\"specVersion\":\"1.6\",\"serialNumber\":\""
+        + serial
+        + "\",\"version\":1,\"metadata\":{\"timestamp\":\""
+        + timestamp
+        + "\",\"component\":{\"name\":\"qits-ci\"}},\"components\":[{\"name\":\"jackson\","
+        + "\"version\":\""
+        + version
+        + "\",\"hashes\":[{\"alg\":\"SHA-256\",\"content\":\""
+        + hash
+        + "\"}]}]}";
+  }
+
+  @Test
   void anOccupiedCoordinateThatCarriesNoDigestDegradesLoudlyRatherThanSilently() {
     store.on("PUT", PATH, StubStore.Reply.of(200, "{\"alreadyPublished\":true}"));
 

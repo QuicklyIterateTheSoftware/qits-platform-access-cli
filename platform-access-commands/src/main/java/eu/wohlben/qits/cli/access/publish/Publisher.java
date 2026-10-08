@@ -1,5 +1,8 @@
 package eu.wohlben.qits.cli.access.publish;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,10 +19,14 @@ import java.util.Map;
  *
  * <ol>
  *   <li><b>Absent</b> — PUT, and say what landed.
- *   <li><b>Occupied with the same bytes</b> — success, with a line saying so. A release run
+ *   <li><b>Occupied with the same content</b> — success, with a line saying so. A release run
  *       re-fires, a rebootstrap replays a tag, a step is retried after a later failure: all three
  *       must go green, because the coordinate holds exactly what this run was asked to put there.
- *   <li><b>Occupied with different bytes</b> — hard failure naming both digests. This is the rule the
+ *       Same content means the same bytes, with one exception: an sbom is also the same content
+ *       when the two documents agree once their generation fields — the top-level {@code
+ *       serialNumber} and {@code metadata.timestamp} — are set aside, because a rebuild of one
+ *       version mints both afresh and nothing else about the document changes.
+ *   <li><b>Occupied with different content</b> — hard failure naming both digests. This is the rule the
  *       whole policy is for. Publishing is allowed to add a coordinate and never to redefine one, so
  *       a run that would need to redefine one has found a real disagreement — two builds of one
  *       version — and the only honest thing to do is stop and show the two digests.
@@ -70,6 +77,12 @@ final class Publisher {
    * That makes this the cheapest verification on the platform: the response to the PUT we were
    * making anyway carries the stored digest, so case 2 and case 3 are settled without a second
    * request.
+   *
+   * <p>Except for one shape of case 3: a rebuild writes a new {@code serialNumber} and {@code
+   * metadata.timestamp} into an otherwise identical document, so the digests of a re-run PUBLISH
+   * never agree. When they differ, the stored document is read back and the two are compared as
+   * JSON with those two fields removed; only a difference that survives that is a real
+   * disagreement.
    */
   int sbomSubmit(String packageType, String packageName, String version, Path file) {
     String url = store.sbomDocument(packageType, packageName, version);
@@ -94,6 +107,17 @@ final class Publisher {
       case 200 -> {
         Map<String, Object> body = Json.parseObject(response.body(), "the sbom publish receipt");
         String stored = Sha256.normalize(Json.string(body, "digest"));
+        if (stored != null && !stored.equals(local) && sameSbomContent(url, file)) {
+          console.info(
+              "the sbom for "
+                  + coordinate
+                  + " is already published as "
+                  + stored
+                  + "; this run produced "
+                  + local
+                  + ", which differs only in serialNumber and metadata.timestamp — verified");
+          return ExitCode.OK;
+        }
         return verified(coordinate, "the sbom for " + coordinate, local, stored);
       }
       default -> throw refusal("the sbom publish for " + coordinate, url, response);
@@ -353,6 +377,45 @@ final class Publisher {
             + ". A coordinate must never come to mean two things, so this publish stops here rather"
             + " than asking again; release a new version, or find out why one version has two"
             + " builds.");
+  }
+
+  /**
+   * Whether the stored sbom, read back from {@code url}, and the local one are the same document
+   * once the two fields every build mints afresh are set aside. Anything that keeps the question
+   * from being answered — a read that fails or is not 200, a body or file that is not a JSON object
+   * — is {@code false}, so the caller falls through to the different-bytes refusal rather than to a
+   * guess.
+   */
+  private boolean sameSbomContent(String url, Path file) {
+    try {
+      Http.Response stored = http.get(url);
+      if (stored.status() != 200) {
+        return false;
+      }
+      Map<String, Object> theirs = Json.parseObject(stored.body(), "the stored sbom");
+      Map<String, Object> ours =
+          Json.parseObject(Files.readString(file, StandardCharsets.UTF_8), "the local sbom");
+      return withoutGenerationFields(theirs).equals(withoutGenerationFields(ours));
+    } catch (CliException | IOException e) {
+      return false;
+    }
+  }
+
+  /**
+   * The document minus {@code serialNumber} and {@code metadata.timestamp}. The parsed tree is maps,
+   * lists, strings, booleans and doubles, so plain equality on it is structural: key order and
+   * whitespace drop out, and equal numbers compare equal.
+   */
+  private static Map<String, Object> withoutGenerationFields(Map<String, Object> document) {
+    Map<String, Object> copy = new LinkedHashMap<>(document);
+    copy.remove("serialNumber");
+    Map<String, Object> metadata = Json.object(copy, "metadata");
+    if (metadata != null) {
+      Map<String, Object> trimmed = new LinkedHashMap<>(metadata);
+      trimmed.remove("timestamp");
+      copy.put("metadata", trimmed);
+    }
+    return copy;
   }
 
   /** The stored digest from a read, preferring the header that is a contract over the one that is a cache validator. */
