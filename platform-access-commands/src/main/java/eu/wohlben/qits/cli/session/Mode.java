@@ -9,8 +9,8 @@ import java.util.Map;
  * container on the platform, where there is no browser and no person and the credential is the
  * commissioned client pair the container was injected with; or a workspace handed a token of its
  * own ({@code QITS_TOKEN}) — a runner node, or an admin or editor workspace placed directly on
- * qits-containers — which has neither and reaches the platform through the public edge, because no
- * wire alias resolves there.
+ * qits-containers — which has neither and reaches the platform through the public edge, because
+ * only the edge exchanges that token (and, on a runner node, no wire alias resolves at all).
  * <p>
  * They are never mixed: in-platform never reads the session file, a workstation never mints with a
  * client secret, and the token home does neither. The decision is a function of the environment, which does not change while
@@ -34,7 +34,7 @@ public enum Mode {
      * The workspace's own token. Non-blank, it decides the home ahead of everything else — the
      * override and the pair included: a container that was handed one was addressed on purpose, and
      * a workspace carrying one — a runner node, or an admin or editor workspace placed directly on
-     * qits-containers — resolves none of the addresses the other two homes would dial.
+     * qits-containers — has to dial the public edge, the only place that token is accepted.
      */
     public static final String TOKEN = "QITS_TOKEN";
 
