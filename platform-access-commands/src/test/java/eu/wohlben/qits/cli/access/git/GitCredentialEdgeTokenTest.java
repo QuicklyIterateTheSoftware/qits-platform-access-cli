@@ -21,7 +21,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The token home of {@code qits git-credential}: a workspace on a runner node, where the workspace
+ * The token home of {@code qits git-credential}: a workspace handed a token of its own — a runner
+ * node, or an admin or editor workspace placed directly on qits-containers — where the workspace
  * token answers the public git host of {@code QITS_DOMAIN} and no other. The helper is global, so
  * Git runs it for every remote — a token handed to any other host would be exfiltration.
  */

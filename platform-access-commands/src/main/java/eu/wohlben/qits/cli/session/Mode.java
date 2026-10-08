@@ -7,9 +7,10 @@ import java.util.Map;
  * <p>
  * A workstation, where a person signed in with a browser and the session lives in a file; a
  * container on the platform, where there is no browser and no person and the credential is the
- * commissioned client pair the container was injected with; or a workspace on a runner node, which
- * has neither and is handed a token of its own ({@code QITS_TOKEN}) and reaches the platform through
- * the public edge, because no wire alias resolves there.
+ * commissioned client pair the container was injected with; or a workspace handed a token of its
+ * own ({@code QITS_TOKEN}) — a runner node, or an admin or editor workspace placed directly on
+ * qits-containers — which has neither and reaches the platform through the public edge, because
+ * only the edge exchanges that token (and, on a runner node, no wire alias resolves at all).
  * <p>
  * They are never mixed: in-platform never reads the session file, a workstation never mints with a
  * client secret, and the token home does neither. The decision is a function of the environment, which does not change while
@@ -23,13 +24,17 @@ public enum Mode {
     /** A workspace container: the commissioned client, minted at the internal idp. */
     IN_PLATFORM,
 
-    /** A workspace on a runner node: {@code QITS_TOKEN} as it is, sent to the public vhosts. */
+    /**
+     * A workspace handed a token of its own — a runner node, or an admin or editor workspace placed
+     * directly on qits-containers: {@code QITS_TOKEN} as it is, sent to the public vhosts.
+     */
     EDGE_TOKEN;
 
     /**
      * The workspace's own token. Non-blank, it decides the home ahead of everything else — the
      * override and the pair included: a container that was handed one was addressed on purpose, and
-     * a runner node resolves none of the addresses the other two homes would dial.
+     * a workspace carrying one — a runner node, or an admin or editor workspace placed directly on
+     * qits-containers — has to dial the public edge, the only place that token is accepted.
      */
     public static final String TOKEN = "QITS_TOKEN";
 

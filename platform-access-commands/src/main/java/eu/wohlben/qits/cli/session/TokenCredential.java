@@ -5,8 +5,9 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import java.util.Map;
 
 /**
- * The credential of a workspace on a runner node: the token it was handed in {@code QITS_TOKEN},
- * sent as it is.
+ * The credential of a workspace handed a token of its own — a runner node, or an admin or editor
+ * workspace placed directly on qits-containers: the token it was handed in {@code QITS_TOKEN}, sent
+ * as it is.
  * <p>
  * Nothing is minted, refreshed or written anywhere. The token is the workspace's own and lives as
  * long as the workspace does, so there is nothing to keep fresh — and, like the commissioned

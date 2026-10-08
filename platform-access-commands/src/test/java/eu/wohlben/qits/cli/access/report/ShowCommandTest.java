@@ -19,7 +19,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** {@code qits ci report show} against a fake qits-ci, in the token home (QITS_TOKEN), like an agent on a runner. */
+/**
+ * {@code qits ci report show} against a fake qits-ci, in the token home (QITS_TOKEN), like a
+ * workspace on a runner node or an admin or editor workspace placed directly on qits-containers.
+ */
 class ShowCommandTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();

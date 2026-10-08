@@ -28,7 +28,10 @@ class PlatformEndpointsTest {
         assertThat(runner.base("githost")).isEqualTo("https://githost.qits.wohlben.eu");
     }
 
-    /** The pair and the wire aliases it would read are passed over: a runner resolves none of them. */
+    /**
+     * The pair and the wire aliases it would read are passed over: the token home resolves none of
+     * them.
+     */
     @Test
     void theTokenHomeIgnoresWhatAContainerWouldDial() throws CliFailure {
         Map<String, String> both = new HashMap<>(RUNNER);
