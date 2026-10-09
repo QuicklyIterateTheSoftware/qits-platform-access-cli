@@ -280,7 +280,7 @@ final class NpmPublisher {
      */
     Decision.Outcome publish(Package pkg, Optional<Path> sbom, List<String> include, boolean ifChanged,
                              boolean mainTag) {
-        String hash = new NpmContentHash().of(BuiltPackage.npm(pkg.tarball()), sbom, include, Reactor.NONE);
+        String hash = ContentHash.forType("npm").of(BuiltPackage.npm(pkg.tarball()), sbom, include, Reactor.NONE);
         Decision.Outcome outcome = new Decision(new ContentHashes(http, store), console)
                 .decide("npm", pkg.name(), pkg.version(), hash, ifChanged, () -> upload(pkg, hash));
         if (outcome.published() && mainTag) {

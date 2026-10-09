@@ -69,7 +69,7 @@ final class MavenPublisher {
     Decision.Outcome publish(Path root, String name, String version, String path, Optional<Path> sbom,
                              List<String> include, List<String> links, boolean ifChanged, boolean dryRun) {
         Built built = build(root, name, version, path, links);
-        String hash = new MavenContentHash().of(BuiltPackage.maven(built.jar()), sbom, include, built.reactor());
+        String hash = ContentHash.forType("maven").of(BuiltPackage.maven(built.jar()), sbom, include, built.reactor());
         String[] ga = name.split(":", -1);
         return new Decision(hashes, console).decide("maven", name, version, hash, ifChanged, dryRun,
                 () -> upload(ga[0], ga[1], version, built, hash));
@@ -82,7 +82,7 @@ final class MavenPublisher {
             throw CliException.policy("--name '" + name + "' is not groupId:artifactId");
         }
         Built built = new Built(jar, ContractPackager.pom(ga[0], ga[1], version, description), Reactor.NONE, List.of());
-        String hash = new MavenContentHash().of(BuiltPackage.maven(jar), Optional.empty(), List.of(), Reactor.NONE);
+        String hash = ContentHash.forType("maven").of(BuiltPackage.maven(jar), Optional.empty(), List.of(), Reactor.NONE);
         return new Decision(hashes, console).decide("maven", name, version, hash, true,
                 () -> upload(ga[0], ga[1], version, built, hash));
     }

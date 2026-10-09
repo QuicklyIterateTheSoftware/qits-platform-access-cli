@@ -35,12 +35,22 @@ interface ContentHash {
      */
     String of(BuiltPackage built, Optional<Path> sbom, List<String> include, Reactor reactor);
 
+    /** The package type (ecosystem) this implementation hashes: {@code maven}, {@code npm}, … Unique. */
+    String type();
+
+    /**
+     * Every ecosystem this CLI can hash, one class each. A new package manager (OCI, cargo, pypi,
+     * go) is one more class here and nothing else: the decision ({@link Decision}), the store reads
+     * ({@link ContentHashes}) and link groups know no ecosystem. A list rather than a ServiceLoader
+     * because the CLI is a Quarkus native image, which registers no service providers by default.
+     */
+    List<ContentHash> ALL = List.of(new MavenContentHash(), new NpmContentHash());
+
     /** The implementation for a package type. */
     static ContentHash forType(String type) {
-        return switch (type) {
-            case "maven" -> new MavenContentHash();
-            case "npm" -> new NpmContentHash();
-            default -> throw CliException.policy("no content hash is defined for package type '" + type + "'");
-        };
+        return ALL.stream()
+                .filter(hash -> hash.type().equals(type))
+                .findFirst()
+                .orElseThrow(() -> CliException.policy("no content hash is defined for package type '" + type + "'"));
     }
 }

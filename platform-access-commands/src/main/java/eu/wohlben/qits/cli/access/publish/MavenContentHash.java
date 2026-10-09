@@ -16,6 +16,11 @@ import java.util.Optional;
 final class MavenContentHash implements ContentHash {
 
     @Override
+    public String type() {
+        return "maven";
+    }
+
+    @Override
     public String of(BuiltPackage built, Optional<Path> sbom, List<String> include, Reactor reactor) {
         HashManifest manifest = new HashManifest("maven", include);
         if (built.bytes() != null) {

@@ -13,6 +13,11 @@ import java.util.Optional;
 final class NpmContentHash implements ContentHash {
 
     @Override
+    public String type() {
+        return "npm";
+    }
+
+    @Override
     public String of(BuiltPackage built, Optional<Path> sbom, List<String> include, Reactor reactor) {
         HashManifest manifest = new HashManifest("npm", include);
         for (Archives.Entry entry : Archives.readTarGz(built.bytes(), "the tarball")) {
