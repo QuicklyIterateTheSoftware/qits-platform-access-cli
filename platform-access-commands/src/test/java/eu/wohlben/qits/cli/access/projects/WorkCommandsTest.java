@@ -83,6 +83,49 @@ class WorkCommandsTest {
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
             """.formatted(EPIC, PROJECT);
 
+    // --- blockSource (qits-895): a ticket blocked by an idle agent session, an explicit block with and
+    // without its reason and who, both at once, and one sent not blocked at all. ---
+
+    private static final String AGENT_WAITING_TICKET = "90909090-0000-4000-8000-000000000005";
+    private static final String AGENT_WAITING_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":700,"qualifiedId":"qits-700",
+             "title":"Idle agent","description":"d","status":"IMPLEMENTING","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z",
+             "blocked":true,"blockSource":"AGENT_WAITING"}
+            """.formatted(AGENT_WAITING_TICKET, PROJECT);
+
+    private static final String EXPLICIT_BLOCK_TICKET = "a1a1a1a1-0000-4000-8000-000000000006";
+    private static final String EXPLICIT_BLOCK_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":701,"qualifiedId":"qits-701",
+             "title":"Needs sign-off","description":"d","status":"REFINED","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z",
+             "blocked":true,"blockSource":"EXPLICIT","blockReason":"Needs security sign-off","blockedBy":"alice"}
+            """.formatted(EXPLICIT_BLOCK_TICKET, PROJECT);
+
+    /** The same explicit block, with neither a reason nor who recorded. */
+    private static final String EXPLICIT_BLOCK_BARE_TICKET = "a2a2a2a2-0000-4000-8000-000000000007";
+    private static final String EXPLICIT_BLOCK_BARE_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":702,"qualifiedId":"qits-702",
+             "title":"Blocked, no reason given","description":"d","status":"REFINED","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z",
+             "blocked":true,"blockSource":"EXPLICIT"}
+            """.formatted(EXPLICIT_BLOCK_BARE_TICKET, PROJECT);
+
+    private static final String BOTH_BLOCK_TICKET = "b0b0b0b0-0000-4000-8000-000000000008";
+    private static final String BOTH_BLOCK_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":703,"qualifiedId":"qits-703",
+             "title":"Blocked and idle","description":"d","status":"REFINED","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z",
+             "blocked":true,"blockSource":"BOTH","blockReason":"Needs security sign-off","blockedBy":"alice"}
+            """.formatted(BOTH_BLOCK_TICKET, PROJECT);
+
+    private static final String NOT_BLOCKED_TICKET = "c0c0c0c0-0000-4000-8000-000000000009";
+    private static final String NOT_BLOCKED_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":704,"qualifiedId":"qits-704",
+             "title":"Not blocked","description":"d","status":"REFINED","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","blocked":false}
+            """.formatted(NOT_BLOCKED_TICKET, PROJECT);
+
     private static final String TICKET_CREATE = """
             {"title":"TICKET create","type":"object","additionalProperties":false,
              "required":["title","ticketType","impetus","project"],
@@ -545,6 +588,27 @@ class WorkCommandsTest {
     }
 
     @Test
+    void listShowsWaitingForAnAgentOnlyBlockAndADashWhenThereIsNone() {
+        platform.answer("GET", LIST, "{\"entities\":[" + AGENT_WAITING_ROW + "," + EXPLICIT_BLOCK_ROW + ","
+                + BOTH_BLOCK_ROW + "," + NOT_BLOCKED_ROW + "]}");
+
+        Result r = run("work", "list", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        List<String> lines = r.out().lines().toList();
+        // The BLOCKED column, not whatever else on the line happens to say the same word.
+        assertThat(blockedColumn(lines.get(1))).isEqualTo("waiting");
+        assertThat(blockedColumn(lines.get(2))).isEqualTo("yes");
+        assertThat(blockedColumn(lines.get(3))).isEqualTo("yes");
+        assertThat(blockedColumn(lines.get(4))).isEqualTo("-");
+    }
+
+    /** The BLOCKED column of a `work list` row: ID, ARCHETYPE, STATUS, BLOCKED, TITLE, UPDATED. */
+    private static String blockedColumn(String row) {
+        return row.strip().split("\\s{2,}")[3];
+    }
+
+    @Test
     void listByParentPassesTheQualifiedIdThrough() {
         Result r = run("work", "list", "--project", "qits", "--parent", "qits-548", "-o", "json");
 
@@ -596,6 +660,64 @@ class WorkCommandsTest {
         Result ticket = run("work", "--entity", "qits-548", "details");
         assertThat(ticket.exit()).as(ticket.err()).isZero();
         assertThat(ticket.out()).doesNotContain("Acceptance criteria:");
+    }
+
+    @Test
+    void detailsDescribesAnAgentOnlyBlockAsWaitingForAPerson() {
+        Result r = detailsOf("qits-700", AGENT_WAITING_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(blockedRow(r.out())).isEqualTo("yes (agent waiting)");
+    }
+
+    @Test
+    void detailsDescribesAnExplicitBlockWithItsReasonAndWho() {
+        Result r = detailsOf("qits-701", EXPLICIT_BLOCK_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(blockedRow(r.out())).isEqualTo("yes: Needs security sign-off (by alice)");
+    }
+
+    @Test
+    void detailsOmitsTheReasonAndWhoAnExplicitBlockDoesNotCarry() {
+        Result r = detailsOf("qits-702", EXPLICIT_BLOCK_BARE_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(blockedRow(r.out())).isEqualTo("yes");
+    }
+
+    @Test
+    void detailsCombinesTheExplicitFormWithAgentWaitingForBoth() {
+        Result r = detailsOf("qits-703", BOTH_BLOCK_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(blockedRow(r.out())).isEqualTo("yes: Needs security sign-off (by alice), agent waiting");
+    }
+
+    @Test
+    void detailsSaysNoWhenTheItemIsSentNotBlocked() {
+        Result r = detailsOf("qits-704", NOT_BLOCKED_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(blockedRow(r.out())).isEqualTo("no");
+    }
+
+    @Test
+    void detailsKeepsThePlainYesAnOlderServiceWithNoBlockSourceSent() {
+        // TICKET_ROW is blocked:true with no blockSource at all, as an old, not-yet-migrated service sends it.
+        Result r = run("work", "--entity", "qits-548", "details");
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(blockedRow(r.out())).isEqualTo("yes");
+    }
+
+    /** `work --entity <id> details` against a freshly answered item, with empty comments and children. */
+    private Result detailsOf(String qualifiedId, String row) {
+        platform.answer("GET", WORK + "/" + qualifiedId, row);
+        platform.answer("GET", WORK + "/" + qualifiedId + "/comments", "{\"entries\":[]}");
+        platform.answer("GET", WORK + "/" + qualifiedId + "/children", "{\"children\":[]}");
+        return run("work", "--entity", qualifiedId, "details");
+    }
+
+    /** The value of the details table's "blocked" row, with no padding around it. */
+    private static String blockedRow(String out) {
+        return out.lines().filter(line -> line.strip().startsWith("blocked")).findFirst()
+                .orElseThrow(() -> new AssertionError("no blocked row in:%n%s".formatted(out)))
+                .strip().replaceFirst("^blocked\\s+", "");
     }
 
     @Test

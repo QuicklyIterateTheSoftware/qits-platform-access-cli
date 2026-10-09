@@ -129,7 +129,9 @@ public class WorkCommand implements Runnable {
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
             description = {"A project's work items, every archetype, in the service's order: id (qualified), "
-                    + "archetype, status, title and when it last changed. BLOCKED appears when a ticket is.",
+                    + "archetype, status, title and when it last changed. BLOCKED appears when a ticket is: "
+                    + "yes for an explicit block, waiting when the only reason is an agent session sitting "
+                    + "idle, and - when it is not blocked.",
                     "Each filter narrows the list; without one it shows everything."},
             footerHeading = HelpText.EXAMPLES,
             footer = {

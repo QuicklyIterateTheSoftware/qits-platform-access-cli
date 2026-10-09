@@ -239,7 +239,7 @@ Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING,
 
 ## qits work list
 
-A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is.
+A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked.
 
 Each filter narrows the list; without one it shows everything.
 

@@ -180,7 +180,7 @@ final class WorkEntities {
                     // 11, so that IMPLEMENTED, the longest status, is not cut
                     cell(text(e, "status"), 11)));
             if (anyBlocked) {
-                row.add(blocked(e) ? "yes" : "-");
+                row.add(blockedCell(e));
             }
             row.add(cell(text(e, "title"), 70));
             row.add(Table.time(text(e, "updatedAt")));
@@ -196,7 +196,7 @@ final class WorkEntities {
         rows.add(row("title", text(e, "title")));
         rows.add(row("status", text(e, "status")));
         if (e.has("blocked") && !e.get("blocked").isNull()) {
-            rows.add(row("blocked", blocked(e) ? "yes" : "no"));
+            rows.add(row("blocked", blockedDetail(e)));
         }
         optional(rows, e, "ticket type", "ticketType");
         optional(rows, e, "impetus", "impetus");
@@ -265,9 +265,61 @@ final class WorkEntities {
         return qualified.isEmpty() ? text(e, "id") : qualified;
     }
 
-    /** Blocked means the phase the item's status belongs to cannot proceed. Only tickets carry it. */
+    /**
+     * Blocked means the phase the item's status belongs to cannot proceed. Only tickets carry it.
+     * The service computes it as the effective block: an explicit block, or an agent session
+     * waiting idle, or both.
+     */
     private static boolean blocked(JsonNode e) {
         return e.path("blocked").asBoolean(false);
+    }
+
+    /** EXPLICIT, AGENT_WAITING or BOTH; empty when the item is not blocked or an older service sends none. */
+    private static String blockSource(JsonNode e) {
+        return text(e, "blockSource");
+    }
+
+    /** The BLOCKED column of a list: yes, waiting for an agent-only block, or - when it is not blocked. */
+    private static String blockedCell(JsonNode e) {
+        if (!blocked(e)) {
+            return "-";
+        }
+        return "AGENT_WAITING".equals(blockSource(e)) ? "waiting" : "yes";
+    }
+
+    /**
+     * The blocked row of details: no when it is not; yes (agent waiting) for an agent-only block;
+     * yes[: reason][ (by who)] for an explicit block, its absent parts left out; the explicit form
+     * with ", agent waiting" appended when both hold; plain yes when an older service sends no
+     * blockSource.
+     */
+    private static String blockedDetail(JsonNode e) {
+        if (!blocked(e)) {
+            return "no";
+        }
+        String source = blockSource(e);
+        if (source.isEmpty()) {
+            return "yes";
+        }
+        if ("AGENT_WAITING".equals(source)) {
+            return "yes (agent waiting)";
+        }
+        String explicit = explicitBlock(e);
+        return "BOTH".equals(source) ? explicit + ", agent waiting" : explicit;
+    }
+
+    /** yes, with the reason and who after it, whichever the service sent. */
+    private static String explicitBlock(JsonNode e) {
+        String reason = text(e, "blockReason");
+        String by = text(e, "blockedBy");
+        StringBuilder explicit = new StringBuilder("yes");
+        if (!reason.isEmpty()) {
+            explicit.append(": ").append(reason);
+        }
+        if (!by.isEmpty()) {
+            explicit.append(" (by ").append(by).append(")");
+        }
+        return explicit.toString();
     }
 
     /** The text a line at a time, each line cleaned on its own and indented. */
