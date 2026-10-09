@@ -25,7 +25,10 @@ import java.util.Optional;
                 "With --if-changed the module is uploaded only when its content hash differs from the newest "
                         + "published version's. No published version, no stored hash, or another algorithm "
                         + "version all count as changed. A re-run at a version already published answers "
-                        + "`published <version>` without uploading."},
+                        + "`published <version>` without uploading.",
+                "With --dry-run (needs --if-changed) nothing is uploaded: the line is `changed` where an upload "
+                        + "would happen, else as above. qits-ci asks every member of a link: group this way first, "
+                        + "so the group publishes together or not at all."},
         footerHeading = "%nExamples:%n",
         footer = {"  qits artifacts publish maven --name eu.wohlben.qits:qits-registries-npm --path npm "
                 + "--sbom npm/target/sbom.json --link eu.wohlben.qits:qits-blobstore --if-changed "
@@ -70,6 +73,10 @@ public class MavenCommand extends AbstractPublishCommand {
             description = "Upload only when the content differs from the newest published version.")
     boolean ifChanged;
 
+    @CommandLine.Option(names = "--dry-run",
+            description = "Decide as --if-changed and upload nothing: print `changed` or `unchanged since <version>`.")
+    boolean dryRun;
+
     @CommandLine.Option(names = "--root", paramLabel = "<dir>",
             description = "The reactor root, whose pom.xml lists the modules. Default: the working directory.")
     List<String> root = new ArrayList<>();
@@ -87,8 +94,11 @@ public class MavenCommand extends AbstractPublishCommand {
         Optional<Path> sbom = Optional.ofNullable(PublishArgs.optionalOnce(this.sbom, "--sbom", null))
                 .map(root::resolve);
         PublishArgs.ifChangedNeedsSbom(ifChanged, sbom.isPresent(), include);
+        if (dryRun && !ifChanged) {
+            throw CliException.policy("--dry-run decides --if-changed and means nothing without it");
+        }
         Decision.Outcome outcome = new MavenPublisher(http(), store(env), console)
-                .publish(root, name, version, path, sbom, include, link, ifChanged);
+                .publish(root, name, version, path, sbom, include, link, ifChanged, dryRun);
         console.answer(outcome.line());
         return ExitCode.OK;
     }

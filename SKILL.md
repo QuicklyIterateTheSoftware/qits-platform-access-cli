@@ -1322,12 +1322,15 @@ The pom uploaded is generated from the module's effective model: no parent, ever
 
 With --if-changed the module is uploaded only when its content hash differs from the newest published version's. No published version, no stored hash, or another algorithm version all count as changed. A re-run at a version already published answers `published <version>` without uploading.
 
+With --dry-run (needs --if-changed) nothing is uploaded: the line is `changed` where an upload would happen, else as above. qits-ci asks every member of a link: group this way first, so the group publishes together or not at all.
+
 ```
-qits artifacts publish maven [--if-changed] [--include <glob>...] [--link <groupId:artifactId>...] [--name <groupId:artifactId>...] [--path <dir>...] [--root <dir>...] [--sbom <file>...] [--version <version>...]
+qits artifacts publish maven [--dry-run] [--if-changed] [--include <glob>...] [--link <groupId:artifactId>...] [--name <groupId:artifactId>...] [--path <dir>...] [--root <dir>...] [--sbom <file>...] [--version <version>...]
 ```
 
 | Name | What it does |
 |---|---|
+| `--dry-run` | Decide as --if-changed and upload nothing: print `changed` or `unchanged since <version>`. |
 | `--if-changed` | Upload only when the content differs from the newest published version. |
 | `--include <glob>...` | Hash only the jar entries matching one of these globs. Narrows the hash, never what is uploaded. Repeatable. |
 | `--link <groupId:artifactId>...` | A reactor sibling that stays a pom dependency instead of being bundled. Repeatable. |

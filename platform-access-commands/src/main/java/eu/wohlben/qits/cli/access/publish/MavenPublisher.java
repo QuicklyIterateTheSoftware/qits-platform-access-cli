@@ -67,11 +67,11 @@ final class MavenPublisher {
     }
 
     Decision.Outcome publish(Path root, String name, String version, String path, Optional<Path> sbom,
-                             List<String> include, List<String> links, boolean ifChanged) {
+                             List<String> include, List<String> links, boolean ifChanged, boolean dryRun) {
         Built built = build(root, name, version, path, links);
         String hash = new MavenContentHash().of(BuiltPackage.maven(built.jar()), sbom, include, built.reactor());
         String[] ga = name.split(":", -1);
-        return new Decision(hashes, console).decide("maven", name, version, hash, ifChanged,
+        return new Decision(hashes, console).decide("maven", name, version, hash, ifChanged, dryRun,
                 () -> upload(ga[0], ga[1], version, built, hash));
     }
 

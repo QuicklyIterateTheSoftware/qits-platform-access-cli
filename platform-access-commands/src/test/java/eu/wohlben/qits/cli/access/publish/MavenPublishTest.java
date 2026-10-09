@@ -330,6 +330,58 @@ class MavenPublishTest {
     assertEquals(puts, store.paths().stream().filter(p -> p.startsWith("PUT")).count());
   }
 
+  @Test
+  void aPureVersionStampHashesTheSame() throws IOException {
+    // What a `bump(dependencies)` release that moved only a test-scope pin leaves behind: the same
+    // classes, and the build's own version in META-INF/maven and in the SBOM's root reference.
+    String before = hashOfClient();
+
+    List<Archives.Entry> entries = new ArrayList<>(Archives.readJar(
+        Files.readAllBytes(reactor.resolve("client/target/qits-foo-client-" + V + ".jar")), "jar"));
+    entries.replaceAll(e -> e.name().endsWith("pom.properties")
+        ? new Archives.Entry(e.name(), "version=2026.1001.2\n".getBytes(StandardCharsets.UTF_8)) : e);
+    Files.write(reactor.resolve("client/target/qits-foo-client-" + V + ".jar"), Archives.writeJar(entries, false));
+    Path sbom = sbom();
+    Files.writeString(sbom, Files.readString(sbom).replace("qits-foo-client@" + V, "qits-foo-client@2026.1001.2"));
+    Harness.Run run = publish("client", "qits-foo-client", "--sbom", sbom.toString());
+    assertEquals(ExitCode.OK, run.code(), run.err());
+
+    assertEquals(before, put(CLIENT_POM).header("X-Artifacts-Content-Hash"));
+  }
+
+  @Test
+  void aDryRunThatWouldPublishSaysChangedAndUploadsNothing() throws IOException {
+    store.on("GET", HASHES + G + ":qits-foo-client/-/newest",
+        StubStore.Reply.of(200, stored(G + ":qits-foo-client", "2026.930.7", "v1:sha256:" + "b".repeat(64))));
+
+    Harness.Run run = publish("client", "qits-foo-client", "--sbom", sbom().toString(), "--if-changed", "--dry-run");
+
+    assertEquals(ExitCode.OK, run.code(), run.err());
+    assertEquals("changed\n", run.out());
+    assertTrue(store.paths().stream().noneMatch(p -> p.startsWith("PUT")), store.paths().toString());
+  }
+
+  @Test
+  void aDryRunOfUnchangedContentSaysUnchangedSince() throws IOException {
+    String hash = hashOfClient();
+    store.on("GET", HASHES + G + ":qits-foo-client/-/newest",
+        StubStore.Reply.of(200, stored(G + ":qits-foo-client", "2026.930.7", hash)));
+    long puts = store.paths().stream().filter(p -> p.startsWith("PUT")).count();
+
+    Harness.Run run = publish("client", "qits-foo-client", "--sbom", sbom().toString(), "--if-changed", "--dry-run");
+
+    assertEquals("unchanged since 2026.930.7\n", run.out());
+    assertEquals(puts, store.paths().stream().filter(p -> p.startsWith("PUT")).count());
+  }
+
+  @Test
+  void aDryRunWithoutIfChangedIsRefused() throws IOException {
+    Harness.Run run = publish("client", "qits-foo-client", "--sbom", sbom().toString(), "--dry-run");
+
+    assertEquals(ExitCode.POLICY, run.code());
+    assertTrue(run.errContains("--dry-run decides --if-changed"), run.err());
+  }
+
   // --- products, mismatches, re-runs -------------------------------------------------------------
 
   @Test

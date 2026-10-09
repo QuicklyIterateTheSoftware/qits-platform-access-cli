@@ -17,6 +17,10 @@ import java.util.Optional;
  *       Anything else: exit 2, never "unchanged" and never "changed".
  * </ol>
  *
+ * <p><b>A dry run</b> ({@code --dry-run}, with {@code --if-changed}) makes the same decision and
+ * uploads nothing: where it would upload, it answers {@code changed}. qits-ci asks every member of a
+ * {@code link:} group this way first, so the group publishes together or not at all.
+ *
  * <p>It errs towards publishing: every doubt that is an answer means "changed", and every doubt
  * that is not an answer stops the step.
  */
@@ -31,15 +35,21 @@ final class Decision {
             /** Already at this version: a re-run, or a hand-deployed version with no hash. */
             ALREADY_PUBLISHED,
             /** The newest version holds the same content; nothing was uploaded. */
-            UNCHANGED
+            UNCHANGED,
+            /** A dry run found the content changed; nothing was uploaded. */
+            CHANGED
         }
 
         boolean published() {
-            return kind != Kind.UNCHANGED;
+            return kind == Kind.UPLOADED || kind == Kind.ALREADY_PUBLISHED;
         }
 
         String line() {
-            return kind == Kind.UNCHANGED ? "unchanged since " + version : "published " + version;
+            return switch (kind) {
+                case UNCHANGED -> "unchanged since " + version;
+                case CHANGED -> "changed";
+                case UPLOADED, ALREADY_PUBLISHED -> "published " + version;
+            };
         }
     }
 
@@ -52,6 +62,15 @@ final class Decision {
     }
 
     Outcome decide(String type, String name, String version, String hash, boolean ifChanged, Runnable upload) {
+        return decide(type, name, version, hash, ifChanged, false, upload);
+    }
+
+    /** As above; with {@code dryRun} (which needs {@code ifChanged}) nothing is uploaded and a change is {@code CHANGED}. */
+    Outcome decide(String type, String name, String version, String hash, boolean ifChanged, boolean dryRun,
+                   Runnable upload) {
+        if (dryRun && !ifChanged) {
+            throw new IllegalArgumentException("a dry run decides if-changed");
+        }
         String coordinate = type + " " + name + "@" + version;
         console.info(coordinate + " hashes to " + hash);
 
@@ -95,6 +114,10 @@ final class Decision {
         } else {
             reason = "the content changed since " + newest.get().version() + " (" + newest.get().contentHash()
                     + ") — publishing";
+        }
+        if (dryRun) {
+            console.info(coordinate + ": " + reason.replace("publishing", "would publish") + " (dry run, nothing uploaded)");
+            return new Outcome(Outcome.Kind.CHANGED, version);
         }
         console.info(coordinate + ": " + reason);
         upload.run();
