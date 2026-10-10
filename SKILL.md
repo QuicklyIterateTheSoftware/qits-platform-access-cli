@@ -155,6 +155,8 @@ qits projects list -o json
 
 The repositories of one project: list shows them, create stands a new one up. Release requests take a repository's id or name as --repository.
 
+branches, commits, commit-changes, commit-diff and commit-subjects read one repository's git history; each takes the repository as --repository <id or name>.
+
 A repository's archetype is read off its name's role suffix, so the name is what says what kind of component it is. There is no flag for the archetype, on purpose.
 
 ## qits repositories list
@@ -222,9 +224,165 @@ qits repositories --project qits create qits-docs-app -o json
 - `1` The platform refused (the message names the status and what to do next), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
+## qits repositories branches
+
+List a repository's branches: each with its parent, how far it is ahead of and behind that parent, and whether it can be cleaned up (fully merged, nothing depends on it).
+
+Reads GET /projects/api/repositories/{id}/branches.
+
+```
+qits repositories branches [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits branches --repository qits-ci-service
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories commits
+
+List the commits on a branch that are not on its parent, newest first, each with the files it changed.
+
+Reads GET /projects/api/repositories/{id}/commits?branch=<branch>. The table shows hash, date, author, file count and subject; -o json adds the full message, the files and the parents.
+
+```
+qits repositories commits [--branch <branch>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--branch <branch>` | The branch whose commits to list (required). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits commits --repository qits-ci-service --branch ticket/x
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories commit-changes
+
+List the files one commit changed against its first parent, or against --parent: path, old path for a rename, and change type.
+
+Reads GET /projects/api/repositories/{id}/commits/{hash}/changes. Use commit-diff for one file's diff.
+
+```
+qits repositories commit-changes [--commit <hash>] [--output table|json] [--parent <hash>] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--commit <hash>` | The commit (required): its full or short hash. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--parent <hash>` | The commit to compare against. Default: the commit's first parent. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits commit-changes --repository qits-ci-service --commit 1a2b3c4
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories commit-diff
+
+Print the unified diff of one file in one commit, against the same base as commit-changes. A binary file or a pure rename has an empty diff.
+
+Reads GET /projects/api/repositories/{id}/commits/{hash}/diff?path=<path>.
+
+```
+qits repositories commit-diff [--commit <hash>] [--output table|json] [--parent <hash>] [--path <path>] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--commit <hash>` | The commit (required): its full or short hash. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--parent <hash>` | The commit to compare against. Default: the commit's first parent. |
+| `--path <path>` | The file (required): its path in the repository. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits commit-diff --repository qits-ci-service --commit 1a2b3c4 --path README.md
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories commit-subjects
+
+Count how many of a branch's newest commits name their subject as term(<project>-<n>): message, for example feat(qits-1337): add the export, and list the ones that do not.
+
+Reads GET /projects/api/repositories/{id}/commit-subjects. Each commit is EXEMPT (a merge, or a platform machine author such as a bump or release commit), COMPLYING or NON_COMPLYING. guard says whether the branch opts into the git host's subject guard (.config/qits/commit-subjects.yml holding enforce: true).
+
+```
+qits repositories commit-subjects [--branch <branch>] [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--branch <branch>` | The branch to read. Default: the repository's main branch. |
+| `--limit <n>` | How many of the newest commits to read. Default 100, at most 1000. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits commit-subjects --repository qits-ci-service
+qits repositories --project qits commit-subjects --repository qits-ci-service --branch ticket/x --limit 20
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
 ## qits work
 
-Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, and comment writes to its thread.
+Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, and comment writes to its thread.
+
+An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, progress), and the HTML designs of a refinement (design) are here too.
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
@@ -377,14 +535,17 @@ The door is full-state: what the request leaves out is cleared. So the command s
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/work/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
 
+With --map it restates several items at once: the payload is the whole request, {"<entity>": <full state>, ...}, sent unchanged. Each key is a qualified id or an id, and each state names its "archetype" and every property the item is to keep, because a property left out is cleared. The service judges the map as one post-state and writes all of it or nothing, so a move with no legal order (a feature becomes an epic while its tasks become features under it) is one call. Nothing is created or deleted: every id must already exist. A status change to or from READY_FOR_DEV, or into started work or REFINED, is refused here; use status. --map takes no --entity and no --archetype.
+
 ```
-qits work transition [--archetype <archetype>] [--entity <entity>] [--output table|json] [--projects-url <url>]
+qits work transition [--archetype <archetype>] [--entity <entity>] [--map] [--output table|json] [--projects-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
-| `--archetype <archetype>` | The archetype to turn the item into (required): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
+| `--archetype <archetype>` | The archetype to turn the item into (required without --map): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--map` | Send the payload as it is: a map of entity to full state, for several items at once. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
 
@@ -394,15 +555,17 @@ qits work transition [--archetype <archetype>] [--entity <entity>] [--output tab
 qits work --entity qits-100 transition --archetype epic </dev/null
 echo '{}' | qits work --entity qits-100 transition --archetype epic
 echo '{"membership":{"parent":"qits-120"}}' | qits work --entity qits-100 transition --archetype feature
+jq -n '{"qits-101":{archetype:"EPIC",title:"Export",status:"REPORTED"},"qits-102":{archetype:"FEATURE",title:"CSV",status:"REPORTED",membership:{parent:"qits-101"}}}' | qits work transition --map
 ```
 
 - {} carries the item over as it stands. membership.parent, supersededBy and dependsOn take a qualified id or an id.
+- --map with nothing on stdin prints the request's schema from the service's OpenAPI document.
 
 ### Exit codes
 
-- `0` The item is reshaped, or nothing was put in and the schema is printed.
+- `0` The items are reshaped, or nothing was put in and the schema is printed.
 - `1` The platform refused (for example a state it does not take, HTTP 400, your roles or another project, HTTP 403, an item or archetype it does not know, HTTP 404, or a conflict, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity or --archetype, or a payload that is not a JSON object), not signed in, or the session ended.
+- `2` Used wrongly (for example no --entity or --archetype, --map with either, or a payload that is not a JSON object), not signed in, or the session ended.
 
 ## qits work status
 
@@ -437,6 +600,124 @@ echo '{"target":"REFINED"}' | qits work --entity qits-100 status
 - `0` The item moved, or nothing was put in and the legal targets are printed.
 - `1` The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example no --entity, an item on a service whose registry has not yet given its archetype a lifecycle, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work block
+
+Block a ticket, an epic or a campaign: say that the phase its status started cannot go on, and why. Use it when you stop and cannot take the work further.
+
+Sends {"blocked":true,"reason":"..."} to POST /projects/api/work/{entity}/blocked. The status does not move: it is the phase to resume, and the next status move clears the block. The reason lands on the item's comment thread, so write what is in the way concretely enough for somebody else to act on it.
+
+```
+qits work block [--entity <entity>] [--output table|json] [--projects-url <url>] [--reason <text>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--reason <text>` | What is in the way (required). It lands on the item's thread. |
+
+### Examples
+
+```
+qits work --entity qits-100 block --reason 'The database team must confirm the new limit.'
+```
+
+- A feature or a task runs no phase of its own: block its epic. An item that is VERIFIED, DONE or DROPPED cannot be blocked (HTTP 409).
+
+### Exit codes
+
+- `0` The item is blocked.
+- `1` The platform refused (for example a feature, a task or a status that starts no phase, HTTP 409, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --reason), not signed in, or the session ended.
+
+## qits work unblock
+
+Unblock a ticket, an epic or a campaign: say that what was in the way is gone and its phase can go on. Do it as soon as you know, whoever blocked it.
+
+Sends {"blocked":false} to POST /projects/api/work/{entity}/blocked, with the reason when one is given. No status moves. A blocked campaign starts no new member until it is unblocked.
+
+```
+qits work unblock [--entity <entity>] [--output table|json] [--projects-url <url>] [--reason <text>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--reason <text>` | Why it can go on again. Optional. |
+
+### Examples
+
+```
+qits work --entity qits-100 unblock
+qits work --entity qits-100 unblock --reason 'The limit is confirmed.' -o json
+```
+
+### Exit codes
+
+- `0` The item is unblocked.
+- `1` The platform refused (for example your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work delete
+
+Delete a work item, its children and their comment threads. The audit log keeps them.
+
+Sends DELETE /projects/api/work/{entity}. An agent may delete a feature or a task of its own project while the epic is REPORTED; deleting an epic or a ticket takes qits:admin. A campaign is never deleted: move its status to DROPPED.
+
+```
+qits work delete [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-104 delete
+```
+
+### Exit codes
+
+- `0` The item is gone.
+- `1` The platform refused (for example an epic or a ticket for an agent, or another project, HTTP 403, an item it does not know, HTTP 404, or a campaign or an epic past REPORTED, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work progress
+
+How a campaign is doing: each member in order with its state (DROPPED, DONE, DISPATCH_FAILED, JOINED_RUNNING, RUNNING, REFUSED, READY or WAITING) and the items it waits for.
+
+Reads GET /projects/api/work/{entity}/progress, worked out fresh on every call. -o json adds each criterion of each member's condition, judged: whether it holds, the evidence, and what would make it hold. It also says whether the criteria evaluator is listening (evaluator: connected, stalled, consumerFailing with lastError), which tells a campaign that waits correctly from one that nothing listens for.
+
+```
+qits work progress [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-130 progress
+qits work --entity qits-130 progress -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an item that is not a campaign, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
 
 ## qits work comment
 
@@ -518,6 +799,480 @@ qits work --entity qits-100 comment update </dev/null
 - `0` The comment is edited, or nothing was put in and the schema is printed.
 - `1` The platform refused (for example your roles, HTTP 403, an entity it does not know or a comment that is not on its thread, HTTP 404, or a patch it does not take, HTTP 400), cannot be reached, or its OpenAPI document does not describe the patch.
 - `2` Used wrongly (for example a patch that is not a JSON object, or no --entity or --comment), not signed in, or the session ended.
+
+## qits work dossier
+
+The dossier of an epic or a ticket: Markdown pages in reading order, for what the item's own description cannot hold. list shows the pages, get reads one, put adds or rewrites one, move reorders, delete removes one, and inline puts a sketch or a design into an epic's dossier.
+
+The item's description is the short form: an epic's is the pitch, a ticket's is what refinement concluded. The dossier is what the implementer builds from, a page per part: what changes and how it works, with paths, names, exact values, examples and figures.
+
+### Notes
+
+- --page is a page's slug (as list shows it) or its id.
+- Nobody accepts a write: a page is live the moment it lands. An epic's dossier is writable while the epic is REPORTED; a ticket's at every status.
+- Reading and writing take qits:admin or qits:agent; an agent writes only in its own project.
+
+## qits work dossier list
+
+List the pages of an epic's or a ticket's dossier in reading order: position, slug, title, version and when it last changed. Read this before you add a page, so the new page does not repeat one that is there.
+
+Reads GET /projects/api/work/{entity}/dossier. -o json includes each page's Markdown body.
+
+```
+qits work dossier list [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 dossier list
+qits work dossier list --entity qits-100 -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an item it does not know or one with no dossier, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work dossier get
+
+Read one dossier page in full: its title, its Markdown body and its version.
+
+Reads GET /projects/api/work/{entity}/dossier/{page}. Read a page before you rewrite it: put needs the version this answers, and a page is somebody's prose.
+
+```
+qits work dossier get [--entity <entity>] [--output table|json] [--page <page>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--page <page>` | The page (required): its slug or its id. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 dossier get --page data-flow
+qits work dossier get --entity qits-100 --page data-flow -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example no such item or no such page, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --page), not signed in, or the session ended.
+
+## qits work dossier put
+
+Add a page to an epic's or a ticket's dossier, or rewrite one.
+
+Without --page it adds a page at the end: the payload is {"title":"...","body":"..."}, sent to POST /projects/api/work/{entity}/dossier. The slug is made from the title and never changes.
+
+With --page it rewrites that page: the payload is {"title"?:"...","body"?:"...","version":<n>}, sent to PUT /projects/api/work/{entity}/dossier/{page}. A property left out keeps its value. version is the one get gave you; when somebody wrote to the page after you read it, the service refuses (HTTP 409). Read the page again, fold your change into it and write again; never write without a version.
+
+The body is Markdown. Write what changes and how it works: paths, names, commands, exact values. To show a sketch or a design on an epic's page, get its Markdown line from inline; never write a figure URL by hand. A ticket's dossier has no figures.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
+
+```
+qits work dossier put [--entity <entity>] [--output table|json] [--page <page>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--page <page>` | The page to rewrite: its slug or its id. Leave it out to add a page. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+jq -n --rawfile b plan.md '{title:"Data flow", body:$b}' | qits work --entity qits-100 dossier put
+jq -n --rawfile b plan.md '{body:$b, version:3}' | qits work --entity qits-100 dossier put --page data-flow
+qits work --entity qits-100 dossier put --page data-flow </dev/null
+```
+
+### Exit codes
+
+- `0` The page is written, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a blank title or no version, HTTP 400, another project, HTTP 403, no such item or page, HTTP 404, or a stale version or an epic past REPORTED, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work dossier move
+
+Move a dossier page to a position in the reading order, counted from 0. The pages between its old and new place shift to close the gap.
+
+Sends {"position":<n>} to POST /projects/api/work/{entity}/dossier/{page}/move. Reading order is the only structure a dossier has: there is no nesting, and a page's own headings are its second level.
+
+```
+qits work dossier move [--entity <entity>] [--output table|json] [--page <page>] [--position <n>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--page <page>` | The page to move (required): its slug or its id. |
+| `--position <n>` | Where it goes (required), counted from 0. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 dossier move --page data-flow --position 0
+```
+
+### Exit codes
+
+- `0` The page is moved.
+- `1` The platform refused (for example another project, HTTP 403, no such item or page, HTTP 404, or an epic past REPORTED, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity, --page or --position), not signed in, or the session ended.
+
+## qits work dossier delete
+
+Delete a dossier page. The pages after it close the gap.
+
+Sends DELETE /projects/api/work/{entity}/dossier/{page}. Deleting somebody's page is not a way to disagree with it: rewrite the part that is wrong, and delete only what you added and no longer mean. On an epic, a figure no other page shows goes with it.
+
+```
+qits work dossier delete [--entity <entity>] [--output table|json] [--page <page>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--page <page>` | The page to delete (required): its slug or its id. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 dossier delete --page old-notes
+```
+
+### Exit codes
+
+- `0` The page is gone.
+- `1` The platform refused (for example another project, HTTP 403, no such item or page, HTTP 404, or an epic past REPORTED, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --page), not signed in, or the session ended.
+
+## qits work dossier inline
+
+Copy a sketch or a design of an epic's refinement into the epic's dossier, and print the exact Markdown line to paste into a page.
+
+Sends {"sourceId":"...","kind":"IMAGE|DESIGN"} to POST /projects/api/work/{entity}/dossier-assets. IMAGE is a sketch from the refinement's Sketch tab, DESIGN a design (`qits work design list`). The line renders as a picture or as a framed document. The copy keeps rendering after the refinement is gone, and inlining the same figure again gives the same line, not a second copy.
+
+Never write a figure URL by hand: it ends up naming something that does not exist or belongs to another epic, and the page shows it broken.
+
+```
+qits work dossier inline [--entity <entity>] [--kind <kind>] [--output table|json] [--projects-url <url>] [--source <id>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--kind <kind>` | IMAGE for a sketch, DESIGN for a design (required). Case-insensitive. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--source <id>` | The sketch's or the design's id (required). |
+
+### Examples
+
+```
+qits work --entity qits-100 dossier inline --source 6f1c0e2a-... --kind design
+```
+
+- The table prints the Markdown line alone; -o json prints the figure's id, kind, label and URL too.
+
+### Exit codes
+
+- `0` The figure is in the dossier and its line is printed.
+- `1` The platform refused (for example another project, HTTP 403, or an item that is not an epic or no such figure in its refinement, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity, --source or --kind), not signed in, or the session ended.
+
+## qits work members
+
+The members of a campaign: the epics and tickets it runs, in order, each with the condition it waits on. list shows them, add gathers one, move reorders, remove takes one out, and condition replaces what one waits on. `qits work progress` shows how they are doing.
+
+A condition is groups OR'd of criteria AND'd: a member waits until every criterion of at least one group holds.
+
+### Notes
+
+- --entity is the campaign. --member is a membership's id, as list prints it, not the member item's id.
+- Members and conditions change only while the campaign is REPORTED, REFINED or READY_FOR_DEV.
+- Starting a campaign and approving an APPROVAL criterion are a person's to do.
+
+## qits work members list
+
+List a campaign's members in order: membership id, position, the member's qualified id, archetype, status and title, and whether it waits on a condition.
+
+Reads GET /projects/api/work/{entity}/members. -o json adds each member's condition (groups of criteria with their latches) and its dispatch record.
+
+```
+qits work members list [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-130 members list
+qits work --entity qits-130 members list -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example no campaign with this id, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work members add
+
+Gather an epic or a ticket into a campaign.
+
+Reads {"entityId":"<qualified id or id>","position"?:<n>,"inFlight"?:true|false} on stdin and sends it unchanged to POST /projects/api/work/{entity}/members. Without position it goes at the end. When the member before it is not yet VERIFIED or DONE, the new member is made to wait for that one to reach VERIFIED, so the order states the dependency; change it with `members condition`. Without inFlight the service decides: a member already IMPLEMENTING or later, or with an ACTIVE workspace on its branch, joins running.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
+
+```
+qits work members add [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+echo '{"entityId":"qits-101"}' | qits work --entity qits-130 members add
+echo '{"entityId":"qits-102","position":0}' | qits work --entity qits-130 members add
+qits work --entity qits-130 members add </dev/null
+```
+
+### Exit codes
+
+- `0` The member is added, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example no entityId, HTTP 400, another project, HTTP 403, no such campaign or item, HTTP 404, or one that cannot join - a member already, a feature or a task, a closed campaign - HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work members move
+
+Move a member to a position in the campaign, counted from 0; past the end is the last place. The members between shift.
+
+Sends {"position":<n>} to PUT /projects/api/work/{entity}/members/{membershipId}/position and prints the members in their new order. It changes no condition: what a member waits on is its criteria, not its place.
+
+```
+qits work members move [--entity <entity>] [--member <membership>] [--output table|json] [--position <n>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--member <membership>` | The membership to move (required): its id, as list prints it. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--position <n>` | Where it goes (required), counted from 0. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-130 members move --member 5f2c0a9e-... --position 0
+```
+
+### Exit codes
+
+- `0` The member is moved.
+- `1` The platform refused (for example another project, HTTP 403, or no such campaign or membership, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity, --member or --position), not signed in, or the session ended.
+
+## qits work members remove
+
+Take a member out of a campaign, with its condition.
+
+Sends DELETE /projects/api/work/{entity}/members/{membershipId} and prints the members that remain. Refused once the member is claimed (its run record would be lost), and while another member's condition still names it: change that condition first.
+
+```
+qits work members remove [--entity <entity>] [--member <membership>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--member <membership>` | The membership to remove (required): its id, as list prints it. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-130 members remove --member 5f2c0a9e-...
+```
+
+### Exit codes
+
+- `0` The member is removed.
+- `1` The platform refused (for example another project, HTTP 403, no such campaign or membership, HTTP 404, or a claimed member or one another member waits on, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --member), not signed in, or the session ended.
+
+## qits work members condition
+
+Replace what a campaign member waits on, whole.
+
+Reads {"groups":[{"criteria":[{"id"?,"kind","predicate"}]}]} on stdin and sends it unchanged to PUT /projects/api/work/{entity}/members/{membershipId}/condition. What you state is the whole condition afterwards; what you leave out is deleted. Groups are OR'd, criteria in a group AND'd. {"groups":[]} makes the member wait on nothing; an empty group is refused. Restate a criterion with its id to keep whether it already held; one without an id is new.
+
+Kinds and their predicates: ENTITY_STATUS {entityId, status} - another member of this campaign (qualified id or id) reaches that status. DEPLOYMENT_ACTIVE {applicationName, environmentName?, minimumVersion?} - that application goes live. SCM_RELEASE {repositoryName, projectId?, minimumVersion?} - that repository releases. APPROVAL {} - a person says yes.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
+
+```
+qits work members condition [--entity <entity>] [--member <membership>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--member <membership>` | The membership whose condition to replace (required unless nothing is put in): its id, as list prints it. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+echo '{"groups":[{"criteria":[{"kind":"ENTITY_STATUS","predicate":{"entityId":"qits-101","status":"VERIFIED"}}]}]}' | qits work --entity qits-130 members condition --member 5f2c0a9e-...
+echo '{"groups":[]}' | qits work --entity qits-130 members condition --member 5f2c0a9e-...
+```
+
+- Refused once the member is claimed: its condition is settled.
+
+### Exit codes
+
+- `0` The condition is replaced, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a criterion it cannot read, HTTP 400, another project, HTTP 403, no such campaign or membership, HTTP 404, or a claimed member, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --member, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work design
+
+The HTML designs of an epic's or a ticket's refinement: the documents a person sees in the Design tab. list shows them, get reads one with its document, put adds or rewrites one.
+
+There is no draft: a design is live the moment it is written, and a person may rename or delete it. The gate on the plan is the item's move from REPORTED to REFINED.
+
+### Notes
+
+- --entity is the epic or the ticket, not the refinement. An item with no open refinement has no designs.
+- Reading takes qits:admin or qits:agent. Writing takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+
+## qits work design list
+
+List the designs of an epic's or a ticket's refinement, oldest first, without their documents: id, title, version, size, whether a dossier page shows it, and when it changed.
+
+Reads GET /projects/api/work/{entity}/refinement for the refinement, then GET /projects/api/refinements/{id}/designs. Read a design with get before you rewrite it.
+
+```
+qits work design list [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 design list
+qits work --entity qits-100 design list -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an item it does not know, HTTP 404), the item has no open refinement, or the platform cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work design get
+
+Read one design in full: its title, its version and the whole HTML document, styles inline and no scripts. Send the same shape back when you rewrite it, with this version.
+
+Reads GET /projects/api/work/{entity}/refinement for the refinement, then GET /projects/api/refinements/{id}/designs/{designId}.
+
+```
+qits work design get [--design <design>] [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--design <design>` | The design's id (required). |
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 design get --design 6f1c0e2a-...
+qits work --entity qits-100 design get --design 6f1c0e2a-... -o json | jq -r .html
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example no such item or design, HTTP 404), the item has no open refinement, or the platform cannot be reached.
+- `2` Used wrongly (for example no --entity or no --design), not signed in, or the session ended.
+
+## qits work design put
+
+Add a design to an epic's or a ticket's refinement, or rewrite one.
+
+Without --design it adds one: the payload is {"title":"...","html":"..."}, sent to POST /projects/api/refinements/{id}/designs. With --design it rewrites that design in place: the payload is {"title":"...","html"?:"...","version":<n>}, sent to PUT /projects/api/refinements/{id}/designs/{designId}; the title is required, and leaving html out only renames it.
+
+html is a COMPLETE HTML document with inline styles and no scripts, the shape get answers. version is the one get gave you. When somebody wrote to the design after you read it, the service refuses (HTTP 409): read it again, fold your change in and write again; never write without a version.
+
+The refinement comes from GET /projects/api/work/{entity}/refinement. With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
+
+```
+qits work design put [--design <design>] [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--design <design>` | The design to rewrite: its id. Leave it out to add a design. |
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+jq -n --rawfile h board.html '{title:"Board", html:$h}' | qits work --entity qits-100 design put
+jq -n --rawfile h board.html '{title:"Board", html:$h, version:2}' | qits work --entity qits-100 design put --design 6f1c0e2a-...
+qits work --entity qits-100 design put </dev/null
+```
+
+### Exit codes
+
+- `0` The design is written, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example no title, html or version, HTTP 400, your roles, HTTP 403, no such item or design, HTTP 404, or a stale version, HTTP 409), the item has no open refinement, or the platform cannot be reached.
+- `2` Used wrongly (for example no --entity, or a payload that is not a JSON object), not signed in, or the session ended.
 
 ## qits release-request
 
@@ -1125,6 +1880,8 @@ Conditions: F=V equal and F^=V starts with (both match case: status=ERROR, not s
 
 Fields: kind service trace span level body name status event attr.<key> resource.<key>. attr.<key> is the record's own attribute, resource.<key> its resource's. Quote a value that holds spaces: body~"connection refused".
 
+Subcommands read what the buffer holds now and do not wait: query searches it with these filters, sources lists its buckets, and errors, slow-spans and metrics sum up one bucket.
+
 ```
 qits observe [--filter <conditions>...] [--observability-url <url>] [--output <text|json>]
 ```
@@ -1198,6 +1955,136 @@ qits observe query --filter 'kind=span status=ERROR' --source _service/qits-ci -
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (a --filter that cannot be read or that the service refused, a time that cannot be read, --since after --until, a --limit outside 1..1000), not signed in, or the session ended.
+
+## qits observe sources
+
+List the buckets qits-observability holds telemetry in: each one's key, kind (SERVICE, WORKSPACE or UNSCOPED), label, repository and workspace ids, and how many spans, logs and metric series it holds.
+
+Reads GET /observability/api/telemetry/sources. The key is what --source takes; pass it back as it is.
+
+```
+qits observe sources [--observability-url <url>] [--output <text|json>]
+```
+
+| Name | What it does |
+|---|---|
+| `--observability-url <url>` | The observability service's base URL, without /observability. Default: QITS_OBSERVABILITY_URL, else the session's idp address with `idp` swapped for `observability`. |
+| `-o, --output <text\|json>` | text: aligned columns (the default). json: the service's answer. |
+
+### Examples
+
+```
+qits observe sources
+qits observe sources -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits observe errors
+
+Recent errors in one bucket, grouped by trace: spans with an error status, their exception events with stack traces, and ERROR logs. Start here when a failure needs explaining; follow a trace with `qits observe query --filter 'trace=<id>'`.
+
+Reads GET /observability/api/telemetry/errors. The table shows each trace, its service, how many error spans and logs it has, and the first message; -o json has every span, event and log in full.
+
+```
+qits observe errors [--limit <n>] [--observability-url <url>] [--output <text|json>] [--repository-id <id>] [--service <name>] [--since-minutes <n>] [--source <key>] [--workspace-id <id>]
+```
+
+| Name | What it does |
+|---|---|
+| `--limit <n>` | At most n traces, 1 to 1000. Default: 200. |
+| `--observability-url <url>` | The observability service's base URL, without /observability. Default: QITS_OBSERVABILITY_URL, else the session's idp address with `idp` swapped for `observability`. |
+| `-o, --output <text\|json>` | text: aligned columns (the default). json: the service's answer. |
+| `--repository-id <id>` | With --workspace-id, the bucket of one workspace: its repository's id. |
+| `--service <name>` | Only records of this service.name. |
+| `--since-minutes <n>` | Only errors received in the last n minutes. Default: everything buffered. |
+| `--source <key>` | The bucket: a key as `qits observe sources` lists it, such as _service/qits-ci. Wins over --repository-id and --workspace-id. |
+| `--workspace-id <id>` | With --repository-id, the bucket of one workspace: its id. |
+
+### Examples
+
+```
+qits observe errors --source _service/qits-ci --since-minutes 30
+qits observe errors --repository-id <repo> --workspace-id <workspace> -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example a --limit above 1000, HTTP 400), or cannot be reached.
+- `2` Used wrongly (for example no bucket named), not signed in, or the session ended.
+
+## qits observe slow-spans
+
+Spans in one bucket that took at least --threshold-ms, slowest first: duration, service, span name, status and trace.
+
+Reads GET /observability/api/telemetry/slow-spans. -o json has each span's attributes and events too.
+
+```
+qits observe slow-spans [--limit <n>] [--observability-url <url>] [--output <text|json>] [--repository-id <id>] [--service <name>] [--since-minutes <n>] [--source <key>] [--threshold-ms <ms>] [--workspace-id <id>]
+```
+
+| Name | What it does |
+|---|---|
+| `--limit <n>` | At most n spans, 1 to 1000. Default: 200. |
+| `--observability-url <url>` | The observability service's base URL, without /observability. Default: QITS_OBSERVABILITY_URL, else the session's idp address with `idp` swapped for `observability`. |
+| `-o, --output <text\|json>` | text: aligned columns (the default). json: the service's answer. |
+| `--repository-id <id>` | With --workspace-id, the bucket of one workspace: its repository's id. |
+| `--service <name>` | Only records of this service.name. |
+| `--since-minutes <n>` | Only spans received in the last n minutes. Default: everything buffered. |
+| `--source <key>` | The bucket: a key as `qits observe sources` lists it, such as _service/qits-ci. Wins over --repository-id and --workspace-id. |
+| `--threshold-ms <ms>` | The shortest duration to list, in milliseconds. Default: 500. |
+| `--workspace-id <id>` | With --repository-id, the bucket of one workspace: its id. |
+
+### Examples
+
+```
+qits observe slow-spans --source _service/qits-ci --threshold-ms 1000
+qits observe slow-spans --repository-id <repo> --workspace-id <workspace> --since-minutes 10
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example a --limit above 1000, HTTP 400), or cannot be reached.
+- `2` Used wrongly (for example no bucket named), not signed in, or the session ended.
+
+## qits observe metrics
+
+The latest value of every metric series in one bucket: name, value, unit, service and the series' attributes. Gauges and counters alike, with no maths over time.
+
+Reads GET /observability/api/telemetry/metrics.
+
+```
+qits observe metrics [--name <metric>] [--observability-url <url>] [--output <text|json>] [--repository-id <id>] [--service <name>] [--source <key>] [--workspace-id <id>]
+```
+
+| Name | What it does |
+|---|---|
+| `--name <metric>` | Only the series of this metric, by its exact name. |
+| `--observability-url <url>` | The observability service's base URL, without /observability. Default: QITS_OBSERVABILITY_URL, else the session's idp address with `idp` swapped for `observability`. |
+| `-o, --output <text\|json>` | text: aligned columns (the default). json: the service's answer. |
+| `--repository-id <id>` | With --workspace-id, the bucket of one workspace: its repository's id. |
+| `--service <name>` | Only records of this service.name. |
+| `--source <key>` | The bucket: a key as `qits observe sources` lists it, such as _service/qits-ci. Wins over --repository-id and --workspace-id. |
+| `--workspace-id <id>` | With --repository-id, the bucket of one workspace: its id. |
+
+### Examples
+
+```
+qits observe metrics --source _service/qits-ci
+qits observe metrics --source _service/qits-ci --name http.server.active_requests -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example no bucket named), not signed in, or the session ended.
 
 ## qits git-login
 

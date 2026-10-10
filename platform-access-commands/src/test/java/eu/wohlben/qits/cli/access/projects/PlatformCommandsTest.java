@@ -751,4 +751,68 @@ class PlatformCommandsTest {
         assertThat(r.err()).contains("'Build*' is neither");
         assertThat(run("events", "--filter", " , ").err()).contains("--filter names no event");
     }
+
+    // --- repository git reads ---
+
+    private static final String REPO = "/projects/api/repositories/" + CI;
+
+    @Test
+    void branchesAndCommitsResolveTheRepositoryByNameAndPassTheBranch() {
+        platform.answer("GET", REPO + "/branches", """
+                {"branches":[{"name":"ticket/x","parent":"main","ahead":2,"behind":0,"canCleanup":false}]}
+                """);
+        platform.answer("GET", REPO + "/commits", """
+                {"branch":"ticket/x","parent":"main","commits":[{"hash":"abc","shortHash":"abc1234",
+                  "author":"wohlben","date":"2026-10-10","message":"feat(qits-1): one\\n\\nbody","files":["a","b"]}]}
+                """);
+
+        Result branches = run("repositories", "--project", "qits", "branches", "--repository", "qits-ci-service");
+        Result commits = run("repositories", "commits", "--project", "qits", "--repository", "qits-ci-service",
+                "--branch", "ticket/x");
+
+        assertThat(branches.exit()).as(branches.err()).isZero();
+        assertThat(branches.out()).contains("ticket/x").contains("main");
+        assertThat(commits.exit()).as(commits.err()).isZero();
+        assertThat(platform.requests("GET", REPO + "/commits").getFirst().query()).isEqualTo("branch=ticket%2Fx");
+        assertThat(commits.out()).contains("abc1234").contains("feat(qits-1): one").doesNotContain("body");
+    }
+
+    @Test
+    void commitChangesDiffAndSubjectsSendTheirQueries() {
+        platform.answer("GET", REPO + "/commits/abc/changes", """
+                {"commit":"abc","files":[{"path":"README.md","changeType":"MODIFY"}]}
+                """);
+        platform.answer("GET", REPO + "/commits/abc/diff", """
+                {"path":"README.md","changeType":"MODIFY","diff":"@@ -1 +1 @@\\n-a\\n+b"}
+                """);
+        platform.answer("GET", REPO + "/commit-subjects", """
+                {"branch":"main","guardEnabled":true,"counts":{"total":3,"complying":2,"nonComplying":1,"exempt":0},
+                 "nonComplying":[{"shortHash":"def5678","authorName":"x","subject":"fix stuff"}]}
+                """);
+
+        Result changes = run("repositories", "--project", "qits", "commit-changes", "--repository", CI,
+                "--commit", "abc", "--parent", "p0");
+        Result diff = run("repositories", "--project", "qits", "commit-diff", "--repository", CI, "--commit", "abc",
+                "--path", "README.md");
+        Result subjects = run("repositories", "--project", "qits", "commit-subjects", "--repository", CI,
+                "--limit", "20");
+
+        assertThat(changes.exit()).as(changes.err()).isZero();
+        assertThat(platform.requests("GET", REPO + "/commits/abc/changes").getFirst().query()).isEqualTo("parent=p0");
+        assertThat(changes.out()).contains("MODIFY").contains("README.md");
+        assertThat(diff.exit()).as(diff.err()).isZero();
+        assertThat(platform.requests("GET", REPO + "/commits/abc/diff").getFirst().query()).isEqualTo("path=README.md");
+        assertThat(diff.out()).contains("+b");
+        assertThat(subjects.exit()).as(subjects.err()).isZero();
+        assertThat(platform.requests("GET", REPO + "/commit-subjects").getFirst().query()).isEqualTo("limit=20");
+        assertThat(subjects.out()).contains("2 complying, 1 not").contains("guard on").contains("fix stuff");
+    }
+
+    @Test
+    void aGitReadNeedsTheRepository() {
+        Result r = run("repositories", "--project", "qits", "branches");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("--repository");
+    }
 }

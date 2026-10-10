@@ -323,7 +323,7 @@ final class WorkEntities {
     }
 
     /** The text a line at a time, each line cleaned on its own and indented. */
-    private static void lines(PrintStream out, String indent, String text) {
+    static void lines(PrintStream out, String indent, String text) {
         for (String line : text.split("\\R", -1)) {
             out.println((indent + SafeText.line(line)).stripTrailing());
         }
@@ -333,7 +333,7 @@ final class WorkEntities {
         return List.of(name, cell(value, 600));
     }
 
-    private static String cell(String value, int max) {
+    static String cell(String value, int max) {
         return Table.cell(SafeText.line(value), max);
     }
 }

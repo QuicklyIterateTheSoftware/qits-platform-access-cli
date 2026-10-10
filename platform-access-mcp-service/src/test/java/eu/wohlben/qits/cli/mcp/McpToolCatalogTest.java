@@ -307,7 +307,8 @@ class McpToolCatalogTest {
             }
         });
         assertThat(marked).containsExactlyInAnyOrder("work_create", "work_update", "work_transition", "work_status",
-                "work_comment_create", "work_comment_update");
+                "work_comment_create", "work_comment_update", "work_dossier_put", "work_members_add",
+                "work_members_condition", "work_design_put");
         for (Tool tool : catalog.tools()) {
             boolean payload = marked.contains(tool.name());
             assertThat(tool.payload()).as(tool.name()).isEqualTo(payload);

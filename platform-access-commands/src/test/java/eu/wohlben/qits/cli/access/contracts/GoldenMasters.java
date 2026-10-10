@@ -288,10 +288,20 @@ public final class GoldenMasters {
             http.state(state, new LinkedHashMap<String, Object>(op.params()));
             http.withRequest(r -> {
                 r.method(op.method());
-                if (op.hasParam(op.path())) {
-                    r.path(Matchers.fromProviderState(op.expressionPath(), op.examplePath()));
+                // A recorded path may carry a query (a diff's ?path=): the path and each parameter go apart.
+                int q = op.path().indexOf('?');
+                String path = q < 0 ? op.path() : op.path().substring(0, q);
+                if (op.hasParam(path)) {
+                    r.path(Matchers.fromProviderState(op.substitute(path, name -> "${" + name + "}"),
+                            op.substitute(path, op.params()::get)));
                 } else {
-                    r.path(op.path());
+                    r.path(path);
+                }
+                if (q >= 0) {
+                    for (String pair : op.path().substring(q + 1).split("&")) {
+                        int eq = pair.indexOf('=');
+                        r.queryParameter(pair.substring(0, eq), op.substitute(pair.substring(eq + 1), op.params()::get));
+                    }
                 }
                 if (request != null) {
                     r.header("Content-Type", contentType);
