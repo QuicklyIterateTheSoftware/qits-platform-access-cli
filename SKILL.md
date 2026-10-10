@@ -1613,6 +1613,8 @@ Write this release's CHANGELOG.md and publish it as the docs site @changelog/<re
 
 The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
 
+The second line's time is the payload's occurredAt, or QITS_EVENT_OCCURRED_AT when the payload has none; both are optional, and a value that does not parse as an ISO-8601 time is dropped rather than refused, so the line is left without a time instead.
+
 The last line is always `associated tickets:` followed by every ticket that exists, as `qits-9`; `qits changelog bump-message` reads it back.
 
 The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the given --meta and release.request.id=<request>. An occupied version is skipped, as there.
