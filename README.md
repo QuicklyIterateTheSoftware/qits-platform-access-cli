@@ -19,6 +19,9 @@ Commands:
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service; `qits observe query` asks the same filters of what it still holds.
+- `qits wait` declares what an agent waits on (a release request to end, a work item to reach a
+  status, a CI run to end, or any domain event that fits a selection); the platform gives the agent
+  a turn when it happens. `qits wait list|cancel` show and end the agent's waits.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -484,6 +487,12 @@ Installing it is not part of this version.
     qits observe query --filter <conditions> [--filter <conditions> …] [--source <key>] \
         [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
+    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>]
+    qits wait release-request <id> [--timeout <duration>] [--label <text>]
+    qits wait work <qualified id> --status <STATUS> [--timeout <duration>] [--label <text>]
+    qits wait ci-run <run id> [--timeout <duration>] [--label <text>]
+    qits wait list [--state OPEN|MATCHED|TIMED_OUT|CANCELLED]
+    qits wait cancel <wait id>
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories`, `work` and `release-request` may come before or
@@ -514,6 +523,7 @@ its first label: `https://idp.qits.wohlben.eu/idp` gives `https://projects.qits.
 - events: `--events-url`, else `QITS_EVENTS_URL`
 - observability: `--observability-url`, else `QITS_OBSERVABILITY_URL`. The stream is a WebSocket,
   so `https` becomes `wss` and `http` becomes `ws`.
+- workspaces (`qits wait`): `--workspaces-url`, else `QITS_WORKSPACES_URL`
 
 `qits checkout-daemon` reads the events service the same way, with `--events-url` or
 `QITS_EVENTS_URL`; the git host it fetches from is the checkout's own `origin`, never a flag.
@@ -1094,6 +1104,55 @@ Notes go to stderr, one line each with a time:
 - A 401 (`The platform refused the token`), a 403 (`Your roles do not allow this`) or any other 4xx
   on the upgrade stops the command with exit code 1.
 - SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0. So does a closed stdout, at the next record.
+
+### qits wait
+
+    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>] [--agent <id>]
+
+An agent declares what it waits on; the platform gives it a turn when that happens (qits-1153). The
+command sends the wait to qits-workspaces (`POST /workspaces/api/agents/{agentId}/waits`), prints it
+and returns at once. It never blocks. Declare the wait, then end the turn: the next turn names what
+fired, the event or the timeout. Never poll for the same thing in a background loop.
+
+The agent is `QITS_AGENT_ID`, which the harness sets, or `--agent`. Without either the command exits
+with 2. An agent may declare and cancel waits for itself only.
+
+Each `--when` is one group of conditions that must all hold; an event that fits any group matches,
+and with no `--when` every event of the name does. The conditions are those of `qits observe`, on
+the event's payload:
+
+    path=value     equal                  status=VERIFIED
+    path^=value    starts with            branch^=release/
+    path?          present                releaseRequestId?
+    !path          absent                 !previousStatus
+
+A path is field names joined by dots; `[]` after a field means some element of that array, and the
+conditions of one group through the same `name[]` hold on the same element. Quote a value with
+spaces, or an empty one: `title="two words"`, `note=""`. At most 8 groups of 8 conditions. The
+grammar and its limits are qits-eventstream-javalib's (`eu.wohlben.qits.eventstream.selection`); the
+CLI holds its own copy (`waits/WhenGrammar`) because the binary does not depend on that library, and
+checks it before anything goes out. The wire form has lowercase ops, string values, and absent as
+`{"op":"exists","value":false}`.
+
+`--timeout` takes `30m`, `2h`, `1h30m`, `1d` or ISO-8601 (`PT2H`); it is sent as ISO-8601.
+
+The presets fill in the event and the groups:
+
+    qits wait release-request <id>               ReleaseRequestStateChanged, releaseRequestId=<id>
+                                                 state=<S>, one group per final state: FINALIZED,
+                                                 REJECTED, FAILED, WITHDRAWN, OBSOLETE
+    qits wait work qits-123 --status VERIFIED    EntityTransitioned, entities[].entityId=<uuid>
+                                                 entities[].status=VERIFIED (the qualified id is
+                                                 looked up in the projects service first)
+    qits wait ci-run <id>                        BuildStatusChanged, runId=<id> status=<S>, one group
+                                                 per terminal status: SUCCESS, FAILED, CANCELLED,
+                                                 CONFIG_ERROR, TIMED_OUT
+
+`release-request` and `ci-run` take the whole id only: a wait matches it exactly, and the start of
+one would make a wait that never fires. Each preset gives a label of its own (`release request
+4f2a91c0 to end`); `--label` replaces it.
+
+`qits wait list [--state <STATE>]` shows the agent's waits, and `qits wait cancel <wait id>` ends one.
 
 ## Git pushes from this workstation
 

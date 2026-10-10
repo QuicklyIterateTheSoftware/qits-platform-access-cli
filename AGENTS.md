@@ -9,7 +9,7 @@ that session fresh), `qits projects|repositories|work|release-request` (the proj
 `work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
 run's step logs, a retry, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits events` (the live event
-stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
+stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), and `qits tui` (an
@@ -175,6 +175,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
     observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
                and SafeText (terminal control characters out of every streamed value); `query`
                under it asks the records search with the same filters (ObserveQueryCommand)
+    waits/     qits wait: the --when grammar (WhenGrammar, a copy of qits-eventstream-javalib's
+               selection grammar and limits, producing its wire JSON; keep the two in step), the
+               --timeout reader, the presets and list/cancel on qits-workspaces' agent waits
+    waits/     qits wait: the --when grammar (WhenGrammar, a copy of qits-eventstream-javalib's
+               selection grammar and limits, producing its wire JSON; keep the two in step), the
+               --timeout reader, the presets and list/cancel on qits-workspaces' agent waits
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.

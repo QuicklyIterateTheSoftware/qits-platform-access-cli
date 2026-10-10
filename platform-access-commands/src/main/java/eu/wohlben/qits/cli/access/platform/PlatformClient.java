@@ -81,6 +81,11 @@ public final class PlatformClient {
         return send("POST", uri, HttpRequest.newBuilder(uri).POST(HttpRequest.BodyPublishers.noBody()));
     }
 
+    /** A DELETE. A 204 gives a {@link NullNode}; a 200 gives what the service answered. */
+    public JsonNode delete(URI uri) throws CliFailure, InterruptedException {
+        return send("DELETE", uri, HttpRequest.newBuilder(uri).DELETE());
+    }
+
     public JsonNode put(URI uri, JsonNode body) throws CliFailure, InterruptedException {
         String json;
         try {
