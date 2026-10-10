@@ -51,6 +51,15 @@ public final class CiApi {
         return client.get(uri("/ci/api/runs/" + segment(runId) + "/reports"));
     }
 
+    /**
+     * {@code {"runId", "commitSha", "releaseRequestId", "baseline", "reports":[…]}}: the release
+     * reports of the gate run that approved the release this run publishes, as summaries with their
+     * highlights ({@code {severity, text, metric, value, delta}}) and without their payloads.
+     */
+    public JsonNode gateReports(String runId) throws CliFailure, InterruptedException {
+        return client.get(uri("/ci/api/runs/" + segment(runId) + "/gate/reports"));
+    }
+
     /** One report: its summary and its {@code payload}, which only the kind that wrote it understands. */
     public JsonNode report(String runId, String reportId) throws CliFailure, InterruptedException {
         return client.get(uri("/ci/api/runs/" + segment(runId) + "/reports/" + segment(reportId)));

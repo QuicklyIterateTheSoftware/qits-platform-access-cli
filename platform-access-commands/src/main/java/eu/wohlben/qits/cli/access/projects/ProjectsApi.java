@@ -85,6 +85,16 @@ public final class ProjectsApi {
         return client.get(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests" + query));
     }
 
+    /**
+     * {@code {"mergedSha", "commits":[…], "detail", "foldParents":[…], "sources":[…]}}: what a release
+     * request carries, newest commit first. Each commit is {@code {hash, shortHash, author, email,
+     * date, message, files, parents, fold}}; {@code fold} marks the request's own merge commits.
+     */
+    public JsonNode releaseRequestCommits(String repoId, String requestId) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/commits"));
+    }
+
     /** {@code {"request":{…}}}: new, or the open request that already holds or joined the branch. */
     public JsonNode createReleaseRequest(String repoId, String branch, String summary, String priority)
             throws CliFailure, InterruptedException {

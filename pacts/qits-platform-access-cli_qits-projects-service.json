@@ -8,6 +8,600 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish changelog",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish changelog: getWork",
+      "key": "266db55f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a comment",
+          "params": {
+            "commentId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "acceptanceCriteria": [
+              "It does what it says."
+            ],
+            "archetype": "TICKET",
+            "assignee": null,
+            "blocked": false,
+            "changedBy": null,
+            "createdAt": "2026-01-01T00:00:00Z",
+            "createdBy": "contract-seeder",
+            "dependsOn": null,
+            "description": null,
+            "id": "00000000-0000-4000-8000-000000000003",
+            "impetus": "Seeded work.",
+            "implementedAt": null,
+            "implementingAt": null,
+            "number": 1,
+            "parent": null,
+            "position": null,
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "repositoryId": null,
+            "slug": "export-fails-for-an-empty-quarter",
+            "slugScope": "00000000-0000-4000-8000-000000000002",
+            "status": "REPORTED",
+            "statusBefore": null,
+            "supersededBy": null,
+            "ticketType": "BUG",
+            "title": "Export fails for an empty quarter",
+            "updatedAt": "2026-01-01T00:00:00Z"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.acceptanceCriteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.acceptanceCriteria[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.impetus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.slugScope": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.ticketType": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listReleaseRequestCommits"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish changelog",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish changelog: listReleaseRequestCommits",
+      "key": "5458031f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a released release request",
+          "params": {
+            "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/commits",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests/00000000-0000-4000-8000-000000000003/commits"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "commits": [
+              {
+                "author": "Contract Seeder",
+                "date": "2026-01-01T00:00:00Z",
+                "email": "seeder@contract.example.test",
+                "files": [],
+                "fold": true,
+                "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+                "message": "Release the CSV export and the rounding fix",
+                "parents": [
+                  "edf350dfabb86b68f03f6d9448036d47924efc0a"
+                ],
+                "shortHash": "cb97768"
+              },
+              {
+                "author": "Contract Seeder",
+                "date": "2026-01-01T00:00:00Z",
+                "email": "seeder@contract.example.test",
+                "files": [],
+                "fold": true,
+                "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+                "message": "Release the CSV export and the rounding fix",
+                "parents": [
+                  "edf350dfabb86b68f03f6d9448036d47924efc0a"
+                ],
+                "shortHash": "cb97768"
+              },
+              {
+                "author": "Contract Seeder",
+                "date": "2026-01-01T00:00:00Z",
+                "email": "seeder@contract.example.test",
+                "files": [],
+                "fold": true,
+                "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+                "message": "Release the CSV export and the rounding fix",
+                "parents": [
+                  "edf350dfabb86b68f03f6d9448036d47924efc0a"
+                ],
+                "shortHash": "cb97768"
+              },
+              {
+                "author": "Contract Seeder",
+                "date": "2026-01-01T00:00:00Z",
+                "email": "seeder@contract.example.test",
+                "files": [],
+                "fold": true,
+                "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+                "message": "Release the CSV export and the rounding fix",
+                "parents": [
+                  "edf350dfabb86b68f03f6d9448036d47924efc0a"
+                ],
+                "shortHash": "cb97768"
+              }
+            ],
+            "detail": null,
+            "foldParents": [
+              {
+                "ref": "refs/heads/main",
+                "role": "SOURCE",
+                "sha": "edf350dfabb86b68f03f6d9448036d47924efc0a",
+                "source": "main"
+              },
+              {
+                "ref": "refs/heads/main",
+                "role": "SOURCE",
+                "sha": "edf350dfabb86b68f03f6d9448036d47924efc0a",
+                "source": "main"
+              },
+              {
+                "ref": "refs/heads/main",
+                "role": "SOURCE",
+                "sha": "edf350dfabb86b68f03f6d9448036d47924efc0a",
+                "source": "main"
+              }
+            ],
+            "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+            "sources": [
+              {
+                "kind": "BRANCH",
+                "name": "main",
+                "ref": "refs/heads/main",
+                "tipSha": "edf350dfabb86b68f03f6d9448036d47924efc0a"
+              },
+              {
+                "kind": "BRANCH",
+                "name": "main",
+                "ref": "refs/heads/main",
+                "tipSha": "edf350dfabb86b68f03f6d9448036d47924efc0a"
+              },
+              {
+                "kind": "BRANCH",
+                "name": "main",
+                "ref": "refs/heads/main",
+                "tipSha": "edf350dfabb86b68f03f6d9448036d47924efc0a"
+              },
+              {
+                "kind": "BRANCH",
+                "name": "main",
+                "ref": "refs/heads/main",
+                "tipSha": "edf350dfabb86b68f03f6d9448036d47924efc0a"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.commits": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.commits[*].author": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].date": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.commits[*].email": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].fold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].hash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].parents": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.commits[*].parents[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].shortHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.foldParents": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.foldParents[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.foldParents[*].role": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.foldParents[*].sha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.foldParents[*].source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.sources[*].tipSha": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "addWorkComment"
           },
           "qits-trigger": {

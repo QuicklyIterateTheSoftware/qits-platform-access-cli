@@ -31,6 +31,9 @@ final class Harness {
      */
     private Store.Hosts hosts = new Store.Hosts("http://127.0.0.1:1", "http://127.0.0.1:1");
 
+    /** qits-projects' and qits-ci's origin for {@code changelog}; null composes them, as a real run does. */
+    private String platform = "http://127.0.0.1:1";
+
     /** What one invocation produced. */
     record Run(int code, String out, String err) {
 
@@ -47,6 +50,12 @@ final class Harness {
     /** The store and the mirror both, pointed at one stub: the paths under each do not collide. */
     Harness store(StubStore store) {
         hosts = new Store.Hosts(store.url(), store.url());
+        return this;
+    }
+
+    /** qits-projects and qits-ci both, pointed at one stub: their paths do not collide with the store's. */
+    Harness platform(StubStore stub) {
+        platform = stub.url();
         return this;
     }
 
@@ -68,6 +77,10 @@ final class Harness {
                     }
                     if (made instanceof AbstractPublishCommand command) {
                         command.hosts = hosts;
+                    }
+                    if (made instanceof ChangelogCommand command) {
+                        command.projectsOrigin = platform;
+                        command.ciOrigin = platform;
                     }
                     return made;
                 }

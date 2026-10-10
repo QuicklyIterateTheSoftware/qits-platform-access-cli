@@ -13,11 +13,11 @@ import picocli.CommandLine;
 @TuiCommand(interaction = Interaction.CI_ONLY)
 @CommandLine.Command(name = "publish", mixinStandardHelpOptions = true,
         subcommands = {MavenCommand.class, NpmCommand.class, ContractCommand.class, ContractDocsCommand.class,
-                SbomCommand.class, DocsCommand.class, DaemonCommand.class, ExistsCommand.class},
+                SbomCommand.class, DocsCommand.class, ChangelogCommand.class, DaemonCommand.class, ExistsCommand.class},
         description = {
                 "Publish to qits-artifacts from a CI release step: a maven module or an npm package (built, "
                         + "hashed and uploaded here, optionally only if its content changed), a contract package, "
-                        + "an sbom, a docs bundle, or a daemon binary. This is the qits-publish client.",
+                        + "an sbom, a docs bundle, a release's changelog, or a daemon binary. This is the qits-publish client.",
                 "Every publish follows one rule, for every surface: absent, PUT it and say what landed; occupied "
                         + "with the same bytes, say so and succeed (a retried or replayed step must go green); "
                         + "occupied with different bytes, fail naming both digests (a coordinate must never come "

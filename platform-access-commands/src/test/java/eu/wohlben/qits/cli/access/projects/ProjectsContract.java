@@ -22,10 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <b>One row per (command, call).</b> Each row runs the {@link ProjectsApi} method the command
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
- * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are only
- * {@code /work} doors; {@code qits projects}, {@code repositories} and {@code release-request}
- * calls are not part of this pact yet, and neither is the OpenAPI document the comment doors read
- * their schema from.
+ * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
+ * {@code /work} doors and one more: the release request's commits, which {@code qits artifacts
+ * publish changelog} reads in every release step (qits-893). {@code qits projects}, {@code
+ * repositories} and {@code release-request} calls are not part of this pact yet, and neither is the
+ * OpenAPI document the comment doors read their schema from.
  * <p>
  * <b>Each state is one the provider records</b> in its golden masters, picked for the call: a row
  * whose (state, operation) the index does not hold fails before anything runs, naming both.
@@ -58,6 +59,7 @@ final class ProjectsContract {
     static final String REPORTED_TICKET = "a reported ticket";
     static final String TICKET_WITH_A_COMMENT = "a ticket with a comment";
     static final String IMPLEMENTED_TICKET = "an implemented ticket";
+    static final String RELEASED_REQUEST = "a released release request";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -157,6 +159,28 @@ final class ProjectsContract {
         assertThat(ProjectsApi.text(comment, "updatedAt")).isNotBlank();
     };
 
+    /** The changelog titles every ticket a subject names, and reads nothing else of it. */
+    private static final Call TITLE = (api, params, recorded) -> {
+        JsonNode item = api.work(params.get("qualifiedId"));
+        assertThat(ProjectsApi.text(item, "title")).isNotBlank();
+    };
+
+    /** The changelog lists the commits that are not the request's own folds, by short hash, subject and author. */
+    private static final Call RELEASE_COMMITS = (api, params, recorded) -> {
+        JsonNode answer = api.releaseRequestCommits(params.get("repositoryId"), params.get("requestId"));
+        JsonNode commits = answer.path("commits");
+        assertThat(commits.size())
+                .isEqualTo(GoldenMasters.json(recorded.state(), recorded.operationId()).path("commits").size());
+        assertThat(commits).allSatisfy(c -> {
+            assertThat(c.path("fold").isBoolean()).isTrue();
+            assertThat(ProjectsApi.text(c, "shortHash")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "message")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "author")).isNotBlank();
+        });
+        // Not "some are not folds": the mock answers every element in the first one's shape, and
+        // the recording's first commit is the fold.
+    };
+
     static final List<Case> CASES = List.of(
             row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", LIST),
             row("qits work details", EPIC_IN_DETAIL, "getWork", GET),
@@ -173,7 +197,9 @@ final class ProjectsContract {
             row("qits work status", REPORTED_TICKET, "setWorkStatus", STATUS),
             row("qits work comment create", TICKET_WITH_A_COMMENT, "addWorkComment", COMMENT),
             new Case(Trigger.command("qits work comment update"), TICKET_WITH_A_COMMENT, "editWorkComment",
-                    ProjectsApi.MERGE_PATCH, EDIT_COMMENT));
+                    ProjectsApi.MERGE_PATCH, EDIT_COMMENT),
+            row("qits artifacts publish changelog", RELEASED_REQUEST, "listReleaseRequestCommits", RELEASE_COMMITS),
+            row("qits artifacts publish changelog", TICKET_WITH_A_COMMENT, "getWork", TITLE));
 
     private static Case row(String command, String state, String operationId, Call call) {
         return new Case(Trigger.command(command), state, operationId, JSON_BODY, call);

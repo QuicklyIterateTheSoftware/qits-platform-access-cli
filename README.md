@@ -1212,6 +1212,7 @@ Commands:
     qits artifacts publish sbom from-dockerfile --root-name <n> --root-version <v> \
                       [--dockerfile <path>]... [--build-arg NAME=value]... -o <out.json>
     qits artifacts publish docs submit --site <name> --version <v> --archive <tgz> [--meta key=value]...
+    qits artifacts publish changelog --version <v> [--meta key=value]...
     qits artifacts publish daemon submit --name <n> --version <v> --file <bin>
     qits artifacts publish exists <daemon|docs|npm|sbom> <name> <version>
     qits artifacts publish npm plan --package <n> --version <v>
@@ -1219,6 +1220,24 @@ Commands:
 
 `qits artifacts publish <command> --help` shows a command's options, examples and exit codes;
 `qits help skill` includes them all.
+
+**`changelog`** is run by every release's publish step (qits-893): `qits artifacts publish changelog
+--version "$QITS_VERSION" --meta git.commit.hash="$QITS_CI_SHA" --meta
+git.repository.name="$QITS_CI_REPO_NAME"`. It writes the release's `CHANGELOG.md` and publishes it as
+the docs site `@changelog/<repositoryName>` at that version, a `.tar.gz` with that one entry, with
+`release.request.id=<request>` added to the metadata. The release is the step's `QITS_EVENT_PAYLOAD`
+(the SCMRelease: `repository`, `repositoryName` and `releaseRequestId` required, `occurredAt`
+optional); the commits are the release request's (qits-projects, oldest first, the request's own
+fold commits left out); the tickets are every qualified id the commits' subjects name in their scope
+(`feat(qits-9, qits-10): ...`), titled by qits-projects and linked to
+`https://qits.$QITS_DOMAIN/projects/<slug>/work/detail/<id>`; and the report highlights are the gate
+run's (`QITS_CI_RUN_ID`, qits-ci's `/runs/<id>/gate/reports`), a section left out when there are none.
+The document always ends in `associated tickets:` and the resolved ids, each in backticks; that line
+is what `qits changelog bump-message` reads back. A ticket qits-projects does not know is listed as
+`(no such work item)` and left out of that line. Exit codes as for `docs submit`: an occupied version
+is skipped with a warning (0), a missing or incomplete payload or an unknown release request is 1, a
+service that cannot be reached or answers 5xx is 2. Changelogs are kept for good for now; deleting
+them with their release during GC is not implemented.
 
 **Addresses are code, not configuration.** The one input is `QITS_DOMAIN`, the platform's bare public
 domain (default `wohlben.eu`). The store is `https://registry.qits.$QITS_DOMAIN` — hosted npm under

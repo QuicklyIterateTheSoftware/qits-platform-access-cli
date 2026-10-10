@@ -178,6 +178,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
+    changelog/ qits changelog bump-message, and the two grammars a changelog shares with its
+               readers: CommitSubjects (the ids a `type(qits-9, qits-10):` subject names, and their
+               order) and AssociatedTickets (the changelog's last line, written and read back).
+               The changelog itself is written by `publish changelog` (publish/Changelog,
+               ChangelogCommand).
     publish/   qits artifacts publish: the qits-publish client, folded in from the retired
                qits-artifacts-cli. Store, Publisher, Npm, DockerfileSbom, Http, Json, Sha256,
                VersionOrder, Env, Console, CliException and ExitCode were that repository's
@@ -394,7 +399,9 @@ mock server, and `ProjectsPactFileTest` compares the committed file byte for byt
 names a provider state the provider records; every interaction carries `qits-call` and a
 `qits-trigger` of kind `command` naming the command (`qits work details`). A new `/work` call on
 `ProjectsApi` needs its row, which `theContractCoversEveryWorkCallOfTheCommandsAndNothingElse`
-enforces. `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
+enforces. One row is not a `/work` door: `qits artifacts publish changelog` reads the release
+request's commits (`listReleaseRequestCommits`, state `a released release request`), and that test
+names its path. `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.

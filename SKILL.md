@@ -1297,7 +1297,7 @@ The platform's artifacts store. `qits artifacts publish` is a CI release step's 
 
 ## qits artifacts publish
 
-Publish to qits-artifacts from a CI release step: a maven module or an npm package (built, hashed and uploaded here, optionally only if its content changed), a contract package, an sbom, a docs bundle, or a daemon binary. This is the qits-publish client.
+Publish to qits-artifacts from a CI release step: a maven module or an npm package (built, hashed and uploaded here, optionally only if its content changed), a contract package, an sbom, a docs bundle, a release's changelog, or a daemon binary. This is the qits-publish client.
 
 Every publish follows one rule, for every surface: absent, PUT it and say what landed; occupied with the same bytes, say so and succeed (a retried or replayed step must go green); occupied with different bytes, fail naming both digests (a coordinate must never come to mean two things); occupied and not comparable, warn and skip.
 
@@ -1606,6 +1606,41 @@ qits artifacts publish docs submit --site @apidocs/qits-projects --version 2026.
 - `0` Published, or already published (see above: not verified in that case).
 - `1` Refused: bad arguments, or a 4xx that is not the store's "already there".
 - `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
+
+## qits artifacts publish changelog
+
+Write this release's CHANGELOG.md and publish it as the docs site @changelog/<repository> at --version. Run in a release's publish step.
+
+The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
+
+The last line is always `associated tickets:` followed by every ticket that exists, as `qits-9`; `qits changelog bump-message` reads it back.
+
+The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the given --meta and release.request.id=<request>. An occupied version is skipped, as there.
+
+```
+qits artifacts publish changelog [--meta <key=value>...] [--version <version>...]
+```
+
+| Name | What it does |
+|---|---|
+| `--meta <key=value>...` | A metadata header, sent as X-Artifacts-Meta-<key>. Repeatable. |
+| `--version <version>...` | The release's version. |
+
+### Examples
+
+```
+qits artifacts publish changelog --version "$QITS_VERSION" --meta git.commit.hash="$QITS_CI_SHA" --meta git.repository.name="$QITS_CI_REPO_NAME"
+```
+
+- qits-projects is https://projects.qits.$QITS_DOMAIN and qits-ci https://ci.qits.$QITS_DOMAIN; a ticket links to https://qits.$QITS_DOMAIN/projects/<slug>/work/detail/<id>.
+- A ticket qits-projects does not know is listed as (no such work item), without a link, and left out of the last line.
+- Changelogs are kept for good for now; nothing deletes one with its release.
+
+### Exit codes
+
+- `0` Published, or already published (not verified, as for docs submit).
+- `1` Refused: bad arguments, QITS_EVENT_PAYLOAD or QITS_CI_RUN_ID missing or incomplete, the release request unknown, or a 4xx from the store.
+- `2` Could not ask: a service unreachable, an I/O failure, or a 5xx.
 
 ## qits artifacts publish daemon
 

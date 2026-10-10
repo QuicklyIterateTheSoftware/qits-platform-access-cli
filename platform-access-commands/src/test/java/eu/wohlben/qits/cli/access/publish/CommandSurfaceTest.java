@@ -109,6 +109,7 @@ class CommandSurfaceTest {
         for (String[] argv : new String[][] {
                 {"sbom", "submit", "--help"},
                 {"docs", "submit", "--help"},
+                {"changelog", "--help"},
                 {"daemon", "submit", "--help"},
                 {"npm", "plan", "--help"},
                 {"npm", "--help"},

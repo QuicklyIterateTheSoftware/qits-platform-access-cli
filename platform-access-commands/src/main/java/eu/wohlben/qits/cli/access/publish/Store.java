@@ -36,7 +36,7 @@ public final class Store {
   static final String DEFAULT_DOMAIN = "wohlben.eu";
 
   /** qits-artifacts' host label, {@code host: registry} in its deployments.yml. */
-  static final String REGISTRY_HOST = "registry";
+  public static final String REGISTRY_HOST = "registry";
 
   /** qits-mirror's host label. */
   static final String MIRROR_HOST = "mirror";
@@ -51,7 +51,7 @@ public final class Store {
   static final String MAVEN_CENTRAL_MIRROR_PATH = "/mirror/maven/central";
 
   /** qits-artifacts' docs repository, its {@code docs} namespace segment included. */
-  static final String DOCS_PATH = "/artifacts/docs/docs";
+  public static final String DOCS_PATH = "/artifacts/docs/docs";
 
   /** The sbom store's package types. Its own whitelist, refused client-side first. */
   static final Set<String> SBOM_PACKAGE_TYPES = Set.of("npm", "maven", "docker", "daemon");
@@ -89,6 +89,15 @@ public final class Store {
    */
   public static String publicOrigin(String label, java.util.Map<String, String> env) {
     return Hosts.origin(label, Hosts.domain(new Env(env).get("QITS_DOMAIN")));
+  }
+
+  /**
+   * {@code https://qits.<QITS_DOMAIN>}: the project's own name, where the landing app serves the
+   * platform's pages (a work item is {@code /projects/<slug>/work/detail/<qualifiedId>} under it).
+   * Not a {@link #publicOrigin} label: {@code landing.qits.<domain>} is no application's host.
+   */
+  public static String projectRoot(java.util.Map<String, String> env) {
+    return "https://" + IdpUrl.PROJECT + "." + Hosts.domain(new Env(env).get("QITS_DOMAIN"));
   }
 
   private final Hosts hosts;

@@ -49,6 +49,12 @@ class StoreTest {
   }
 
   @Test
+  void theProjectRootIsTheBareProjectNameUnderTheDomainNotALandingHost() {
+    assertEquals("https://qits.wohlben.eu", Store.projectRoot(env().values()));
+    assertEquals("https://qits.example.org", Store.projectRoot(env("QITS_DOMAIN", " .Example.ORG. ").values()));
+  }
+
+  @Test
   void theDomainIsFoldedTheWayQitsCiFoldsIt() {
     assertEquals(
         "https://registry.qits.wohlben.eu/artifacts/npm/npm",
