@@ -910,7 +910,7 @@ or `*` for every event. `*` is the default. There are no patterns and no filter 
 
     qits events --filter=BuildSuccessful,BuildFailed
     qits events --filter=SCMPublishCommit,SCMDeleteBranch
-    qits events --filter=ReleaseRequestChanged | jq -r '.payload'
+    qits events --filter=ReleaseRequestStateChanged | jq -r '.payload'
 
 The stream is live only: it has no replay. Notes go to stderr, one line each with a time.
 

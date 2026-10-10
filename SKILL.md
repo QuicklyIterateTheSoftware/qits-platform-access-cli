@@ -1052,7 +1052,7 @@ qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 
 ## qits events
 
-Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait for something on the platform: a build (BuildSuccessful, BuildFailed) or a release request (ReleaseRequestChanged).
+Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to watch the platform: builds (BuildStatusChanged), release requests (ReleaseRequestStateChanged). To wait for something, do not keep this running: declare it with `qits wait` and end your turn.
 
 Each line is the event with its payload read as JSON. Live only: the stream has no replay, so start it before the thing you wait for; events that happen while it reconnects are missed. Notes go to stderr. Stops on SIGINT or SIGTERM.
 
@@ -1069,7 +1069,7 @@ qits events [--events-url <url>] [--filter <names>]
 
 ```
 qits events --filter=BuildSuccessful,BuildFailed
-qits events --filter=ReleaseRequestChanged | jq -r '.payload'
+qits events --filter=ReleaseRequestStateChanged | jq -r '.payload'
 ```
 
 --filter takes exact event names. A pattern such as Build* is refused.
