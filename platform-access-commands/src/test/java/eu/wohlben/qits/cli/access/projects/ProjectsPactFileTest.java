@@ -102,7 +102,8 @@ public class ProjectsPactFileTest {
   /**
    * Every {@code /work} door {@link ProjectsApi} calls has a row, and every row is a {@code /work}
    * door — or the release request's commits, the changelog's one read outside that family
-   * (qits-893), named here by its path. A new call on the client without its row here would ship
+   * (qits-893), or the project's release requests, {@code qits release-request list} without a
+   * repository, each named here by its path. A new call on the client without its row here would ship
    * unverified; a row on another family would put a door into this pact that epic qits-965 is
    * retiring.
    */
@@ -114,13 +115,15 @@ public class ProjectsPactFileTest {
         new java.util.TreeSet<>(Set.of(
             "listProjectWork", "getWork", "listWorkComments", "listWorkChildren", "createWork",
             "getWorkArchetypeSchema", "patchWork", "transitionWork", "listWorkArchetypes",
-            "setWorkStatus", "addWorkComment", "editWorkComment", "listReleaseRequestCommits")),
+            "setWorkStatus", "addWorkComment", "editWorkComment", "listReleaseRequestCommits",
+            "listProjectReleaseRequests")),
         covered);
     for (JsonNode interaction : MAPPER.readTree(normalise(written())).path("interactions")) {
       String path = interaction.path("request").path("path").asText();
       assertTrue(
           path.startsWith("/projects/api/work") || path.matches("/projects/api/projects/[^/]+/work")
-              || path.matches("/projects/api/repositories/[^/]+/release-requests/[^/]+/commits"),
+              || path.matches("/projects/api/repositories/[^/]+/release-requests/[^/]+/commits")
+              || path.matches("/projects/api/projects/[^/]+/release-requests"),
           interaction.path("description").asText() + ": " + path + " is not a /work door");
     }
   }

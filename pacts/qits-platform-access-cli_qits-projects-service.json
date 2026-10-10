@@ -626,6 +626,861 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "listProjectReleaseRequests"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request list: listProjectReleaseRequests",
+      "key": "519e7da3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with pending release requests",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/release-requests",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/release-requests"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "requests": [
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/00000000-0000-4000-8000-000000000002",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "The sources cannot be folded.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "mergedSha": "0000000000000000000000000000000000000004",
+                "mergedToMainAt": null,
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualityGates": [
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": null,
+                "repoId": "00000000-0000-4000-8000-000000000003",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [],
+                "state": "PENDING",
+                "summary": "Waiting on its gates",
+                "supersededBy": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100005"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/00000000-0000-4000-8000-000000000002",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "The sources cannot be folded.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "mergedSha": "0000000000000000000000000000000000000004",
+                "mergedToMainAt": null,
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualityGates": [
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": null,
+                "repoId": "00000000-0000-4000-8000-000000000003",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [],
+                "state": "PENDING",
+                "summary": "Waiting on its gates",
+                "supersededBy": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100005"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/00000000-0000-4000-8000-000000000002",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "The sources cannot be folded.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "mergedSha": "0000000000000000000000000000000000000004",
+                "mergedToMainAt": null,
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualityGates": [
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": null,
+                "repoId": "00000000-0000-4000-8000-000000000003",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [],
+                "state": "PENDING",
+                "summary": "Waiting on its gates",
+                "supersededBy": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100005"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/00000000-0000-4000-8000-000000000002",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "The sources cannot be folded.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "mergedSha": "0000000000000000000000000000000000000004",
+                "mergedToMainAt": null,
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualityGates": [
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": null,
+                "repoId": "00000000-0000-4000-8000-000000000003",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [],
+                "state": "PENDING",
+                "summary": "Waiting on its gates",
+                "supersededBy": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100005"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/00000000-0000-4000-8000-000000000002",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "The sources cannot be folded.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "mergedSha": "0000000000000000000000000000000000000004",
+                "mergedToMainAt": null,
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualityGates": [
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": null,
+                "repoId": "00000000-0000-4000-8000-000000000003",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [],
+                "state": "PENDING",
+                "summary": "Waiting on its gates",
+                "supersededBy": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100005"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/00000000-0000-4000-8000-000000000002",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "The sources cannot be folded.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "mergedSha": "0000000000000000000000000000000000000004",
+                "mergedToMainAt": null,
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualityGates": [
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [
+                      {
+                        "detail": "SUCCESS on release/00000000-0000-4000-8000-000000000006",
+                        "name": "Run 00000000-0000-4000-8000-000000000007",
+                        "runId": "00000000-0000-4000-8000-000000000007",
+                        "state": "PASSED"
+                      }
+                    ],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": "00000000-0000-4000-8000-000000000007",
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": null,
+                "repoId": "00000000-0000-4000-8000-000000000003",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [],
+                "state": "PENDING",
+                "summary": "Waiting on its gates",
+                "supersededBy": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100005"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.requests": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 6,
+                  "min": 6
+                }
+              ]
+            },
+            "$.requests[*].approvalRequired": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].backingBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.requests[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.requests[*].gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].mergedSha": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].preRun.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].checks[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].runId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].retryable": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].unattended": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.requests[*].version": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "addWorkComment"
           },
           "qits-trigger": {

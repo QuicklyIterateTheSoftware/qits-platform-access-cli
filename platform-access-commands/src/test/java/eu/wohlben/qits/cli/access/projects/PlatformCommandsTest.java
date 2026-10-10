@@ -42,6 +42,7 @@ class PlatformCommandsTest {
     private static final String DOCS_APP = "0a0b0c0d-0000-4000-8000-00000000000c";
     private static final String REQUESTS = "/projects/api/repositories/" + CI + "/release-requests";
     private static final String REPOSITORIES = "/projects/api/projects/" + QITS + "/repositories";
+    private static final String PROJECT_REQUESTS = "/projects/api/projects/" + QITS + "/release-requests";
 
     @TempDir
     Path home;
@@ -88,6 +89,18 @@ class PlatformCommandsTest {
                    "summary":"Red build","version":null,"updatedAt":"2026-09-12T08:00:00Z"},
                   {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED","priority":"MEDIUM",
                    "summary":"Old release","version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
+                """);
+        platform.answer("GET", PROJECT_REQUESTS, """
+                {"requests":[
+                  {"id":"55555555-2222-3333-4444-555555555555","repoName":"qits-ci-frontend","state":"PENDING",
+                   "approvalState":"WAITING","priority":"BLOCKING","summary":"Dark theme","version":null,
+                   "updatedAt":"2026-09-12T09:30:00Z"},
+                  {"id":"11111111-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"PENDING",
+                   "approvalState":"NOT_REQUIRED","priority":"HIGH","summary":"Ship the log view","version":null,
+                   "updatedAt":"2026-09-12T09:00:00Z"},
+                  {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Old release","version":"2026.910.1",
+                   "updatedAt":"2026-09-10T09:00:00Z"}]}
                 """);
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
@@ -377,8 +390,57 @@ class PlatformCommandsTest {
         assertThat(r.exit()).isEqualTo(2);
         assertThat(r.err()).contains("Project qits has no repository with the id or name 'qits-cd'.")
                 .contains("`qits repositories --project qits list`");
-        assertThat(run("release-request", "--project", "qits", "list").err())
+        assertThat(run("release-request", "--project", "qits", "create", "--branch", "b", "--summary", "s").err())
                 .contains("Name the repository: --repository <id or name>.");
+    }
+
+    @Test
+    void withoutARepositoryTheListShowsTheWholeProjectAsTheServiceAnswers() {
+        Result r = run("release-request", "--project", "qits", "list");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out())
+                .contains("ID        REPOSITORY        STATE      APPROVAL      PRIORITY  SUMMARY")
+                .contains("55555555  qits-ci-frontend  PENDING    WAITING       BLOCKING  Dark theme")
+                .contains("11111111  qits-ci-service   PENDING")
+                // The landing app's default: the last finalized stay, nothing is dropped.
+                .contains("77777777  qits-ci-service   FINALIZED").contains("2026.910.1");
+        assertThat(platform.requests("GET", PROJECT_REQUESTS).getFirst().query()).isNull();
+        assertThat(platform.requests("GET", REQUESTS)).isEmpty();
+        assertThat(platform.requests("GET", REPOSITORIES)).isEmpty();
+    }
+
+    @Test
+    void theProjectListPassesTheStateAndCutsAtTheLimitInBothForms() throws Exception {
+        Result r = run("release-request", "list", "--project", "qits", "--state", "all", "--limit", "2");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("55555555").contains("11111111").doesNotContain("77777777");
+        assertThat(platform.requests("GET", PROJECT_REQUESTS).getFirst().query()).isEqualTo("state=all");
+
+        Result json = run("release-request", "list", "--project", "qits", "--limit", "1", "-o", "json");
+        assertThat(JSON.readTree(json.out()).path("requests")).extracting(n -> n.path("repoName").asText())
+                .containsExactly("qits-ci-frontend");
+    }
+
+    @Test
+    void theRepositoryListCutsAtTheLimitToo() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list", "--limit", "1");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("11111111").doesNotContain("22222222");
+    }
+
+    @Test
+    void anEmptyProjectListNamesTheProjectAndALimitBelowOneIsRefused() {
+        platform.answer("GET", PROJECT_REQUESTS, "{\"requests\":[]}");
+
+        assertThat(run("release-request", "--project", "qits", "list").out())
+                .contains("No open release requests for project qits.");
+        Result refused = run("release-request", "--project", "qits", "list", "--limit", "0");
+        assertThat(refused.exit()).isEqualTo(2);
+        assertThat(refused.err()).contains("--limit must be 1 or more.");
+        assertThat(run("release-request", "list").err()).contains("--project");
     }
 
     @Test
