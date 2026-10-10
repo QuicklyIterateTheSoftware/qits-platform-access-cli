@@ -43,6 +43,18 @@ public final class PlatformUrls {
         return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);
     }
 
+    /** The landing app, which a person's browser opens: {@code https://qits.wohlben.eu}. */
+    public static String landing(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        if (!blank(flag)) {
+            return trim(flag);
+        }
+        String configured = env.get("QITS_LANDING_URL");
+        if (!blank(configured)) {
+            return trim(configured);
+        }
+        return new PlatformEndpoints(Mode.of(env), env, idpUrl).landing();
+    }
+
     static String resolve(String app, String flagName, String variable, String flag, Map<String, String> env,
                           String idpUrl) throws CliFailure {
         if (!blank(flag)) {

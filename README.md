@@ -24,6 +24,8 @@ Commands:
   platform, the container's own credential instead.
 - `qits mcp-credential` is Claude's MCP headers helper for the qits MCP server (interim) — see
   below.
+- `qits agents claude hook work-links` is a Claude Code hook that shows work ids such as `qits-111`
+  as links to the landing app — see below.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
 - `qits tui` opens an interactive screen over all of the above: pick a command instead of
@@ -1194,6 +1196,37 @@ Claude connects without the header and the server answers 401.
 It is the other place `qits` prints a token. It is interim: a container's token lasts an hour, so
 a header written once at launch would go stale. Follow-up qits-684 gives every workspace a
 long-lived token of its own, the entry then carries it as a plain header, and this command goes.
+
+## qits agents
+
+What an agent harness runs on this machine: `qits agents <harness> …`. Claude Code is the one
+harness today.
+
+### qits agents claude hook work-links
+
+Claude Code's `MessageDisplay` hook. It shows work ids in Claude's messages, such as `qits-111`, as
+links to the work item in the landing app (`<landing>/projects/<slug>/work/detail/<id>`). Only the
+screen changes; the transcript and the model keep the plain id. Register it in
+`~/.claude/settings.json`:
+
+    {"hooks": {"MessageDisplay": [{"hooks": [{"type": "command",
+      "command": "qits agents claude hook work-links", "timeout": 5}]}]}}
+
+Claude holds each batch of text until the hook returns, so the hook never waits for the network
+and never fails: any error prints nothing and exits `0`, and Claude shows the original. An id
+inside a branch (`ticket/qits-1152`), a longer name, a link, inline code or a code block stays as it
+is. A code fence can span batches, so whether one is open is kept per message in
+`$XDG_RUNTIME_DIR/qits-work-links/`, and removed on the last batch.
+
+The project slugs are cached for an hour in `$XDG_CACHE_HOME/qits/work-links.json` (default
+`~/.cache/qits/`). A stale cache is used as it is, and the hook starts the same command with a
+hidden `--refresh` in a session of its own, which asks the projects service with this home's
+credential. Until the first refresh is done only `qits` ids are linked.
+
+The landing app is the platform's bare domain: on a workstation the session's idp address without
+`idp.` (`https://qits.wohlben.eu`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
+`QITS_LANDING_URL` sets it. `--style osc8` or `QITS_LINK_STYLE=osc8` writes a terminal hyperlink
+instead of a markdown link, and `QITS_LINK_PROJECTS` (comma-separated slugs) replaces the cache.
 
 ## qits artifacts publish
 

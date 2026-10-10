@@ -102,6 +102,25 @@ public final class PlatformEndpoints {
     }
 
     /**
+     * The landing app, {@code https://qits.wohlben.eu}: the bare platform domain, where a person's
+     * browser opens a work item. A browser address in every home, so inside the platform it is never a
+     * wire alias: it comes from {@code QITS_DOMAIN}, and without one there is none to give.
+     * {@code QITS_URL_LANDING} overrides it, as it does every address.
+     */
+    public String landing() throws CliFailure {
+        String override = env.get("QITS_URL_LANDING");
+        if (override != null && !override.isBlank()) {
+            return trim(override);
+        }
+        if (mode == Mode.WORKSTATION) {
+            String projects = vhost("projects", "Cannot tell the landing address from the idp address " + idpUrl
+                    + ". Set QITS_URL_LANDING.");
+            return projects.replaceFirst("://projects\\.", "://");
+        }
+        return "https://qits." + domain(env);
+    }
+
+    /**
      * {@code https://projects.qits.wohlben.eu}, from {@code QITS_DOMAIN}: the shape of {@link
      * #vhost}, fed from the environment instead of a session.
      * <p>

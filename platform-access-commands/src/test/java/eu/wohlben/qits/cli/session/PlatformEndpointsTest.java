@@ -77,4 +77,18 @@ class PlatformEndpointsTest {
         Map<String, String> container = Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret", "QITS_ENV", "qa");
         assertThat(endpoints(container).base("idp")).isEqualTo("http://qa-qits-idp:8080");
     }
+
+    /** The landing app is a browser address in every home: the bare platform domain, never a wire alias. */
+    @Test
+    void theLandingAppIsTheBarePlatformDomain() throws CliFailure {
+        assertThat(new PlatformEndpoints(Mode.WORKSTATION, Map.of(), "https://idp.qits.wohlben.eu/idp").landing())
+                .isEqualTo("https://qits.wohlben.eu");
+        assertThat(endpoints(RUNNER).landing()).isEqualTo("https://qits.wohlben.eu");
+        Map<String, String> container = Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret", "QITS_DOMAIN", "example.org");
+        assertThat(endpoints(container).landing()).isEqualTo("https://qits.example.org");
+        assertThatThrownBy(() -> endpoints(Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret")).landing())
+                .isInstanceOf(CliFailure.class);
+        assertThat(endpoints(Map.of("QITS_URL_LANDING", "http://localhost:4200/")).landing())
+                .isEqualTo("http://localhost:4200");
+    }
 }

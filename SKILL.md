@@ -1742,6 +1742,50 @@ qits changelog bump-message --group targeted --applied applied.tsv --body body.t
 - `1` Refused: an option or QITS_EVENT_PAYLOAD missing or unreadable, no credential in the environment, a changelog that is not published (404) or whose last line is not `associated tickets: ...`, or another 4xx.
 - `2` Could not ask: the store unreachable, a 5xx, or a token command or idp that failed. A step may retry a 2.
 
+## qits agents
+
+What an agent harness runs on this machine, one group per harness. A person does not run these.
+
+## qits agents claude
+
+What Claude Code runs.
+
+## qits agents claude hook
+
+Claude Code's hooks. Each is registered in Claude's settings.json; the help of each shows how.
+
+## qits agents claude hook work-links
+
+Claude Code's MessageDisplay hook: shows work ids such as qits-111 in Claude's messages as links to the landing app's work item page. Claude runs it; a person does not.
+
+It reads one batch of the message on stdin and prints the text to show, or nothing when no id was linked. Only the screen changes: the transcript and the model keep the plain id. An id inside a word, a branch (ticket/qits-1152), a longer name (qits-1152-x), a link, inline code or a code block stays as it is. Any error prints nothing and exits 0, so Claude shows the original text.
+
+The project slugs are cached for an hour in $XDG_CACHE_HOME/qits/work-links.json (default ~/.cache/qits/). A stale cache is used as it is while a refresh runs in the background, with this home's credential; until the first one is done only `qits` ids are linked.
+
+```
+qits agents claude hook work-links [--landing-url <url>] [--style <style>]
+```
+
+| Name | What it does |
+|---|---|
+| `--landing-url <url>` | The landing app's base URL. Default: QITS_LANDING_URL, else the platform's bare domain. |
+| `--style <style>` | markdown ([qits-111](url)) or osc8 (a terminal hyperlink). Default: QITS_LINK_STYLE, else markdown. |
+
+### Examples
+
+```
+{"hooks": {"MessageDisplay": [{"hooks": [{"type": "command", "command": "qits agents claude hook work-links", "timeout": 5}]}]}}
+```
+
+The example is the entry in Claude's settings.json (~/.claude/settings.json).
+
+- The landing app is the platform's bare domain: on a workstation the session's idp address without `idp.`, elsewhere https://qits.<QITS_DOMAIN>. --landing-url or QITS_LANDING_URL sets it.
+- QITS_LINK_STYLE=osc8 is the same as --style osc8. QITS_LINK_PROJECTS (comma-separated slugs) replaces the cache.
+
+### Exit codes
+
+- `0` Always, also when nothing was printed.
+
 ## qits tui
 
 Pick a command instead of remembering it: an interactive screen over every qits command.

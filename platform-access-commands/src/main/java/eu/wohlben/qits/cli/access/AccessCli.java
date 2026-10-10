@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access;
 
+import eu.wohlben.qits.cli.access.agents.AgentsCommand;
 import eu.wohlben.qits.cli.access.artifacts.ArtifactsCommand;
 import eu.wohlben.qits.cli.access.changelog.ChangelogGroup;
 import eu.wohlben.qits.cli.access.checkout.CheckoutDaemonCommand;
@@ -39,7 +40,7 @@ import picocli.CommandLine;
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, EventsCommand.class,
                 ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
-                ArtifactsCommand.class, ChangelogGroup.class,
+                ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "

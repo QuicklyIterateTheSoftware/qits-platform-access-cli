@@ -12,7 +12,8 @@ diagram, generated from its compiled classes), `qits events` (the live event
 stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
-`refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), and `qits tui` (an
+`refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), `qits agents claude …` (what
+Claude Code runs: the work-links hook), and `qits tui` (an
 interactive screen over all of them). The README says how each behaves.
 
 It has **two homes**. A workstation, where a person signs in with a browser and the session lives in
@@ -197,6 +198,10 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                effective models, MavenReactor), NpmPublisher (the tarball and publish document),
                ContractPackager and ContractDocs, and Archives (the deterministic jar and tar.gz).
     mcp/       qits mcp-credential: Claude's MCP headers helper (interim, retired by qits-684)
+    agents/    qits agents claude: what Claude Code runs. hook work-links (WorkLinks, the id matching;
+               LinkProjects, the slug cache, refreshed by the same command's hidden --refresh started
+               detached). The hook path never waits for the network and never fails: errors print nothing
+               and exit 0
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
     complete/  the five platform sources behind the TUI's dropdowns (projects, repositories,
                release requests, runs, versions), over the credential the commands use
