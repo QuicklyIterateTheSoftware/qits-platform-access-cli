@@ -255,6 +255,17 @@ class TestResultsKindTest {
     }
 
     @Test
+    void aRedStepsCountIsPartialAndNeverComparedWithTheBaseline() {
+        StepContext step = Fixtures.step(work, 1, Optional.of(BASELINE));
+
+        assertThat(kind.highlight(totals(900, 0, 0, 1), Optional.of(totals(2674, 0, 0, 1)), step)).containsExactly(
+                new Highlight("good", "all 899 tests passed, 1 skipped", "tests.passed", 899.0, null),
+                new Highlight("info", "partial: step exited 1, counts not compared with 2026.1003.52637", null, null,
+                        null),
+                new Highlight("warn", "step exited 1, no test failed", null, null, null));
+    }
+
+    @Test
     void withoutABaselineThereIsNoComparison() {
         assertThat(kind.highlight(totals(10, 0, 0, 0), Optional.empty(), Fixtures.step(work)))
                 .containsExactly(new Highlight("good", "all 10 tests passed", "tests.passed", 10.0, null));

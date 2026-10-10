@@ -2,8 +2,9 @@ package eu.wohlben.qits.cli.access.report;
 
 import org.jacoco.core.analysis.Analyzer;
 import org.jacoco.core.analysis.CoverageBuilder;
+import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
-import org.jacoco.core.analysis.ISourceFileCoverage;
+import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.tools.ExecFileLoader;
 
 import java.io.IOException;
@@ -15,7 +16,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -31,11 +34,23 @@ import java.util.stream.Stream;
  * {@code target/generated-sources}, or written in another language) is left out: no reviewer can read
  * those lines, and no diff names them. {@code NOT_COVERED} is uncovered; {@code PARTLY_COVERED} and
  * {@code FULLY_COVERED} are covered.
+ * <p>
+ * CLASSES A JVM CHANGED BEFORE IT RAN THEM (qits-1171). JaCoCo keys its data by a CRC of the class
+ * bytes the JVM loaded. Quarkus rewrites many classes as it loads them (CDI beans, Panache entities
+ * and repositories), so their data carries an id no class in {@code target/classes} has, and read
+ * against {@code target/classes} alone those classes count as never run. The agent's
+ * {@code classdumpdir} writes every class as it was loaded to {@code .qits-reports/jacoco-classes},
+ * one file per variant. Each variant is read against the data under its own id, and a line it covers
+ * counts as covered in the original. {@code target/classes} alone decides which lines are coverable,
+ * so the total does not depend on how many variants a run loaded. Without the directory (an older
+ * archetype), only {@code target/classes} is read, as before.
  */
 public final class JacocoExecParser implements ReportParser<LineCoverage> {
 
     static final String EXEC = "jacoco.exec";
     static final String SOURCES = "src/main/java";
+    /** Beside the exec file: what the agent's {@code classdumpdir} wrote, every class as a JVM loaded it. */
+    static final String CLASS_DUMP = "jacoco-classes";
 
     /** Directories never searched for a module. */
     private static final Set<String> NOT_MODULES = Set.of("node_modules", ".git", VitestJunitParser.REPORTS, "src");
@@ -68,39 +83,86 @@ public final class JacocoExecParser implements ReportParser<LineCoverage> {
     public LineCoverage parse(Path file, StepContext step) throws IOException {
         ExecFileLoader loader = new ExecFileLoader();
         loader.load(file.toFile());
+        ExecutionDataStore executions = loader.getExecutionDataStore();
         LineCoverage coverage = LineCoverage.of(language(), tool());
+        Map<String, Lines> byClass = new HashMap<>();
         for (Path classes : classDirectories(step.root())) {
             Path module = classes.getParent().getParent();
-            CoverageBuilder builder = new CoverageBuilder();
-            Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
             for (Path type : classFiles(classes)) {
-                try (InputStream in = Files.newInputStream(type)) {
-                    analyzer.analyzeClass(in, type.toString());
-                } catch (IOException | RuntimeException unreadable) {
-                    // One class JaCoCo cannot read (a newer class file version, a broken file) costs
-                    // its own lines and nothing else.
+                IClassCoverage original = analyze(type, executions);
+                if (original == null || original.getSourceFileName() == null) {
+                    continue;
                 }
-            }
-            for (ISourceFileCoverage source : builder.getSourceFiles()) {
-                String relative = (source.getPackageName().isEmpty() ? "" : source.getPackageName() + "/")
-                        + source.getName();
+                String relative = (original.getPackageName().isEmpty() ? "" : original.getPackageName() + "/")
+                        + original.getSourceFileName();
                 Path sourceFile = module.resolve(SOURCES).resolve(relative);
                 if (!Files.isRegularFile(sourceFile)) {
                     continue;
                 }
-                String path = step.relative(sourceFile);
-                for (int line = source.getFirstLine(); line > 0 && line <= source.getLastLine(); line++) {
-                    switch (source.getLine(line).getStatus()) {
-                        case ICounter.NOT_COVERED -> coverage.line(path, line, false);
-                        case ICounter.PARTLY_COVERED, ICounter.FULLY_COVERED -> coverage.line(path, line, true);
-                        default -> {
-                            // EMPTY: no code on the line.
-                        }
-                    }
+                byClass.put(original.getName(), new Lines(step.relative(sourceFile), lines(original)));
+            }
+        }
+        for (Path type : dumpedClassFiles(file.resolveSibling(CLASS_DUMP))) {
+            IClassCoverage variant = analyze(type, executions);
+            if (variant == null || executions.get(variant.getId()) == null) {
+                continue;
+            }
+            Lines original = byClass.get(variant.getName());
+            if (original == null) {
+                continue;
+            }
+            lines(variant).forEach((line, covered) -> {
+                if (covered) {
+                    original.lines().computeIfPresent(line, (l, before) -> true);
+                }
+            });
+        }
+        for (Lines lines : byClass.values()) {
+            lines.lines().forEach((line, covered) -> coverage.line(lines.source(), line, covered));
+        }
+        return coverage;
+    }
+
+    /** A class's coverable lines in its source file, and whether each is covered. */
+    private record Lines(String source, Map<Integer, Boolean> lines) {
+    }
+
+    /**
+     * One class file against the exec data, on its own: a variant shares its name with the original,
+     * and one {@link CoverageBuilder} refuses two classes of one name. Null when JaCoCo cannot read
+     * it (a newer class file version, a broken file): that costs its own lines and nothing else.
+     */
+    private static IClassCoverage analyze(Path type, ExecutionDataStore executions) {
+        CoverageBuilder builder = new CoverageBuilder();
+        try (InputStream in = Files.newInputStream(type)) {
+            new Analyzer(executions, builder).analyzeClass(in, type.toString());
+        } catch (IOException | RuntimeException unreadable) {
+            return null;
+        }
+        return builder.getClasses().stream().findFirst().orElse(null);
+    }
+
+    /** Line number to covered, for every line with code. */
+    private static Map<Integer, Boolean> lines(IClassCoverage type) {
+        Map<Integer, Boolean> lines = new HashMap<>();
+        for (int line = type.getFirstLine(); line > 0 && line <= type.getLastLine(); line++) {
+            switch (type.getLine(line).getStatus()) {
+                case ICounter.NOT_COVERED -> lines.put(line, false);
+                case ICounter.PARTLY_COVERED, ICounter.FULLY_COVERED -> lines.put(line, true);
+                default -> {
+                    // EMPTY: no code on the line.
                 }
             }
         }
-        return coverage;
+        return lines;
+    }
+
+    /** Every class file the agent dumped, or none when it dumped nothing. */
+    static List<Path> dumpedClassFiles(Path dump) throws IOException {
+        if (!Files.isDirectory(dump)) {
+            return List.of();
+        }
+        return classFiles(dump);
     }
 
     /** Every {@code <module>/target/classes} under the root, in path order. */

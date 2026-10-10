@@ -164,7 +164,7 @@ public final class CoverageKind implements ReportKind<Coverage> {
 
     @Override
     public Coverage compared(Coverage report, Optional<Coverage> baseline, StepContext step) {
-        if (baseline.isEmpty() || step.baseline().isEmpty() || baseline.get().total() == null
+        if (partial(step) || baseline.isEmpty() || step.baseline().isEmpty() || baseline.get().total() == null
                 || baseline.get().total().percent() == null) {
             return report.withBaselineTotal(null);
         }
@@ -181,17 +181,22 @@ public final class CoverageKind implements ReportKind<Coverage> {
                 highlights.add(new Highlight(Highlight.INFO, "diff coverage: no coverable line changed",
                         "coverage.diff", null, null));
             } else {
-                String severity = diff.percent() >= GOOD_FROM ? Highlight.GOOD
+                String severity = partial(step) ? Highlight.INFO
+                        : diff.percent() >= GOOD_FROM ? Highlight.GOOD
                         : diff.percent() < WARN_BELOW ? Highlight.WARN : Highlight.INFO;
                 highlights.add(new Highlight(severity, "diff coverage " + format(diff.percent()) + "% ("
-                        + diff.linesCovered() + "/" + diff.linesChanged() + " changed lines)",
+                        + diff.linesCovered() + "/" + diff.linesChanged() + " changed lines"
+                        + (partial(step) ? ", partial run" : "") + ")",
                         "coverage.diff", diff.percent(), null));
             }
         }
         Double total = report.total().percent();
         if (total != null) {
             Coverage.BaselineTotal before = report.baselineTotal();
-            if (before != null && before.percent() != null) {
+            if (partial(step)) {
+                highlights.add(new Highlight(Highlight.INFO, "coverage " + format(total) + "% (partial: step exited "
+                        + step.exitCode() + ", not compared)", "coverage.total", total, null));
+            } else if (before != null && before.percent() != null) {
                 double delta = BigDecimal.valueOf(total - before.percent()).setScale(2, RoundingMode.HALF_UP)
                         .doubleValue();
                 highlights.add(new Highlight(Highlight.INFO, "coverage " + format(total) + "% (" + signed(delta) + ")",
@@ -205,6 +210,15 @@ public final class CoverageKind implements ReportKind<Coverage> {
                     null));
         }
         return highlights;
+    }
+
+    /**
+     * A step whose script exited non-zero may have stopped part way (a failed module ends the reactor),
+     * so its numbers cover only what ran. They are reported, and never compared with the baseline,
+     * which a released, so complete, run produced (qits-1171).
+     */
+    static boolean partial(StepContext step) {
+        return step.exitCode() != 0;
     }
 
     @Override

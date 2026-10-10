@@ -163,6 +163,23 @@ class CoverageKindTest {
     }
 
     @Test
+    void aRedStepsCoverageIsPartialAndNeverComparedWithTheBaseline() throws IOException {
+        StepContext step = new StepContext(work, "run-1", 2, Fixtures.REPOSITORY, Fixtures.COMMIT, 1,
+                Optional.of(BASELINE), changed(Map.of("a/A.java", Set.of(1, 2))), TestCaseLocators.registered());
+        Coverage report = collect(step, coverage("java", "jacoco", Map.of("a/A.java", Map.of(1, false, 2, false))));
+        Coverage baseline = new Coverage(List.of(), new Coverage.Total(81, 100, 81.0), null, null, List.of());
+
+        Coverage compared = kind.compared(report, Optional.of(baseline), step);
+
+        assertThat(compared.baselineTotal()).isNull();
+        assertThat(kind.highlight(compared, Optional.of(baseline), step)).containsExactly(
+                new Highlight("info", "diff coverage 0.0% (0/2 changed lines, partial run)", "coverage.diff", 0.0,
+                        null),
+                new Highlight("info", "coverage 0.0% (partial: step exited 1, not compared)", "coverage.total", 0.0,
+                        null));
+    }
+
+    @Test
     void anUnchangedTotalSaysSo() throws IOException {
         StepContext step = step(Optional.of(BASELINE), ChangedLines.unavailable());
         Coverage report = collect(step, coverage("java", "jacoco", Map.of("a/A.java", Map.of(1, true, 2, false))));
