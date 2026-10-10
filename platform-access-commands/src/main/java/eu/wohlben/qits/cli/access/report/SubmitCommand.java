@@ -59,7 +59,9 @@ import java.util.function.Consumer;
                         + "test method, its annotations included) and for TypeScript or JavaScript with vitest (the "
                         + "it/test block); any other failure has none.",
                 "- coverage reads .qits-reports/jacoco.exec (JaCoCo 0.8.14's format) against every "
-                        + "**/target/classes, and coverage/**/coverage-final.json or "
+                        + "**/target/classes and against the classes the agent dumped to "
+                        + ".qits-reports/jacoco-classes (a class Quarkus rewrote as it loaded it counts on its "
+                        + "original's lines), and coverage/**/coverage-final.json or "
                         + ".qits-reports/coverage/**/coverage-final.json (istanbul's json, as vitest writes it). "
                         + "With a baseline it fetches the baseline's tag (git fetch --depth=1 "
                         + "\"$QITS_CI_REPOSITORY_URL\" refs/tags/<version>) and measures the lines `git diff -U0 "
@@ -91,6 +93,8 @@ import java.util.function.Consumer;
                         + "publish`. qits-ci takes only the run's own ci-run token, while the run is running.",
                 "- No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without "
                         + "the comparison.",
+                "- A non-zero --exit-code means the step may have stopped part way, so its test count and coverage "
+                        + "are partial: they are sent and say so, and never compared with the baseline's.",
                 "- Gives up after 120 seconds in all, whatever is still waiting.",
                 "- The exit code says whether the reports were stored, never whether the tests passed. The hook "
                         + "that runs this ignores it, so a report never changes a step's verdict."},

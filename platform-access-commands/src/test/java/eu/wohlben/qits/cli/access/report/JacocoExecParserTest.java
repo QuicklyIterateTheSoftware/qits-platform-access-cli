@@ -47,6 +47,40 @@ class JacocoExecParserTest {
     }
 
     @Test
+    void aClassTheRunLoadedAsOtherBytesReadsAsUncoveredWithoutTheDump() throws Exception {
+        JacocoFixture.buildTransformed(work, false);
+
+        LineCoverage coverage = parser.parse(work.resolve(".qits-reports/jacoco.exec"), Fixtures.step(work));
+
+        assertThat(coverage.files().get(JacocoFixture.LEDGER)).doesNotContainValue(true).hasSize(7);
+    }
+
+    @Test
+    void theDumpedVariantCountsItsCoveredLinesOnTheOriginal() throws Exception {
+        JacocoFixture.buildTransformed(work, true);
+
+        LineCoverage coverage = parser.parse(work.resolve(".qits-reports/jacoco.exec"), Fixtures.step(work));
+
+        assertThat(coverage.files()).containsOnlyKeys(JacocoFixture.LEDGER, JacocoFixture.CLOCK);
+        assertThat(coverage.files().get(JacocoFixture.LEDGER)).containsExactly(
+                entry(3, true), entry(7, true), entry(8, false), entry(10, true), entry(11, true), entry(14, true),
+                entry(18, false));
+        assertThat(coverage.files().get(JacocoFixture.CLOCK)).containsExactly(entry(3, false), entry(5, false));
+    }
+
+    @Test
+    void aDumpedClassWhoseSourceIsNotInTheTreeAddsNoLines() throws Exception {
+        JacocoFixture.build(work);
+        Path stray = work.resolve(".qits-reports/jacoco-classes/fx/Generated_Subclass.0000000000000001.class");
+        Files.createDirectories(stray.getParent());
+        Files.copy(work.resolve("service/target/classes/fx/Generated.class"), stray);
+
+        LineCoverage coverage = parser.parse(work.resolve(".qits-reports/jacoco.exec"), Fixtures.step(work));
+
+        assertThat(coverage.files()).containsOnlyKeys(JacocoFixture.LEDGER, JacocoFixture.CLOCK);
+    }
+
+    @Test
     void aClassDirectoryInsideSourcesOrNodeModulesIsNoModule() throws Exception {
         JacocoFixture.build(work);
         Files.createDirectories(work.resolve("web/node_modules/pkg/target/classes"));

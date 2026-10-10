@@ -109,7 +109,7 @@ class SubmitCommandTest {
                 {"runId":"%s","version":"2026.1003.52637"}""".formatted(BASE_RUN)));
         assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
                 [{"severity":"bad","text":"10 tests failed","metric":"tests.failed","value":10.0,"delta":null},
-                 {"severity":"info","text":"+3 tests vs 2026.1003.52637","metric":"tests.total","value":18.0,"delta":3.0}]
+                 {"severity":"info","text":"partial: step exited 1, counts not compared with 2026.1003.52637","metric":null,"value":null,"delta":null}]
                 """));
         TestResults expected = new TestResultsKind(line -> { }).collect(
                 new StepContext(root, RUN, 2, Fixtures.REPOSITORY, Fixtures.COMMIT, 1, Optional.empty(),
