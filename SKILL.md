@@ -1702,6 +1702,42 @@ qits artifacts publish exists npm @qits/ui-components 2026.906.1
 - `1` Not published, or the arguments are wrong.
 - `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
 
+## qits changelog
+
+Release changelogs, as the docs store keeps them (@changelog/<repository>, one CHANGELOG.md per version). bump-message writes a dependency bump's commit message from them, in a CI step.
+
+## qits changelog bump-message
+
+Print the commit message of a dependency-bump step: `bump(<group>): <N> dependencies`, the step's body, and the changelogs of every version the applied changes upgrade to, with the tickets those changelogs name in the subject's scope.
+
+N is the number of lines in --applied. The changelogs come from the docs store (@changelog/<repository> at each version, CHANGELOG.md), for the changes in QITS_EVENT_PAYLOAD's changes[] that carry `changelog: {repository, versions}` and are listed in --applied; repositories by name, versions in version order. With no changelog to read the message is the subject and the body alone.
+
+```
+qits changelog bump-message [--applied <file>] [--body <file>] [--group <group>]
+```
+
+| Name | What it does |
+|---|---|
+| `--applied <file>` | The changes this step applied, one `<ecosystem><TAB><name>` per line. |
+| `--body <file>` | The step's body, printed as it is. |
+| `--group <group>` | The bump's group, as in `bump(<group>)`. |
+
+### Examples
+
+```
+qits changelog bump-message --group targeted --applied applied.tsv --body body.txt > message.txt
+```
+
+- --applied holds one `<ecosystem><TAB><name>` line per change the step applied; --body the step's own lines (`- maven g:a 1 -> 2 (pom.xml)`), printed as they are.
+- With tickets the subject is `chore(qits-9, qits-10): bump(<group>): <N> dependencies`, the ids sorted by project and number.
+- The store is https://registry.qits.$QITS_DOMAIN; the bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or the commissioned pair, as for `qits artifacts publish`.
+
+### Exit codes
+
+- `0` The message is on stdout.
+- `1` Refused: an option or QITS_EVENT_PAYLOAD missing or unreadable, no credential in the environment, a changelog that is not published (404) or whose last line is not `associated tickets: ...`, or another 4xx.
+- `2` Could not ask: the store unreachable, a 5xx, or a token command or idp that failed. A step may retry a 2.
+
 ## qits tui
 
 Pick a command instead of remembering it: an interactive screen over every qits command.

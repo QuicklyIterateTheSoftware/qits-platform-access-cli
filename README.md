@@ -1285,3 +1285,38 @@ A binary or a symlink started under the name `qits-publish` — its own name, be
 release still publishes the binary as `qits-platform-access-cli`; a step that still says
 `qits-publish` needs only that name on its `PATH`, as a copy or a symlink of `qits`. New pipelines
 should call `qits artifacts publish` directly.
+
+## qits changelog
+
+What reads the changelogs every release publishes (`qits artifacts publish changelog`, above). Like
+`qits artifacts publish` it runs in a CI step, never signs in, and presents the same bearer chain
+(`QITS_PUBLISH_TOKEN_COMMAND`, `QITS_PUBLISH_TOKEN`, or the commissioned pair).
+
+    qits changelog bump-message --group <group> --applied <file> --body <file>
+
+`bump-message` prints the commit message of one dependency-bump step (qits-1144). `--applied` holds
+one `<ecosystem><TAB><name>` line per change the step applied, and N is their count; `--body` is the
+step's own body (`- maven g:a 1 -> 2 (pom.xml)` lines), printed as it is with its trailing newlines
+trimmed to one. The step's `QITS_EVENT_PAYLOAD` lists the requested changes in `changes[]`, each with
+an optional `changelog: {repository, versions: [...]}`. For every applied change that has one, each
+version's changelog is read from
+`https://registry.qits.$QITS_DOMAIN/artifacts/docs/docs/@changelog/<repository>/-/<version>/CHANGELOG.md`;
+a version two coordinates name is read once. The output:
+
+    chore(qits-9, qits-10): bump(<group>): <N> dependencies
+
+    <body>
+
+    ## <repository>
+    # <version>
+    <that version's CHANGELOG.md>
+
+    # <version>
+    <...>
+
+Repositories are sorted by name, versions in version order (numerically, dot segment by dot
+segment). The scope is every ticket the changelogs' `associated tickets:` lines name, sorted by
+project and then number; with none the subject is plain `bump(<group>): <N> dependencies`, and with no
+changelog to read the message is the subject and the body alone. A changelog that is not published
+(404) or whose last line is not `associated tickets: ...` is exit `1`; a store that cannot be reached
+or answers 5xx is `2`, which a step may retry.

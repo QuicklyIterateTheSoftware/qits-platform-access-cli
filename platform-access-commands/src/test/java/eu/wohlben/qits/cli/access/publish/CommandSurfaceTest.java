@@ -126,6 +126,24 @@ class CommandSurfaceTest {
     }
 
     @Test
+    void theChangelogGroupBesideItAnswersHelpAndRefusesNoCommand() {
+        // `qits changelog` is a sibling of `qits artifacts`, outside this harness's tree.
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        java.io.ByteArrayOutputStream err = new java.io.ByteArrayOutputStream();
+        eu.wohlben.qits.cli.access.platform.CliContext context = new eu.wohlben.qits.cli.access.platform.CliContext(
+                java.util.Map.of(), java.io.InputStream.nullInputStream(),
+                new java.io.PrintStream(out, true, java.nio.charset.StandardCharsets.UTF_8),
+                new java.io.PrintStream(err, true, java.nio.charset.StandardCharsets.UTF_8),
+                java.time.Clock.systemUTC(), eu.wohlben.qits.cli.access.daemon.Sleeper.real(), name -> null,
+                runnable -> {
+                });
+        assertEquals(0, eu.wohlben.qits.cli.access.TestCli.execute(context, "changelog", "bump-message", "--help"));
+        assertTrue(out.toString(java.nio.charset.StandardCharsets.UTF_8).contains("--applied"), out.toString());
+        assertEquals(2, eu.wohlben.qits.cli.access.TestCli.execute(context, "changelog"));
+        assertTrue(err.toString(java.nio.charset.StandardCharsets.UTF_8).contains("Name a command"), err.toString());
+    }
+
+    @Test
     void anExtraPositionalArgumentIsRefused() {
         Harness.Run run = cli.run("sbom", "submit", "--type", "docker", "--name", "x", "--version", "1",
                 "--file", "f", "extra");

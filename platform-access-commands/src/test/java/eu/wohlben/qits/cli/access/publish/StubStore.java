@@ -27,29 +27,31 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * <p>Replies are keyed by {@code "METHOD /path"}. An unscripted request answers 404 with a plain-text
  * body, which is what the real store does for a coordinate nobody published — so "absent" needs no
  * scripting at all.
+ *
+ * <p>Public so {@code changelog/}'s tests serve changelogs from it as the docs store.
  */
-final class StubStore implements AutoCloseable {
+public final class StubStore implements AutoCloseable {
 
   /** What the store was asked, kept whole so a test can assert on headers and body bytes. */
-  record Request(String method, String path, Map<String, String> headers, byte[] body) {
+  public record Request(String method, String path, Map<String, String> headers, byte[] body) {
 
-    String header(String name) {
+    public String header(String name) {
       return headers.get(name.toLowerCase(Locale.ROOT));
     }
 
-    String bodyText() {
+    public String bodyText() {
       return new String(body, StandardCharsets.UTF_8);
     }
   }
 
   /** What it answers. */
-  record Reply(int status, String body, Map<String, String> headers) {
+  public record Reply(int status, String body, Map<String, String> headers) {
 
-    static Reply of(int status, String body) {
+    public static Reply of(int status, String body) {
       return new Reply(status, body, Map.of());
     }
 
-    static Reply of(int status, String body, Map<String, String> headers) {
+    public static Reply of(int status, String body, Map<String, String> headers) {
       return new Reply(status, body, headers);
     }
   }
@@ -58,7 +60,7 @@ final class StubStore implements AutoCloseable {
   private final Map<String, Reply> replies = new LinkedHashMap<>();
   private final List<Request> requests = new CopyOnWriteArrayList<>();
 
-  StubStore() {
+  public StubStore() {
     try {
       server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
     } catch (IOException e) {
@@ -68,20 +70,20 @@ final class StubStore implements AutoCloseable {
     server.start();
   }
 
-  String url() {
+  public String url() {
     return "http://127.0.0.1:" + server.getAddress().getPort();
   }
 
-  StubStore on(String method, String path, Reply reply) {
+  public StubStore on(String method, String path, Reply reply) {
     replies.put(method + " " + path, reply);
     return this;
   }
 
-  List<Request> requests() {
+  public List<Request> requests() {
     return List.copyOf(requests);
   }
 
-  Request lastRequest() {
+  public Request lastRequest() {
     if (requests.isEmpty()) {
       throw new IllegalStateException("nothing was asked of the stub store");
     }
@@ -137,7 +139,7 @@ final class StubStore implements AutoCloseable {
   }
 
   /** Every path the stub was asked for, in order — handy for asserting a probe really happened. */
-  List<String> paths() {
+  public List<String> paths() {
     List<String> paths = new ArrayList<>();
     for (Request request : requests) {
       paths.add(request.method() + " " + request.path());
