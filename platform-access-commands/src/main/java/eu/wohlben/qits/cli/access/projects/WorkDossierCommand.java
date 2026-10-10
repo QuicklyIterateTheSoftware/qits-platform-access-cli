@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -71,6 +72,7 @@ public class WorkDossierCommand implements Runnable {
                     "1:The platform refused (for example an item it does not know or one with no dossier, HTTP "
                             + "404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -112,6 +114,7 @@ public class WorkDossierCommand implements Runnable {
                     "1:The platform refused (for example no such item or no such page, HTTP 404), or cannot be "
                             + "reached.",
                     "2:Used wrongly (for example no --entity or no --page), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class GetCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

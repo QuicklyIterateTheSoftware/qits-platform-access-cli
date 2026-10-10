@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.access.observe.SafeText;
@@ -69,6 +71,7 @@ final class RepositoryGitCommands {
             footer = {"  qits repositories --project qits branches --repository qits-ci-service"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class BranchesCommand extends GitRead {
 
         @Override
@@ -104,6 +107,7 @@ final class RepositoryGitCommands {
             footer = {"  qits repositories --project qits commits --repository qits-ci-service --branch ticket/x"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class CommitsCommand extends GitRead {
 
         @CommandLine.Option(names = "--branch", paramLabel = "<branch>",
@@ -143,6 +147,7 @@ final class RepositoryGitCommands {
             footer = {"  qits repositories --project qits commit-changes --repository qits-ci-service --commit 1a2b3c4"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class CommitChangesCommand extends GitRead {
 
         @CommandLine.Option(names = "--commit", paramLabel = "<hash>",
@@ -186,6 +191,7 @@ final class RepositoryGitCommands {
                     + "--path README.md"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class CommitDiffCommand extends GitRead {
 
         @CommandLine.Option(names = "--commit", paramLabel = "<hash>",
@@ -230,6 +236,7 @@ final class RepositoryGitCommands {
                             + "--limit 20"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class CommitSubjectsCommand extends GitRead {
 
         @CommandLine.Option(names = "--branch", paramLabel = "<branch>",

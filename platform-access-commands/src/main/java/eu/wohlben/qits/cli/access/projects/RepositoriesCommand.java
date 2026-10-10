@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -60,6 +62,7 @@ public class RepositoriesCommand implements Runnable {
             footer = {"  qits repositories --project qits list", "  qits repositories list --project qits -o json"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

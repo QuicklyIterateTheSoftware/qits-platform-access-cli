@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.observe.SafeText;
@@ -76,6 +77,7 @@ public class WorkDesignCommand implements Runnable {
                     "1:The platform refused (for example an item it does not know, HTTP 404), the item has no open "
                             + "refinement, or the platform cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -119,6 +121,7 @@ public class WorkDesignCommand implements Runnable {
                     "1:The platform refused (for example no such item or design, HTTP 404), the item has no open "
                             + "refinement, or the platform cannot be reached.",
                     "2:Used wrongly (for example no --entity or no --design), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class GetCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

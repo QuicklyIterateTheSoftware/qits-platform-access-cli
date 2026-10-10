@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -151,6 +152,7 @@ public class WorkCommand implements Runnable {
                     "1:The platform refused (for example an unknown archetype or status, HTTP 400, or a project it "
                             + "does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --project), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -209,6 +211,7 @@ public class WorkCommand implements Runnable {
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class DetailsCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -709,6 +712,7 @@ public class WorkCommand implements Runnable {
                     "1:The platform refused (for example an item that is not a campaign, HTTP 404), or cannot be "
                             + "reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class ProgressCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.observe;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,7 +34,7 @@ import java.util.List;
  * the buffer reaches; a window that starts before it asks about what the service has forgotten, and
  * stderr says so, because an empty answer there is not proof of absence.
  */
-@TuiCommand(interaction = Interaction.PLAIN)
+@TuiCommand(interaction = Interaction.PLAIN, effect = Effect.READ)
 @CommandLine.Command(name = "query", mixinStandardHelpOptions = true,
         description = {
                 "Print the logs, spans and metrics qits-observability still holds for a window of time, oldest "

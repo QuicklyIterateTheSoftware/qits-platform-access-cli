@@ -1,5 +1,8 @@
 package eu.wohlben.qits.cli.access.agents;
 
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.wohlben.qits.cli.access.platform.CliContext;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
                         + "them, with the same --landing-url, QITS_LANDING_URL and QITS_LINK_PROJECTS."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Always, also when nothing was printed."})
+@TuiCommand(interaction = Interaction.LOCAL, effect = Effect.READ)
 public class WorkItemsCommand extends PlatformCommand {
 
     private static final ObjectMapper JSON = new ObjectMapper();

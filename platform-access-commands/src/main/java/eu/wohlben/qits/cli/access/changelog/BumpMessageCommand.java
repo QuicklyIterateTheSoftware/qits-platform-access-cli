@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.changelog;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.wohlben.qits.cli.access.platform.CliContext;
@@ -45,7 +46,7 @@ import java.util.regex.Pattern;
  * each with an optional {@code changelog: {repository, versions}}; only the changes the step
  * actually applied ({@code --applied}) count, because a change that was dropped brings nothing in.
  */
-@TuiCommand(interaction = Interaction.CI_ONLY)
+@TuiCommand(interaction = Interaction.CI_ONLY, effect = Effect.READ)
 @CommandLine.Command(name = "bump-message", mixinStandardHelpOptions = true,
         description = {"Print the commit message of a dependency-bump step: `bump(<group>): <N> dependencies`, the "
                         + "step's body, and the changelogs of every version the applied changes upgrade to, with the "

@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.observe;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-@TuiCommand(interaction = Interaction.STREAMING)
+@TuiCommand(interaction = Interaction.STREAMING, effect = Effect.READ)
 @CommandLine.Command(name = "observe", mixinStandardHelpOptions = true, subcommands = {ObserveQueryCommand.class,
         ObserveTelemetryCommands.SourcesCommand.class, ObserveTelemetryCommands.ErrorsCommand.class,
         ObserveTelemetryCommands.SlowSpansCommand.class, ObserveTelemetryCommands.MetricsCommand.class},

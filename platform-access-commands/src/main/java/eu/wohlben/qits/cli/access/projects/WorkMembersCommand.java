@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -67,6 +68,7 @@ public class WorkMembersCommand implements Runnable {
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example no campaign with this id, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

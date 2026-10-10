@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.observe;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.platform.CliContext;
@@ -148,7 +149,7 @@ final class ObserveTelemetryCommands {
         }
     }
 
-    @TuiCommand(interaction = Interaction.PLAIN)
+    @TuiCommand(interaction = Interaction.PLAIN, effect = Effect.READ)
     @CommandLine.Command(name = "sources", mixinStandardHelpOptions = true,
             description = {"List the buckets qits-observability holds telemetry in: each one's key, kind "
                     + "(SERVICE, WORKSPACE or UNSCOPED), label, repository and workspace ids, and how many spans, "
@@ -185,7 +186,7 @@ final class ObserveTelemetryCommands {
         }
     }
 
-    @TuiCommand(interaction = Interaction.PLAIN)
+    @TuiCommand(interaction = Interaction.PLAIN, effect = Effect.READ)
     @CommandLine.Command(name = "errors", mixinStandardHelpOptions = true,
             description = {"Recent errors in one bucket, grouped by trace: spans with an error status, their "
                     + "exception events with stack traces, and ERROR logs. Start here when a failure needs "
@@ -240,7 +241,7 @@ final class ObserveTelemetryCommands {
         }
     }
 
-    @TuiCommand(interaction = Interaction.PLAIN)
+    @TuiCommand(interaction = Interaction.PLAIN, effect = Effect.READ)
     @CommandLine.Command(name = "slow-spans", mixinStandardHelpOptions = true,
             description = {"Spans in one bucket that took at least --threshold-ms, slowest first: duration, "
                     + "service, span name, status and trace.",
@@ -294,7 +295,7 @@ final class ObserveTelemetryCommands {
         }
     }
 
-    @TuiCommand(interaction = Interaction.PLAIN)
+    @TuiCommand(interaction = Interaction.PLAIN, effect = Effect.READ)
     @CommandLine.Command(name = "metrics", mixinStandardHelpOptions = true,
             description = {"The latest value of every metric series in one bucket: name, value, unit, service "
                     + "and the series' attributes. Gauges and counters alike, with no maths over time.",

@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.events;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -35,7 +36,7 @@ import java.util.List;
  * and nothing after it. The pages run newest first and follow {@code nextCursor} until {@code limit}
  * rows are in hand or the log has no more; the rows are then printed oldest first.
  */
-@TuiCommand(interaction = Interaction.PLAIN)
+@TuiCommand(interaction = Interaction.PLAIN, effect = Effect.READ)
 @CommandLine.Command(name = "query", mixinStandardHelpOptions = true,
         description = {
                 "Print the qits-events domain events that already happened in a window of time, oldest first, "
