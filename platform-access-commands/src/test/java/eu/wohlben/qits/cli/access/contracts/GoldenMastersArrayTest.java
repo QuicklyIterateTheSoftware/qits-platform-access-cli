@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import au.com.dius.pact.consumer.dsl.DslPart;
 import au.com.dius.pact.core.model.matchingrules.MatchingRuleGroup;
 import au.com.dius.pact.core.model.matchingrules.MinMaxTypeMatcher;
+import au.com.dius.pact.core.model.matchingrules.MinTypeMatcher;
 import au.com.dius.pact.core.model.matchingrules.RuleLogic;
 import au.com.dius.pact.core.model.matchingrules.TypeMatcher;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -86,5 +87,27 @@ class GoldenMastersArrayTest {
 
     assertThat(rules).doesNotContainKeys(".entities", ".entities[*].meta.b");
     assertThat(rules).containsKeys(".entities[0].meta.b", ".entities[1].meta.a");
+  }
+  @Test
+  void aNestedArrayRecordedAtDifferentLengthsHasAMinimumAndNoMaximum() throws Exception {
+    // listReleaseRequestCommits (qits-893): the fold's merge commit has three parents and no files,
+    // every other commit one of each. No one exact length holds for every commit.
+    DslPart part = GoldenMasters.responseBody(OP, MAPPER.readTree("""
+        {"commits": [
+          {"hash": "m", "files": [], "parents": ["a", "b", "c"]},
+          {"hash": "c", "files": ["src/c.txt"], "parents": ["a"]},
+          {"hash": "b", "files": ["README.md"], "parents": ["a"]}
+        ]}"""));
+    Map<String, MatchingRuleGroup> rules = part.getMatchers().getMatchingRules();
+    JsonNode body = MAPPER.readTree(part.getBody().serialise());
+
+    // The outer array's length agrees with itself: still exact.
+    assertThat(rules.get(".commits").getRules()).containsExactly(new MinMaxTypeMatcher(3, 3));
+    assertThat(rules.get(".commits[*].parents").getRules()).containsExactly(new MinTypeMatcher(1));
+    assertThat(rules.get(".commits[*].files").getRules()).containsExactly(new MinTypeMatcher(0));
+    assertThat(rules.get(".commits[*].parents[*]").getRules()).containsExactly(TypeMatcher.INSTANCE);
+    assertThat(rules.get(".commits[*].files[*]").getRules()).containsExactly(TypeMatcher.INSTANCE);
+    // An empty first recording still gets an element to match by: borrowed from a sibling.
+    assertThat(body.path("commits").get(0).path("files").get(0).asText()).isEqualTo("src/c.txt");
   }
 }

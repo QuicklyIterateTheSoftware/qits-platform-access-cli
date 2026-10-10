@@ -64,6 +64,9 @@ import java.util.regex.Pattern;
  * template requires every key of every element on every element (pact compares a template's keys
  * as present), so {@code listProjectWork}'s epics and tickets, which carry {@code blocked}, would
  * otherwise demand it of its features and tasks, which do not (qits-965). Absent is not null.
+ * <b>An array nested in a merged template whose elements recorded it at different lengths</b>
+ * ({@code commits[*].parents}: three on a merge commit, one elsewhere) is {@code minArrayLike} of
+ * the shortest length with no maximum, since no one exact length holds for every element (qits-893).
  * <p>
  * <b>A request body is the recorded one, exactly.</b> A value the recorder wrote as {@code
  * "{param}"} is the state's frozen example here and a provider-state expression ({@code
@@ -483,6 +486,10 @@ public final class GoldenMasters {
         }
         boolean filtered = path.equals(op.listFilteredTo());
         int n = array.length;
+        if (array.maxLength != n) {
+            openEnded(target, name, array, path, op, flowTemplate);
+            return;
+        }
         if (n == 0) {
             // Nothing to build a template from: the recording says "empty", and an empty array with
             // no rule is compared as exactly that.
@@ -514,6 +521,39 @@ public final class GoldenMasters {
                     target.minMaxArrayLike(name, n, n, value, n);
                 }
             }
+            default -> throw unsupported(op, elementPath, "an array of " + element.kind);
+        }
+    }
+
+    /**
+     * An array nested in a merged template whose recorded elements disagree on its length (qits-893):
+     * {@code listReleaseRequestCommits}' {@code commits[*].parents} is three long on the fold's merge
+     * commit and one long on every other commit, and {@code commits[*].files} is empty on the merge
+     * and one long elsewhere. pact-jvm holds one rule per path, so {@code minMaxArrayLike(n, n)} with
+     * any one n contradicts some element of the provider's own recording — the shortest length, which
+     * the merge used to keep, failed the merge commit's three parents. Such an array is matched by type
+     * with the shortest recorded length as its minimum and no maximum, its template the merge of every
+     * element it holds anywhere in the recording, so even an array that is empty on the first element
+     * ({@code files}) borrows its element shape from a sibling instead of being pinned to empty. An
+     * array whose recorded lengths agree keeps its exact length, as {@link #array} pins it.
+     */
+    private static void openEnded(
+            PactDslJsonBody target, String name, Shape array, String path, Operation op, Shape flowTemplate) {
+        int min = array.length;
+        int examples = Math.max(min, 1);
+        Shape element = array.element;
+        String elementPath = path + "[*]";
+        if (element == null || !array.mergeable || !expressible(element)) {
+            throw unsupported(op, path, "an array whose elements disagree on both its length and its element shape");
+        }
+        switch (element.kind) {
+            case OBJECT -> {
+                PactDslJsonBody template = target.minArrayLike(name, min, examples);
+                fillObject(template, element, elementPath, op, flowTemplate);
+                DslPart closed = template.closeObject();
+                ((PactDslJsonArray) closed).closeArray();
+            }
+            case LEAF -> target.minArrayLike(name, min, rootLeaf(element, elementPath, op), examples);
             default -> throw unsupported(op, elementPath, "an array of " + element.kind);
         }
     }
@@ -688,7 +728,10 @@ public final class GoldenMasters {
         JsonNode example;
         final LinkedHashMap<String, Shape> fields = new LinkedHashMap<>();
         Shape element;
+        /** An array's length; once merged, the SHORTEST any element recorded. */
         int length;
+        /** Once merged, the LONGEST length any element recorded; differs from {@link #length} only then. */
+        int maxLength;
         /** An array's elements, each its own shape, unmerged: the positional fallback's input. */
         final List<Shape> items = new ArrayList<>();
         /** Whether an array's elements merge into one template at all (no OBJECT beside a LEAF). */
@@ -709,6 +752,7 @@ public final class GoldenMasters {
             } else if (node.isArray()) {
                 shape.kind = Kind.ARRAY;
                 shape.length = node.size();
+                shape.maxLength = node.size();
                 for (JsonNode e : node) {
                     shape.items.add(of(e));
                     if (shape.mergeable) {
@@ -765,6 +809,7 @@ public final class GoldenMasters {
                 }
                 case ARRAY -> {
                     a.length = Math.min(a.length, b.length);
+                    a.maxLength = Math.max(a.maxLength, b.maxLength);
                     a.mergeable &= b.mergeable;
                     a.element = !a.mergeable ? null
                             : a.element == null ? b.element : b.element == null ? a.element : merge(a.element, b.element);

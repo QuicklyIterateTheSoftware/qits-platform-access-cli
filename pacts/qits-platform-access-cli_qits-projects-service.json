@@ -292,7 +292,9 @@
                 "author": "Contract Seeder",
                 "date": "2026-01-01T00:00:00Z",
                 "email": "seeder@contract.example.test",
-                "files": [],
+                "files": [
+                  "src/invoice.txt"
+                ],
                 "fold": true,
                 "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
                 "message": "Release the CSV export and the rounding fix",
@@ -305,7 +307,9 @@
                 "author": "Contract Seeder",
                 "date": "2026-01-01T00:00:00Z",
                 "email": "seeder@contract.example.test",
-                "files": [],
+                "files": [
+                  "src/invoice.txt"
+                ],
                 "fold": true,
                 "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
                 "message": "Release the CSV export and the rounding fix",
@@ -318,7 +322,9 @@
                 "author": "Contract Seeder",
                 "date": "2026-01-01T00:00:00Z",
                 "email": "seeder@contract.example.test",
-                "files": [],
+                "files": [
+                  "src/invoice.txt"
+                ],
                 "fold": true,
                 "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
                 "message": "Release the CSV export and the rounding fix",
@@ -331,7 +337,9 @@
                 "author": "Contract Seeder",
                 "date": "2026-01-01T00:00:00Z",
                 "email": "seeder@contract.example.test",
-                "files": [],
+                "files": [
+                  "src/invoice.txt"
+                ],
                 "fold": true,
                 "hash": "cb9776855921387be1951de5bbbf0914aa54b1bf",
                 "message": "Release the CSV export and the rounding fix",
@@ -435,6 +443,23 @@
                 }
               ]
             },
+            "$.commits[*].files": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.commits[*].files[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.commits[*].fold": {
               "combine": "AND",
               "matchers": [
@@ -464,7 +489,6 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
                   "min": 1
                 }
               ]
