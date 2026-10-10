@@ -209,6 +209,22 @@ public final class GoldenMasters {
                 "qits-projects' golden masters record no operation " + operationId + " in state '" + state + "'");
     }
 
+    /**
+     * The recorded query string of one (state, operation), in the index's order; empty when the
+     * recording has none. Values are literal: no recording puts a param in a query.
+     */
+    public static Map<String, String> query(String state, String operationId) {
+        operation(state, operationId);
+        Map<String, String> query = new LinkedHashMap<>();
+        for (JsonNode op : stateNode(state).path("operations")) {
+            if (operationId.equals(op.path("operationId").asText())) {
+                op.path("query").properties().forEach(e -> query.put(e.getKey(), e.getValue().asText()));
+                break;
+            }
+        }
+        return query;
+    }
+
     /** The recorded JSON for one (state, operation), byte for byte as the jar carries it. */
     public static String body(String state, String operationId) {
         return resource(ROOT + operation(state, operationId).file());
@@ -263,7 +279,8 @@ public final class GoldenMasters {
      * Add the V4 HTTP interaction for one recorded (state, operation), reached from {@code trigger}.
      * <p>
      * {@code given(state, params)}; the request path from the index template, each {@code {param}}
-     * as a provider-state expression with the frozen example; the recorded request body, if any,
+     * as a provider-state expression with the frozen example; the recorded query, if any, exact;
+     * the recorded request body, if any,
      * sent as {@code contentType}; the status exact; the answer from the recording with the matchers
      * the class javadoc lists; and the per-interaction {@code comments.references} — {@code
      * qits-call} (the provider operation) and {@code qits-trigger}.
@@ -276,6 +293,7 @@ public final class GoldenMasters {
             PactBuilder builder, String state, String operationId, Trigger trigger, String contentType) {
         Objects.requireNonNull(trigger, "trigger: every interaction names the entry point that makes it");
         Operation op = operation(state, operationId);
+        Map<String, String> query = query(state, operationId);
         DslPart answer = responseBody(op);
         DslPart request = op.body() == null ? null : requestBody(op);
         Map<String, Object> references = new LinkedHashMap<>();
@@ -293,6 +311,7 @@ public final class GoldenMasters {
                 } else {
                     r.path(op.path());
                 }
+                query.forEach(r::queryParameter);
                 if (request != null) {
                     r.header("Content-Type", contentType);
                     r.body(request);

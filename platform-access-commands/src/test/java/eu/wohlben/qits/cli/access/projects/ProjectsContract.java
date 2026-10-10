@@ -23,10 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
- * {@code /work} doors and one more: the release request's commits, which {@code qits artifacts
- * publish changelog} reads in every release step (qits-893). {@code qits projects}, {@code
- * repositories} and {@code release-request} calls are not part of this pact yet, and neither is the
- * OpenAPI document the comment doors read their schema from.
+ * {@code /work} doors and two more: the release request's commits, which {@code qits artifacts
+ * publish changelog} reads in every release step (qits-893), and the repository's requests of every
+ * state, where every command that takes a request finds it by its logical id (qits-1158). The other
+ * {@code qits projects}, {@code repositories} and {@code release-request} calls are not part of this
+ * pact yet, and neither is the OpenAPI document the comment doors read their schema from.
  * <p>
  * <b>Each state is one the provider records</b> in its golden masters, picked for the call: a row
  * whose (state, operation) the index does not hold fails before anything runs, naming both.
@@ -60,6 +61,7 @@ final class ProjectsContract {
     static final String TICKET_WITH_A_COMMENT = "a ticket with a comment";
     static final String IMPLEMENTED_TICKET = "an implemented ticket";
     static final String RELEASED_REQUEST = "a released release request";
+    static final String REQUESTS_OF_EVERY_STATE = "a repository with a release not merged to main";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -181,6 +183,23 @@ final class ProjectsContract {
         // the recording's first commit is the fold.
     };
 
+    /**
+     * Every command that takes a release request finds it among the repository's requests of every
+     * state, by its logical id (qits-1158) or its uuid's start, and sends the uuid it found.
+     */
+    private static final Call FIND_REQUEST = (api, params, recorded) -> {
+        JsonNode requests = api.releaseRequests(params.get("repositoryId"), "all").path("requests");
+        assertThat(requests).isNotEmpty().allSatisfy(r -> {
+            assertThat(ProjectsApi.text(r, "id")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "qualifiedId")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "state")).isNotBlank();
+        });
+        JsonNode first = requests.get(0);
+        JsonNode found = ReleaseRequestRefs.find(requests, ProjectsApi.text(first, "qualifiedId").toUpperCase(),
+                ProjectsApi.text(first, "repoName"), "");
+        assertThat(ProjectsApi.text(found, "id")).isEqualTo(ProjectsApi.text(first, "id"));
+    };
+
     static final List<Case> CASES = List.of(
             row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", LIST),
             row("qits work details", EPIC_IN_DETAIL, "getWork", GET),
@@ -199,7 +218,8 @@ final class ProjectsContract {
             new Case(Trigger.command("qits work comment update"), TICKET_WITH_A_COMMENT, "editWorkComment",
                     ProjectsApi.MERGE_PATCH, EDIT_COMMENT),
             row("qits artifacts publish changelog", RELEASED_REQUEST, "listReleaseRequestCommits", RELEASE_COMMITS),
-            row("qits artifacts publish changelog", TICKET_WITH_A_COMMENT, "getWork", TITLE));
+            row("qits artifacts publish changelog", TICKET_WITH_A_COMMENT, "getWork", TITLE),
+            row("qits release-request join", REQUESTS_OF_EVERY_STATE, "listRepositoryReleaseRequests", FIND_REQUEST));
 
     private static Case row(String command, String state, String operationId, Call call) {
         return new Case(Trigger.command(command), state, operationId, JSON_BODY, call);

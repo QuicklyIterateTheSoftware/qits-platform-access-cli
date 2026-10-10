@@ -405,9 +405,12 @@ mock server, and `ProjectsPactFileTest` compares the committed file byte for byt
 names a provider state the provider records; every interaction carries `qits-call` and a
 `qits-trigger` of kind `command` naming the command (`qits work details`). A new `/work` call on
 `ProjectsApi` needs its row, which `theContractCoversEveryWorkCallOfTheCommandsAndNothingElse`
-enforces. One row is not a `/work` door: `qits artifacts publish changelog` reads the release
-request's commits (`listReleaseRequestCommits`, state `a released release request`), and that test
-names its path. `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
+enforces. Two rows are not `/work` doors, and that test names their paths: `qits artifacts publish
+changelog` reads the release request's commits (`listReleaseRequestCommits`, state `a released
+release request`), and every command that takes a release request finds it among the repository's
+requests of every state by its logical id (`listRepositoryReleaseRequests` with `state=all`, state
+`a repository with a release not merged to main`; qits-1158). A recorded query is part of the
+interaction (`GoldenMasters.query`). `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.
