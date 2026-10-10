@@ -111,7 +111,8 @@ class FictionalCommandTest {
      */
     private static final Set<String> ORDINARY = Set.of(
             "qits", "tui", "run", "runs", "list", "new", "update", "create", "details", "comment",
-            "plan", "submit", "join", "help", "exists", "docs", "daemon", "skill", "show", "ci");
+            "plan", "submit", "join", "help", "exists", "docs", "daemon", "skill", "show", "ci", "move",
+            "sources");
 
     private static final Pattern LITERAL = Pattern.compile("\"((?:[^\"\\\\]|\\\\.)*)\"");
     private static final Pattern WORD = Pattern.compile("[A-Za-z][A-Za-z0-9-]*");
