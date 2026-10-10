@@ -537,7 +537,7 @@ A request folds main and its branches into one commit, and the builds of that co
 
 List the repository's open release requests.
 
-Open means every state but FINALIZED, WITHDRAWN and OBSOLETE. --state asks for other ones. The ID column shows the first 8 characters of the id, which is enough for `join`.
+Open means every state but FINALIZED, WITHDRAWN and OBSOLETE. --state asks for other ones. The ID column shows the request's id, <repository>-rr-<n>, which `join` and `withdraw` take. -o json also has its uuid (id); the commands take that too.
 
 ```
 qits release-request list [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--state <STATE|all>]
@@ -614,7 +614,7 @@ qits release-request join --branch <branch> --request <id> [--output table|json]
 | Name | What it does |
 |---|---|
 | `--branch <branch>` | Required. The branch to add. |
-| `--request <id>` | Required. The request: its id, or enough of its start to name one (list shows 8 characters). |
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--priority <priority>` | LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: MEDIUM for a new branch; a branch already on the request keeps its priority. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -624,8 +624,8 @@ qits release-request join --branch <branch> --request <id> [--output table|json]
 ### Examples
 
 ```
-qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 --branch feature/log-search
-qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 --branch feature/log-search --priority BLOCKING
+qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 --branch feature/log-search
+qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 --branch feature/log-search --priority BLOCKING
 ```
 
 - Safe to repeat: a branch already on the request adds nothing. With --priority it states that priority again; without, the branch keeps its priority.
@@ -649,7 +649,7 @@ qits release-request withdraw --request <id> [--output table|json] [--project <p
 
 | Name | What it does |
 |---|---|
-| `--request <id>` | Required. The request: its id, or enough of its start to name one (list shows 8 characters). |
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
@@ -659,8 +659,8 @@ qits release-request withdraw --request <id> [--output table|json] [--project <p
 ### Examples
 
 ```
-qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0
-qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0 --reason "The log view moves to qits-observability"
+qits release-request --project qits --repository qits-ci-service withdraw --request qits-ci-service-rr-12
+qits release-request --project qits --repository qits-ci-service withdraw --request qits-ci-service-rr-12 --reason "The log view moves to qits-observability"
 ```
 
 - Only for a request that must not ship. A gating build that was red because of the platform, not the code, runs again with `qits ci retry <run id>`. A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push.
@@ -704,7 +704,7 @@ qits ci runs [--branch <branch>] [--ci-url <url>] [--limit <n>] [--output table|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
-| `--release-request <id>` | Only the runs of this release request: its id, or the start of it. |
+| `--release-request <id>` | Only the runs of this release request: its id (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `--repository <repository>` | The repository: its id or name. |
 | `--status <STATUS>` | Only the runs in this status: QUEUED, RUNNING, SUCCESS, FAILED, CANCELLED, TIMED_OUT or CONFIG_ERROR. |
 
@@ -713,11 +713,11 @@ qits ci runs [--branch <branch>] [--ci-url <url>] [--limit <n>] [--output table|
 ```
 qits ci runs --project qits --repository qits-ci-service
 qits ci runs --project qits --repository qits-ci-service --status FAILED --limit 5
-qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0
+qits ci runs --project qits --repository qits-ci-service --release-request qits-ci-service-rr-12
 qits ci runs --project qits --repository qits-ci-service --branch main -o json
 ```
 
-- A release request's gating runs: --release-request with the request's id, or the 8 characters `qits release-request list` shows. They build the branch release/<request id>.
+- A release request's gating runs: --release-request with the request's id as `qits release-request list` shows it (qits-ci-service-rr-12), its uuid or the start of the uuid. They build the request's branch, release/<request id>.
 - The service filters by repository and count only. --branch, --status and --release-request are applied here, over all of the repository's runs, and --limit after them.
 
 ### Exit codes
@@ -955,7 +955,7 @@ qits maintenance automations --request <id> [--fold <sha>] [--maintenance-url <u
 
 | Name | What it does |
 |---|---|
-| `--request <id>` | Required. The release request: its id, or enough of its start to name one (`qits release-request list` shows 8 characters). |
+| `--request <id>` | Required. The release request: its id as `qits release-request list` shows it (qits-landing-app-rr-7), its uuid, or the start of the uuid. |
 | `--fold <sha>` | The fold to read; without it, the request's newest. |
 | `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else the session's idp address with `idp` swapped for `maintenance`. |
 | `-o, --output table\|json` | table (the default): one line per field. json: the service's answer, pretty-printed. |
@@ -966,7 +966,7 @@ qits maintenance automations --request <id> [--fold <sha>] [--maintenance-url <u
 ### Examples
 
 ```
-qits maintenance --project qits --repository qits-landing-app automations --request 4f2a91c0
+qits maintenance --project qits --repository qits-landing-app automations --request qits-landing-app-rr-7
 ```
 
 - RUN is the newest run of the kind's current attempt. `qits maintenance automation run` re-runs one; `qits ci run <id> --logs` shows a run.
@@ -994,7 +994,7 @@ qits maintenance automation run --kind <kind> --request <id> [--maintenance-url 
 | Name | What it does |
 |---|---|
 | `--kind <kind>` | Required. The automation's kind, as `qits maintenance automations --request <id>` names it. |
-| `--request <id>` | Required. The release request: its id, or enough of its start to name one (`qits release-request list` shows 8 characters). |
+| `--request <id>` | Required. The release request: its id as `qits release-request list` shows it (qits-landing-app-rr-7), its uuid, or the start of the uuid. |
 | `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else the session's idp address with `idp` swapped for `maintenance`. |
 | `-o, --output table\|json` | table (the default): one line per field. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -1005,8 +1005,8 @@ qits maintenance automation run --kind <kind> --request <id> [--maintenance-url 
 ### Examples
 
 ```
-qits maintenance --project qits --repository qits-landing-app automation run --request 4f2a91c0 --kind estate-pins
-qits maintenance --project qits --repository qits-landing-app automation run --request 4f2a91c0 --kind estate-pins --work-item qits-112
+qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins
+qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins --work-item qits-112
 ```
 
 - `qits maintenance automations --request <id>` names the kinds; `kind` is the first column.
@@ -1229,7 +1229,7 @@ qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json]
 - A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.
 
 ```
-qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab
+qits wait release-request qits-ci-service-rr-12
 qits wait work qits-123 --status VERIFIED --timeout 2h
 qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
 qits wait --event BuildFailed --when 'repoName=qits-ci-service branch=main' --label 'main to break'
@@ -1248,7 +1248,7 @@ qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
 
 Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.
 
-The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestId=<id> state=<STATE>.
+The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> state=<STATE> for a uuid.
 
 ```
 qits wait release-request [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
@@ -1256,7 +1256,7 @@ qits wait release-request [--agent <id>] [--label <text>] [--output table|json] 
 
 | Name | What it does |
 |---|---|
-| `<id>` | The release request's whole id. |
+| `<id>` | The release request: its id (qits-ci-service-rr-12) or its whole uuid. |
 | `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
@@ -1266,17 +1266,18 @@ qits wait release-request [--agent <id>] [--label <text>] [--output table|json] 
 ### Examples
 
 ```
+qits wait release-request qits-ci-service-rr-12
+qits wait release-request qits-ci-service-rr-12 --timeout 3h
 qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab
-qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab --timeout 3h
 ```
 
-- Give the whole id: `qits release-request list -o json` shows it.
+- Give the whole id, as `qits release-request list` shows it, or the whole uuid. The wait matches it exactly, so the start of a uuid is refused, and the id must be in the case the list shows.
 
 ### Exit codes
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, not a whole id), not signed in, or the session ended.
+- `2` Used wrongly (no agent id, not a whole id or uuid), not signed in, or the session ended.
 
 ## qits wait work
 
@@ -1815,11 +1816,11 @@ qits artifacts publish docs submit --site @apidocs/qits-projects --version 2026.
 
 Write this release's CHANGELOG.md and publish it as the docs site @changelog/<repository> at --version. Run in a release's publish step.
 
-The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
+The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId, releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
 
 The last line is always `associated tickets:` followed by every ticket that exists, as `qits-9`; `qits changelog bump-message` reads it back.
 
-The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the given --meta and release.request.id=<request>. An occupied version is skipped, as there.
+The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the given --meta, release.request.id=<uuid> and, when the event names it, release.request.qualified-id=<repository>-rr-<n>. An occupied version is skipped, as there.
 
 ```
 qits artifacts publish changelog [--meta <key=value>...] [--version <version>...]

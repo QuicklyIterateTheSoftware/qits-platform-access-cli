@@ -13,14 +13,13 @@ import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
@@ -98,26 +97,14 @@ public class MaintenanceCommand implements Runnable {
         }
     }
 
-    /** The repository's request whose id starts with {@code wanted}, of any state. */
-    static String requestId(ProjectsApi projects, String repoId, String repoName, String wanted)
+    /**
+     * The repository's request that {@code wanted} names, of any state: its id ({@code
+     * <repository>-rr-<n>}), its uuid or the start of the uuid. qits-maintenance takes only the uuid,
+     * so the commands send the uuid this finds.
+     */
+    static JsonNode request(ProjectsApi projects, String repoId, String repoName, String wanted)
             throws CliFailure, InterruptedException {
-        String start = wanted.toLowerCase(Locale.ROOT);
-        List<JsonNode> matches = new ArrayList<>();
-        projects.releaseRequests(repoId, "all").path("requests").forEach(r -> {
-            if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
-                matches.add(r);
-            }
-        });
-        if (matches.isEmpty()) {
-            throw new CliFailure("Repository " + repoName + " has no release request whose id starts with '"
-                    + wanted + "'.", CliFailure.USAGE);
-        }
-        if (matches.size() > 1) {
-            throw new CliFailure("'" + wanted + "' is the start of more than one release request of " + repoName
-                    + ": " + matches.stream().map(r -> text(r, "id")).collect(Collectors.joining(", "))
-                    + ". Give more of the id.", CliFailure.USAGE);
-        }
-        return text(matches.getFirst(), "id");
+        return ReleaseRequestRefs.find(projects.releaseRequests(repoId, "all").path("requests"), wanted, repoName, "");
     }
 
     /** The id or sha, shortened to the first 8 characters a table has room for. */
@@ -134,7 +121,7 @@ public class MaintenanceCommand implements Runnable {
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits maintenance --project qits --repository qits-landing-app automations "
-                            + "--request 4f2a91c0",
+                            + "--request qits-landing-app-rr-7",
                     "",
                     "- RUN is the newest run of the kind's current attempt. `qits maintenance automation run` "
                             + "re-runs one; `qits ci run <id> --logs` shows a run."},
@@ -147,8 +134,8 @@ public class MaintenanceCommand implements Runnable {
 
         @Completes(ReleaseRequestSource.class)
         @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
-                description = "The release request: its id, or enough of its start to name one "
-                        + "(`qits release-request list` shows 8 characters).")
+                description = "The release request: its id as `qits release-request list` shows it "
+                        + "(qits-landing-app-rr-7), its uuid, or the start of the uuid.")
         String request;
 
         @CommandLine.Option(names = "--fold", paramLabel = "<sha>",
@@ -164,7 +151,7 @@ public class MaintenanceCommand implements Runnable {
             ProjectsApi projects = ProjectsApi.connect(context, parent.projectsUrl);
             JsonNode foundProject = projects.project(wantedProject);
             JsonNode repo = projects.repository(foundProject, wantedRepository);
-            String requestId = requestId(projects, text(repo, "id"), text(repo, "name"), wantedRequest);
+            String requestId = text(request(projects, text(repo, "id"), text(repo, "name"), wantedRequest), "id");
 
             JsonNode answer = parent.maintenance(context).automations(requestId, fold);
             if (json) {

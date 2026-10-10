@@ -122,6 +122,19 @@ class PlatformSourcesTest {
     }
 
     @Test
+    void aRequestWithALogicalIdIsOfferedByIt() {
+        platform.answer("GET", REQUESTS, """
+                {"requests":[{"id":"4f2a91c0-0000-4000-8000-000000000001","qualifiedId":"qits-ci-service-rr-12",
+                  "state":"PENDING","summary":"a change","version":null}]}
+                """);
+        assertThat(source(new ReleaseRequestSource()).choices(Map.of("project", "qits", "repository", "qits-ci-service")))
+                .singleElement().satisfies(choice -> {
+                    assertThat(choice.value()).isEqualTo("qits-ci-service-rr-12");
+                    assertThat(choice.label()).startsWith("qits-ci-service-rr-12 PENDING  a change");
+                });
+    }
+
+    @Test
     void versionsComeFromTheRequestsThatReleased() {
         platform.answer("GET", REQUESTS, """
                 {"requests":[

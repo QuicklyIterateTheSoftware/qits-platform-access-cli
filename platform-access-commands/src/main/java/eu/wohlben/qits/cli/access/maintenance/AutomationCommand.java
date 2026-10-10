@@ -7,6 +7,7 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
@@ -42,9 +43,9 @@ public class AutomationCommand implements Runnable {
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits maintenance --project qits --repository qits-landing-app automation run "
-                            + "--request 4f2a91c0 --kind estate-pins",
+                            + "--request qits-landing-app-rr-7 --kind estate-pins",
                     "  qits maintenance --project qits --repository qits-landing-app automation run "
-                            + "--request 4f2a91c0 --kind estate-pins --work-item qits-112",
+                            + "--request qits-landing-app-rr-7 --kind estate-pins --work-item qits-112",
                     "",
                     "- `qits maintenance automations --request <id>` names the kinds; `kind` is the first column.",
                     "- 404 means the kind or the repository is not one the platform knows. 409 means one is "
@@ -61,8 +62,8 @@ public class AutomationCommand implements Runnable {
 
         @Completes(ReleaseRequestSource.class)
         @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
-                description = "The release request: its id, or enough of its start to name one "
-                        + "(`qits release-request list` shows 8 characters).")
+                description = "The release request: its id as `qits release-request list` shows it "
+                        + "(qits-landing-app-rr-7), its uuid, or the start of the uuid.")
         String request;
 
         @CommandLine.Option(names = "--kind", paramLabel = "<kind>", required = true,
@@ -86,15 +87,15 @@ public class AutomationCommand implements Runnable {
             ProjectsApi projects = ProjectsApi.connect(context, maintenance.projectsUrl);
             JsonNode foundProject = projects.project(wantedProject);
             JsonNode repo = projects.repository(foundProject, wantedRepository);
-            String requestId = MaintenanceCommand.requestId(projects, text(repo, "id"), text(repo, "name"), wantedRequest);
+            JsonNode found = MaintenanceCommand.request(projects, text(repo, "id"), text(repo, "name"), wantedRequest);
 
-            JsonNode answer = maintenance.maintenance(context).runAutomation(requestId, wantedKind, workItem);
+            JsonNode answer = maintenance.maintenance(context).runAutomation(text(found, "id"), wantedKind, workItem);
             if (json) {
                 ProjectsApi.printJson(context.out(), answer);
                 return 0;
             }
             String id = text(answer, "id");
-            context.out().println("Requested " + wantedKind + " for release request " + requestId + ": job " + id);
+            context.out().println("Requested " + wantedKind + " for release request " + ReleaseRequestRefs.name(found) + ": job " + id);
             context.out().println("Follow it with `qits maintenance bump " + id + "`.");
             return 0;
         }

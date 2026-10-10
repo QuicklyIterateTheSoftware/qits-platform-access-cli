@@ -68,7 +68,8 @@ class MaintenanceCommandsTest {
                 {"entries":[{"repository":{"id":"%s","name":"qits-landing-app","archetype":"APP"},"declared":true}]}
                 """.formatted(LANDING));
         platform.answer("GET", "/projects/api/repositories/" + LANDING + "/release-requests", """
-                {"requests":[{"id":"%s","state":"REJECTED"},{"id":"%s","state":"RELEASED"}]}
+                {"requests":[{"id":"%s","qualifiedId":"qits-landing-app-rr-7","state":"REJECTED"},
+                             {"id":"%s","qualifiedId":"qits-landing-app-rr-6","state":"RELEASED"}]}
                 """.formatted(REQUEST, OTHER));
         platform.answer("GET", AUTOMATIONS_DOOR, """
                 {"requestId":"%s","foldSha":"%s","automations":[{"kind":"screenshot-baselines",
@@ -151,7 +152,7 @@ class MaintenanceCommandsTest {
                 "automations", "--request", "ffff");
 
         assertThat(r.exit()).isEqualTo(2);
-        assertThat(r.err()).contains("no release request whose id starts with 'ffff'");
+        assertThat(r.err()).contains("Repository qits-landing-app has no release request 'ffff'.");
         assertThat(platform.requests("GET", AUTOMATIONS_DOOR)).isEmpty();
     }
 
@@ -166,6 +167,19 @@ class MaintenanceCommandsTest {
         assertThat(platform.requests("POST", RUN_DOOR).getFirst().body()).contains("\"workItem\":\"qits-112\"");
         assertThat(platform.requests("POST", RUN_DOOR).getFirst().authorization())
                 .isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
+    }
+
+    @Test
+    void theLogicalIdIsLookedUpAndTheUuidSent() {
+        Result r = run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automation", "run", "--request", "QITS-LANDING-APP-RR-7", "--kind", "screenshot-baselines");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("POST", RUN_DOOR)).hasSize(1);
+        assertThat(r.out()).contains("for release request qits-landing-app-rr-7: job " + JOB);
+        assertThat(run("maintenance", "--project", "qits", "--repository", "qits-landing-app",
+                "automations", "--request", "qits-landing-app-rr-7").exit()).isZero();
+        assertThat(platform.requests("GET", AUTOMATIONS_DOOR)).hasSize(1);
     }
 
     @Test

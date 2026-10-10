@@ -203,6 +203,34 @@ class CiCommandsTest {
     }
 
     @Test
+    void aRunOfARequestWithALogicalIdShowsItAndIsFoundByIt() {
+        platform.answer("GET", RUNS, """
+                {"runs":[
+                  {"id":"%1$s","repoId":"%3$s","repoName":"qits-ci-service","branch":"release/qits-ci-service-rr-12",
+                   "commitSha":"%5$s","gating":true,"status":"FAILED","createdAt":"2026-09-12T09:00:00Z",
+                   "startedAt":"2026-09-12T09:00:10Z","finishedAt":"2026-09-12T09:03:15Z","releaseRequestId":"%4$s",
+                   "releaseRequestQualifiedId":"qits-ci-service-rr-12"},
+                  {"id":"%2$s","repoId":"%3$s","repoName":"qits-ci-service","branch":"main","commitSha":"fedcba9876543210",
+                   "gating":true,"status":"SUCCESS","createdAt":"2026-09-12T08:00:00Z","startedAt":"2026-09-12T08:00:05Z",
+                   "finishedAt":"2026-09-12T09:02:05Z","releaseRequestId":null,"releaseRequestQualifiedId":null}]}
+                """.formatted(FAILED, SUCCESS, CI, REQUEST, COMMIT));
+        platform.answer("GET", RUNS + "/" + FAILED, """
+                {"id":"%1$s","repoId":"%2$s","repoName":"qits-ci-service","branch":"release/qits-ci-service-rr-12",
+                 "commitSha":"%4$s","gating":true,"status":"FAILED","createdAt":"2026-09-12T09:00:00Z",
+                 "releaseRequestId":"%3$s","releaseRequestQualifiedId":"qits-ci-service-rr-12","steps":[]}
+                """.formatted(FAILED, CI, REQUEST, COMMIT));
+
+        Result r = runs("--release-request", "QITS-CI-SERVICE-RR-12");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(line(r.out(), "bbbb2222")).contains("01234567  qits-ci-service-rr-12");
+        assertThat(r.out()).doesNotContain("cccc3333");
+        assertThat(runs("--release-request", "1111").out()).contains("bbbb2222");
+        assertThat(runs("--release-request", "qits-ci-service-rr-1").out()).isEqualTo("No runs of qits-ci-service match.\n");
+        assertThat(run("ci", "run", FAILED).out()).contains("  release request  qits-ci-service-rr-12 (" + REQUEST + ")");
+    }
+
+    @Test
     void theProjectAndRepositoryAreRequiredAndMayComeFirst() {
         assertThat(run("ci", "runs").err()).contains("Name the project: --project <id, slug or name>.");
         assertThat(run("ci", "runs", "--project", "qits").err()).contains("Name the repository: --repository <id or name>.");

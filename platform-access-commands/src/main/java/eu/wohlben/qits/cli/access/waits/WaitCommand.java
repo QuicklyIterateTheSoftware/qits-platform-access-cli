@@ -13,6 +13,7 @@ import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 import picocli.CommandLine;
 
 import java.io.PrintStream;
@@ -58,7 +59,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- While a wait is open, the platform shows the agent as waiting on its label, not as blocked.",
                 "- A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.",
                 "",
-                "  qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab",
+                "  qits wait release-request qits-ci-service-rr-12",
                 "  qits wait work qits-123 --status VERIFIED --timeout 2h",
                 "  qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a",
                 "  qits wait --event BuildFailed --when 'repoName=qits-ci-service branch=main' --label 'main to break'",
@@ -263,15 +264,19 @@ public class WaitCommand extends PlatformCommand {
     @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
             description = {"Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.",
                     "The same as --event ReleaseRequestStateChanged with one group per final state: "
-                            + "releaseRequestId=<id> state=<STATE>."},
+                            + "releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> "
+                            + "state=<STATE> for a uuid."},
             footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab",
-                    "  qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab --timeout 3h",
+            footer = {"  qits wait release-request qits-ci-service-rr-12",
+                    "  qits wait release-request qits-ci-service-rr-12 --timeout 3h",
+                    "  qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab",
                     "",
-                    "- Give the whole id: `qits release-request list -o json` shows it."},
+                    "- Give the whole id, as `qits release-request list` shows it, or the whole uuid. The wait "
+                            + "matches it exactly, so the start of a uuid is refused, and the id must be in the "
+                            + "case the list shows."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The wait is declared; it is printed.", HelpText.REFUSED,
-                    "2:Used wrongly (no agent id, not a whole id), not signed in, or the session ended."})
+                    "2:Used wrongly (no agent id, not a whole id or uuid), not signed in, or the session ended."})
     public static class ReleaseRequestWait extends PlatformCommand {
 
         static final String EVENT = "ReleaseRequestStateChanged";
@@ -280,7 +285,8 @@ public class WaitCommand extends PlatformCommand {
         @CommandLine.ParentCommand
         WaitCommand parent;
 
-        @CommandLine.Parameters(paramLabel = "<id>", description = "The release request's whole id.")
+        @CommandLine.Parameters(paramLabel = "<id>",
+                description = "The release request: its id (qits-ci-service-rr-12) or its whole uuid.")
         String id;
 
         @CommandLine.Mixin
@@ -289,11 +295,25 @@ public class WaitCommand extends PlatformCommand {
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = json(parent.output);
-            String requestId = wholeId(id, "release request", "`qits release-request list -o json`");
-            List<List<WhenGrammar.Condition>> groups = onePerValue(
-                    new WhenGrammar.Condition("releaseRequestId", WhenGrammar.Op.EXACT, requestId), "state", FINAL_STATES);
-            return parent.declare(context, json, EVENT, groups, declaration,
-                    "release request " + shortId(requestId) + " to end");
+            String given = id == null ? "" : id.strip();
+            // The event carries both ids; a logical id is matched as given, a uuid in lower case.
+            WhenGrammar.Condition which;
+            String label;
+            if (ReleaseRequestRefs.isQualified(given)) {
+                which = new WhenGrammar.Condition("releaseRequestQualifiedId", WhenGrammar.Op.EXACT, given);
+                label = given;
+            } else {
+                if (!WHOLE_ID.matcher(given).matches()) {
+                    throw new CliFailure("'" + given + "' is neither a release request's id (qits-ci-service-rr-12) "
+                            + "nor a whole uuid. A wait matches it exactly, so the start of a uuid is not enough; "
+                            + "`qits release-request list` shows the ids.", CliFailure.USAGE);
+                }
+                String requestId = given.toLowerCase(Locale.ROOT);
+                which = new WhenGrammar.Condition("releaseRequestId", WhenGrammar.Op.EXACT, requestId);
+                label = shortId(requestId);
+            }
+            List<List<WhenGrammar.Condition>> groups = onePerValue(which, "state", FINAL_STATES);
+            return parent.declare(context, json, EVENT, groups, declaration, "release request " + label + " to end");
         }
     }
 

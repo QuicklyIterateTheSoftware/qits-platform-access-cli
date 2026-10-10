@@ -136,7 +136,10 @@ public class ShowCommand extends PlatformCommand {
 
     private static void printSummaries(PrintStream out, JsonNode answer, List<JsonNode> reports, String runId) {
         String commit = answer.path("commitSha").asText("");
-        String request = answer.path("releaseRequestId").asText("");
+        String request = answer.path("releaseRequestQualifiedId").asText("");
+        if (request.isEmpty()) {
+            request = answer.path("releaseRequestId").asText("");
+        }
         out.println("Run " + SafeText.line(runId)
                 + (commit.isEmpty() ? "" : ", commit " + SafeText.line(commit.length() > 12 ? commit.substring(0, 12) : commit))
                 + (request.isEmpty() ? "" : ", release request " + SafeText.line(request)));

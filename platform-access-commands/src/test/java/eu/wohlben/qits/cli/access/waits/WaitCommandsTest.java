@@ -236,7 +236,27 @@ class WaitCommandsTest {
         Result result = run("wait", "release-request", "4f2a91c0");
 
         assertThat(result.exit()).isEqualTo(2);
-        assertThat(result.err()).contains("not a whole release request id").contains("qits release-request list -o json");
+        assertThat(result.err()).contains("'4f2a91c0' is neither a release request's id (qits-ci-service-rr-12) nor a "
+                + "whole uuid").contains("`qits release-request list` shows the ids.");
+        assertThat(run("wait", "release-request", "qits-ci-service-rr-").exit()).isEqualTo(2);
+        assertThat(run("wait", "release-request", "qits-ci-service").exit()).isEqualTo(2);
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void releaseRequestByItsLogicalIdMatchesTheQualifiedIdTheEventCarries() throws Exception {
+        Result result = run("wait", "release-request", " qits-ci-service-rr-12 ");
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(sent()).isEqualTo(JSON.readTree("""
+                {"label":"release request qits-ci-service-rr-12 to end",
+                 "selection":{"event":"ReleaseRequestStateChanged","when":[
+                   [{"path":"releaseRequestQualifiedId","op":"exact","value":"qits-ci-service-rr-12"},{"path":"state","op":"exact","value":"FINALIZED"}],
+                   [{"path":"releaseRequestQualifiedId","op":"exact","value":"qits-ci-service-rr-12"},{"path":"state","op":"exact","value":"REJECTED"}],
+                   [{"path":"releaseRequestQualifiedId","op":"exact","value":"qits-ci-service-rr-12"},{"path":"state","op":"exact","value":"FAILED"}],
+                   [{"path":"releaseRequestQualifiedId","op":"exact","value":"qits-ci-service-rr-12"},{"path":"state","op":"exact","value":"WITHDRAWN"}],
+                   [{"path":"releaseRequestQualifiedId","op":"exact","value":"qits-ci-service-rr-12"},{"path":"state","op":"exact","value":"OBSOLETE"}]]}}
+                """));
     }
 
     @Test

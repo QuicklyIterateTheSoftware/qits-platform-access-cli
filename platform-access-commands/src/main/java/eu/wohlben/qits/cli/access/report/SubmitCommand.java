@@ -285,8 +285,11 @@ public class SubmitCommand extends PlatformCommand {
             err.println("baseline: none");
             return Optional.empty();
         }
-        err.println("baseline: " + version + " (run " + baselineRun + ")");
-        return Optional.of(new Baseline(version, baselineRun, text(found, "releaseRequestId"), text(found, "tagSha")));
+        String qualifiedId = text(found, "releaseRequestQualifiedId");
+        err.println("baseline: " + version + " (run " + baselineRun
+                + (qualifiedId == null ? "" : ", release request " + qualifiedId) + ")");
+        return Optional.of(new Baseline(version, baselineRun, text(found, "releaseRequestId"), text(found, "tagSha"),
+                qualifiedId));
     }
 
     /** One kind: collect, compare, PUT. True when it was stored or had nothing to store. */
