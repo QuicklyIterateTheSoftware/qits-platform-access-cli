@@ -12,10 +12,8 @@ import eu.wohlben.qits.cli.access.projects.ProjectsApi;
 import eu.wohlben.qits.cli.access.session.Session;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +122,7 @@ public class WorkLinksCommand extends PlatformCommand {
      * The idp address the landing app is derived from, read without a refresh: a workstation's
      * session file as it is, even when its access token has expired. Null inside the platform.
      */
-    private static String idpUrlWithoutNetwork(CliContext context) throws Exception {
+    static String idpUrlWithoutNetwork(CliContext context) throws Exception {
         return switch (context.mode()) {
             case WORKSTATION -> context.sessionFile().read().map(Session::idpUrl).orElse(null);
             case EDGE_TOKEN -> context.idpUrl();
@@ -132,7 +130,8 @@ public class WorkLinksCommand extends PlatformCommand {
         };
     }
 
-    private static List<String> slugs(CliContext context) {
+    /** QITS_LINK_PROJECTS, else the cache, refreshed in the background when stale. */
+    static List<String> slugs(CliContext context) {
         String told = context.env().get("QITS_LINK_PROJECTS");
         if (told != null && !told.isBlank()) {
             return Arrays.stream(told.split(",")).map(String::strip).filter(s -> !s.isEmpty()).toList();
@@ -149,34 +148,9 @@ public class WorkLinksCommand extends PlatformCommand {
         return base.resolve("qits-work-links");
     }
 
-    /**
-     * Starts this binary with {@code --refresh} and does not wait for it: in a session of its own
-     * (setsid), so Claude ending the hook does not end it, with no stdin, stdout or stderr. A JVM is
-     * not the binary (tests, the dev loop), so it starts nothing there.
-     */
+    /** Rewrites the slug cache in the background. */
     static void startRefresh() {
-        try {
-            Path self = Path.of("/proc/self/exe").toRealPath();
-            String name = self.getFileName().toString();
-            if (name.equals("java") || name.startsWith("java.")) {
-                return;
-            }
-            List<String> command = new ArrayList<>();
-            for (String setsid : List.of("/usr/bin/setsid", "/bin/setsid")) {
-                if (Files.isExecutable(Path.of(setsid))) {
-                    command.add(setsid);
-                    break;
-                }
-            }
-            command.addAll(List.of(self.toString(), "agents", "claude", "hook", "work-links", "--refresh"));
-            new ProcessBuilder(command)
-                    .redirectInput(new File("/dev/null"))
-                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                    .redirectError(ProcessBuilder.Redirect.DISCARD)
-                    .start();
-        } catch (Exception | LinkageError cannot) {
-            // No refresh this time; the touched cache tries again in an hour.
-        }
+        Detached.start(List.of("agents", "claude", "hook", "work-links", "--refresh"));
     }
 
     private static int refresh(CliContext context) throws CliFailure, InterruptedException {

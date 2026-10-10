@@ -13,7 +13,7 @@ stream), `qits checkout-daemon` (a local checkout held at what a repository rele
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), `qits agents claude …` (what
-Claude Code runs: the work-links hook), and `qits tui` (an
+Claude Code runs: the work-links hook and the work-items status line), and `qits tui` (an
 interactive screen over all of them). The README says how each behaves.
 
 It has **two homes**. A workstation, where a person signs in with a browser and the session lives in
@@ -202,6 +202,9 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                LinkProjects, the slug cache, refreshed by the same command's hidden --refresh started
                detached). The hook path never waits for the network and never fails: errors print nothing
                and exit 0
+               statusline work-items (TranscriptIds, the transcript's tail; WorkStates, the per-id state
+               cache, refreshed by a detached --refresh <ids>; StatusMarker, a copy of qits-coding-agents'
+               session-name palette). Detached starts either refresh
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
     complete/  the five platform sources behind the TUI's dropdowns (projects, repositories,
                release requests, runs, versions), over the credential the commands use

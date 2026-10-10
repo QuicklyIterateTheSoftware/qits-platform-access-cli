@@ -1786,6 +1786,42 @@ The example is the entry in Claude's settings.json (~/.claude/settings.json).
 
 - `0` Always, also when nothing was printed.
 
+## qits agents claude statusline
+
+Claude Code's status lines. Each is registered in Claude's settings.json; the help of each shows how.
+
+## qits agents claude statusline work-items
+
+Claude Code's status line: the work items this session spoke of most recently, newest first, each with its status square and block glyph and linked to the landing app (OSC 8). Claude runs it; a person does not.
+
+It reads Claude's status line JSON on stdin and the end of the transcript it names, where ids count from Claude's text and from tool results, by the same rules as `qits agents claude hook work-links`. It prints one line, or nothing when there is no id. The squares are the session names' palette; a red mark in front means blocked, and an interrobang that the item's agent is waiting on a person.
+
+Each id's status is cached for 60 seconds in $XDG_CACHE_HOME/qits/work-states.json (default ~/.cache/qits/). What is cached shows at once, an id with nothing cached shows without a mark, and one background refresh asks the projects service for the stale ids with this home's credential. Any error prints the ids without marks, or nothing; the exit is 0.
+
+```
+qits agents claude statusline work-items [--landing-url <url>] [--limit <n>]
+```
+
+| Name | What it does |
+|---|---|
+| `--landing-url <url>` | The landing app's base URL. Default: QITS_LANDING_URL, else the platform's bare domain. |
+| `--limit <n>` | How many ids to show. Default: 5. |
+
+### Examples
+
+```
+"statusLine": {"type": "command", "command": "qits agents claude statusline work-items", "refreshInterval": 30}
+```
+
+The example is the entry in Claude's settings.json (~/.claude/settings.json).
+
+- Your own status line script can run it too: pass the JSON it was given on stdin and print the line it prints.
+- The landing app and the project slugs are found as `qits agents claude hook work-links` finds them, with the same --landing-url, QITS_LANDING_URL and QITS_LINK_PROJECTS.
+
+### Exit codes
+
+- `0` Always, also when nothing was printed.
+
 ## qits tui
 
 Pick a command instead of remembering it: an interactive screen over every qits command.

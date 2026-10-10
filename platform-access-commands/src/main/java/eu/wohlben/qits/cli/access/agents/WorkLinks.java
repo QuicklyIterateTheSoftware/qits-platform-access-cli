@@ -36,6 +36,10 @@ public final class WorkLinks {
         }
     }
 
+    /** One work id and the project slug it belongs to: {@code qits-111} of {@code qits}. */
+    public record WorkId(String slug, String id) {
+    }
+
     /** The text as shown, and whether a code fence is still open at its end. */
     public record Result(String text, boolean inFence) {
     }
@@ -86,6 +90,21 @@ public final class WorkLinks {
         return new Result(out.toString(), inFence);
     }
 
+    /**
+     * Every id in {@code text}, in order, by the same rules as {@link #link}, but in code too: the
+     * status line reads tool output, which is not markdown.
+     */
+    public List<WorkId> ids(String text) {
+        List<WorkId> found = new ArrayList<>();
+        if (id != null) {
+            Matcher m = id.matcher(text);
+            while (m.find()) {
+                found.add(new WorkId(m.group(1), m.group()));
+            }
+        }
+        return found;
+    }
+
     /** Links one line outside a fence, leaving its inline code alone. */
     private void linkLine(String line, StringBuilder out) {
         Matcher code = INLINE_CODE.matcher(line);
@@ -108,7 +127,8 @@ public final class WorkLinks {
         out.append(text, at, text.length());
     }
 
-    private String link(String slug, String workId) {
+    /** One id as a link in this style. */
+    public String link(String slug, String workId) {
         String url = landing + "/projects/" + slug + "/work/detail/" + workId;
         return style == Style.OSC8
                 ? "\u001b]8;;" + url + "\u001b\\" + workId + "\u001b]8;;\u001b\\"

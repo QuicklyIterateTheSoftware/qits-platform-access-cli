@@ -25,7 +25,8 @@ Commands:
 - `qits mcp-credential` is Claude's MCP headers helper for the qits MCP server (interim) — see
   below.
 - `qits agents claude hook work-links` is a Claude Code hook that shows work ids such as `qits-111`
-  as links to the landing app — see below.
+  as links to the landing app, and `qits agents claude statusline work-items` a Claude
+  Code status line with the session's newest work items and their states — see below.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
 - `qits tui` opens an interactive screen over all of the above: pick a command instead of
@@ -1227,6 +1228,28 @@ The landing app is the platform's bare domain: on a workstation the session's id
 `idp.` (`https://qits.wohlben.eu`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
 `QITS_LANDING_URL` sets it. `--style osc8` or `QITS_LINK_STYLE=osc8` writes a terminal hyperlink
 instead of a markdown link, and `QITS_LINK_PROJECTS` (comma-separated slugs) replaces the cache.
+
+### qits agents claude statusline work-items
+
+Claude Code's status line: the newest work items this session spoke of, newest first, each with
+its status square and linked to the landing app (OSC 8). Register it in `~/.claude/settings.json`:
+
+    "statusLine": {"type": "command", "command": "qits agents claude statusline work-items",
+      "refreshInterval": 30}
+
+A status line script of your own can run it too: pass on the JSON Claude gave it on stdin, and print
+the line it prints.
+
+It reads the last 200 KB of the transcript Claude names (`transcript_path`); ids count from Claude's
+text and from tool results, by the work-links rules, and the newest five distinct ones are shown
+(`--limit`). The marks are the session names' palette from qits-coding-agents' `EntityStatusSquare`,
+copied (`StatusMarker`): a square per status, with `❗` against it when the item is blocked and `⁉️`
+when the block is only its agent waiting on a person.
+
+The states are cached for 60 seconds in `$XDG_CACHE_HOME/qits/work-states.json`. A run shows what is
+cached at once (an id with nothing cached has no mark) and starts one detached `--refresh <ids>` for
+the stale ids, which asks the projects service with this home's credential. Errors show the ids
+without marks, or nothing; the exit is always `0`.
 
 ## qits artifacts publish
 

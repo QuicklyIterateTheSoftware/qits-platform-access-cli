@@ -23,7 +23,7 @@ public class AgentsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "claude", mixinStandardHelpOptions = true,
-            subcommands = HookCommand.class,
+            subcommands = {HookCommand.class, StatuslineCommand.class},
             description = "What Claude Code runs.")
     public static class ClaudeCommand implements Runnable {
 
@@ -40,6 +40,21 @@ public class AgentsCommand implements Runnable {
             subcommands = WorkLinksCommand.class,
             description = "Claude Code's hooks. Each is registered in Claude's settings.json; the help of each shows how.")
     public static class HookCommand implements Runnable {
+
+        @CommandLine.Spec
+        CommandLine.Model.CommandSpec spec;
+
+        @Override
+        public void run() {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Name a command.");
+        }
+    }
+
+    @CommandLine.Command(name = "statusline", mixinStandardHelpOptions = true,
+            subcommands = WorkItemsCommand.class,
+            description = "Claude Code's status lines. Each is registered in Claude's settings.json; the help of each "
+                    + "shows how.")
+    public static class StatuslineCommand implements Runnable {
 
         @CommandLine.Spec
         CommandLine.Model.CommandSpec spec;
