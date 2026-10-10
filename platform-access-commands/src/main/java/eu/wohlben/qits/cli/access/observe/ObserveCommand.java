@@ -39,6 +39,8 @@ import java.util.Locale;
                 "  qits observe --filter 'service^=qits-ci kind=log body~\"connection refused\"'",
                 "  qits observe --filter 'trace=4bf92f3577b34da6a3ce929d0e0e4736'",
                 "  qits observe --filter 'kind=log level>=WARN' -o json | jq -r .record.body",
+                "  qits observe --filter 'service=qits-ci-daemon'",
+                "  qits observe --filter 'service=qits-ci-daemon resource.qits.ci.run_id=5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17'",
                 "",
                 "- A span's exception is an event of the span: event=exception finds it. attr.exception.type? "
                         + "matches logs only.",
