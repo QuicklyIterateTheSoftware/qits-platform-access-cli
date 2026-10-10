@@ -246,6 +246,30 @@ class ChangelogPublishTest {
         assertThat(uploaded()).contains("\n\nRelease request `rr-1`.\n\n");
     }
 
+    @Test
+    void noTimeInThePayloadOrTheEnvLeavesTheTimeOut() {
+        stub.on("GET", COMMITS, json("{\"commits\":[]}"));
+        Harness.Run run = cli.with("QITS_EVENT_PAYLOAD",
+                        "{\"repository\":\"repo-1\",\"repositoryName\":\"qits-ci\",\"releaseRequestId\":\"rr-1\"}")
+                .with("QITS_EVENT_OCCURRED_AT", "not a time")
+                .run("changelog", "--version", VERSION);
+
+        assertThat(run.code()).as(run.err()).isEqualTo(ExitCode.OK);
+        assertThat(uploaded()).contains("\n\nRelease request `rr-1`.\n\n");
+    }
+
+    @Test
+    void noTimeInThePayloadFallsBackToTheEnvVariable() {
+        stub.on("GET", COMMITS, json("{\"commits\":[]}"));
+        Harness.Run run = cli.with("QITS_EVENT_PAYLOAD",
+                        "{\"repository\":\"repo-1\",\"repositoryName\":\"qits-ci\",\"releaseRequestId\":\"rr-1\"}")
+                .with("QITS_EVENT_OCCURRED_AT", "2026-07-31T12:46:03Z")
+                .run("changelog", "--version", VERSION);
+
+        assertThat(run.code()).as(run.err()).isEqualTo(ExitCode.OK);
+        assertThat(uploaded()).contains("\n\nRelease request `rr-1`, released 2026-07-31T12:46:03Z.\n\n");
+    }
+
     private static StubStore.Reply json(String body) {
         return StubStore.Reply.of(200, body, java.util.Map.of("Content-Type", "application/json"));
     }
