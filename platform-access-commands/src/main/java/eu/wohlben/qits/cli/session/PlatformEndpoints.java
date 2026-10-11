@@ -44,20 +44,16 @@ public final class PlatformEndpoints {
     static final String DAEMON_URL = "QITS_WORKSPACE_DAEMON_URL";
     static final String PROJECTS_DAEMON_URL = "QITS_PROJECTS_DAEMON_URL";
     static final String PLATFORM_MCP_URL = "QITS_PLATFORM_MCP_URL";
-    /** The old name of the MCP address. It goes when no container is injected with it any more. */
-    static final String REPOSITORY_MCP_URL = "QITS_REPOSITORY_MCP_URL";
 
     /**
      * The platform URLs a container is injected with, in the order the tier is read off them. Two
      * kinds of container run this binary and they carry different variables: a workspace container
      * carries {@code QITS_WORKSPACE_DAEMON_URL}, and a project-agent container — triage, epic
      * refinement, the composed run for an epic — carries {@code QITS_PROJECTS_DAEMON_URL} instead.
-     * Both carry the MCP address, {@code QITS_PLATFORM_MCP_URL} (or, until it is retired, the older
-     * {@code QITS_REPOSITORY_MCP_URL}), which is why they are last and one of them always answers.
-     * The order is fixed so the same container always resolves the same tier.
+     * Both carry the MCP address, {@code QITS_PLATFORM_MCP_URL}, which is why it is last and always
+     * answers. The order is fixed so the same container always resolves the same tier.
      */
-    static final List<String> TIER_URLS = List.of(DAEMON_URL, PROJECTS_DAEMON_URL, PLATFORM_MCP_URL,
-            REPOSITORY_MCP_URL);
+    static final List<String> TIER_URLS = List.of(DAEMON_URL, PROJECTS_DAEMON_URL, PLATFORM_MCP_URL);
 
     /** What a workspace container is told the idp's token endpoint is. */
     static final String TOKEN_URL = "QITS_GIT_AUTH_TOKEN_URL";

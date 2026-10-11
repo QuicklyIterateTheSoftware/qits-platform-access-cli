@@ -287,8 +287,7 @@ the signal, decided once at startup:
   events. Those aliases are not one pattern, so the CLI holds the two it dials by name rather than
   spelling them. The tier in an environment name comes from `QITS_ENV`, else from the host of whichever
   platform URL the container carries — `QITS_WORKSPACE_DAEMON_URL` in a workspace,
-  `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_PLATFORM_MCP_URL` (or the older
-  `QITS_REPOSITORY_MCP_URL`) in both.
+  `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_PLATFORM_MCP_URL` in both.
   `QITS_URL_<APP>` overrides any of them;
 - the credential is `qits:agent`. Every read door answers and an operator write answers `403`, which
   is correct behaviour and is worded as such;

@@ -165,13 +165,9 @@ class ModeTest {
     }
 
     @Test
-    void theOldRepositoryMcpUrlStillAnswersUntilItIsRetired() {
+    void theRetiredRepositoryMcpUrlIsNotRead() {
         assertThat(endpoints(Map.of("QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp"), null)
-                .environment()).isEqualTo("qa");
-        Map<String, String> both = Map.of(
-                "QITS_PLATFORM_MCP_URL", "http://staging-qits-platform-access-mcp:8080/mcp",
-                "QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp");
-        assertThat(endpoints(both, null).environment()).as("the new name is read first").isEqualTo("staging");
+                .environment()).isEqualTo("dev");
     }
 
     @Test
@@ -187,7 +183,7 @@ class ModeTest {
                 .environment()).as("no throw, and no tier read off it").isEqualTo("dev");
         Map<String, String> mixed = Map.of(
                 "QITS_PROJECTS_DAEMON_URL", "not a url at all",
-                "QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp");
+                "QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp");
         assertThat(endpoints(mixed, null).environment()).isEqualTo("qa");
     }
 
