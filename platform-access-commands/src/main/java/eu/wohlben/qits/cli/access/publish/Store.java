@@ -147,6 +147,11 @@ public final class Store {
     return origin() + DOCS_PATH + "/" + safe("--site", site) + "/-/" + version(version);
   }
 
+  /** {@code /artifacts/docs/docs/<site>}: the site's listing, every version it published. */
+  String docsSite(String site) {
+    return origin() + DOCS_PATH + "/" + safe("--site", site);
+  }
+
   /**
    * {@code /artifacts/content-hashes/<maven|npm>/<name>/-/<version|newest>}: the version's stored
    * content hash, or the newest version by version order and its hash. Both read the hosted

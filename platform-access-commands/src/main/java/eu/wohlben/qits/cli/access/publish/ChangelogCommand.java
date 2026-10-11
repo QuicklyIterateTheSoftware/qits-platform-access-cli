@@ -17,8 +17,10 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * {@code qits artifacts publish changelog}: the release's {@code CHANGELOG.md}, written here from
@@ -26,7 +28,9 @@ import java.util.Map;
  * the release's version.
  * <p>
  * Every release's publish step runs it. The release is the step's {@code QITS_EVENT_PAYLOAD} (the
- * SCMRelease that started the run); the commits are the release request's, from qits-projects; the
+ * SCMRelease that started the run); the commits are the release request's, from qits-projects, after
+ * those of every earlier release since the newest one that published a changelog ({@link
+ * #unpublished}, qits-1193), so a release whose publish never completed loses none of its commits; the
  * tickets are the ones their subjects name ({@link CommitSubjects}), titled by qits-projects; the
  * highlights are the gate run's reports, from qits-ci. The document's last line lists the tickets
  * that resolved, and a dependant's bump message reads it back ({@code qits changelog bump-message}).
@@ -43,7 +47,9 @@ import java.util.Map;
                         + "at --version. Run in a release's publish step.",
                 "The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId, "
                         + "releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and "
-                        + "without the request's own merge commits; the tickets from the commits' subjects "
+                        + "without the request's own merge commits, after those of every earlier release cut since the "
+                        + "newest one that published a changelog (a release whose publish never completed has none of "
+                        + "its own); the tickets from the commits' subjects "
                         + "(`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from "
                         + "the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.",
                 "The second line's time is the payload's occurredAt, or QITS_EVENT_OCCURRED_AT when the payload "
@@ -129,14 +135,27 @@ public class ChangelogCommand extends AbstractPublishCommand {
                 projectsOrigin != null ? projectsOrigin : Store.publicOrigin("projects", variables));
         CiApi ci = new CiApi(client, ciOrigin != null ? ciOrigin : Store.publicOrigin("ci", variables));
 
+        List<Changelog.Earlier> earlier = new ArrayList<>();
+        List<JsonNode> listed = new ArrayList<>();
+        for (Unpublished unpublished : unpublished(http(), store(env), projects, release, version)) {
+            earlier.add(new Changelog.Earlier(unpublished.version(), unpublished.releaseRequest()));
+            listed.addAll(commits(projects, release.repository(), unpublished.requestId()));
+        }
+        listed.addAll(commits(projects, release.repository(), release.releaseRequestId()));
+
         List<Changelog.Commit> commits = new ArrayList<>();
         List<String> subjects = new ArrayList<>();
-        for (JsonNode commit : commits(projects, release)) {
+        Set<String> seen = new HashSet<>();
+        for (JsonNode commit : listed) {
+            // A commit two requests share is listed once.
+            String hash = text(commit, "hash");
+            if (hash != null && !seen.add(hash)) {
+                continue;
+            }
             String subject = CommitSubjects.subject(text(commit, "message"));
             subjects.add(subject);
             String shortHash = text(commit, "shortHash");
             if (shortHash == null) {
-                String hash = text(commit, "hash");
                 shortHash = hash == null ? "" : hash.substring(0, Math.min(7, hash.length()));
             }
             commits.add(new Changelog.Commit(shortHash, subject, text(commit, "author")));
@@ -150,7 +169,7 @@ public class ChangelogCommand extends AbstractPublishCommand {
 
         String markdown = Changelog.render(
                 new Changelog.Release(release.repositoryName(), version, release.releaseRequest(), release.occurredAt()),
-                commits, tickets, highlights);
+                earlier, commits, tickets, highlights);
         List<String> meta = new ArrayList<>(this.meta);
         meta.add("release.request.id=" + release.releaseRequestId());
         if (!release.releaseRequest().equals(release.releaseRequestId())) {
@@ -215,13 +234,98 @@ public class ChangelogCommand extends AbstractPublishCommand {
         }
     }
 
+    /**
+     * An earlier release that published no changelog: its version, its request's uuid, and the
+     * request as the document names it (its logical id, else its uuid).
+     */
+    record Unpublished(String version, String requestId, String releaseRequest) {
+    }
+
+    /**
+     * The earlier releases whose commits this changelog carries (qits-1193): every release cut after
+     * the newest release below {@code version} that published a changelog, oldest first. A release
+     * that never published (its publish run cancelled or failed for good) is in no changelog of its
+     * own, so without this its commits would be in none at all.
+     * <p>
+     * The docs store's listing says which versions published; qits-projects' history of the
+     * repository (every state) says which requests cut which version. A repository that never
+     * published a changelog carries nothing: no published release bounds the walk, and the releases
+     * before changelogs existed have none for a reason. The history is read only when the listing
+     * holds a version below this one.
+     */
+    static List<Unpublished> unpublished(Http http, Store store, ProjectsApi projects, Release release,
+                                         String version) {
+        String newest = newestPublishedBelow(http, store, release.repositoryName(), version);
+        if (newest == null) {
+            return List.of();
+        }
+        JsonNode history;
+        try {
+            history = projects.releaseRequests(release.repository(), "all");
+        } catch (CliFailure failed) {
+            throw translated("the repository's release requests", failed);
+        } catch (InterruptedException interrupted) {
+            throw interrupted(interrupted);
+        }
+        List<Unpublished> earlier = new ArrayList<>();
+        for (JsonNode request : history.path("requests")) {
+            String id = text(request, "id");
+            String cut = text(request, "version");
+            if (id == null || cut == null || id.equals(release.releaseRequestId())
+                    || VersionOrder.compare(cut, version) != VersionOrder.BELOW
+                    || VersionOrder.compare(cut, newest) != VersionOrder.ABOVE) {
+                continue;
+            }
+            String qualifiedId = text(request, "qualifiedId");
+            earlier.add(new Unpublished(cut, id, qualifiedId == null ? id : qualifiedId));
+        }
+        earlier.sort((a, b) -> switch (VersionOrder.compare(a.version(), b.version())) {
+            case BELOW -> -1;
+            case SAME -> 0;
+            case ABOVE -> 1;
+        });
+        return earlier;
+    }
+
+    /**
+     * The newest version below {@code version} in the store's listing of {@code @changelog/<repository>},
+     * or null when there is none (a 404 is a repository that never published one).
+     */
+    private static String newestPublishedBelow(Http http, Store store, String repository, String version) {
+        String url = store.docsSite("@changelog/" + repository);
+        Http.Response response = http.get(url);
+        if (response.status() == 404) {
+            return null;
+        }
+        if (response.status() != 200) {
+            String message = "cannot read the changelog listing: GET " + url + " answered HTTP " + response.status()
+                    + ": " + response.excerpt();
+            throw response.status() >= 500 ? CliException.transport(message) : CliException.policy(message);
+        }
+        JsonNode listing;
+        try {
+            listing = JSON.readTree(response.body());
+        } catch (java.io.IOException notJson) {
+            throw CliException.transport("cannot read the changelog listing: GET " + url + " answered no JSON");
+        }
+        String newest = null;
+        for (JsonNode entry : listing.path("versions")) {
+            String published = text(entry, "version");
+            if (published != null && VersionOrder.compare(published, version) == VersionOrder.BELOW
+                    && (newest == null || VersionOrder.compare(published, newest) == VersionOrder.ABOVE)) {
+                newest = published;
+            }
+        }
+        return newest;
+    }
+
     /** The request's commits, oldest first, without its own merge commits. */
-    private static List<JsonNode> commits(ProjectsApi projects, Release release) {
+    private static List<JsonNode> commits(ProjectsApi projects, String repository, String requestId) {
         JsonNode answer;
         try {
-            answer = projects.releaseRequestCommits(release.repository(), release.releaseRequestId());
+            answer = projects.releaseRequestCommits(repository, requestId);
         } catch (CliFailure failed) {
-            throw translated("the release request's commits", failed);
+            throw translated("the commits of release request " + requestId, failed);
         } catch (InterruptedException interrupted) {
             throw interrupted(interrupted);
         }

@@ -24,9 +24,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
  * {@code /work} doors and these: the release request's commits, which {@code qits artifacts
- * publish changelog} reads in every release step (qits-893), the git reads of {@code qits
- * repositories} (branches, a branch's commits, a commit's changes and one file's diff, the commit
- * subjects), the project's release requests, which {@code qits release-request list} reads when no
+ * publish changelog} reads in every release step (qits-893), together with the repository's
+ * requests of every state when an earlier release published no changelog (qits-1193), the git
+ * reads of {@code qits repositories} (branches, a branch's commits, a commit's changes and one
+ * file's diff, the commit subjects), the project's release requests, which {@code qits
+ * release-request list} reads when no
  * repository is named, the repository's requests of every state, where every command that takes
  * a request finds it by its logical id (qits-1158), an automation run, which {@code qits
  * release-request regenerate} asks for (qits-1182), and a refinement's designs, which {@code qits
@@ -212,6 +214,21 @@ final class ProjectsContract {
         JsonNode found = ReleaseRequestRefs.find(requests, ProjectsApi.text(first, "qualifiedId").toUpperCase(),
                 ProjectsApi.text(first, "repoName"), "");
         assertThat(ProjectsApi.text(found, "id")).isEqualTo(ProjectsApi.text(first, "id"));
+    };
+
+    /**
+     * {@code qits artifacts publish changelog} finds the earlier releases that published no changelog
+     * among the repository's requests of every state (qits-1193): it reads each one's id, logical id
+     * and the version it cut, and skips a request that cut none.
+     */
+    private static final Call EARLIER_RELEASES = (api, params, recorded) -> {
+        JsonNode requests = api.releaseRequests(params.get("repositoryId"), "all").path("requests");
+        assertThat(requests).isNotEmpty().allSatisfy(r -> {
+            assertThat(ProjectsApi.text(r, "id")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "qualifiedId")).isNotBlank();
+            assertThat(r.path("version").isTextual() || r.path("version").isNull()).isTrue();
+        });
+        assertThat(requests).anySatisfy(r -> assertThat(ProjectsApi.text(r, "version")).isNotBlank());
     };
 
     /** The literal segment after {@code marker} in the recorded path: a page slug or a commit hash. */
@@ -465,6 +482,8 @@ final class ProjectsContract {
                     ProjectsApi.MERGE_PATCH, EDIT_COMMENT),
             row("qits artifacts publish changelog", RELEASED_REQUEST, "listReleaseRequestCommits", RELEASE_COMMITS),
             row("qits artifacts publish changelog", TICKET_WITH_A_COMMENT, "getWork", TITLE),
+            row("qits artifacts publish changelog", REQUESTS_OF_EVERY_STATE, "listRepositoryReleaseRequests",
+                    EARLIER_RELEASES),
             row("qits work block", REPORTED_TICKET, "setWorkBlocked", BLOCK),
             row("qits work delete", REPORTED_TICKET, "deleteWork", DELETE),
             row("qits work progress", CAMPAIGN_IN_DETAIL, "getWorkProgress", PROGRESS),

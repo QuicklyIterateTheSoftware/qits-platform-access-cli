@@ -41,17 +41,42 @@ final class Changelog {
     record Release(String repositoryName, String version, String releaseRequest, Instant occurredAt) {
     }
 
+    /**
+     * An earlier release that published no changelog (qits-1193): its commits are listed in this one,
+     * so none of them is in no changelog at all. {@code releaseRequest} as in {@link Release}.
+     */
+    record Earlier(String version, String releaseRequest) {
+    }
+
     private Changelog() {
     }
 
-    /** The whole document, ending in exactly one line break. */
+    /** The whole document of a release with no earlier release to carry. */
     static String render(Release release, List<Commit> commits, List<Ticket> tickets, List<Highlight> highlights) {
+        return render(release, List.of(), commits, tickets, highlights);
+    }
+
+    /**
+     * The whole document, ending in exactly one line break. {@code commits} holds the earlier
+     * releases' commits too; {@code earlier} only names those releases above the list.
+     */
+    static String render(Release release, List<Earlier> earlier, List<Commit> commits, List<Ticket> tickets,
+                         List<Highlight> highlights) {
         List<String> blocks = new ArrayList<>();
         blocks.add("# " + oneLine(release.repositoryName()) + " " + oneLine(release.version()));
         blocks.add("Release request `" + oneLine(release.releaseRequest()) + "`"
                 + (release.occurredAt() == null ? "" : ", released " + released(release.occurredAt())) + ".");
 
         StringBuilder commitBlock = new StringBuilder("## Commits\n\n");
+        if (!earlier.isEmpty()) {
+            List<String> names = new ArrayList<>();
+            for (Earlier unpublished : earlier) {
+                names.add(oneLine(unpublished.version()) + " (`" + oneLine(unpublished.releaseRequest()) + "`)");
+            }
+            String joined = names.size() == 1 ? names.get(0)
+                    : String.join(", ", names.subList(0, names.size() - 1)) + " and " + names.get(names.size() - 1);
+            commitBlock.append("With the commits of ").append(joined).append(", which published no changelog.\n\n");
+        }
         if (commits.isEmpty()) {
             commitBlock.append("None.");
         } else {

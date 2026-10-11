@@ -631,6 +631,632 @@
           },
           "qits-trigger": {
             "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish changelog",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish changelog: listRepositoryReleaseRequests",
+      "key": "fdbfba88",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with a release not merged to main",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests",
+        "query": {
+          "state": [
+            "all"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "requests": [
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/contract-service-rr-3",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "Withdrawn: the README moves to the next release.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000003",
+                "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0002",
+                "mergedToMainAt": "2026-01-01T00:00:00Z",
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualifiedId": "contract-service-rr-3",
+                "qualityGates": [
+                  {
+                    "checks": [],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": null,
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": null,
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0104",
+                "repoId": "00000000-0000-4000-8000-000000000002",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [
+                  {
+                    "addedBy": null,
+                    "implicit": true,
+                    "kind": "RELEASED_TAG",
+                    "name": "2026.101.100400",
+                    "priority": null,
+                    "ref": "refs/tags/2026.101.100400"
+                  }
+                ],
+                "state": "WITHDRAWN",
+                "summary": "Release the README",
+                "supersededBy": null,
+                "supersededByQualifiedId": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100400"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/contract-service-rr-3",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "Withdrawn: the README moves to the next release.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000003",
+                "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0002",
+                "mergedToMainAt": "2026-01-01T00:00:00Z",
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualifiedId": "contract-service-rr-3",
+                "qualityGates": [
+                  {
+                    "checks": [],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": null,
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": null,
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0104",
+                "repoId": "00000000-0000-4000-8000-000000000002",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [
+                  {
+                    "addedBy": null,
+                    "implicit": true,
+                    "kind": "RELEASED_TAG",
+                    "name": "2026.101.100400",
+                    "priority": null,
+                    "ref": "refs/tags/2026.101.100400"
+                  }
+                ],
+                "state": "WITHDRAWN",
+                "summary": "Release the README",
+                "supersededBy": null,
+                "supersededByQualifiedId": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100400"
+              },
+              {
+                "approvalNote": null,
+                "approvalRequired": false,
+                "approvalState": "NOT_REQUIRED",
+                "approvedAt": null,
+                "approvedBy": null,
+                "automations": null,
+                "backingBranch": "release/contract-service-rr-3",
+                "conflict": null,
+                "createdAt": "2026-01-01T00:00:00Z",
+                "detail": "Withdrawn: the README moves to the next release.",
+                "gateTicketId": null,
+                "gates": [
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "detail": null,
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000003",
+                "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0002",
+                "mergedToMainAt": "2026-01-01T00:00:00Z",
+                "pipeline": null,
+                "preRun": {
+                  "state": "PENDING"
+                },
+                "priority": "MEDIUM",
+                "qualifiedId": "contract-service-rr-3",
+                "qualityGates": [
+                  {
+                    "checks": [],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": null,
+                    "state": "PENDING"
+                  },
+                  {
+                    "checks": [],
+                    "detail": "Waiting for the automations to answer",
+                    "kind": "automations",
+                    "label": "Automations",
+                    "link": null,
+                    "position": "pre-run-qa",
+                    "runId": null,
+                    "state": "PENDING"
+                  }
+                ],
+                "releasedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0104",
+                "repoId": "00000000-0000-4000-8000-000000000002",
+                "repoName": "contract-service",
+                "requester": "contract-seeder",
+                "retryable": false,
+                "sources": [
+                  {
+                    "addedBy": null,
+                    "implicit": true,
+                    "kind": "RELEASED_TAG",
+                    "name": "2026.101.100400",
+                    "priority": null,
+                    "ref": "refs/tags/2026.101.100400"
+                  }
+                ],
+                "state": "WITHDRAWN",
+                "summary": "Release the README",
+                "supersededBy": null,
+                "supersededByQualifiedId": null,
+                "unattended": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": "2026.101.100400"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.requests": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.requests[*].approvalRequired": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].backingBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.requests[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.requests[*].gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].mergedSha": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].mergedToMainAt": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].preRun.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].releasedSha": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].retryable": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.requests[*].sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].unattended": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.requests[*].version": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listRepositoryReleaseRequests"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
             "command": "qits release-request join",
             "kind": "command"
           }
