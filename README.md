@@ -27,6 +27,9 @@ Commands:
   platform, the container's own credential instead.
 - `qits mcp-credential` is Claude's MCP headers helper for the qits MCP server (interim) — see
   below.
+- `qits agents claude hook work-links` is a Claude Code hook that shows work ids such as `qits-111`
+  as links to the landing app, and `qits agents claude statusline work-items` a Claude
+  Code status line with the session's newest work items and their states — see below.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
 - `qits tui` opens an interactive screen over all of the above: pick a command instead of
@@ -284,7 +287,8 @@ the signal, decided once at startup:
   events. Those aliases are not one pattern, so the CLI holds the two it dials by name rather than
   spelling them. The tier in an environment name comes from `QITS_ENV`, else from the host of whichever
   platform URL the container carries — `QITS_WORKSPACE_DAEMON_URL` in a workspace,
-  `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_REPOSITORY_MCP_URL` in both.
+  `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_PLATFORM_MCP_URL` (or the older
+  `QITS_REPOSITORY_MCP_URL`) in both.
   `QITS_URL_<APP>` overrides any of them;
 - the credential is `qits:agent`. Every read door answers and an operator write answers `403`, which
   is correct behaviour and is worded as such;
@@ -468,7 +472,8 @@ Installing it is not part of this version.
     {"target":"<STATUS>"} | qits work --entity <id or qualified id> status
     <payload> | qits work --entity <id or qualified id> comment create
     <merge patch> | qits work --entity <id or qualified id> comment update --comment <id>
-    qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
+    qits release-request --project <project> [--repository <repository>] list \
+        [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
     qits release-request --project <project> --repository <repository> join \
@@ -537,8 +542,8 @@ and `http://qits-events:8080`. The flags and variables above still come first in
 ### Output, errors and exit codes
 
 `--output table` (the default) prints aligned columns. `--output json` (or `-o json`) prints the
-service's answer, pretty-printed. The default `release-request list` leaves out the finalized
-requests in both forms (see below).
+service's answer, pretty-printed. The default `release-request list` of one repository leaves out
+the finalized requests in both forms, and `--limit` cuts both forms (see below).
 
 When the platform refuses:
 
@@ -680,7 +685,8 @@ form takes terminal control characters out of every value, and `-o json` writes 
 
 ### qits release-request
 
-`--project` as above. `--repository` is the repository's id or name within that project.
+`--project` as above. `--repository` is the repository's id or name within that project. Only
+`list` works without it.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate.
 States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining
@@ -690,11 +696,19 @@ request for the repository superseded this one before it finished). RELEASED is 
 the request still waits on its remaining gates, one of which (PUBLISH) is the tag's own release
 pipeline.
 
-`list` shows the open requests: every state but FINALIZED, WITHDRAWN and OBSOLETE. The service's
-default answer holds the open requests and the last 10 finalized ones; the command drops the
-finalized. `--state all` shows every request, and `--state PENDING` (or READY, RELEASED, FINALIZED,
-REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. Columns: id, state, priority,
-summary, version, updated.
+`list` without `--repository` shows the requests of every repository of the project, as the landing
+app does: the service's default answer, which is the open requests and the last 10 finalized ones,
+most recently moved first. Columns: id, repository, state, approval, priority, summary, version,
+updated.
+
+`list --repository <repository>` shows that repository's open requests: every state but FINALIZED,
+WITHDRAWN and OBSOLETE. The service's default answer holds the open requests and the last 10
+finalized ones; the command drops the finalized. Columns: id, state, priority, summary, version,
+updated.
+
+In both forms `--state all` shows every request, and `--state PENDING` (or READY, RELEASED,
+FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. `--limit <n>` shows
+the first n; the service has no limit, so the command cuts the list it got.
 
 A request's id is `<repository>-rr-<n>` (`qits-ci-service-rr-12`), numbered per repository and fixed
 when the request is made: a rename of the repository does not change it. The request also has a
@@ -731,6 +745,8 @@ for one of its branches opens a new request. The command prints the request that
 - A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409, exit code 1).
 - HTTP 404 means the platform has no such request (exit code 1).
 
+    qits release-request --project qits list
+    qits release-request --project qits list --state all --limit 20
     qits release-request --project qits --repository qits-ci-service list
     qits release-request --project qits --repository qits-ci-service list --state all -o json
     qits release-request --project qits --repository qits-ci-service create \
@@ -1268,6 +1284,59 @@ Claude connects without the header and the server answers 401.
 It is the other place `qits` prints a token. It is interim: a container's token lasts an hour, so
 a header written once at launch would go stale. Follow-up qits-684 gives every workspace a
 long-lived token of its own, the entry then carries it as a plain header, and this command goes.
+
+## qits agents
+
+What an agent harness runs on this machine: `qits agents <harness> …`. Claude Code is the one
+harness today.
+
+### qits agents claude hook work-links
+
+Claude Code's `MessageDisplay` hook. It shows work ids in Claude's messages, such as `qits-111`, as
+links to the work item in the landing app (`<landing>/projects/<slug>/work/detail/<id>`). Only the
+screen changes; the transcript and the model keep the plain id. Register it in
+`~/.claude/settings.json`:
+
+    {"hooks": {"MessageDisplay": [{"hooks": [{"type": "command",
+      "command": "qits agents claude hook work-links", "timeout": 5}]}]}}
+
+Claude holds each batch of text until the hook returns, so the hook never waits for the network
+and never fails: any error prints nothing and exits `0`, and Claude shows the original. An id
+inside a branch (`ticket/qits-1152`), a longer name, a link, inline code or a code block stays as it
+is. A code fence can span batches, so whether one is open is kept per message in
+`$XDG_RUNTIME_DIR/qits-work-links/`, and removed on the last batch.
+
+The project slugs are cached for an hour in `$XDG_CACHE_HOME/qits/work-links.json` (default
+`~/.cache/qits/`). A stale cache is used as it is, and the hook starts the same command with a
+hidden `--refresh` in a session of its own, which asks the projects service with this home's
+credential. Until the first refresh is done only `qits` ids are linked.
+
+The landing app is the platform's bare domain: on a workstation the session's idp address without
+`idp.` (`https://qits.wohlben.eu`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
+`QITS_LANDING_URL` sets it. `--style osc8` or `QITS_LINK_STYLE=osc8` writes a terminal hyperlink
+instead of a markdown link, and `QITS_LINK_PROJECTS` (comma-separated slugs) replaces the cache.
+
+### qits agents claude statusline work-items
+
+Claude Code's status line: the newest work items this session spoke of, newest first, each with
+its status square and linked to the landing app (OSC 8). Register it in `~/.claude/settings.json`:
+
+    "statusLine": {"type": "command", "command": "qits agents claude statusline work-items",
+      "refreshInterval": 30}
+
+A status line script of your own can run it too: pass on the JSON Claude gave it on stdin, and print
+the line it prints.
+
+It reads the last 200 KB of the transcript Claude names (`transcript_path`); ids count from Claude's
+text and from tool results, by the work-links rules, and the newest five distinct ones are shown
+(`--limit`). The marks are the session names' palette from qits-coding-agents' `EntityStatusSquare`,
+copied (`StatusMarker`): a square per status, with `❗` against it when the item is blocked and `⁉️`
+when the block is only its agent waiting on a person.
+
+The states are cached for 60 seconds in `$XDG_CACHE_HOME/qits/work-states.json`. A run shows what is
+cached at once (an id with nothing cached has no mark) and starts one detached `--refresh <ids>` for
+the stale ids, which asks the projects service with this home's credential. Errors show the ids
+without marks, or nothing; the exit is always `0`.
 
 ## qits artifacts publish
 

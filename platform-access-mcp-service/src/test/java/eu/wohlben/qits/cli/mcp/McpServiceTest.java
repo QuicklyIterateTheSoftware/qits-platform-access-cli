@@ -89,4 +89,62 @@ class McpServiceTest {
         }).thenAssertResults();
         assertThat(projects.seen()).containsExactly("Bearer " + token);
     }
+
+    // --- the read-only mode ---
+
+    private static McpStreamableTestClient readOnlyClient(String token) {
+        return McpAssured.newStreamableClient()
+                .setStateless()
+                .setMcpPath("/mcp?agentReadOnly=true")
+                .setBearerToken(token)
+                .build()
+                .connect();
+    }
+
+    @Test
+    void aReadOnlyConnectionListsOnlyTheReads() {
+        readOnlyClient(BearerProfile.agentToken("qits-platform")).when().toolsList(page ->
+                assertThat(page.tools()).extracting(McpAssured.ToolInfo::name)
+                        .contains("projects_list", "work_details", "work_dossier_get", "observe_errors")
+                        .doesNotContain("work_update", "work_delete", "work_dossier_put", "ci_retry",
+                                "release-request_create"))
+                .thenAssertResults();
+    }
+
+    @Test
+    void aReadOnlyConnectionRunsAReadAsUsual() {
+        projects.seen().clear();
+        readOnlyClient(BearerProfile.agentToken("qits-platform")).when().toolsCall("projects_list", Map.of(),
+                response -> assertThat(response.isError()).isFalse()).thenAssertResults();
+        assertThat(projects.seen()).hasSize(1);
+    }
+
+    /** A raw JSON-RPC request in a session opened at {@code path}, as any client could send it. */
+    private static String post(String path, String body) {
+        String token = BearerProfile.agentToken("qits-platform");
+        String session = given().contentType("application/json").accept("application/json, text/event-stream")
+                .header("Authorization", "Bearer " + token).body(INITIALIZE)
+                .when().post(path).then().statusCode(200).extract().header("Mcp-Session-Id");
+        return given().contentType("application/json").accept("application/json, text/event-stream")
+                .header("Authorization", "Bearer " + token).header("Mcp-Session-Id", session).body(body)
+                .when().post(path).then().extract().asString();
+    }
+
+    /** Calling a write it was never shown is refused before anything runs, whatever the client does. */
+    @Test
+    void aReadOnlyConnectionRefusesAWriteCalledAnyway() {
+        projects.seen().clear();
+        projects.deleted().clear();
+        String call = """
+                {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"projects_list","arguments":{}}}""";
+        String write = call.replace("projects_list", "work_delete").replace("{}", "{\"entity\":\"qits-1\"}");
+        for (String marker : new String[] {"true", "TRUE", "yes", ""}) {
+            String body = post("/mcp?agentReadOnly=" + marker, write);
+            assertThat(body).as(marker).contains("\"error\"").contains("work_delete").doesNotContain("\"result\"");
+        }
+        assertThat(projects.deleted()).as("no write reached the platform").isEmpty();
+        assertThat(post("/mcp?agentReadOnly=false", call)).contains("\"result\"");
+        assertThat(post("/mcp", write)).as("without the marker a write runs").contains("\"result\"");
+        assertThat(projects.deleted()).as("the write without the marker ran").containsExactly("qits-1");
+    }
 }

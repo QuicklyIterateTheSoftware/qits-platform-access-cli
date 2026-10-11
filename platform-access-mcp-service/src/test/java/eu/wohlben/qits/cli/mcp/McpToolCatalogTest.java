@@ -9,6 +9,7 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.mcp.ToolCatalog.Tool;
 import eu.wohlben.qits.cli.session.RequestCredential;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.tui.api.Input;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -297,6 +298,34 @@ class McpToolCatalogTest {
         }
     }
 
+    /**
+     * The commands marked READ, every one of them on purpose. A command added without a marker is a
+     * write and is not on this list, so the read-only mode never offers it; one marked READ by
+     * mistake fails here until somebody adds it knowingly.
+     */
+    @Test
+    void exactlyTheseCommandsAreReads() {
+        Set<String> reads = new TreeSet<>();
+        realTree().forEach((name, spec) -> {
+            if (TuiCommands.effectOf(spec.userObject()) == Effect.READ) {
+                reads.add(name);
+            }
+        });
+        assertThat(reads).containsExactlyInAnyOrder(
+                "projects_list", "repositories_list", "repositories_branches", "repositories_commits",
+                "repositories_commit-changes", "repositories_commit-diff", "repositories_commit-subjects",
+                "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
+                "work_members_list", "work_design_list", "work_design_get", "release-request_list",
+                "ci_runs", "ci_run", "ci_report_show", "maintenance_automations", "maintenance_bump",
+                "events", "events_query", "observe", "observe_query", "observe_sources", "observe_errors",
+                "observe_slow-spans", "observe_metrics", "help_skill", "agents_claude_hook_work-links",
+                "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message");
+        // The default is what keeps a new command out: no marker, or a marker without an effect, is a write.
+        assertThat(TuiCommands.effectOf(new Object())).isEqualTo(Effect.WRITE);
+        assertThat(TuiCommands.effectOf(new eu.wohlben.qits.cli.access.projects.WorkCommand.CreateCommand()))
+                .isEqualTo(Effect.WRITE);
+    }
+
     @Test
     void thePayloadIsOnExactlyTheCommandsThatReadOne() {
         Map<String, CommandSpec> commands = realTree();
@@ -307,7 +336,8 @@ class McpToolCatalogTest {
             }
         });
         assertThat(marked).containsExactlyInAnyOrder("work_create", "work_update", "work_transition", "work_status",
-                "work_comment_create", "work_comment_update");
+                "work_comment_create", "work_comment_update", "work_dossier_put", "work_members_add",
+                "work_members_condition", "work_design_put");
         for (Tool tool : catalog.tools()) {
             boolean payload = marked.contains(tool.name());
             assertThat(tool.payload()).as(tool.name()).isEqualTo(payload);

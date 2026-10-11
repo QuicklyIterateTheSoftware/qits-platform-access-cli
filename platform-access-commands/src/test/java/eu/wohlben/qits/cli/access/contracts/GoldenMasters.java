@@ -194,7 +194,7 @@ public final class GoldenMasters {
                         params(state),
                         operationId,
                         op.path("method").asText(),
-                        op.path("path").asText(),
+                        pathWithQuery(op),
                         body == null || body.isNull() ? null : body,
                         op.path("status").asInt(),
                         op.path("file").asText(),
@@ -210,19 +210,25 @@ public final class GoldenMasters {
     }
 
     /**
-     * The recorded query string of one (state, operation), in the index's order; empty when the
-     * recording has none. Values are literal: no recording puts a param in a query.
+     * The recorded path, with the query appended as {@code ?name=value}. Newer recorders keep the
+     * query apart, in a {@code query} object; older ones left it in the path. Both read the same.
      */
-    public static Map<String, String> query(String state, String operationId) {
-        operation(state, operationId);
-        Map<String, String> query = new LinkedHashMap<>();
-        for (JsonNode op : stateNode(state).path("operations")) {
-            if (operationId.equals(op.path("operationId").asText())) {
-                op.path("query").properties().forEach(e -> query.put(e.getKey(), e.getValue().asText()));
-                break;
+    private static String pathWithQuery(JsonNode op) {
+        StringBuilder path = new StringBuilder(op.path("path").asText());
+        char separator = path.indexOf("?") < 0 ? '?' : '&';
+        for (Map.Entry<String, JsonNode> e : op.path("query").properties()) {
+            List<JsonNode> values = new ArrayList<>();
+            if (e.getValue().isArray()) {
+                e.getValue().forEach(values::add);
+            } else {
+                values.add(e.getValue());
+            }
+            for (JsonNode value : values) {
+                path.append(separator).append(e.getKey()).append('=').append(value.asText());
+                separator = '&';
             }
         }
-        return query;
+        return path.toString();
     }
 
     /** The recorded JSON for one (state, operation), byte for byte as the jar carries it. */
@@ -293,7 +299,6 @@ public final class GoldenMasters {
             PactBuilder builder, String state, String operationId, Trigger trigger, String contentType) {
         Objects.requireNonNull(trigger, "trigger: every interaction names the entry point that makes it");
         Operation op = operation(state, operationId);
-        Map<String, String> query = query(state, operationId);
         DslPart answer = responseBody(op);
         DslPart request = op.body() == null ? null : requestBody(op);
         Map<String, Object> references = new LinkedHashMap<>();
@@ -306,12 +311,21 @@ public final class GoldenMasters {
             http.state(state, new LinkedHashMap<String, Object>(op.params()));
             http.withRequest(r -> {
                 r.method(op.method());
-                if (op.hasParam(op.path())) {
-                    r.path(Matchers.fromProviderState(op.expressionPath(), op.examplePath()));
+                // A recorded path may carry a query (a diff's ?path=): the path and each parameter go apart.
+                int q = op.path().indexOf('?');
+                String path = q < 0 ? op.path() : op.path().substring(0, q);
+                if (op.hasParam(path)) {
+                    r.path(Matchers.fromProviderState(op.substitute(path, name -> "${" + name + "}"),
+                            op.substitute(path, op.params()::get)));
                 } else {
-                    r.path(op.path());
+                    r.path(path);
                 }
-                query.forEach(r::queryParameter);
+                if (q >= 0) {
+                    for (String pair : op.path().substring(q + 1).split("&")) {
+                        int eq = pair.indexOf('=');
+                        r.queryParameter(pair.substring(0, eq), op.substitute(pair.substring(eq + 1), op.params()::get));
+                    }
+                }
                 if (request != null) {
                     r.header("Content-Type", contentType);
                     r.body(request);

@@ -27,8 +27,8 @@ artifacts:
   # qits-ci submits this `sbom:` from whichever release step holds the file — the maven step below,
   # where `makeBom` writes it — and checks on the last step that it reached the store.
   - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary, sbom: platform-access-cli-binary/target/sbom.json }
-# THE CONSUMER PACT (epic qits-965): what the `qits work` commands ask qits-projects' /work doors,
-# written by ProjectsPactFileTest from qits-projects' golden masters and committed at
+# THE CONSUMER PACT (epic qits-965): what the `qits work` commands ask qits-projects' /work doors
+# (plus the changelog's commits read and `qits release-request list`'s project-wide read), written by ProjectsPactFileTest from qits-projects' golden masters and committed at
 # pacts/qits-platform-access-cli_qits-projects-service.json. The platform packs it as
 # `eu.wohlben.qits:qits-platform-access-cli-pacts-qits-projects-service` (the coordinate is named by
 # this repository and the provider's), only when it changed, from the release slot's LAST step — the

@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.mcp;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.tui.api.Input;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -51,9 +52,11 @@ public final class ToolCatalog {
      * @param payload     whether the command reads a JSON document on stdin
      * @param outputJson  the name of the output option the runner sets to {@code json} when the call
      *                    did not choose, or null when the command offers no JSON
+     * @param read        whether the command is marked {@code Effect.READ}; false for every other,
+     *                    marked or not, so a read-only connection never sees it
      */
     public record Tool(String name, List<String> path, String description, Map<String, Object> inputSchema,
-                       List<Argument> arguments, boolean payload, String outputJson) {
+                       List<Argument> arguments, boolean payload, String outputJson, boolean read) {
 
         public Tool {
             path = List.copyOf(path);
@@ -137,6 +140,8 @@ public final class ToolCatalog {
                 .append("it may not do here. The result is what the command prints; `-o json` is the default where ")
                 .append("a command offers it. A failed command is a result with isError set, its stderr and its ")
                 .append("exit code.\n\n");
+        text.append("A connection whose URL carries agentReadOnly=true is read-only: it is offered only the tools ")
+                .append("that change nothing, and a call to any other answers that the tool does not exist.\n\n");
         text.append("Not served here (").append(excluded.size()).append("):\n");
         excluded.forEach(e -> text.append(e.line()).append('\n'));
         return text.toString().stripTrailing();
@@ -245,7 +250,7 @@ public final class ToolCatalog {
             input.put("required", required);
         }
         return new Tool(String.join("_", path), path, description(spec, payload), input, arguments, payload,
-                outputJson);
+                outputJson, TuiCommands.effectOf(spec.userObject()) == Effect.READ);
     }
 
     /**

@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.access.ci;
 
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -263,6 +265,7 @@ public class CiCommand implements Runnable {
                             + "are applied here, over all of the repository's runs, and --limit after them."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class RunsCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -363,6 +366,7 @@ public class CiCommand implements Runnable {
                     "1:The platform refused (for example no such run, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example an id start that fits no run of the repository, or more than one), "
                             + "not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class RunCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

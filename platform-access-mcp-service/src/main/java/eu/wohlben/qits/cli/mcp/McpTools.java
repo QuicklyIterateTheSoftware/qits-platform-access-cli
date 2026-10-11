@@ -22,6 +22,7 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The tools of the `qits` server: the catalog registered with the server at startup, each call run
@@ -31,6 +32,9 @@ import java.util.Optional;
  * <b>The guard is armed before anything else.</b> {@link CliContext#MCP_SERVICE} is set as the first
  * thing this bean does, before a single tool exists, so no call can ever run while a command could
  * still fall back to this process's own environment.
+ * <p>
+ * A request whose URL carries {@code agentReadOnly=true} gets only the tools marked READ, and a call
+ * to any other is refused: see {@link ReadOnlyToolFilter}.
  * <p>
  * A handler registered with {@code setHandler} runs on a worker thread, not the event loop, and that
  * is required: every command makes blocking HTTP calls.
@@ -55,11 +59,13 @@ public class McpTools implements InitialResponseInfo {
 
     private ToolCatalog catalog;
     private ToolRunner runner;
+    private java.util.Set<String> reads;
 
     @PostConstruct
     void register() {
         System.setProperty(CliContext.MCP_SERVICE, "true");
         catalog = ToolCatalog.of(new CommandLine(new AccessCli()));
+        reads = catalog.tools().stream().filter(Tool::read).map(Tool::name).collect(Collectors.toUnmodifiableSet());
         runner = new ToolRunner(factory -> new CommandLine(new AccessCli(), factory),
                 ToolRunner.environment(name -> config.getOptionalValue(name, String.class).orElse(null)),
                 Clock.systemUTC());
@@ -77,6 +83,14 @@ public class McpTools implements InitialResponseInfo {
 
     public ToolCatalog catalog() {
         return catalog;
+    }
+
+    /**
+     * Whether the tool's command is marked READ, the one thing {@link ReadOnlyToolFilter} asks. A
+     * name this catalog does not hold is not a read.
+     */
+    public boolean isRead(String tool) {
+        return reads != null && reads.contains(tool);
     }
 
     private ToolResponse call(Tool tool, Map<String, Object> arguments) {

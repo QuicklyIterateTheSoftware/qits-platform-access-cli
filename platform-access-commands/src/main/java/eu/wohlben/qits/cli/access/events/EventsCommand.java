@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.events;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -18,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@TuiCommand(interaction = Interaction.STREAMING)
+@TuiCommand(interaction = Interaction.STREAMING, effect = Effect.READ)
 @CommandLine.Command(name = "events", mixinStandardHelpOptions = true, subcommands = EventsQueryCommand.class,
         description = {
                 "Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to watch "

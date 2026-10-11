@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.platform;
 
+import eu.wohlben.qits.cli.access.observe.SafeText;
 import eu.wohlben.qits.cli.access.session.Times;
 
 import java.io.PrintStream;
@@ -39,9 +40,12 @@ public final class Table {
         }
     }
 
-    /** One line, at most {@code max} characters; a dash for nothing. */
+    /**
+     * One line, at most {@code max} characters; a dash for nothing. Terminal control characters and
+     * escape sequences go first: a cell shows text another person wrote, such as a summary.
+     */
     public static String cell(String value, int max) {
-        String flat = value == null ? "" : value.replaceAll("\\s+", " ").strip();
+        String flat = SafeText.line(value).replaceAll("\\s+", " ").strip();
         if (flat.isEmpty()) {
             return "-";
         }

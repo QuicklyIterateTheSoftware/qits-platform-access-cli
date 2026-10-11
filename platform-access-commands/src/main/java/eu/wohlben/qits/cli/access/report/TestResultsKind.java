@@ -157,7 +157,11 @@ public final class TestResultsKind implements ReportKind<TestResults> {
                     + (totals.skipped() > 0 ? ", " + totals.skipped() + " skipped" : ""),
                     "tests.passed", (double) totals.passed(), null));
         }
-        if (baseline.isPresent()) {
+        if (baseline.isPresent() && CoverageKind.partial(step)) {
+            highlights.add(new Highlight(Highlight.INFO, "partial: step exited " + step.exitCode()
+                    + ", counts not compared with " + step.baseline().map(Baseline::version).orElse("the baseline"),
+                    null, null, null));
+        } else if (baseline.isPresent()) {
             int delta = totals.tests() - baseline.get().totals().tests();
             if (delta != 0) {
                 String version = step.baseline().map(Baseline::version).orElse("the baseline");

@@ -38,7 +38,8 @@ class PayloadMarkerTest {
         assertThat(marked).isEqualTo(reads);
         assertThat(reads.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey)).containsExactlyInAnyOrder(
                 "work create", "work update", "work transition", "work status",
-                "work comment create", "work comment update");
+                "work comment create", "work comment update", "work dossier put", "work members add",
+                "work members condition", "work design put");
     }
 
     private static void walk(CommandLine.Model.CommandSpec spec, String path,

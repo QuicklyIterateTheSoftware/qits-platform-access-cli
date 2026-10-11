@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.observe;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -17,8 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-@TuiCommand(interaction = Interaction.STREAMING)
-@CommandLine.Command(name = "observe", mixinStandardHelpOptions = true, subcommands = ObserveQueryCommand.class,
+@TuiCommand(interaction = Interaction.STREAMING, effect = Effect.READ)
+@CommandLine.Command(name = "observe", mixinStandardHelpOptions = true, subcommands = {ObserveQueryCommand.class,
+        ObserveTelemetryCommands.SourcesCommand.class, ObserveTelemetryCommands.ErrorsCommand.class,
+        ObserveTelemetryCommands.SlowSpansCommand.class, ObserveTelemetryCommands.MetricsCommand.class},
         description = {
                 "Print what qits-observability takes in (logs, spans with their events, metrics) as it arrives. "
                         + "Use it to watch a service's errors or to follow one trace live. The service applies the "
@@ -32,13 +35,18 @@ import java.util.Locale;
                         + "(TRACE, DEBUG, INFO, WARN, ERROR, FATAL or 1-24).",
                 "Fields: kind service trace span level body name status event attr.<key> resource.<key>. "
                         + "attr.<key> is the record's own attribute, resource.<key> its resource's. "
-                        + "Quote a value that holds spaces: body~\"connection refused\"."},
+                        + "Quote a value that holds spaces: body~\"connection refused\".",
+                "",
+                "Subcommands read what the buffer holds now and do not wait: query searches it with these filters, "
+                        + "sources lists its buckets, and errors, slow-spans and metrics sum up one bucket."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
                 "  qits observe --filter 'kind=log level>=ERROR' --filter 'kind=span event=exception'",
                 "  qits observe --filter 'service^=qits-ci kind=log body~\"connection refused\"'",
                 "  qits observe --filter 'trace=4bf92f3577b34da6a3ce929d0e0e4736'",
                 "  qits observe --filter 'kind=log level>=WARN' -o json | jq -r .record.body",
+                "  qits observe --filter 'service=qits-ci-daemon'",
+                "  qits observe --filter 'service=qits-ci-daemon resource.qits.ci.run_id=5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17'",
                 "",
                 "- A span's exception is an event of the span: event=exception finds it. attr.exception.type? "
                         + "matches logs only.",

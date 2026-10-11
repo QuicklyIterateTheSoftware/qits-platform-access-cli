@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -10,6 +11,7 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
+import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import eu.wohlben.qits.cli.tui.api.Input;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -37,11 +39,16 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 @CommandLine.Command(name = "work", mixinStandardHelpOptions = true,
         subcommands = {WorkCommand.ListCommand.class, WorkCommand.DetailsCommand.class, WorkCommand.CreateCommand.class,
                 WorkCommand.UpdateCommand.class, WorkCommand.TransitionCommand.class, WorkCommand.StatusCommand.class,
-                WorkCommentCommand.class},
+                WorkCommand.BlockCommand.class, WorkCommand.UnblockCommand.class, WorkCommand.DeleteCommand.class,
+                WorkCommand.ProgressCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
+                WorkMembersCommand.class, WorkDesignCommand.class},
         description = {"Work items of every archetype - epics, tickets, features, tasks and campaigns - and their "
                         + "comment threads. list shows a project's items, details shows one with its comments and "
                         + "children, create files one, update edits its fields, transition reshapes it into "
-                        + "another archetype, status moves it along its lifecycle, and comment writes to its thread.",
+                        + "another archetype, status moves it along its lifecycle, block and unblock flag that its "
+                        + "phase cannot go on, delete removes it, and comment writes to its thread.",
+                "An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, "
+                        + "progress), and the HTML designs of a refinement (design) are here too.",
                 "A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or "
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
                         + "served by the service for that archetype.",
@@ -145,6 +152,7 @@ public class WorkCommand implements Runnable {
                     "1:The platform refused (for example an unknown archetype or status, HTTP 400, or a project it "
                             + "does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --project), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class ListCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -203,6 +211,7 @@ public class WorkCommand implements Runnable {
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
     public static class DetailsCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -358,23 +367,36 @@ public class WorkCommand implements Runnable {
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's "
                             + "JSON schema, served at GET /projects/api/work/archetypes/{archetype}/schemas/"
                             + "transition, names the required properties the item does not carry yet and the ones "
-                            + "that would be dropped, and exits with 0."},
+                            + "that would be dropped, and exits with 0.",
+                    "With --map it restates several items at once: the payload is the whole request, "
+                            + "{\"<entity>\": <full state>, ...}, sent unchanged. Each key is a qualified id or an "
+                            + "id, and each state names its \"archetype\" and every property the item is to keep, "
+                            + "because a property left out is cleared. The service judges the map as one post-state "
+                            + "and writes all of it or nothing, so a move with no legal order (a feature becomes an "
+                            + "epic while its tasks become features under it) is one call. Nothing is created or "
+                            + "deleted: every id must already exist. A status change to or from READY_FOR_DEV, or "
+                            + "into started work or REFINED, is refused here; use status. --map takes no --entity "
+                            + "and no --archetype."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 transition --archetype epic </dev/null",
                     "  echo '{}' | qits work --entity qits-100 transition --archetype epic",
                     "  echo '{\"membership\":{\"parent\":\"qits-120\"}}' "
                             + "| qits work --entity qits-100 transition --archetype feature",
+                    "  jq -n '{\"qits-101\":{archetype:\"EPIC\",title:\"Export\",status:\"REPORTED\"},"
+                            + "\"qits-102\":{archetype:\"FEATURE\",title:\"CSV\",status:\"REPORTED\","
+                            + "membership:{parent:\"qits-101\"}}}' | qits work transition --map",
                     "",
                     "- {} carries the item over as it stands. membership.parent, supersededBy and dependsOn take a "
-                            + "qualified id or an id."},
+                            + "qualified id or an id.",
+                    "- --map with nothing on stdin prints the request's schema from the service's OpenAPI document."},
             exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {"0:The item is reshaped, or nothing was put in and the schema is printed.",
+            exitCodeList = {"0:The items are reshaped, or nothing was put in and the schema is printed.",
                     "1:The platform refused (for example a state it does not take, HTTP 400, your roles or another "
                             + "project, HTTP 403, an item or archetype it does not know, HTTP 404, or a conflict, "
                             + "HTTP 409), or cannot be reached.",
-                    "2:Used wrongly (for example no --entity or --archetype, or a payload that is not a JSON object), "
-                            + "not signed in, or the session ended."})
+                    "2:Used wrongly (for example no --entity or --archetype, --map with either, or a payload that "
+                            + "is not a JSON object), not signed in, or the session ended."})
     @TuiCommand(input = Input.PAYLOAD)
     public static class TransitionCommand extends PlatformCommand {
 
@@ -385,14 +407,21 @@ public class WorkCommand implements Runnable {
         CommandLine.Model.CommandSpec spec;
 
         @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
-                description = "The archetype to turn the item into (required): EPIC, TICKET, FEATURE, TASK or "
-                        + "CAMPAIGN. Case-insensitive.")
+                description = "The archetype to turn the item into (required without --map): EPIC, TICKET, "
+                        + "FEATURE, TASK or CAMPAIGN. Case-insensitive.")
         String archetype;
+
+        @CommandLine.Option(names = "--map",
+                description = "Send the payload as it is: a map of entity to full state, for several items at once.")
+        boolean map;
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = json(work.options.output);
             ObjectNode payload = WorkPayload.read(context);
+            if (map) {
+                return restate(context, json, payload);
+            }
             String wanted = work.entity();
             String target = archetype(archetype);
             ProjectsApi api = work.api(context);
@@ -426,6 +455,30 @@ public class WorkCommand implements Runnable {
             body.set(wanted, state);
             JsonNode answer = api.transitionWork(body);
             WorkEntities.printAnswer(context.out(), json, json ? answer : answer.path(wanted));
+            return 0;
+        }
+
+        /** {@code --map}: the payload is the request, sent unchanged; each answer is a row. */
+        private int restate(CliContext context, boolean json, ObjectNode payload)
+                throws CliFailure, InterruptedException {
+            if (work.entity != null && !work.entity.isBlank() || archetype != null && !archetype.isBlank()) {
+                throw new CliFailure("--map takes no --entity and no --archetype: the payload's keys name the "
+                        + "items and each state names its archetype. Nothing was sent.", CliFailure.USAGE);
+            }
+            ProjectsApi api = work.api(context);
+            if (payload == null) {
+                WorkPayload.printSchema(context, api, json, "POST", ProjectsApi.WORK + "/transition",
+                        List.of("application/json"));
+                return 0;
+            }
+            JsonNode answer = api.transitionWork(payload);
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            List<JsonNode> rows = new ArrayList<>();
+            answer.forEach(rows::add);
+            WorkEntities.printRows(context.out(), "", rows);
             return 0;
         }
     }
@@ -509,6 +562,194 @@ public class WorkCommand implements Runnable {
             }
             JsonNode answer = api.setWorkStatus(wanted, payload);
             WorkEntities.printAnswer(context.out(), json, answer);
+            return 0;
+        }
+    }
+
+    // --- block and unblock ---
+
+    @CommandLine.Command(name = "block", mixinStandardHelpOptions = true,
+            description = {"Block a ticket, an epic or a campaign: say that the phase its status started cannot "
+                    + "go on, and why. Use it when you stop and cannot take the work further.",
+                    "Sends {\"blocked\":true,\"reason\":\"...\"} to POST /projects/api/work/{entity}/blocked. "
+                            + "The status does not move: it is the phase to resume, and the next status move "
+                            + "clears the block. The reason lands on the item's comment thread, so write what is "
+                            + "in the way concretely enough for somebody else to act on it."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits work --entity qits-100 block --reason 'The database team must confirm the new limit.'",
+                    "",
+                    "- A feature or a task runs no phase of its own: block its epic. An item that is VERIFIED, "
+                            + "DONE or DROPPED cannot be blocked (HTTP 409)."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The item is blocked.",
+                    "1:The platform refused (for example a feature, a task or a status that starts no phase, HTTP "
+                            + "409, your roles or another project, HTTP 403, or an item it does not know, HTTP "
+                            + "404), or cannot be reached.",
+                    "2:Used wrongly (for example no --entity or no --reason), not signed in, or the session ended."})
+    public static class BlockCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        WorkCommand work;
+
+        @CommandLine.Option(names = "--reason", paramLabel = "<text>",
+                description = "What is in the way (required). It lands on the item's thread.")
+        String reason;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(work.options.output);
+            String wanted = work.entity();
+            String why = RepositoriesCommand.required(reason, "Say what is in the way: --reason <text>.");
+            ObjectNode body = JsonNodeFactory.instance.objectNode();
+            body.put("blocked", true);
+            body.put("reason", why);
+            printBlock(context.out(), json, work.api(context).setWorkBlocked(wanted, body));
+            return 0;
+        }
+    }
+
+    @CommandLine.Command(name = "unblock", mixinStandardHelpOptions = true,
+            description = {"Unblock a ticket, an epic or a campaign: say that what was in the way is gone and its "
+                    + "phase can go on. Do it as soon as you know, whoever blocked it.",
+                    "Sends {\"blocked\":false} to POST /projects/api/work/{entity}/blocked, with the reason when "
+                            + "one is given. No status moves. A blocked campaign starts no new member until it is "
+                            + "unblocked."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits work --entity qits-100 unblock",
+                    "  qits work --entity qits-100 unblock --reason 'The limit is confirmed.' -o json"},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The item is unblocked.",
+                    "1:The platform refused (for example your roles or another project, HTTP 403, or an item it "
+                            + "does not know, HTTP 404), or cannot be reached.",
+                    "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    public static class UnblockCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        WorkCommand work;
+
+        @CommandLine.Option(names = "--reason", paramLabel = "<text>",
+                description = "Why it can go on again. Optional.")
+        String reason;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(work.options.output);
+            String wanted = work.entity();
+            ObjectNode body = JsonNodeFactory.instance.objectNode();
+            body.put("blocked", false);
+            if (reason != null && !reason.isBlank()) {
+                body.put("reason", reason.strip());
+            }
+            printBlock(context.out(), json, work.api(context).setWorkBlocked(wanted, body));
+            return 0;
+        }
+    }
+
+    /** The flag as the write left it: blocked or not, and by what. */
+    private static void printBlock(PrintStream out, boolean json, JsonNode answer) throws CliFailure {
+        if (json) {
+            SafeJson.print(out, answer);
+            return;
+        }
+        JsonNode b = answer.path("block");
+        Table.print(out, "", List.of("ARCHETYPE", "STATUS", "BLOCKED", "SOURCE", "REASON"),
+                List.of(List.of(WorkEntities.cell(text(b, "archetype"), 9), WorkEntities.cell(text(b, "status"), 11),
+                        b.path("blocked").asBoolean() ? "yes" : "no", WorkEntities.cell(text(b, "blockSource"), 14),
+                        WorkEntities.cell(text(b, "blockReason"), 80))));
+    }
+
+    // --- delete ---
+
+    @CommandLine.Command(name = "delete", mixinStandardHelpOptions = true,
+            description = {"Delete a work item, its children and their comment threads. The audit log keeps them.",
+                    "Sends DELETE /projects/api/work/{entity}. An agent may delete a feature or a task of its own "
+                            + "project while the epic is REPORTED; deleting an epic or a ticket takes qits:admin. A "
+                            + "campaign is never deleted: move its status to DROPPED."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits work --entity qits-104 delete"},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The item is gone.",
+                    "1:The platform refused (for example an epic or a ticket for an agent, or another project, HTTP "
+                            + "403, an item it does not know, HTTP 404, or a campaign or an epic past REPORTED, "
+                            + "HTTP 409), or cannot be reached.",
+                    "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    public static class DeleteCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        WorkCommand work;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(work.options.output);
+            String wanted = work.entity();
+            JsonNode answer = work.api(context).deleteWork(wanted);
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            context.out().println("Deleted " + SafeText.line(wanted) + ".");
+            return 0;
+        }
+    }
+
+    // --- progress ---
+
+    @CommandLine.Command(name = "progress", mixinStandardHelpOptions = true,
+            description = {"How a campaign is doing: each member in order with its state (DROPPED, DONE, "
+                    + "DISPATCH_FAILED, JOINED_RUNNING, RUNNING, REFUSED, READY or WAITING) and the items it "
+                    + "waits for.",
+                    "Reads GET /projects/api/work/{entity}/progress, worked out fresh on every call. -o json adds "
+                            + "each criterion of each member's condition, judged: whether it holds, the evidence, "
+                            + "and what would make it hold. It also says whether the criteria evaluator is "
+                            + "listening (evaluator: connected, stalled, consumerFailing with lastError), which "
+                            + "tells a campaign that waits correctly from one that nothing listens for."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits work --entity qits-130 progress", "  qits work --entity qits-130 progress -o json"},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE,
+                    "1:The platform refused (for example an item that is not a campaign, HTTP 404), or cannot be "
+                            + "reached.",
+                    "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
+    @TuiCommand(effect = Effect.READ)
+    public static class ProgressCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        WorkCommand work;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(work.options.output);
+            JsonNode answer = work.api(context).workProgress(work.entity());
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            PrintStream out = context.out();
+            JsonNode progress = answer.path("progress");
+            JsonNode campaign = progress.path("campaign");
+            JsonNode evaluator = progress.path("evaluator");
+            out.println("CAMPAIGN " + SafeText.line(text(campaign, "qualifiedId")) + "  "
+                    + SafeText.line(text(campaign, "status")) + "  " + SafeText.line(text(campaign, "title")));
+            out.println("evaluator: " + (evaluator.path("connected").asBoolean() ? "connected" : "not connected")
+                    + (evaluator.path("stalled").asBoolean() ? ", stalled" : "")
+                    + (evaluator.path("consumerFailing").asBoolean()
+                            ? ", failing: " + SafeText.line(text(evaluator, "lastError")) : ""));
+            List<List<String>> rows = new ArrayList<>();
+            for (JsonNode m : progress.path("members")) {
+                JsonNode e = m.path("entity");
+                rows.add(List.of(m.path("position").asText(), WorkEntities.cell(text(e, "qualifiedId"), 40),
+                        WorkEntities.cell(text(e, "status"), 11), WorkEntities.cell(text(m, "state"), 15),
+                        WorkEntities.cell(String.join(", ", WorkEntities.texts(m.path("waitsFor"))), 60),
+                        WorkEntities.cell(text(e, "title"), 60)));
+            }
+            if (rows.isEmpty()) {
+                out.println("No members.");
+                return 0;
+            }
+            out.println();
+            Table.print(out, "", List.of("POS", "ID", "STATUS", "STATE", "WAITS FOR", "TITLE"), rows);
             return 0;
         }
     }

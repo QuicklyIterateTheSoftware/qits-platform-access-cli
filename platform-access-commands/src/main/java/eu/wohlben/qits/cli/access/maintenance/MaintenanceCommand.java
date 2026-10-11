@@ -1,5 +1,7 @@
 package eu.wohlben.qits.cli.access.maintenance;
 
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.complete.ProjectSource;
 import eu.wohlben.qits.cli.access.complete.ReleaseRequestSource;
@@ -127,6 +129,7 @@ public class MaintenanceCommand implements Runnable {
                             + "re-runs one; `qits ci run <id> --logs` shows a run."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class AutomationsCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand
@@ -195,6 +198,7 @@ public class MaintenanceCommand implements Runnable {
                     "- Run it again to follow a job: REQUESTED and RUNNING are not finished."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(effect = Effect.READ)
     public static class BumpCommand extends PlatformCommand {
 
         @CommandLine.ParentCommand

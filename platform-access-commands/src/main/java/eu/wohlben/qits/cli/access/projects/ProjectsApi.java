@@ -81,8 +81,21 @@ public final class ProjectsApi {
 
     /** {@code {"requests":[…]}}. A null state asks for the service's default. */
     public JsonNode releaseRequests(String repoId, String state) throws CliFailure, InterruptedException {
-        String query = state == null || state.isBlank() ? "" : "?state=" + URLEncoder.encode(state.strip(), StandardCharsets.UTF_8);
-        return client.get(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests" + query));
+        return client.get(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests" + stateQuery(state)));
+    }
+
+    /**
+     * {@code {"requests":[…]}}: the release requests of every repository of the project, most
+     * recently moved first, each with its {@code repoName}. Without a state the service answers the
+     * open ones plus the last 10 finalized, which is what the landing app shows; {@code all} is every
+     * state, and a state's name narrows to it.
+     */
+    public JsonNode projectReleaseRequests(String projectId, String state) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/release-requests" + stateQuery(state)));
+    }
+
+    private static String stateQuery(String state) {
+        return state == null || state.isBlank() ? "" : "?state=" + URLEncoder.encode(state.strip(), StandardCharsets.UTF_8);
     }
 
     /**
@@ -224,6 +237,175 @@ public final class ProjectsApi {
     /** The item in its new status, {@code statusBefore} filled. The body is {@code {"target": …}}. */
     public JsonNode setWorkStatus(String entity, JsonNode body) throws CliFailure, InterruptedException {
         return client.post(uri(workPath(entity) + "/status"), body);
+    }
+
+    /** {@code {"block":{…}}}: the flag as the write left it. The body is {@code {"blocked", "reason"}}. */
+    public JsonNode setWorkBlocked(String entity, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/blocked"), body);
+    }
+
+    /** {@code {"success":true}}: the item and its subtree are gone. */
+    public JsonNode deleteWork(String entity) throws CliFailure, InterruptedException {
+        return client.delete(uri(workPath(entity)));
+    }
+
+    // --- dossier ---
+
+    /** {@code {"pages":[…]}}, in reading order, bodies included. */
+    public JsonNode workDossier(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity) + "/dossier"));
+    }
+
+    /** One page, by its slug or its id: {@code {id, slug, title, position, body, version, …}}. */
+    public JsonNode workDossierPage(String entity, String page) throws CliFailure, InterruptedException {
+        return client.get(uri(dossierPagePath(entity, page)));
+    }
+
+    /** The new page. The body is {@code {"title", "body"}}. */
+    public JsonNode createWorkDossierPage(String entity, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/dossier"), body);
+    }
+
+    /** The page as written. The body is {@code {"title"?, "body"?, "version"}}. */
+    public JsonNode putWorkDossierPage(String entity, String page, JsonNode body)
+            throws CliFailure, InterruptedException {
+        return client.put(uri(dossierPagePath(entity, page)), body);
+    }
+
+    /** The page in its new place. The body is {@code {"position"}}. */
+    public JsonNode moveWorkDossierPage(String entity, String page, JsonNode body)
+            throws CliFailure, InterruptedException {
+        return client.post(uri(dossierPagePath(entity, page) + "/move"), body);
+    }
+
+    /** {@code {"success":true}}. */
+    public JsonNode deleteWorkDossierPage(String entity, String page) throws CliFailure, InterruptedException {
+        return client.delete(uri(dossierPagePath(entity, page)));
+    }
+
+    /** {@code {id, kind, mimeType, label, url, markdown}}. The body is {@code {"sourceId", "kind"}}. */
+    public JsonNode inlineWorkDossierAsset(String entity, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/dossier-assets"), body);
+    }
+
+    static String dossierPagePath(String entity, String page) {
+        return workPath(entity) + "/dossier/" + segment(page);
+    }
+
+    // --- campaign members ---
+
+    /** {@code {"members":[…]}}, in campaign order. */
+    public JsonNode workMembers(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity) + "/members"));
+    }
+
+    /** {@code {"member":{…}}}. The body is {@code {"entityId", "position"?, "inFlight"?}}. */
+    public JsonNode addWorkMember(String entity, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/members"), body);
+    }
+
+    /** {@code {"members":[…]}} in the new order. The body is {@code {"position"}}. */
+    public JsonNode moveWorkMember(String entity, String membershipId, JsonNode body)
+            throws CliFailure, InterruptedException {
+        return client.put(uri(memberPath(entity, membershipId) + "/position"), body);
+    }
+
+    /** {@code {"members":[…]}}: the ones that remain. */
+    public JsonNode removeWorkMember(String entity, String membershipId) throws CliFailure, InterruptedException {
+        return client.delete(uri(memberPath(entity, membershipId)));
+    }
+
+    /** {@code {"member":{…}}}. The body is the whole condition, {@code {"groups":[…]}}. */
+    public JsonNode setWorkMemberCondition(String entity, String membershipId, JsonNode body)
+            throws CliFailure, InterruptedException {
+        return client.put(uri(memberPath(entity, membershipId) + "/condition"), body);
+    }
+
+    /** {@code {"progress":{campaign, evaluator, members}}}: derived on every call. */
+    public JsonNode workProgress(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity) + "/progress"));
+    }
+
+    private static String memberPath(String entity, String membershipId) {
+        return workPath(entity) + "/members/" + segment(membershipId);
+    }
+
+    // --- refinement designs ---
+
+    /** {@code {"refinement":{id, …}}}, or {@code {"refinement":null}} when the item has no room. */
+    public JsonNode workRefinement(String entity) throws CliFailure, InterruptedException {
+        return client.get(uri(workPath(entity) + "/refinement"));
+    }
+
+    /** {@code {"designs":[…]}}, oldest first, without their documents. */
+    public JsonNode refinementDesigns(String refinementId) throws CliFailure, InterruptedException {
+        return client.get(uri(designsPath(refinementId)));
+    }
+
+    /** One design with its whole document. */
+    public JsonNode refinementDesign(String refinementId, String designId) throws CliFailure, InterruptedException {
+        return client.get(uri(designsPath(refinementId) + "/" + segment(designId)));
+    }
+
+    /** The new design, without its document. The body is {@code {"title", "html"}}. */
+    public JsonNode addRefinementDesign(String refinementId, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(designsPath(refinementId)), body);
+    }
+
+    /** The design as written. The body is {@code {"title", "html"?, "version"}}. */
+    public JsonNode updateRefinementDesign(String refinementId, String designId, JsonNode body)
+            throws CliFailure, InterruptedException {
+        return client.put(uri(designsPath(refinementId) + "/" + segment(designId)), body);
+    }
+
+    private static String designsPath(String refinementId) {
+        return "/projects/api/refinements/" + segment(refinementId) + "/designs";
+    }
+
+    // --- repository reads ---
+
+    /** {@code {"branches":[{name, parent, ahead, behind, canCleanup}]}}. */
+    public JsonNode branches(String repoId) throws CliFailure, InterruptedException {
+        return client.get(uri(repositoryPath(repoId) + "/branches"));
+    }
+
+    /** {@code {branch, parent, commits:[…]}}: the commits on the branch that are not on its parent. */
+    public JsonNode commits(String repoId, String branch) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "branch", branch);
+        return client.get(uri(repositoryPath(repoId) + "/commits" + query(query)));
+    }
+
+    /** {@code {commit, parent, files:[{path, oldPath, changeType}]}}. A null parent is the first parent. */
+    public JsonNode commitChanges(String repoId, String hash, String parent) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "parent", parent);
+        return client.get(uri(repositoryPath(repoId) + "/commits/" + segment(hash) + "/changes" + query(query)));
+    }
+
+    /** {@code {path, changeType, diff}}: one file's unified diff. */
+    public JsonNode commitDiff(String repoId, String hash, String path, String parent)
+            throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "path", path);
+        addQuery(query, "parent", parent);
+        return client.get(uri(repositoryPath(repoId) + "/commits/" + segment(hash) + "/diff" + query(query)));
+    }
+
+    /** {@code {branch, limit, guardEnabled, counts, nonComplying:[…], qualifiedIds}}. */
+    public JsonNode commitSubjects(String repoId, String branch, Integer limit) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "branch", branch);
+        addQuery(query, "limit", limit == null ? null : limit.toString());
+        return client.get(uri(repositoryPath(repoId) + "/commit-subjects" + query(query)));
+    }
+
+    private static String repositoryPath(String repoId) {
+        return "/projects/api/repositories/" + segment(repoId);
+    }
+
+    private static String query(List<String> query) {
+        return query.isEmpty() ? "" : "?" + String.join("&", query);
     }
 
     /** A JSON Schema: what the door takes for this archetype, as the service validates it. */

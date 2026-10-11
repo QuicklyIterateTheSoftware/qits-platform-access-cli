@@ -9,9 +9,15 @@ import eu.wohlben.qits.cli.tui.screen.Frame;
 import eu.wohlben.qits.cli.tui.screen.Glyphs;
 import eu.wohlben.qits.cli.tui.screen.Key;
 import org.jline.utils.AttributedString;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -91,7 +97,30 @@ class InteractionClassesTest {
     }
 
     private final CommandNode root = CommandNode.of(new CommandLine(new Root()).getCommandSpec());
-    private final CommandRunner runner = new CommandRunner("/bin/true");
+    /**
+     * The child waits until it is stopped. A child that exits at once (`/bin/true`) races the
+     * title check: on a fast machine it has already finished, and the title reads its exit code.
+     */
+    private static final Path WAITING_CHILD = waitingChild();
+
+    private final CommandRunner runner = new CommandRunner(WAITING_CHILD.toString());
+
+    private static Path waitingChild() {
+        try {
+            Path script = Files.createTempFile("qits-tui-child", ".sh",
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+            Files.writeString(script, "#!/bin/sh\nexec sleep 30\n");
+            script.toFile().deleteOnExit();
+            return script;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @AfterEach
+    void stopTheChild() {
+        runner.stop();
+    }
     private final TuiApp app = new TuiApp(root, "qits tui", runner);
     private final Frame frame = new Frame(Glyphs.UNICODE);
 

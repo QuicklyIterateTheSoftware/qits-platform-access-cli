@@ -4,6 +4,7 @@ import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.data.ExecutionDataWriter;
 import org.jacoco.core.data.SessionInfoStore;
 import org.jacoco.core.instr.Instrumenter;
+import org.jacoco.core.internal.data.CRC64;
 import org.jacoco.core.runtime.IRuntime;
 import org.jacoco.core.runtime.LoggerRuntime;
 import org.jacoco.core.runtime.RuntimeData;
@@ -99,6 +100,35 @@ final class JacocoFixture {
         return root;
     }
 
+    /**
+     * The same tree, except that the run loaded {@code fx.Ledger} as different bytes than its
+     * {@code target/classes} holds, the way Quarkus rewrites a bean as it loads it: here, compiled
+     * without local variable tables, so same lines and another class id. With {@code dumped}, those
+     * bytes are where the agent's {@code classdumpdir} puts them,
+     * {@code .qits-reports/jacoco-classes/fx/Ledger.<id>.class}.
+     */
+    static Path buildTransformed(Path root, boolean dumped) throws Exception {
+        Path ledger = write(root, LEDGER, LEDGER_SOURCE);
+        Path clock = write(root, CLOCK, CLOCK_SOURCE);
+        compile(root.resolve("service/target/classes"), ledger);
+        compile(root.resolve("domain/target/classes"), clock);
+        Path variantDir = root.resolve("elsewhere-variant");
+        compile(variantDir, "-g:source,lines", ledger);
+        byte[] variant = Files.readAllBytes(variantDir.resolve("fx/Ledger.class"));
+        byte[] original = Files.readAllBytes(root.resolve("service/target/classes/fx/Ledger.class"));
+        if (CRC64.classId(variant) == CRC64.classId(original)) {
+            throw new IllegalStateException("the variant must have another class id");
+        }
+        writeExec(root.resolve(".qits-reports/jacoco.exec"), variant);
+        if (dumped) {
+            Path dump = root.resolve(".qits-reports/jacoco-classes/fx")
+                    .resolve(String.format("Ledger.%016x.class", CRC64.classId(variant)));
+            Files.createDirectories(dump.getParent());
+            Files.write(dump, variant);
+        }
+        return root;
+    }
+
     private static Path write(Path root, String path, String text) throws IOException {
         Path file = root.resolve(path);
         Files.createDirectories(file.getParent());
@@ -107,9 +137,13 @@ final class JacocoFixture {
     }
 
     private static void compile(Path into, Path... sources) throws IOException {
+        compile(into, "-g", sources);
+    }
+
+    private static void compile(Path into, String debug, Path... sources) throws IOException {
         Files.createDirectories(into);
         JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
-        List<String> arguments = new ArrayList<>(List.of("-g", "-d", into.toString()));
+        List<String> arguments = new ArrayList<>(List.of(debug, "-d", into.toString()));
         for (Path source : sources) {
             arguments.add(source.toString());
         }
