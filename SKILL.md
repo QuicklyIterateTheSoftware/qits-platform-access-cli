@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -15,6 +15,7 @@ A workspace is the token home: on a runner node, or an admin or editor workspace
 - Release only through a release request: `qits release-request create`, or `join` to add a branch to an open one. A push releases nothing.
 - Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from `qits git-credential`.
 - qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, and `qits mcp-credential`, which Claude runs.
+- To wait for something on the platform, declare it with `qits wait` and end your turn: you get a new turn when it happens. Never poll for it in a background loop.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
 
 ## Exit codes
@@ -1295,7 +1296,7 @@ Without --repository it shows every repository's requests, as the landing app do
 
 With --repository it shows that repository's open requests only. Open means every state but FINALIZED, WITHDRAWN and OBSOLETE.
 
---state asks for other ones in both forms. The ID column shows the first 8 characters of the id, which is enough for `join`.
+--state asks for other ones in both forms. The ID column shows the request's id, <repository>-rr-<n>, which `join` and `withdraw` take. -o json also has its uuid (id); the commands take that too.
 
 ```
 qits release-request list [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--state <STATE|all>]
@@ -1375,7 +1376,7 @@ qits release-request join --branch <branch> --request <id> [--output table|json]
 | Name | What it does |
 |---|---|
 | `--branch <branch>` | Required. The branch to add. |
-| `--request <id>` | Required. The request: its id, or enough of its start to name one (list shows 8 characters). |
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--priority <priority>` | LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: MEDIUM for a new branch; a branch already on the request keeps its priority. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -1385,8 +1386,8 @@ qits release-request join --branch <branch> --request <id> [--output table|json]
 ### Examples
 
 ```
-qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 --branch feature/log-search
-qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 --branch feature/log-search --priority BLOCKING
+qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 --branch feature/log-search
+qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 --branch feature/log-search --priority BLOCKING
 ```
 
 - Safe to repeat: a branch already on the request adds nothing. With --priority it states that priority again; without, the branch keeps its priority.
@@ -1410,7 +1411,7 @@ qits release-request withdraw --request <id> [--output table|json] [--project <p
 
 | Name | What it does |
 |---|---|
-| `--request <id>` | Required. The request: its id, or enough of its start to name one (list shows 8 characters). |
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
@@ -1420,8 +1421,8 @@ qits release-request withdraw --request <id> [--output table|json] [--project <p
 ### Examples
 
 ```
-qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0
-qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0 --reason "The log view moves to qits-observability"
+qits release-request --project qits --repository qits-ci-service withdraw --request qits-ci-service-rr-12
+qits release-request --project qits --repository qits-ci-service withdraw --request qits-ci-service-rr-12 --reason "The log view moves to qits-observability"
 ```
 
 - Only for a request that must not ship. A gating build that was red because of the platform, not the code, runs again with `qits ci retry <run id>`. A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push.
@@ -1451,13 +1452,13 @@ qits release-request regenerate --kind <kind> [--output table|json] [--project <
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
 | `--repository <repository>` | The repository: its id or name. |
-| `--request <id>` | The request: its id, or enough of its start to name one (list shows 8 characters). Default: the repository's one open request. |
+| `--request <id>` | The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. Default: the repository's one open request. |
 
 ### Examples
 
 ```
 qits release-request --project qits --repository qits-landing-app regenerate --kind screenshot-baselines
-qits release-request --project qits --repository qits-projects-service regenerate --request 4f2a91c0 --kind entity-diagram
+qits release-request --project qits --repository qits-projects-service regenerate --request qits-projects-service-rr-12 --kind entity-diagram
 ```
 
 - Without --request it takes the repository's one open request. A REJECTED request is open: a red QA is the usual reason to regenerate.
@@ -1501,7 +1502,7 @@ qits ci runs [--branch <branch>] [--ci-url <url>] [--limit <n>] [--output table|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
-| `--release-request <id>` | Only the runs of this release request: its id, or the start of it. |
+| `--release-request <id>` | Only the runs of this release request: its id (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `--repository <repository>` | The repository: its id or name. |
 | `--status <STATUS>` | Only the runs in this status: QUEUED, RUNNING, SUCCESS, FAILED, CANCELLED, TIMED_OUT or CONFIG_ERROR. |
 
@@ -1510,11 +1511,11 @@ qits ci runs [--branch <branch>] [--ci-url <url>] [--limit <n>] [--output table|
 ```
 qits ci runs --project qits --repository qits-ci-service
 qits ci runs --project qits --repository qits-ci-service --status FAILED --limit 5
-qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0
+qits ci runs --project qits --repository qits-ci-service --release-request qits-ci-service-rr-12
 qits ci runs --project qits --repository qits-ci-service --branch main -o json
 ```
 
-- A release request's gating runs: --release-request with the request's id, or the 8 characters `qits release-request list` shows. They build the branch release/<request id>.
+- A release request's gating runs: --release-request with the request's id as `qits release-request list` shows it (qits-ci-service-rr-12), its uuid or the start of the uuid. They build the request's branch, release/<request id>.
 - The service filters by repository and count only. --branch, --status and --release-request are applied here, over all of the repository's runs, and --limit after them.
 
 ### Exit codes
@@ -1753,7 +1754,7 @@ qits maintenance automations --request <id> [--fold <sha>] [--maintenance-url <u
 
 | Name | What it does |
 |---|---|
-| `--request <id>` | Required. The release request: its id, or enough of its start to name one (`qits release-request list` shows 8 characters). |
+| `--request <id>` | Required. The release request: its id as `qits release-request list` shows it (qits-landing-app-rr-7), its uuid, or the start of the uuid. |
 | `--fold <sha>` | The fold to read; without it, the request's newest. |
 | `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else the session's idp address with `idp` swapped for `maintenance`. |
 | `-o, --output table\|json` | table (the default): one line per field. json: the service's answer, pretty-printed. |
@@ -1764,7 +1765,7 @@ qits maintenance automations --request <id> [--fold <sha>] [--maintenance-url <u
 ### Examples
 
 ```
-qits maintenance --project qits --repository qits-landing-app automations --request 4f2a91c0
+qits maintenance --project qits --repository qits-landing-app automations --request qits-landing-app-rr-7
 ```
 
 - RUN is the newest run of the kind's current attempt. `qits maintenance automation run` re-runs one; `qits ci run <id> --logs` shows a run.
@@ -1792,7 +1793,7 @@ qits maintenance automation run --kind <kind> --request <id> [--maintenance-url 
 | Name | What it does |
 |---|---|
 | `--kind <kind>` | Required. The automation's kind, as `qits maintenance automations --request <id>` names it. |
-| `--request <id>` | Required. The release request: its id, or enough of its start to name one (`qits release-request list` shows 8 characters). |
+| `--request <id>` | Required. The release request: its id as `qits release-request list` shows it (qits-landing-app-rr-7), its uuid, or the start of the uuid. |
 | `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else the session's idp address with `idp` swapped for `maintenance`. |
 | `-o, --output table\|json` | table (the default): one line per field. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -1803,8 +1804,8 @@ qits maintenance automation run --kind <kind> --request <id> [--maintenance-url 
 ### Examples
 
 ```
-qits maintenance --project qits --repository qits-landing-app automation run --request 4f2a91c0 --kind estate-pins
-qits maintenance --project qits --repository qits-landing-app automation run --request 4f2a91c0 --kind estate-pins --work-item qits-112
+qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins
+qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins --work-item qits-112
 ```
 
 - `qits maintenance automations --request <id>` names the kinds; `kind` is the first column.
@@ -1850,7 +1851,7 @@ qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 
 ## qits events
 
-Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait for something on the platform: a build (BuildSuccessful, BuildFailed) or a release request (ReleaseRequestChanged).
+Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to watch the platform: builds (BuildStatusChanged), release requests (ReleaseRequestStateChanged). To wait for something, do not keep this running: declare it with `qits wait` and end your turn.
 
 Each line is the event with its payload read as JSON. Live only: the stream has no replay, so start it before the thing you wait for; events that happen while it reconnects are missed. Notes go to stderr. Stops on SIGINT or SIGTERM.
 
@@ -1867,7 +1868,7 @@ qits events [--events-url <url>] [--filter <names>]
 
 ```
 qits events --filter=BuildSuccessful,BuildFailed
-qits events --filter=ReleaseRequestChanged | jq -r '.payload'
+qits events --filter=ReleaseRequestStateChanged | jq -r '.payload'
 ```
 
 --filter takes exact event names. A pattern such as Build* is refused.
@@ -2128,6 +2129,210 @@ qits observe metrics --source _service/qits-ci --name http.server.active_request
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example no bucket named), not signed in, or the session ended.
+
+## qits wait
+
+Declare what this agent waits on: a domain event that fits a selection. The platform gives the agent a turn when one arrives, or when the timeout passes. The command returns at once; it never blocks.
+
+Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets for the usual waits; list shows this agent's waits and cancel ends one.
+
+Each --when is one group of conditions, separated by spaces, that must all hold. An event that fits any group matches; with no --when, every event of the name does. Conditions: path=value equal, path^=value starts with, path? present, !path absent. A path is the payload's fields joined by dots; [] after a field means some element of that array, and the conditions of one group that go through the same name[] must hold on the same element (entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or is empty: label="two words", note="". At most 8 groups of 8 conditions.
+
+The agent is QITS_AGENT_ID, which the harness sets, or --agent. An agent may declare and cancel waits for itself only.
+
+```
+qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json] [--timeout <duration>] [--when <conditions>...] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--event <Name>` | Required, unless a preset is named. The event's name, as the bus carries it: BuildFailed, EntityTransitioned. |
+| `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
+| `--when <conditions>...` | One group of conditions, for example 'runId=<id> status=SUCCESS'. Give it again for another group, up to 8. Without one, every event of the name fits. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Waiting on the platform
+
+- Declare the wait, then end your turn. You get a new turn that names what fired: the event, or the timeout.
+- Never poll in a background loop (sleep, watch, `qits events`) for something a wait can say.
+- While a wait is open, the platform shows the agent as waiting on its label, not as blocked.
+- A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.
+
+```
+qits wait release-request qits-ci-service-rr-12
+qits wait work qits-123 --status VERIFIED --timeout 2h
+qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
+qits wait --event BuildFailed --when 'repoName=qits-ci-service branch=main' --label 'main to break'
+qits wait --event EntityTransitioned --when 'entities[].status=VERIFIED' --timeout 30m
+qits wait list --state OPEN
+qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
+```
+
+### Exit codes
+
+- `0` The wait is declared; it is printed.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (no agent id, no --event, a --when or --timeout that cannot be read or is over a limit), not signed in, or the session ended.
+
+## qits wait release-request
+
+Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.
+
+The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> state=<STATE> for a uuid.
+
+```
+qits wait release-request [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
+```
+
+| Name | What it does |
+|---|---|
+| `<id>` | The release request: its id (qits-ci-service-rr-12) or its whole uuid. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits wait release-request qits-ci-service-rr-12
+qits wait release-request qits-ci-service-rr-12 --timeout 3h
+qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab
+```
+
+- Give the whole id, as `qits release-request list` shows it, or the whole uuid. The wait matches it exactly, so the start of a uuid is refused, and the id must be in the case the list shows.
+
+### Exit codes
+
+- `0` The wait is declared; it is printed.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (no agent id, not a whole id or uuid), not signed in, or the session ended.
+
+## qits wait work
+
+Wait until a work item reaches a status.
+
+The item is looked up in the projects service first, so its qualified id (qits-123) works. The same as --event EntityTransitioned --when 'entities[].entityId=<its id> entities[].status=<STATUS>'.
+
+```
+qits wait work --status <STATUS> [--agent <id>] [--label <text>] [--output table|json] [--projects-url <url>] [--timeout <duration>] [--workspaces-url <url>] <entity>
+```
+
+| Name | What it does |
+|---|---|
+| `<entity>` | The work item: its qualified id (qits-123) or its id. |
+| `--status <STATUS>` | Required. The status to wait for: REFINED, READY_FOR_DEV, IMPLEMENTED, VERIFIED, DONE, DROPPED or another word of the item's lifecycle. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where the item is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits wait work qits-123 --status VERIFIED
+qits wait work qits-123 --status DONE --timeout 1d --label 'qits-123 to be done'
+```
+
+### Exit codes
+
+- `0` The wait is declared; it is printed.
+- `1` The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (no agent id, no --status), not signed in, or the session ended.
+
+## qits wait ci-run
+
+Wait until a CI run ends: SUCCESS, FAILED, CANCELLED, CONFIG_ERROR or TIMED_OUT.
+
+The same as --event BuildStatusChanged with one group per final status: runId=<id> status=<STATUS>.
+
+```
+qits wait ci-run [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <run id>
+```
+
+| Name | What it does |
+|---|---|
+| `<run id>` | The run's whole id. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
+```
+
+- Give the whole id: `qits ci runs ... -o json` shows it.
+
+### Exit codes
+
+- `0` The wait is declared; it is printed.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (no agent id, not a whole id), not signed in, or the session ended.
+
+## qits wait list
+
+This agent's waits: id, state, event, label, when it was declared and when it times out.
+
+```
+qits wait list [--agent <id>] [--output table|json] [--state <STATE>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--state <STATE>` | Only the waits in this state: OPEN, MATCHED, TIMED_OUT or CANCELLED. Default: all. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits wait list
+qits wait list --state OPEN -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (no agent id, a state qits does not know), not signed in, or the session ended.
+
+## qits wait cancel
+
+End one of this agent's open waits. The agent gets no turn for it.
+
+```
+qits wait cancel [--agent <id>] [--output table|json] [--workspaces-url <url>] <wait id>
+```
+
+| Name | What it does |
+|---|---|
+| `<wait id>` | The wait's id, as `qits wait list` shows it. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example a wait it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (no agent id), not signed in, or the session ended.
 
 ## qits git-login
 
@@ -2544,13 +2749,13 @@ qits artifacts publish docs submit --site @apidocs/qits-projects --version 2026.
 
 Write this release's CHANGELOG.md and publish it as the docs site @changelog/<repository> at --version. Run in a release's publish step.
 
-The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
+The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId, releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
 
 The second line's time is the payload's occurredAt, or QITS_EVENT_OCCURRED_AT when the payload has none; both are optional, and a value that does not parse as an ISO-8601 time is dropped rather than refused, so the line is left without a time instead.
 
 The last line is always `associated tickets:` followed by every ticket that exists, as `qits-9`; `qits changelog bump-message` reads it back.
 
-The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the given --meta and release.request.id=<request>. An occupied version is skipped, as there.
+The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the given --meta, release.request.id=<uuid> and, when the event names it, release.request.qualified-id=<repository>-rr-<n>. An occupied version is skipped, as there.
 
 ```
 qits artifacts publish changelog [--meta <key=value>...] [--version <version>...]

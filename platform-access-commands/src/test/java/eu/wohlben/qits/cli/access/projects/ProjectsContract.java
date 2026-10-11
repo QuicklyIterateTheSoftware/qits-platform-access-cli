@@ -23,15 +23,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
- * {@code /work} doors and five more: the release request's commits, which {@code qits artifacts
+ * {@code /work} doors and six more: the release request's commits, which {@code qits artifacts
  * publish changelog} reads in every release step (qits-893), a commit's changes and one file's
  * diff, the project's release requests, which {@code qits release-request list} reads when no
- * repository is named, and an automation run, which {@code qits release-request regenerate} asks
- * for (qits-1182). {@code qits projects}, the other {@code repositories} reads and the other {@code
- * release-request} calls are not part of this pact yet, and neither is the OpenAPI document the
- * payload commands read their schema from. Neither is {@code list --state}: the provider records
- * the project list without a query only. Doors the provider records in no state (branches,
- * commits, commit subjects, the refinement designs) have no row: a row needs a recorded state.
+ * repository is named, the repository's requests of every state, where every command that takes
+ * a request finds it by its logical id (qits-1158), and an automation run, which {@code qits
+ * release-request regenerate} asks for (qits-1182). {@code qits projects}, the other {@code
+ * repositories} reads and the other {@code release-request} calls are not part of this pact yet,
+ * and neither is the OpenAPI document the payload commands read their schema from. Neither is
+ * {@code list --state}: the provider records the project list without a query only. Doors the
+ * provider records in no state (branches, commits, commit subjects, the refinement designs) have
+ * no row: a row needs a recorded state.
  * <p>
  * <b>Each state is one the provider records</b> in its golden masters, picked for the call: a row
  * whose (state, operation) the index does not hold fails before anything runs, naming both.
@@ -65,6 +67,7 @@ final class ProjectsContract {
     static final String TICKET_WITH_A_COMMENT = "a ticket with a comment";
     static final String IMPLEMENTED_TICKET = "an implemented ticket";
     static final String RELEASED_REQUEST = "a released release request";
+    static final String REQUESTS_OF_EVERY_STATE = "a repository with a release not merged to main";
     static final String BUG_TICKET_IN_DETAIL = "a bug ticket in detail";
     static final String EPIC_WITH_A_SKETCH = "an epic with a sketch to inline";
     static final String CAMPAIGN_IN_DETAIL = "a campaign in detail";
@@ -191,6 +194,23 @@ final class ProjectsContract {
         });
         // Not "some are not folds": the mock answers every element in the first one's shape, and
         // the recording's first commit is the fold.
+    };
+
+    /**
+     * Every command that takes a release request finds it among the repository's requests of every
+     * state, by its logical id (qits-1158) or its uuid's start, and sends the uuid it found.
+     */
+    private static final Call FIND_REQUEST = (api, params, recorded) -> {
+        JsonNode requests = api.releaseRequests(params.get("repositoryId"), "all").path("requests");
+        assertThat(requests).isNotEmpty().allSatisfy(r -> {
+            assertThat(ProjectsApi.text(r, "id")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "qualifiedId")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "state")).isNotBlank();
+        });
+        JsonNode first = requests.get(0);
+        JsonNode found = ReleaseRequestRefs.find(requests, ProjectsApi.text(first, "qualifiedId").toUpperCase(),
+                ProjectsApi.text(first, "repoName"), "");
+        assertThat(ProjectsApi.text(found, "id")).isEqualTo(ProjectsApi.text(first, "id"));
     };
 
     /** The literal segment after {@code marker} in the recorded path: a page slug or a commit hash. */
@@ -374,6 +394,7 @@ final class ProjectsContract {
             row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", COMMIT_DIFF),
             row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
                     PROJECT_RELEASE_REQUESTS),
+            row("qits release-request join", REQUESTS_OF_EVERY_STATE, "listRepositoryReleaseRequests", FIND_REQUEST),
             row("qits release-request regenerate", HELD_BY_A_FAILED_AUTOMATION, "rerunReleaseRequestAutomation",
                     REGENERATE));
 

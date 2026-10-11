@@ -9,7 +9,7 @@ that session fresh), `qits projects|repositories|work|release-request` (the proj
 `work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
 run's step logs, a retry, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits events` (the live event
-stream), `qits checkout-daemon` (a local checkout held at what a repository released, root and
+stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), `qits agents claude …` (what
@@ -176,6 +176,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
     observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
                and SafeText (terminal control characters out of every streamed value); `query`
                under it asks the records search with the same filters (ObserveQueryCommand)
+    waits/     qits wait: the --when grammar (WhenGrammar, a copy of qits-eventstream-javalib's
+               selection grammar and limits, producing its wire JSON; keep the two in step), the
+               --timeout reader, the presets and list/cancel on qits-workspaces' agent waits
+    waits/     qits wait: the --when grammar (WhenGrammar, a copy of qits-eventstream-javalib's
+               selection grammar and limits, producing its wire JSON; keep the two in step), the
+               --timeout reader, the presets and list/cancel on qits-workspaces' agent waits
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
@@ -407,9 +413,12 @@ mock server, and `ProjectsPactFileTest` compares the committed file byte for byt
 names a provider state the provider records; every interaction carries `qits-call` and a
 `qits-trigger` of kind `command` naming the command (`qits work details`). A new `/work` call on
 `ProjectsApi` needs its row, which `theContractCoversEveryWorkCallOfTheCommandsAndNothingElse`
-enforces. One row is not a `/work` door: `qits artifacts publish changelog` reads the release
-request's commits (`listReleaseRequestCommits`, state `a released release request`), and that test
-names its path. `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
+enforces. Two rows are not `/work` doors, and that test names their paths: `qits artifacts publish
+changelog` reads the release request's commits (`listReleaseRequestCommits`, state `a released
+release request`), and every command that takes a release request finds it among the repository's
+requests of every state by its logical id (`listRepositoryReleaseRequests` with `state=all`, state
+`a repository with a release not merged to main`; qits-1158). A recorded query is part of the
+interaction (`GoldenMasters.query`). `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.

@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.complete;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.ArrayList;
@@ -38,8 +39,9 @@ public class ReleaseRequestSource extends PlatformSource {
             if (CLOSED.contains(state)) {
                 return;
             }
-            String id = ProjectsApi.text(request, "id");
-            choices.add(new Choice(id, columns(shortId(id), state + "  " + ProjectsApi.text(request, "summary"))));
+            // Every command that takes a request takes its logical id, and it is what a person reads.
+            choices.add(new Choice(ReleaseRequestRefs.name(request),
+                    columns(ReleaseRequestRefs.label(request), state + "  " + ProjectsApi.text(request, "summary"))));
         });
         return choices;
     }

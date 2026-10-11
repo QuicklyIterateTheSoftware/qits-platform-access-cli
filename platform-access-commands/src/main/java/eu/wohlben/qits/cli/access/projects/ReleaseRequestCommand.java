@@ -105,31 +105,14 @@ public class ReleaseRequestCommand implements Runnable {
     }
 
     /**
-     * The repository's request whose id starts with {@code wanted}; a full id fits only its own
-     * request. It reads every request, of every state. The service finds a request by its id alone,
-     * so this lookup is also what keeps a command off another repository's request.
+     * The repository's request that {@code wanted} names: its id ({@code <repository>-rr-<n>}, any
+     * case), its uuid, or the start of the uuid. It reads every request, of every state. This lookup
+     * is also what keeps a command off another repository's request.
      */
     private static JsonNode find(Target target, String wanted) throws CliFailure, InterruptedException {
-        String start = wanted.toLowerCase(Locale.ROOT);
-        List<JsonNode> matches = new ArrayList<>();
-        target.api().releaseRequests(target.repoId(), ALL).path("requests").forEach(r -> {
-            if (text(r, "id").toLowerCase(Locale.ROOT).startsWith(start)) {
-                matches.add(r);
-            }
-        });
-        if (matches.isEmpty()) {
-            throw new CliFailure("Repository " + target.repoName() + " has no release request whose id starts with '"
-                    + wanted + "'. `qits release-request --project " + target.projectLabel() + " --repository "
-                    + target.repoName() + " list --state all` shows them.", CliFailure.USAGE);
-        }
-        if (matches.size() > 1) {
-            throw new CliFailure("'" + wanted + "' is the start of more than one release request of "
-                    + target.repoName() + ": "
-                    + matches.stream().map(r -> text(r, "id") + " (" + text(r, "state") + ")")
-                            .collect(Collectors.joining(", "))
-                    + ". Give more of the id.", CliFailure.USAGE);
-        }
-        return matches.getFirst();
+        return ReleaseRequestRefs.find(target.api().releaseRequests(target.repoId(), ALL).path("requests"), wanted,
+                target.repoName(), "`qits release-request --project " + target.projectLabel() + " --repository "
+                        + target.repoName() + " list --state all` shows them.");
     }
 
     /** The state the list showed, when it already takes no more branches; else every state that would. */
@@ -145,8 +128,9 @@ public class ReleaseRequestCommand implements Runnable {
                             + "APPROVAL column.",
                     "With --repository it shows that repository's open requests only. Open means every state but "
                             + "FINALIZED, WITHDRAWN and OBSOLETE.",
-                    "--state asks for other ones in both forms. The ID column shows the first 8 characters of the "
-                            + "id, which is enough for `join`."},
+                    "--state asks for other ones in both forms. The ID column shows the request's id, "
+                            + "<repository>-rr-<n>, which `join` and `withdraw` take. -o json also has its uuid (id); "
+                            + "the commands take that too."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits list",
@@ -212,7 +196,7 @@ public class ReleaseRequestCommand implements Runnable {
                 Table.print(context.out(), "", List.of("ID", "REPOSITORY", "STATE", "APPROVAL", "PRIORITY", "SUMMARY",
                                 "VERSION", "UPDATED"),
                         requests.stream().map(r -> List.of(
-                                Table.cell(shortId(text(r, "id")), 8),
+                                Table.cell(ReleaseRequestRefs.label(r), 60),
                                 Table.cell(text(r, "repoName"), 40),
                                 Table.cell(text(r, "state"), 12),
                                 Table.cell(text(r, "approvalState"), 12),
@@ -224,7 +208,7 @@ public class ReleaseRequestCommand implements Runnable {
             }
             Table.print(context.out(), "", List.of("ID", "STATE", "PRIORITY", "SUMMARY", "VERSION", "UPDATED"),
                     requests.stream().map(r -> List.of(
-                            Table.cell(shortId(text(r, "id")), 8),
+                            Table.cell(ReleaseRequestRefs.label(r), 60),
                             Table.cell(text(r, "state"), 12),
                             Table.cell(text(r, "priority"), 10),
                             Table.cell(text(r, "summary"), 60),
@@ -317,9 +301,9 @@ public class ReleaseRequestCommand implements Runnable {
                             + "builds that commit. It prints the request that came back."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
-                    "  qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 "
+                    "  qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 "
                             + "--branch feature/log-search",
-                    "  qits release-request --project qits --repository qits-ci-service join --request 4f2a91c0 "
+                    "  qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 "
                             + "--branch feature/log-search --priority BLOCKING",
                     "",
                     "- Safe to repeat: a branch already on the request adds nothing. With --priority it states that "
@@ -336,7 +320,8 @@ public class ReleaseRequestCommand implements Runnable {
         ReleaseRequestCommand parent;
 
         @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
-                description = "The request: its id, or enough of its start to name one (list shows 8 characters).")
+                description = "The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the "
+                        + "uuid.")
         String request;
 
         @CommandLine.Option(names = "--branch", paramLabel = "<branch>", required = true,
@@ -373,7 +358,7 @@ public class ReleaseRequestCommand implements Runnable {
         /** The two refusals a join can expect get a sentence that says what to do next. */
         private static CliFailure explain(CliFailure refused, JsonNode found) {
             if (refused.status() == 409) {
-                return new CliFailure("Release request " + text(found, "id") + " is " + settledState(found)
+                return new CliFailure("Release request " + ReleaseRequestRefs.name(found) + " is " + settledState(found)
                         + " and takes no more branches (HTTP 409). Open a new one with `qits release-request create`.",
                         CliFailure.FAILED);
             }
@@ -391,8 +376,8 @@ public class ReleaseRequestCommand implements Runnable {
                             + "came back."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
-                    "  qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0",
-                    "  qits release-request --project qits --repository qits-ci-service withdraw --request 4f2a91c0 "
+                    "  qits release-request --project qits --repository qits-ci-service withdraw --request qits-ci-service-rr-12",
+                    "  qits release-request --project qits --repository qits-ci-service withdraw --request qits-ci-service-rr-12 "
                             + "--reason \"The log view moves to qits-observability\"",
                     "",
                     "- Only for a request that must not ship. A gating build that was red because of the platform, "
@@ -410,7 +395,8 @@ public class ReleaseRequestCommand implements Runnable {
         ReleaseRequestCommand parent;
 
         @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
-                description = "The request: its id, or enough of its start to name one (list shows 8 characters).")
+                description = "The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the "
+                        + "uuid.")
         String request;
 
         @CommandLine.Option(names = "--reason", paramLabel = "<text>",
@@ -443,7 +429,7 @@ public class ReleaseRequestCommand implements Runnable {
         /** The two refusals a withdraw can expect get a sentence of their own. */
         private static CliFailure explain(CliFailure refused, JsonNode found) {
             if (refused.status() == 409) {
-                return new CliFailure("Release request " + text(found, "id") + " is " + settledState(found)
+                return new CliFailure("Release request " + ReleaseRequestRefs.name(found) + " is " + settledState(found)
                         + " already and cannot be withdrawn (HTTP 409).", CliFailure.FAILED);
             }
             if (refused.status() == 404) {
@@ -465,7 +451,7 @@ public class ReleaseRequestCommand implements Runnable {
                     "  qits release-request --project qits --repository qits-landing-app regenerate "
                             + "--kind screenshot-baselines",
                     "  qits release-request --project qits --repository qits-projects-service regenerate "
-                            + "--request 4f2a91c0 --kind entity-diagram",
+                            + "--request qits-projects-service-rr-12 --kind entity-diagram",
                     "",
                     "- Without --request it takes the repository's one open request. A REJECTED request is open: "
                             + "a red QA is the usual reason to regenerate.",
@@ -488,8 +474,8 @@ public class ReleaseRequestCommand implements Runnable {
 
         @Completes(ReleaseRequestSource.class)
         @CommandLine.Option(names = "--request", paramLabel = "<id>",
-                description = "The request: its id, or enough of its start to name one (list shows 8 characters). "
-                        + "Default: the repository's one open request.")
+                description = "The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start "
+                        + "of the uuid. Default: the repository's one open request.")
         String request;
 
         @CommandLine.Option(names = "--kind", paramLabel = "<kind>", required = true,
@@ -507,18 +493,19 @@ public class ReleaseRequestCommand implements Runnable {
             Target target = parent.target(context);
             JsonNode found = request == null ? onlyOpen(target) : find(target, request.strip());
             String requestId = text(found, "id");
+            String requestName = ReleaseRequestRefs.name(found);
             JsonNode answer;
             try {
                 answer = target.api().rerunReleaseRequestAutomation(target.repoId(), requestId, wantedKind);
             } catch (CliFailure refused) {
-                throw explain(refused, requestId, wantedKind);
+                throw explain(refused, requestName, ReleaseRequestRefs.label(found), wantedKind);
             }
             if (json) {
                 SafeJson.print(context.out(), answer);
                 return 0;
             }
             String runId = text(answer, "id");
-            context.out().println("Asked for " + wantedKind + " on release request " + requestId + ": run " + runId);
+            context.out().println("Asked for " + wantedKind + " on release request " + requestName + ": run " + runId);
             context.out().println("The request folds again when the output is committed to maintenance/automations/"
                     + wantedKind + "/" + requestId + "; QA then runs again.");
             context.out().println("Follow the run with `qits maintenance bump " + runId + "`.");
@@ -539,7 +526,7 @@ public class ReleaseRequestCommand implements Runnable {
             }
             if (open.size() > 1) {
                 throw new CliFailure("Repository " + target.repoName() + " has more than one open release request: "
-                        + open.stream().map(r -> shortId(text(r, "id")) + " (" + text(r, "state") + ")")
+                        + open.stream().map(r -> ReleaseRequestRefs.label(r) + " (" + text(r, "state") + ")")
                                 .collect(Collectors.joining(", "))
                         + ". Name one with --request.", CliFailure.USAGE);
             }
@@ -547,14 +534,14 @@ public class ReleaseRequestCommand implements Runnable {
         }
 
         /** The three refusals the door names get a sentence that says what to do next. */
-        private static CliFailure explain(CliFailure refused, String requestId, String kind) {
+        private static CliFailure explain(CliFailure refused, String requestName, String requestLabel, String kind) {
             return switch (refused.status()) {
                 case 404 -> new CliFailure("The platform knows no kind '" + kind + "' or no release request "
-                        + requestId + " (HTTP 404). The kinds are " + KINDS + ". " + refused.getMessage(),
+                        + requestName + " (HTTP 404). The kinds are " + KINDS + ". " + refused.getMessage(),
                         CliFailure.FAILED);
-                case 409 -> new CliFailure("The platform will not run " + kind + " on release request " + requestId
+                case 409 -> new CliFailure("The platform will not run " + kind + " on release request " + requestName
                         + " now (HTTP 409): a run of it may be active already, the request may not be open or have "
-                        + "no fold, or bumping may be off. `qits maintenance automations --request " + shortId(requestId)
+                        + "no fold, or bumping may be off. `qits maintenance automations --request " + requestLabel
                         + "` shows the kind's state. " + refused.getMessage(), CliFailure.FAILED);
                 case 503 -> new CliFailure("qits-maintenance cannot be reached or is not set up, so nothing ran "
                         + "(HTTP 503). Try again later. " + refused.getMessage(), CliFailure.FAILED);
@@ -564,11 +551,15 @@ public class ReleaseRequestCommand implements Runnable {
     }
 
     static void printRequest(PrintStream out, JsonNode request) {
-        out.println("Release request " + text(request, "id"));
-        Table.print(out, "  ", null, List.of(
+        out.println("Release request " + ReleaseRequestRefs.name(request));
+        List<List<String>> rows = new ArrayList<>();
+        if (!text(request, "qualifiedId").isBlank()) {
+            rows.add(List.of("uuid", Table.cell(text(request, "id"), 200)));
+        }
+        rows.addAll(List.of(
                 List.of("repository", Table.cell(text(request, "repoName"), 200)),
                 List.of("state", Table.cell(text(request, "state"), 200)),
-                List.of("superseded by", Table.cell(shortIdOrDash(text(request, "supersededBy")), 200)),
+                List.of("superseded by", Table.cell(supersededBy(request), 200)),
                 List.of("priority", Table.cell(text(request, "priority"), 200)),
                 List.of("summary", Table.cell(text(request, "summary"), 200)),
                 List.of("requester", Table.cell(text(request, "requester"), 200)),
@@ -578,6 +569,7 @@ public class ReleaseRequestCommand implements Runnable {
                 List.of("detail", Table.cell(text(request, "detail"), 200)),
                 List.of("created", Table.time(text(request, "createdAt"))),
                 List.of("updated", Table.time(text(request, "updatedAt")))));
+        Table.print(out, "  ", null, rows);
         List<List<String>> gates = new ArrayList<>();
         request.path("gates").forEach(g -> gates.add(List.of(
                 Table.cell(text(g, "kind"), 20),
@@ -601,12 +593,8 @@ public class ReleaseRequestCommand implements Runnable {
         }
     }
 
-    static String shortId(String id) {
-        return id.length() <= 8 ? id : id.substring(0, 8);
-    }
-
-    /** The short id of the request that superseded this one, or blank when there is none. */
-    private static String shortIdOrDash(String supersededBy) {
-        return supersededBy.isBlank() ? "" : shortId(supersededBy);
+    /** The request that superseded this one, by its logical id, else its short uuid; blank when none. */
+    private static String supersededBy(JsonNode request) {
+        return ReleaseRequestRefs.label(text(request, "supersededByQualifiedId"), text(request, "supersededBy"));
     }
 }

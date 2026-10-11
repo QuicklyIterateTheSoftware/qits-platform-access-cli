@@ -16,6 +16,7 @@ import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
 import eu.wohlben.qits.cli.access.complete.ProjectSource;
 import eu.wohlben.qits.cli.access.complete.ReleaseRequestSource;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.access.complete.RunSource;
 import eu.wohlben.qits.cli.access.report.ReportCommand;
@@ -254,11 +255,12 @@ public class CiCommand implements Runnable {
             footer = {
                     "  qits ci runs --project qits --repository qits-ci-service",
                     "  qits ci runs --project qits --repository qits-ci-service --status FAILED --limit 5",
-                    "  qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0",
+                    "  qits ci runs --project qits --repository qits-ci-service --release-request qits-ci-service-rr-12",
                     "  qits ci runs --project qits --repository qits-ci-service --branch main -o json",
                     "",
-                    "- A release request's gating runs: --release-request with the request's id, or the 8 characters "
-                            + "`qits release-request list` shows. They build the branch release/<request id>.",
+                    "- A release request's gating runs: --release-request with the request's id as `qits release-request "
+                            + "list` shows it (qits-ci-service-rr-12), its uuid or the start of the uuid. They build "
+                            + "the request's branch, release/<request id>.",
                     "- The service filters by repository and count only. --branch, --status and --release-request "
                             + "are applied here, over all of the repository's runs, and --limit after them."},
             exitCodeListHeading = HelpText.EXIT_CODES,
@@ -280,7 +282,8 @@ public class CiCommand implements Runnable {
 
         @Completes(ReleaseRequestSource.class)
         @CommandLine.Option(names = "--release-request", paramLabel = "<id>",
-                description = "Only the runs of this release request: its id, or the start of it.")
+                description = "Only the runs of this release request: its id (qits-ci-service-rr-12), its uuid, or the "
+                        + "start of the uuid.")
         String releaseRequest;
 
         @CommandLine.Option(names = "--limit", paramLabel = "<n>", defaultValue = "20",
@@ -335,11 +338,9 @@ public class CiCommand implements Runnable {
                 all.add(r -> wanted.equals(text(r, "status").toUpperCase(Locale.ROOT)));
             }
             if (!blank(releaseRequest)) {
-                String start = releaseRequest.strip().toLowerCase(Locale.ROOT);
-                all.add(r -> {
-                    String id = text(r, "releaseRequestId").toLowerCase(Locale.ROOT);
-                    return !id.isEmpty() && id.startsWith(start);
-                });
+                String wanted = releaseRequest.strip();
+                all.add(r -> ReleaseRequestRefs.matches(text(r, "releaseRequestQualifiedId"),
+                        text(r, "releaseRequestId"), wanted));
             }
             return all.stream().reduce(Predicate::and).orElse(null);
         }

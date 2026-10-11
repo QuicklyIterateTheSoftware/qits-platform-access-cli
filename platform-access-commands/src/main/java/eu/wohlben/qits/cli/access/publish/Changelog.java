@@ -34,8 +34,11 @@ final class Changelog {
     record Highlight(String kind, String severity, String text) {
     }
 
-    /** What the document is about. {@code occurredAt} may be null: the line then leaves the time out. */
-    record Release(String repositoryName, String version, String releaseRequestId, Instant occurredAt) {
+    /**
+     * What the document is about. {@code releaseRequest} is the request's logical id, or its uuid when
+     * the event has none. {@code occurredAt} may be null: the line then leaves the time out.
+     */
+    record Release(String repositoryName, String version, String releaseRequest, Instant occurredAt) {
     }
 
     private Changelog() {
@@ -45,7 +48,7 @@ final class Changelog {
     static String render(Release release, List<Commit> commits, List<Ticket> tickets, List<Highlight> highlights) {
         List<String> blocks = new ArrayList<>();
         blocks.add("# " + oneLine(release.repositoryName()) + " " + oneLine(release.version()));
-        blocks.add("Release request `" + oneLine(release.releaseRequestId()) + "`"
+        blocks.add("Release request `" + oneLine(release.releaseRequest()) + "`"
                 + (release.occurredAt() == null ? "" : ", released " + released(release.occurredAt())) + ".");
 
         StringBuilder commitBlock = new StringBuilder("## Commits\n\n");

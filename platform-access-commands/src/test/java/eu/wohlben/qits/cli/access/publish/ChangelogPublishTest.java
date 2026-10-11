@@ -111,6 +111,7 @@ class ChangelogPublishTest {
         assertThat(put.header("X-Artifacts-Meta-git.commit.hash")).isEqualTo("cafe");
         assertThat(put.header("X-Artifacts-Meta-git.repository.name")).isEqualTo("qits-ci");
         assertThat(put.header("X-Artifacts-Meta-release.request.id")).isEqualTo("rr-1");
+        assertThat(put.header("X-Artifacts-Meta-release.request.qualified-id")).isNull();
         assertThat(put.header("Authorization")).isEqualTo("Bearer token");
         assertThat(stub.lastRequest().path()).isEqualTo(PUT);
         StubStore.Request commits = stub.requests().stream().filter(r -> r.path().equals(COMMITS)).findFirst()
@@ -244,6 +245,21 @@ class ChangelogPublishTest {
 
         assertThat(run.code()).as(run.err()).isEqualTo(ExitCode.OK);
         assertThat(uploaded()).contains("\n\nRelease request `rr-1`.\n\n");
+    }
+
+    @Test
+    void aLogicalIdNamesTheRequestAndIsAddedToTheMetadata() {
+        stub.on("GET", COMMITS, json("{\"commits\":[]}"));
+        Harness.Run run = cli.with("QITS_EVENT_PAYLOAD", "{\"repository\":\"repo-1\",\"repositoryName\":\"qits-ci\","
+                        + "\"releaseRequestId\":\"rr-1\",\"releaseRequestQualifiedId\":\"qits-ci-rr-12\"}")
+                .run("changelog", "--version", VERSION);
+
+        assertThat(run.code()).as(run.err()).isEqualTo(ExitCode.OK);
+        assertThat(uploaded()).contains("\n\nRelease request `qits-ci-rr-12`.\n\n");
+        StubStore.Request put = stub.requests().stream().filter(r -> r.method().equals("PUT")).findFirst().orElseThrow();
+        assertThat(put.header("X-Artifacts-Meta-release.request.id")).isEqualTo("rr-1");
+        assertThat(put.header("X-Artifacts-Meta-release.request.qualified-id")).isEqualTo("qits-ci-rr-12");
+        assertThat(stub.requests()).anyMatch(r -> r.path().equals(COMMITS));
     }
 
     @Test

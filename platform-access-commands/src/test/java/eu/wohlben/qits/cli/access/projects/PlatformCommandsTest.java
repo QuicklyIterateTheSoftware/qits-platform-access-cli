@@ -584,7 +584,8 @@ class PlatformCommandsTest {
                 "--request", "9999", "--branch", "feature/search");
 
         assertThat(r.exit()).isEqualTo(2);
-        assertThat(r.err()).contains("Repository qits-ci-service has no release request whose id starts with '9999'.")
+        assertThat(r.err()).contains("Repository qits-ci-service has no release request '9999'. Give its id "
+                        + "(qits-ci-service-rr-<n>), its uuid or the start of the uuid.")
                 .contains("`qits release-request --project qits --repository qits-ci-service list --state all` shows them.");
         assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
     }
@@ -604,7 +605,7 @@ class PlatformCommandsTest {
         assertThat(r.exit()).isEqualTo(2);
         assertThat(r.err()).contains("'ABCD' is the start of more than one release request of qits-ci-service: "
                 + "abcd0001-0000-4000-8000-000000000000 (PENDING), abcd0002-0000-4000-8000-000000000000 (READY). "
-                + "Give more of the id.");
+                + "Give its id or more of the uuid.");
         assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
     }
 
@@ -633,6 +634,68 @@ class PlatformCommandsTest {
         assertThat(r.exit()).isEqualTo(1);
         assertThat(r.err()).contains("No such request or branch. POST " + platform.url() + sourcesOf(PENDING_ID)
                 + " answered HTTP 404: Release request not found: " + PENDING_ID);
+    }
+
+    // --- logical ids (qits-1158) ---
+
+    /** The repository's requests as a qits-projects with logical ids answers them. */
+    private void answerQualified() {
+        platform.answer("GET", REQUESTS, """
+                {"requests":[
+                  {"id":"%s","qualifiedId":"qits-ci-service-rr-12","repoName":"qits-ci-service","state":"PENDING",
+                   "priority":"HIGH","summary":"Ship the log view","version":null,"updatedAt":"2026-09-12T09:00:00Z"},
+                  {"id":"%s","qualifiedId":"qits-ci-service-rr-1","repoName":"qits-ci-service","state":"RELEASED",
+                   "priority":"MEDIUM","summary":"Cut, still gating","version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"}]}
+                """.formatted(PENDING_ID, RELEASED_ID));
+    }
+
+    @Test
+    void theListShowsTheLogicalId() {
+        answerQualified();
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).startsWith("ID                     STATE     PRIORITY  SUMMARY            VERSION     UPDATED\n"
+                + "qits-ci-service-rr-12  PENDING   HIGH      Ship the log view  -           2026-09-12 ");
+        assertThat(r.out()).doesNotContain("11111111");
+    }
+
+    @Test
+    void joinTakesTheLogicalIdInAnyCaseAndSendsTheUuid() throws Exception {
+        answerQualified();
+        platform.answer("POST", sourcesOf(PENDING_ID), """
+                {"request":{"id":"%s","qualifiedId":"qits-ci-service-rr-12","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"OBSOLETE","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
+                  "supersededBy":"99999999-2222-3333-4444-555555555555","supersededByQualifiedId":"qits-ci-service-rr-13",
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","sources":[]}}
+                """.formatted(PENDING_ID, CI));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "QITS-CI-SERVICE-RR-12", "--branch", "feature/search");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("POST", sourcesOf(PENDING_ID))).hasSize(1);
+        assertThat(r.out()).startsWith("Release request qits-ci-service-rr-12\n")
+                .contains("  uuid           " + PENDING_ID)
+                .contains("  superseded by  qits-ci-service-rr-13");
+    }
+
+    @Test
+    void aLogicalIdWinsOverAUuidStartAndOneThatFitsNoneIsRefused() {
+        answerQualified();
+        platform.answer("POST", withdrawOf(RELEASED_ID), 409, "{\"message\":\"already RELEASED\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "withdraw",
+                "--request", "qits-ci-service-rr-1");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("Release request qits-ci-service-rr-1 is RELEASED already and cannot be withdrawn");
+        assertThat(run("release-request", "--project", "qits", "--repository", "qits-ci-service", "withdraw",
+                "--request", "qits-ci-service-rr-2").err())
+                .contains("Repository qits-ci-service has no release request 'qits-ci-service-rr-2'.");
+        assertThat(platform.requests("POST", withdrawOf(RELEASED_ID))).hasSize(1);
     }
 
     // --- withdrawing a request ---
@@ -690,7 +753,7 @@ class PlatformCommandsTest {
                 "--request", "9999");
 
         assertThat(r.exit()).isEqualTo(2);
-        assertThat(r.err()).contains("Repository qits-ci-service has no release request whose id starts with '9999'.");
+        assertThat(r.err()).contains("Repository qits-ci-service has no release request '9999'.");
         assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
     }
 

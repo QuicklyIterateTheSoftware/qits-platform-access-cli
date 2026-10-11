@@ -41,8 +41,8 @@ import java.util.Map;
         // Not mixinStandardHelpOptions: --version is the release's version (see AGENTS.md).
         description = {"Write this release's CHANGELOG.md and publish it as the docs site @changelog/<repository> "
                         + "at --version. Run in a release's publish step.",
-                "The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId and "
-                        + "occurredAt); the commits from the release request in qits-projects, oldest first and "
+                "The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId, "
+                        + "releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and "
                         + "without the request's own merge commits; the tickets from the commits' subjects "
                         + "(`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from "
                         + "the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.",
@@ -52,7 +52,8 @@ import java.util.Map;
                 "The last line is always `associated tickets:` followed by every ticket that exists, as "
                         + "`qits-9`; `qits changelog bump-message` reads it back.",
                 "The bundle is a .tar.gz with one entry, CHANGELOG.md, published like `docs submit` with the "
-                        + "given --meta and release.request.id=<request>. An occupied version is skipped, as "
+                        + "given --meta, release.request.id=<uuid> and, when the event names it, "
+                        + "release.request.qualified-id=<repository>-rr-<n>. An occupied version is skipped, as "
                         + "there."},
         footerHeading = "%nExamples:%n",
         footer = {"  qits artifacts publish changelog --version \"$QITS_VERSION\" --meta "
@@ -98,8 +99,18 @@ public class ChangelogCommand extends AbstractPublishCommand {
     String projectsOrigin;
     String ciOrigin;
 
-    /** The release, as the payload says. */
-    record Release(String repository, String repositoryName, String releaseRequestId, Instant occurredAt) {
+    /**
+     * The release, as the payload says. {@code releaseRequestQualifiedId} is null from a qits-projects
+     * older than qits-1158.
+     */
+    record Release(String repository, String repositoryName, String releaseRequestId,
+                   String releaseRequestQualifiedId, Instant occurredAt) {
+
+        /** The request as the document names it: its logical id, else its uuid. */
+        String releaseRequest() {
+            return releaseRequestQualifiedId == null || releaseRequestQualifiedId.isBlank()
+                    ? releaseRequestId : releaseRequestQualifiedId;
+        }
     }
 
     @Override
@@ -138,10 +149,13 @@ public class ChangelogCommand extends AbstractPublishCommand {
         List<Changelog.Highlight> highlights = highlights(ci, runId);
 
         String markdown = Changelog.render(
-                new Changelog.Release(release.repositoryName(), version, release.releaseRequestId(), release.occurredAt()),
+                new Changelog.Release(release.repositoryName(), version, release.releaseRequest(), release.occurredAt()),
                 commits, tickets, highlights);
         List<String> meta = new ArrayList<>(this.meta);
         meta.add("release.request.id=" + release.releaseRequestId());
+        if (!release.releaseRequest().equals(release.releaseRequestId())) {
+            meta.add("release.request.qualified-id=" + release.releaseRequestQualifiedId());
+        }
         Path bundle = ContractDocs.temporary(Archives.writeTarGz(
                 List.of(new Archives.Entry(FILE, markdown.getBytes(StandardCharsets.UTF_8)))));
         try {
@@ -186,7 +200,7 @@ public class ChangelogCommand extends AbstractPublishCommand {
             occurredAt = parsedInstant(occurredAtEnv);
         }
         return new Release(text(event, "repository"), text(event, "repositoryName"), text(event, "releaseRequestId"),
-                occurredAt);
+                text(event, "releaseRequestQualifiedId"), occurredAt);
     }
 
     /** An ISO-8601 instant, or null when the value is absent or does not parse as one. */

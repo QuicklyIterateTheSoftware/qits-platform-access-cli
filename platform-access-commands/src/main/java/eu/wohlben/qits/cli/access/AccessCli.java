@@ -20,6 +20,7 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.WorkCommand;
+import eu.wohlben.qits.cli.access.waits.WaitCommand;
 import picocli.CommandLine;
 
 /**
@@ -39,14 +40,14 @@ import picocli.CommandLine;
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, EventsCommand.class,
-                ObserveCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
+                ObserveCommand.class, WaitCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
                 ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
                         + "work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment "
                         + "threads, release requests, CI runs and their logs, "
-                        + "domain events, live telemetry, Git "
+                        + "domain events, live telemetry, waiting on the platform, Git "
                         + "pushes to the platform's git host, and publishing release artifacts from a CI step.",
                 "Each command calls the platform through its edge, with the session of `qits login`, except "
                         + "`qits artifacts publish`, which runs in a CI step container with no person and never touches that "
@@ -65,6 +66,8 @@ import picocli.CommandLine;
                         + "`qits git-credential`.",
                 "- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, "
                         + "and `qits mcp-credential`, which Claude runs.",
+                "- To wait for something on the platform, declare it with `qits wait` and end your turn: you get a "
+                        + "new turn when it happens. Never poll for it in a background loop.",
                 "- A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})

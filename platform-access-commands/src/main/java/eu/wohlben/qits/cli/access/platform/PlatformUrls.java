@@ -38,6 +38,10 @@ public final class PlatformUrls {
         return resolve("maintenance", "--maintenance-url", "QITS_MAINTENANCE_URL", flag, env, idpUrl);
     }
 
+    public static String workspaces(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        return resolve("workspaces", "--workspaces-url", "QITS_WORKSPACES_URL", flag, env, idpUrl);
+    }
+
     /** The git host's origin, which Git pushes to through the edge. */
     public static String gitHost(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);

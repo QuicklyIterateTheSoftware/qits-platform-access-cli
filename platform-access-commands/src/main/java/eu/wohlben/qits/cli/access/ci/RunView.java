@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.observe.SafeText;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.Table;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -36,9 +37,16 @@ final class RunView {
                         cell(text(r, "status"), 12),
                         cell(text(r, "branch"), 60),
                         cell(shortId(text(r, "commitSha")), 8),
-                        cell(shortId(text(r, "releaseRequestId")), 8),
+                        cell(ReleaseRequestRefs.label(text(r, "releaseRequestQualifiedId"), text(r, "releaseRequestId")), 40),
                         Table.time(text(r, "createdAt")),
                         took(r, now))).toList());
+    }
+
+    /** The run's release request: its logical id with the uuid beside it, or the uuid alone from an older qits-ci. */
+    private static String releaseRequest(JsonNode run) {
+        String qualifiedId = text(run, "releaseRequestQualifiedId");
+        String id = text(run, "releaseRequestId");
+        return qualifiedId.isEmpty() || id.isEmpty() ? qualifiedId + id : qualifiedId + " (" + id + ")";
     }
 
     static void printRun(PrintStream out, JsonNode run, Instant now) {
@@ -51,7 +59,7 @@ final class RunView {
                 row("gating", run.path("gating").asBoolean() ? "yes" : "no"),
                 row("branch", text(run, "branch")),
                 row("commit", text(run, "commitSha")),
-                row("release request", text(run, "releaseRequestId")),
+                row("release request", releaseRequest(run)),
                 row("retry of", text(run, "retryOfRunId")),
                 row("superseded by", text(run, "supersededByRunId")),
                 row("trigger", text(run, "triggerType") + " " + text(run, "triggerEventName")),

@@ -19,6 +19,9 @@ Commands:
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service; `qits observe query` asks the same filters of what it still holds.
+- `qits wait` declares what an agent waits on (a release request to end, a work item to reach a
+  status, a CI run to end, or any domain event that fits a selection); the platform gives the agent
+  a turn when it happens. `qits wait list|cancel` show and end the agent's waits.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -491,6 +494,12 @@ Installing it is not part of this version.
     qits observe query --filter <conditions> [--filter <conditions> …] [--source <key>] \
         [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
+    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>]
+    qits wait release-request <id> [--timeout <duration>] [--label <text>]
+    qits wait work <qualified id> --status <STATUS> [--timeout <duration>] [--label <text>]
+    qits wait ci-run <run id> [--timeout <duration>] [--label <text>]
+    qits wait list [--state OPEN|MATCHED|TIMED_OUT|CANCELLED]
+    qits wait cancel <wait id>
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories`, `work` and `release-request` may come before or
@@ -521,6 +530,7 @@ its first label: `https://idp.qits.wohlben.eu/idp` gives `https://projects.qits.
 - events: `--events-url`, else `QITS_EVENTS_URL`
 - observability: `--observability-url`, else `QITS_OBSERVABILITY_URL`. The stream is a WebSocket,
   so `https` becomes `wss` and `http` becomes `ws`.
+- workspaces (`qits wait`): `--workspaces-url`, else `QITS_WORKSPACES_URL`
 
 `qits checkout-daemon` reads the events service the same way, with `--events-url` or
 `QITS_EVENTS_URL`; the git host it fetches from is the checkout's own `origin`, never a flag.
@@ -690,8 +700,8 @@ pipeline.
 
 `list` without `--repository` shows the requests of every repository of the project, as the landing
 app does: the service's default answer, which is the open requests and the last 10 finalized ones,
-most recently moved first. Columns: id (the first 8 characters), repository, state, approval,
-priority, summary, version, updated.
+most recently moved first. Columns: id, repository, state, approval, priority, summary, version,
+updated.
 
 `list --repository <repository>` shows that repository's open requests: every state but FINALIZED,
 WITHDRAWN and OBSOLETE. The service's default answer holds the open requests and the last 10
@@ -702,16 +712,22 @@ In both forms `--state all` shows every request, and `--state PENDING` (or READY
 FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. `--limit <n>` shows
 the first n; the service has no limit, so the command cuts the list it got.
 
+A request's id is `<repository>-rr-<n>` (`qits-ci-service-rr-12`), numbered per repository and fixed
+when the request is made: a rename of the repository does not change it. The request also has a
+uuid, its internal key, which `-o json` shows as `id` beside `qualifiedId`. Every command that takes
+a request takes either, and the start of a uuid too. A request from a qits-projects older than this
+has no logical id; the commands then show the uuid's first 8 characters, as before.
+
 `create` asks for a branch to be released once its builds are green. `--branch` and `--summary`
 are required; `--priority` is LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING (the platform's
 default is MEDIUM). The platform may answer with a new request, with the open request that already
 holds the branch, or (on a project wrapper) with the open request the branch joined. The command
 prints the request that came back, with its sources.
 
-`join` adds a branch to an open request. `--request` is the request's id, or enough of its start to
-name one: the 8 characters `list` shows are enough. The command looks among all the repository's
-requests, of every state; a start that fits none, or more than one, stops with exit code 2 and
-names what it found. `--branch` is required; `--priority` is as for `create`. The platform folds the
+`join` adds a branch to an open request. `--request` is the request's id as `list` shows it (any
+case), its uuid, or enough of the uuid's start to name one. The command looks among all the
+repository's requests, of every state; a value that fits none, or a uuid start that fits more than
+one, stops with exit code 2 and names what it found. `--branch` is required; `--priority` is as for `create`. The platform folds the
 request again with the branch and, if that makes a new commit, its builds run on that commit. The
 command prints the request that came back, with its sources, like `create`.
 
@@ -750,9 +766,9 @@ it, and QA runs again. It prints the run's id; `qits maintenance bump <run id>` 
     qits release-request --project qits --repository qits-ci-service create \
         --branch feature/log-view --summary "Show the build log live" --priority HIGH
     qits release-request --project qits --repository qits-ci-service join \
-        --request 4f2a91c0 --branch feature/log-search
+        --request qits-ci-service-rr-12 --branch feature/log-search
     qits release-request --project qits --repository qits-ci-service withdraw \
-        --request 4f2a91c0 --reason "The log view moves to qits-observability"
+        --request qits-ci-service-rr-12 --reason "The log view moves to qits-observability"
     qits release-request --project qits --repository qits-landing-app regenerate \
         --kind screenshot-baselines
 
@@ -773,8 +789,9 @@ applied here, over all of the repository's runs, and `--limit` (default 20) afte
 filter, `--limit` goes to the service.
 
 A release request's gating runs build its backing branch `release/<request id>` and carry the
-request's id. `--release-request` takes that id, or its start (the 8 characters
-`qits release-request list` shows).
+request's id and uuid. `--release-request` takes the id as `qits release-request list` shows it
+(`qits-ci-service-rr-12`), the uuid, or the uuid's start. The release request column shows the id
+(the uuid's first 8 characters for a run from an older qits-ci).
 
 `run` shows one run: what it built, its status, trigger and times, and its steps with their exit
 codes. `--logs` adds each step's output. The service keeps the end of each step's output, and for a
@@ -790,7 +807,7 @@ HTTP 404; both exit with 1.
 `run` and `retry` take the whole run id. With `--project` and `--repository` they also take the
 start of it, looked up among that repository's runs.
 
-    qits ci runs --project qits --repository qits-ci-service --release-request 4f2a91c0
+    qits ci runs --project qits --repository qits-ci-service --release-request qits-ci-service-rr-12
     qits ci run 5f2c0a9e --project qits --repository qits-ci-service --logs
     qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
@@ -892,6 +909,10 @@ holds no version, time or absolute path, so two runs write the same bytes.
 
 Jobs of qits-maintenance. `--project` and `--repository` are as for `release-request`.
 
+`--request` takes the request's id as `qits release-request list` shows it, its uuid or the uuid's
+start. qits-maintenance takes only the uuid, so the command looks the request up in qits-projects
+first and sends the uuid.
+
 `automations --request <id>` lists a release request's release-request automations and their
 state: the regenerations that must land inside the request before it can proceed, such as
 `estate-pins` (a wrapper's gitlink bumps) and `screenshot-baselines` (a repository whose
@@ -911,8 +932,8 @@ off. Any of the three roles may ask, the agent credential included, as for every
 `bump <id>` shows a job: SUCCEEDED (joined, or ff-pushed), NOTHING_TO_DO (unchanged) or FAILED,
 with the reason.
 
-    qits maintenance --project qits --repository qits-landing-app automations --request 4f2a91c0
-    qits maintenance --project qits --repository qits-landing-app automation run --request 4f2a91c0 --kind screenshot-baselines
+    qits maintenance --project qits --repository qits-landing-app automations --request qits-landing-app-rr-7
+    qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind screenshot-baselines
     qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 
 ### qits events
@@ -932,7 +953,7 @@ or `*` for every event. `*` is the default. There are no patterns and no filter 
 
     qits events --filter=BuildSuccessful,BuildFailed
     qits events --filter=SCMPublishCommit,SCMDeleteBranch
-    qits events --filter=ReleaseRequestChanged | jq -r '.payload'
+    qits events --filter=ReleaseRequestStateChanged | jq -r '.payload'
 
 The stream is live only: it has no replay. Notes go to stderr, one line each with a time.
 
@@ -1127,6 +1148,59 @@ Notes go to stderr, one line each with a time:
   on the upgrade stops the command with exit code 1.
 - SIGINT (Ctrl-C) or SIGTERM stops it with exit code 0. So does a closed stdout, at the next record.
 
+### qits wait
+
+    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>] [--agent <id>]
+
+An agent declares what it waits on; the platform gives it a turn when that happens (qits-1153). The
+command sends the wait to qits-workspaces (`POST /workspaces/api/agents/{agentId}/waits`), prints it
+and returns at once. It never blocks. Declare the wait, then end the turn: the next turn names what
+fired, the event or the timeout. Never poll for the same thing in a background loop.
+
+The agent is `QITS_AGENT_ID`, which the harness sets, or `--agent`. Without either the command exits
+with 2. An agent may declare and cancel waits for itself only.
+
+Each `--when` is one group of conditions that must all hold; an event that fits any group matches,
+and with no `--when` every event of the name does. The conditions are those of `qits observe`, on
+the event's payload:
+
+    path=value     equal                  status=VERIFIED
+    path^=value    starts with            branch^=release/
+    path?          present                releaseRequestId?
+    !path          absent                 !previousStatus
+
+A path is field names joined by dots; `[]` after a field means some element of that array, and the
+conditions of one group through the same `name[]` hold on the same element. Quote a value with
+spaces, or an empty one: `title="two words"`, `note=""`. At most 8 groups of 8 conditions. The
+grammar and its limits are qits-eventstream-javalib's (`eu.wohlben.qits.eventstream.selection`); the
+CLI holds its own copy (`waits/WhenGrammar`) because the binary does not depend on that library, and
+checks it before anything goes out. The wire form has lowercase ops, string values, and absent as
+`{"op":"exists","value":false}`.
+
+`--timeout` takes `30m`, `2h`, `1h30m`, `1d` or ISO-8601 (`PT2H`); it is sent as ISO-8601.
+
+The presets fill in the event and the groups:
+
+    qits wait release-request <id>               ReleaseRequestStateChanged,
+                                                 releaseRequestQualifiedId=<id> (or, for a uuid,
+                                                 releaseRequestId=<uuid>) state=<S>, one group per
+                                                 final state: FINALIZED, REJECTED, FAILED,
+                                                 WITHDRAWN, OBSOLETE
+    qits wait work qits-123 --status VERIFIED    EntityTransitioned, entities[].entityId=<uuid>
+                                                 entities[].status=VERIFIED (the qualified id is
+                                                 looked up in the projects service first)
+    qits wait ci-run <id>                        BuildStatusChanged, runId=<id> status=<S>, one group
+                                                 per terminal status: SUCCESS, FAILED, CANCELLED,
+                                                 CONFIG_ERROR, TIMED_OUT
+
+`release-request` and `ci-run` take the whole id only: a wait matches it exactly, and the start of
+one would make a wait that never fires. `release-request` takes the request's id as `qits
+release-request list` shows it (`qits-ci-service-rr-12`, in that case) or its whole uuid. Each
+preset gives a label of its own (`release request qits-ci-service-rr-12 to end`); `--label`
+replaces it.
+
+`qits wait list [--state <STATE>]` shows the agent's waits, and `qits wait cancel <wait id>` ends one.
+
 ## Git pushes from this workstation
 
     qits git-login [--idp-url <url>] [--git-host <url>] [--audience <audience>]
@@ -1310,9 +1384,11 @@ Commands:
 --version "$QITS_VERSION" --meta git.commit.hash="$QITS_CI_SHA" --meta
 git.repository.name="$QITS_CI_REPO_NAME"`. It writes the release's `CHANGELOG.md` and publishes it as
 the docs site `@changelog/<repositoryName>` at that version, a `.tar.gz` with that one entry, with
-`release.request.id=<request>` added to the metadata. The release is the step's `QITS_EVENT_PAYLOAD`
-(the SCMRelease: `repository`, `repositoryName` and `releaseRequestId` required, `occurredAt`
-optional); the commits are the release request's (qits-projects, oldest first, the request's own
+`release.request.id=<uuid>` added to the metadata, and `release.request.qualified-id=<id>` when the
+event names the request's logical id. The release is the step's `QITS_EVENT_PAYLOAD` (the
+SCMRelease: `repository`, `repositoryName` and `releaseRequestId` required,
+`releaseRequestQualifiedId` and `occurredAt` optional; the document names the request by its logical
+id when it has one); the commits are the release request's (qits-projects, oldest first, the request's own
 fold commits left out); the tickets are every qualified id the commits' subjects name in their scope
 (`feat(qits-9, qits-10): ...`), titled by qits-projects and linked to
 `https://qits.$QITS_DOMAIN/projects/<slug>/work/detail/<id>`; and the report highlights are the gate

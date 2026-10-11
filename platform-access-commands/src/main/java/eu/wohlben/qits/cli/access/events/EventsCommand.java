@@ -22,16 +22,17 @@ import java.util.stream.Collectors;
 @TuiCommand(interaction = Interaction.STREAMING, effect = Effect.READ)
 @CommandLine.Command(name = "events", mixinStandardHelpOptions = true, subcommands = EventsQueryCommand.class,
         description = {
-                "Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to wait "
-                        + "for something on the platform: a build (BuildSuccessful, BuildFailed) or a release "
-                        + "request (ReleaseRequestChanged).",
+                "Print qits-events domain events as they happen, one JSON object per line on stdout. Use it to watch "
+                        + "the platform: builds (BuildStatusChanged), release requests (ReleaseRequestStateChanged). "
+                        + "To wait for something, do not keep this running: declare it with `qits wait` and end "
+                        + "your turn.",
                 "Each line is the event with its payload read as JSON. Live only: the stream has no replay, so start "
                         + "it before the thing you wait for; events that happen while it reconnects are missed. "
                         + "Notes go to stderr. Stops on SIGINT or SIGTERM."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
                 "  qits events --filter=BuildSuccessful,BuildFailed",
-                "  qits events --filter=ReleaseRequestChanged | jq -r '.payload'",
+                "  qits events --filter=ReleaseRequestStateChanged | jq -r '.payload'",
                 "",
                 "--filter takes exact event names. A pattern such as Build* is refused."},
         exitCodeListHeading = HelpText.EXIT_CODES,

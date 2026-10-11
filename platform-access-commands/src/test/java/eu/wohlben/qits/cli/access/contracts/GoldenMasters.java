@@ -285,7 +285,8 @@ public final class GoldenMasters {
      * Add the V4 HTTP interaction for one recorded (state, operation), reached from {@code trigger}.
      * <p>
      * {@code given(state, params)}; the request path from the index template, each {@code {param}}
-     * as a provider-state expression with the frozen example; the recorded request body, if any,
+     * as a provider-state expression with the frozen example; the recorded query, if any, exact;
+     * the recorded request body, if any,
      * sent as {@code contentType}; the status exact; the answer from the recording with the matchers
      * the class javadoc lists; and the per-interaction {@code comments.references} — {@code
      * qits-call} (the provider operation) and {@code qits-trigger}.

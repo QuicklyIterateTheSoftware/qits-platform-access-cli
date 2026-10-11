@@ -80,6 +80,19 @@ class ShowCommandTest {
     }
 
     @Test
+    void aRunOfARequestWithALogicalIdNamesTheRequestByIt() {
+        ci.answer("GET", REPORTS, """
+                {"runId":"%s","commitSha":"0123456789abcdef0123","releaseRequestId":"rr-1",
+                 "releaseRequestQualifiedId":"qits-ci-service-rr-12","baseline":null,"reports":[]}
+                """.formatted(RUN));
+
+        Result result = run("ci", "report", "show", RUN);
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.out()).startsWith("Run " + RUN + ", commit 0123456789ab, release request qits-ci-service-rr-12\n");
+    }
+
+    @Test
     void aKindPrintsItsWholeReport() throws Exception {
         Result result = run("ci", "report", "show", RUN, "--kind", "test-results");
 

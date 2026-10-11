@@ -75,7 +75,8 @@ class SubmitCommandTest {
     void theReportGoesToTheRunsStepWithItsHighlightsAndItsBaseline() throws Exception {
         Path root = Fixtures.tree(work);
         ci.answer("GET", BASELINE, """
-                {"baseline":{"version":"2026.1003.52637","runId":"%s","releaseRequestId":"rr-1","tagSha":"abc"}}
+                {"baseline":{"version":"2026.1003.52637","runId":"%s","releaseRequestId":"rr-1",
+                 "releaseRequestQualifiedId":"qits-ci-service-rr-1","tagSha":"abc"}}
                 """.formatted(BASE_RUN));
         ci.answer("GET", BASELINE_REPORTS, """
                 [{"id":"r-0","kind":"test-results","kindVersion":1,"stepIndex":1,"highlights":[],
@@ -95,7 +96,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n");
-        assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN + ")");
+        assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN
+                + ", release request qits-ci-service-rr-1)");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path())
                 .containsExactly("GET " + BASELINE, "GET " + BASELINE_REPORTS, "PUT " + PUT);
         assertThat(ci.requests).allSatisfy(r -> assertThat(r.authorization()).isEqualTo("Bearer " + TOKEN));
