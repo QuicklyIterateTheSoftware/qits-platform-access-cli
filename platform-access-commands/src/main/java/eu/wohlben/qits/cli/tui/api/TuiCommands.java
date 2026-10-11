@@ -41,4 +41,13 @@ public final class TuiCommands {
         TuiCommand declared = declaredOn(command);
         return declared == null ? Output.TEXT : declared.output();
     }
+
+    /**
+     * The command's own effect, WRITE when it declares none. Only the command's own declaration
+     * counts, never a parent's: a READ group must not make a write under it read-only.
+     */
+    public static Effect effectOf(Object command) {
+        TuiCommand declared = declaredOn(command);
+        return declared == null ? Effect.WRITE : declared.effect();
+    }
 }

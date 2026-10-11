@@ -23,4 +23,11 @@ public @interface TuiCommand {
 
     /** Whether the command reads a document on stdin. The screen does not read it. */
     Input input() default Input.NONE;
+
+    /**
+     * Whether the command only reads. The screen does not read it; the MCP service's read-only mode
+     * does. WRITE unless a command says otherwise, so a command nobody classified is never run by a
+     * caller that may change nothing.
+     */
+    Effect effect() default Effect.WRITE;
 }

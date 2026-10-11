@@ -25,7 +25,7 @@ class ModeTest {
             Mode.CLIENT_ID, "dyn-project-agent-7-k22qd",
             Mode.CLIENT_SECRET, "a secret",
             "QITS_PROJECTS_DAEMON_URL", "http://qa-qits-projects:8080/projects/agents/daemon",
-            "QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp");
+            "QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp");
 
     private static PlatformEndpoints endpoints(Map<String, String> env, String idpUrl) {
         return new PlatformEndpoints(Mode.of(env), env, idpUrl);
@@ -159,9 +159,19 @@ class ModeTest {
     }
 
     @Test
-    void theRepositoryMcpUrlAnswersWhenItIsTheOnlyOne() {
+    void thePlatformMcpUrlAnswersWhenItIsTheOnlyOne() {
+        assertThat(endpoints(Map.of("QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp"), null)
+                .environment()).isEqualTo("qa");
+    }
+
+    @Test
+    void theOldRepositoryMcpUrlStillAnswersUntilItIsRetired() {
         assertThat(endpoints(Map.of("QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp"), null)
                 .environment()).isEqualTo("qa");
+        Map<String, String> both = Map.of(
+                "QITS_PLATFORM_MCP_URL", "http://staging-qits-platform-access-mcp:8080/mcp",
+                "QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp");
+        assertThat(endpoints(both, null).environment()).as("the new name is read first").isEqualTo("staging");
     }
 
     @Test

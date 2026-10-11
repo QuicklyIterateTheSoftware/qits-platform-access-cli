@@ -1,5 +1,8 @@
 package eu.wohlben.qits.cli.access.agents;
 
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -51,6 +54,7 @@ import java.util.Map;
                         + "replaces the cache."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Always, also when nothing was printed."})
+@TuiCommand(interaction = Interaction.LOCAL, effect = Effect.READ)
 public class WorkLinksCommand extends PlatformCommand {
 
     private static final ObjectMapper JSON = new ObjectMapper();

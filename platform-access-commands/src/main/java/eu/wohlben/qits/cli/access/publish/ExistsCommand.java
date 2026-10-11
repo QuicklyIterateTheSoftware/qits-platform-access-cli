@@ -1,5 +1,8 @@
 package eu.wohlben.qits.cli.access.publish;
 
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
+import eu.wohlben.qits.cli.tui.api.Effect;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
@@ -22,6 +25,7 @@ import java.util.List;
                 "0:Published.",
                 "1:Not published, or the arguments are wrong.",
                 "2:Could not ask: the store unreachable, an I/O failure, or a 5xx."})
+@TuiCommand(interaction = Interaction.CI_ONLY, effect = Effect.READ)
 public class ExistsCommand extends AbstractPublishCommand {
 
     @CommandLine.Parameters(index = "0..*", paramLabel = "<type> <name> <version>",

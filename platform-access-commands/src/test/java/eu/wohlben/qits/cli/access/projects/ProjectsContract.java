@@ -23,12 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
- * {@code /work} doors and two more: the release request's commits, which {@code qits artifacts
- * publish changelog} reads in every release step (qits-893), and the project's release requests,
- * which {@code qits release-request list} reads when no repository is named. The other {@code qits
- * projects}, {@code repositories} and {@code release-request} calls are not part of this pact yet,
- * and neither is the OpenAPI document the comment doors read their schema from. Neither is {@code
- * list --state}: the provider records the project list without a query only.
+   * {@code /work} doors and four more: the release request's commits, which {@code qits artifacts
+   * publish changelog} reads in every release step (qits-893), a commit's changes and one file's
+   * diff, and the project's release requests, which {@code qits release-request list} reads when no
+   * repository is named. {@code qits projects}, the other {@code repositories} reads and {@code
+   * release-request} calls are not part of this pact yet, and neither is the OpenAPI document the
+   * payload commands read their schema from. Neither is {@code list --state}: the provider records
+   * the project list without a query only. Doors the provider records in no state (branches,
+   * commits, commit subjects, the refinement designs) have no row: a row needs a recorded state.
  * <p>
  * <b>Each state is one the provider records</b> in its golden masters, picked for the call: a row
  * whose (state, operation) the index does not hold fails before anything runs, naming both.
@@ -63,6 +65,11 @@ final class ProjectsContract {
     static final String IMPLEMENTED_TICKET = "an implemented ticket";
     static final String RELEASED_REQUEST = "a released release request";
     static final String PENDING_REQUESTS = "a project with pending release requests";
+    static final String BUG_TICKET_IN_DETAIL = "a bug ticket in detail";
+    static final String EPIC_WITH_A_SKETCH = "an epic with a sketch to inline";
+    static final String CAMPAIGN_IN_DETAIL = "a campaign in detail";
+    static final String CAMPAIGN_TO_EDIT = "a campaign with members to edit";
+    static final String AWAITING_REQUEST = "a release request awaiting approval";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -198,6 +205,127 @@ final class ProjectsContract {
         });
     };
 
+    /** The literal segment after {@code marker} in the recorded path: a page slug or a commit hash. */
+    private static String segmentAfter(Operation recorded, String marker) {
+        String rest = recorded.path().substring(recorded.path().indexOf(marker) + marker.length());
+        int end = rest.indexOf('/');
+        return end < 0 ? rest : rest.substring(0, end);
+    }
+
+    private static final Call BLOCK = (api, params, recorded) -> {
+        JsonNode block = api.setWorkBlocked(params.get("qualifiedId"), recorded.exampleBody()).path("block");
+        assertThat(block.path("blocked").asBoolean()).isTrue();
+        assertThat(ProjectsApi.text(block, "blockSource")).isNotBlank();
+        assertThat(ProjectsApi.text(block, "blockReason")).isEqualTo(recorded.exampleBody().path("reason").asText());
+    };
+
+    private static final Call DELETE = (api, params, recorded) ->
+            assertThat(api.deleteWork(params.get("qualifiedId")).path("success").asBoolean()).isTrue();
+
+    /** A page as `dossier get`, `put` and `move` print it. */
+    private static void page(JsonNode page) {
+        assertThat(ProjectsApi.text(page, "slug")).isNotBlank();
+        assertThat(ProjectsApi.text(page, "title")).isNotBlank();
+        assertThat(page.path("version").isNumber()).isTrue();
+        assertThat(page.path("position").isNumber()).isTrue();
+    }
+
+    private static final Call DOSSIER = (api, params, recorded) -> {
+        JsonNode pages = api.workDossier(params.get("qualifiedId")).path("pages");
+        assertThat(pages.size())
+                .isEqualTo(GoldenMasters.json(recorded.state(), recorded.operationId()).path("pages").size());
+        pages.forEach(ProjectsContract::page);
+    };
+
+    private static final Call DOSSIER_PAGE = (api, params, recorded) -> {
+        JsonNode page = api.workDossierPage(params.get("qualifiedId"), segmentAfter(recorded, "/dossier/"));
+        page(page);
+        assertThat(ProjectsApi.text(page, "body")).isNotBlank();
+    };
+
+    private static final Call DOSSIER_CREATE = (api, params, recorded) ->
+            page(api.createWorkDossierPage(params.get("qualifiedId"), recorded.exampleBody()));
+
+    private static final Call DOSSIER_PUT = (api, params, recorded) ->
+            page(api.putWorkDossierPage(params.get("qualifiedId"), segmentAfter(recorded, "/dossier/"),
+                    recorded.exampleBody()));
+
+    private static final Call DOSSIER_MOVE = (api, params, recorded) ->
+            page(api.moveWorkDossierPage(params.get("qualifiedId"), segmentAfter(recorded, "/dossier/"),
+                    recorded.exampleBody()));
+
+    private static final Call DOSSIER_DELETE = (api, params, recorded) ->
+            assertThat(api.deleteWorkDossierPage(params.get("qualifiedId"), segmentAfter(recorded, "/dossier/"))
+                    .path("success").asBoolean()).isTrue();
+
+    private static final Call INLINE = (api, params, recorded) ->
+            assertThat(ProjectsApi.text(api.inlineWorkDossierAsset(params.get("qualifiedId"), recorded.exampleBody()),
+                    "markdown")).isNotBlank();
+
+    /** A member row as `members` prints it. */
+    private static void member(JsonNode m) {
+        assertThat(ProjectsApi.text(m, "membershipId")).isNotBlank();
+        assertThat(m.path("position").isNumber()).isTrue();
+        assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
+        assertThat(ProjectsApi.text(m.path("entity"), "status")).isNotBlank();
+        assertThat(m.path("groups").isArray()).isTrue();
+    }
+
+    private static final Call MEMBERS = (api, params, recorded) -> {
+        JsonNode members = api.workMembers(params.get("qualifiedId")).path("members");
+        assertThat(members).isNotEmpty();
+        members.forEach(ProjectsContract::member);
+    };
+
+    private static final Call MEMBER_ADD = (api, params, recorded) ->
+            member(api.addWorkMember(params.get("qualifiedId"), recorded.exampleBody()).path("member"));
+
+    private static final Call MEMBER_MOVE = (api, params, recorded) ->
+            api.moveWorkMember(params.get("qualifiedId"), params.get("lastMembershipId"), recorded.exampleBody())
+                    .path("members").forEach(ProjectsContract::member);
+
+    private static final Call MEMBER_REMOVE = (api, params, recorded) ->
+            api.removeWorkMember(params.get("qualifiedId"), params.get("lastMembershipId"))
+                    .path("members").forEach(ProjectsContract::member);
+
+    private static final Call MEMBER_CONDITION = (api, params, recorded) -> {
+        JsonNode m = api.setWorkMemberCondition(params.get("qualifiedId"), params.get("firstMembershipId"),
+                recorded.exampleBody()).path("member");
+        member(m);
+        assertThat(m.path("groups")).isNotEmpty();
+    };
+
+    private static final Call PROGRESS = (api, params, recorded) -> {
+        JsonNode progress = api.workProgress(params.get("qualifiedId")).path("progress");
+        assertThat(ProjectsApi.text(progress.path("campaign"), "qualifiedId")).isEqualTo(params.get("qualifiedId"));
+        assertThat(progress.path("evaluator").path("connected").isBoolean()).isTrue();
+        assertThat(progress.path("members")).allSatisfy(m -> {
+            assertThat(ProjectsApi.text(m, "state")).isNotBlank();
+            assertThat(m.path("waitsFor").isArray()).isTrue();
+            assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
+        });
+    };
+
+    /** `design` asks the item for its refinement first; an item with none answers null. */
+    private static final Call NO_REFINEMENT = (api, params, recorded) ->
+            assertThat(api.workRefinement(params.get("qualifiedId")).path("refinement").isNull()).isTrue();
+
+    private static final Call COMMIT_CHANGES = (api, params, recorded) -> {
+        JsonNode files = api.commitChanges(params.get("repositoryId"), segmentAfter(recorded, "/commits/"), null)
+                .path("files");
+        assertThat(files).isNotEmpty().allSatisfy(f -> {
+            assertThat(ProjectsApi.text(f, "path")).isNotBlank();
+            assertThat(ProjectsApi.text(f, "changeType")).isNotBlank();
+        });
+    };
+
+    private static final Call COMMIT_DIFF = (api, params, recorded) -> {
+        String path = recorded.path().substring(recorded.path().indexOf("?path=") + "?path=".length());
+        JsonNode diff = api.commitDiff(params.get("repositoryId"), segmentAfter(recorded, "/commits/"), path, null);
+        assertThat(ProjectsApi.text(diff, "path")).isEqualTo(path);
+        assertThat(ProjectsApi.text(diff, "diff")).isNotBlank();
+    };
+
     static final List<Case> CASES = List.of(
             row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", LIST),
             row("qits work details", EPIC_IN_DETAIL, "getWork", GET),
@@ -217,6 +345,24 @@ final class ProjectsContract {
                     ProjectsApi.MERGE_PATCH, EDIT_COMMENT),
             row("qits artifacts publish changelog", RELEASED_REQUEST, "listReleaseRequestCommits", RELEASE_COMMITS),
             row("qits artifacts publish changelog", TICKET_WITH_A_COMMENT, "getWork", TITLE),
+            row("qits work block", REPORTED_TICKET, "setWorkBlocked", BLOCK),
+            row("qits work delete", REPORTED_TICKET, "deleteWork", DELETE),
+            row("qits work progress", CAMPAIGN_IN_DETAIL, "getWorkProgress", PROGRESS),
+            row("qits work dossier list", BUG_TICKET_IN_DETAIL, "listWorkDossier", DOSSIER),
+            row("qits work dossier get", EPIC_IN_DETAIL, "getWorkDossierPage", DOSSIER_PAGE),
+            row("qits work dossier put", BUG_TICKET_IN_DETAIL, "createWorkDossierPage", DOSSIER_CREATE),
+            row("qits work dossier put", BUG_TICKET_IN_DETAIL, "putWorkDossierPage", DOSSIER_PUT),
+            row("qits work dossier move", BUG_TICKET_IN_DETAIL, "moveWorkDossierPage", DOSSIER_MOVE),
+            row("qits work dossier delete", BUG_TICKET_IN_DETAIL, "deleteWorkDossierPage", DOSSIER_DELETE),
+            row("qits work dossier inline", EPIC_WITH_A_SKETCH, "inlineWorkDossierAsset", INLINE),
+            row("qits work members list", CAMPAIGN_TO_EDIT, "listWorkMembers", MEMBERS),
+            row("qits work members add", CAMPAIGN_TO_EDIT, "addWorkMember", MEMBER_ADD),
+            row("qits work members move", CAMPAIGN_TO_EDIT, "moveWorkMember", MEMBER_MOVE),
+            row("qits work members remove", CAMPAIGN_TO_EDIT, "removeWorkMember", MEMBER_REMOVE),
+            row("qits work members condition", CAMPAIGN_TO_EDIT, "setWorkMemberCondition", MEMBER_CONDITION),
+            row("qits work design list", REPORTED_TICKET, "getWorkRefinement", NO_REFINEMENT),
+            row("qits repositories commit-changes", AWAITING_REQUEST, "listCommitChanges", COMMIT_CHANGES),
+            row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", COMMIT_DIFF),
             row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
                     PROJECT_RELEASE_REQUESTS));
 

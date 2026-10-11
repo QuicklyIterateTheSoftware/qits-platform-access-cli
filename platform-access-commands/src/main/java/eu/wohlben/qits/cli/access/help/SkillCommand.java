@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.help;
 
+import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -7,7 +8,7 @@ import picocli.CommandLine;
 
 import java.io.PrintWriter;
 
-@TuiCommand(interaction = Interaction.LOCAL)
+@TuiCommand(interaction = Interaction.LOCAL, effect = Effect.READ)
 @CommandLine.Command(name = "skill", mixinStandardHelpOptions = true,
         description = "Print the help of every command as a SKILL.md for an agent: the platform rules, and each "
                 + "command with its options, examples and exit codes.",

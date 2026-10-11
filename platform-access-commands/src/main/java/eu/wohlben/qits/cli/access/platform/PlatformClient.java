@@ -93,6 +93,11 @@ public final class PlatformClient {
                 .PUT(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)));
     }
 
+    /** A DELETE: the address names what goes, so there is no body. */
+    public JsonNode delete(URI uri) throws CliFailure, InterruptedException {
+        return send("DELETE", uri, HttpRequest.newBuilder(uri).DELETE());
+    }
+
     /**
      * A PATCH with a body of the given media type: a merge patch is {@code application/merge-patch+json},
      * and a service that reads both takes it by that name.
