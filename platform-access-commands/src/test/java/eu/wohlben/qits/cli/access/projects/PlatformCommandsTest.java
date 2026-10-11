@@ -784,6 +784,110 @@ class PlatformCommandsTest {
                 + " answered HTTP 404: Release request not found: " + PENDING_ID);
     }
 
+    // --- regenerating a release output ---
+
+    private static final String REJECTED_ID = "33333333-2222-3333-4444-555555555555";
+
+    private static String runsOf(String id, String kind) {
+        return REQUESTS + "/" + id + "/automations/" + kind + "/runs";
+    }
+
+    /** The repository with one open request, the REJECTED one; the finalized one does not count. */
+    private void answerOneOpenRequest() {
+        platform.answer("GET", REQUESTS, """
+                {"requests":[
+                  {"id":"%s","repoName":"qits-ci-service","state":"REJECTED","priority":"MEDIUM",
+                   "summary":"Red build","version":null,"updatedAt":"2026-09-12T08:00:00Z"},
+                  {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED","priority":"MEDIUM",
+                   "summary":"Old release","version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
+                """.formatted(REJECTED_ID));
+    }
+
+    @Test
+    void regenerateWithoutARequestTakesTheOneOpenRequestEvenWhenItIsRejected() {
+        answerOneOpenRequest();
+        platform.answer("POST", runsOf(REJECTED_ID, "entity-diagram"), 202, "{\"id\":\"bump-1\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "regenerate",
+                "--kind", "entity-diagram");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isNull();
+        assertThat(platform.requests("POST", runsOf(REJECTED_ID, "entity-diagram")).getFirst().body()).isEmpty();
+        assertThat(r.out().lines().toList()).containsExactly(
+                "Asked for entity-diagram on release request " + REJECTED_ID + ": run bump-1",
+                "The request folds again when the output is committed to maintenance/automations/entity-diagram/"
+                        + REJECTED_ID + "; QA then runs again.",
+                "Follow the run with `qits maintenance bump bump-1`.");
+    }
+
+    @Test
+    void regenerateFindsANamedRequestByTheStartOfItsIdAndPrintsJson() throws Exception {
+        platform.answer("POST", runsOf(PENDING_ID, "screenshot-baselines"), 202, "{\"id\":\"bump-2\"}");
+
+        Result r = run("release-request", "regenerate", "--request", "1111", "--kind", "Screenshot-Baselines",
+                "--project", "qits", "--repository", CI, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
+        assertThat(JSON.readTree(r.out())).isEqualTo(JSON.readTree("{\"id\":\"bump-2\"}"));
+    }
+
+    @Test
+    void regenerateWithoutARequestRefusesWhenMoreThanOneIsOpen() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "regenerate",
+                "--kind", "estate-pins");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Repository qits-ci-service has more than one open release request: "
+                + "11111111 (PENDING), 33333333 (REJECTED). Name one with --request.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+        assertThat(run("release-request", "regenerate", "--project", "qits", "--repository", CI).exit()).isEqualTo(2);
+    }
+
+    @Test
+    void regenerateWithoutARequestRefusesWhenNoneIsOpen() {
+        platform.answer("GET", REQUESTS, "{\"requests\":[]}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "regenerate",
+                "--kind", "estate-pins");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Repository qits-ci-service has no open release request. Name one with --request.");
+    }
+
+    @Test
+    void regenerateTurnsTheDoorsRefusalsIntoSentences() {
+        answerOneOpenRequest();
+        platform.answer("POST", runsOf(REJECTED_ID, "estate-pins"), 409,
+                "{\"message\":\"An estate-pins run is already active for this request\"}");
+        platform.answer("POST", runsOf(REJECTED_ID, "nonsense"), 404, "{\"message\":\"Unknown kind: nonsense\"}");
+        platform.answer("POST", runsOf(REJECTED_ID, "entity-diagram"), 503,
+                "{\"message\":\"qits-maintenance is not configured\"}");
+
+        Result busy = run("release-request", "--project", "qits", "--repository", CI, "regenerate", "--kind",
+                "estate-pins");
+        Result unknown = run("release-request", "--project", "qits", "--repository", CI, "regenerate", "--kind",
+                "nonsense");
+        Result down = run("release-request", "--project", "qits", "--repository", CI, "regenerate", "--kind",
+                "entity-diagram");
+
+        assertThat(busy.exit()).isEqualTo(1);
+        assertThat(busy.err()).contains("The platform will not run estate-pins on release request " + REJECTED_ID
+                        + " now (HTTP 409)")
+                .contains("`qits maintenance automations --request 33333333`")
+                .contains("An estate-pins run is already active for this request");
+        assertThat(unknown.exit()).isEqualTo(1);
+        assertThat(unknown.err()).contains("The platform knows no kind 'nonsense' or no release request "
+                        + REJECTED_ID + " (HTTP 404). The kinds are entity-diagram, screenshot-baselines, "
+                        + "dependency-bump and estate-pins.")
+                .contains("Unknown kind: nonsense");
+        assertThat(down.exit()).isEqualTo(1);
+        assertThat(down.err()).contains("qits-maintenance cannot be reached or is not set up, so nothing ran "
+                + "(HTTP 503). Try again later.");
+        assertThat(busy.out() + unknown.out() + down.out()).isEmpty();
+    }
+
     // --- refusals ---
 
     @Test

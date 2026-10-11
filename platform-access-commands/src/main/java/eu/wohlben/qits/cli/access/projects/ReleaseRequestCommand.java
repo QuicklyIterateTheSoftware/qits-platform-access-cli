@@ -12,6 +12,7 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.complete.ProjectSource;
+import eu.wohlben.qits.cli.access.complete.ReleaseRequestSource;
 import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
@@ -22,16 +23,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
-                ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class},
+                ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class,
+                ReleaseRequestCommand.RegenerateCommand.class},
         description = {"Release requests: the one way to release a repository. list shows them (of the whole project, "
                         + "or of one repository), create "
-                        + "asks for a branch to be released, join adds a branch to an open request, and withdraw "
-                        + "ends a request that must not ship.",
+                        + "asks for a branch to be released, join adds a branch to an open request, withdraw "
+                        + "ends a request that must not ship, and regenerate runs one release output again.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
                         + "States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its "
                         + "remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build "
@@ -433,6 +436,116 @@ public class ReleaseRequestCommand implements Runnable {
                 return new CliFailure("No such request. " + refused.getMessage(), CliFailure.FAILED);
             }
             return refused;
+        }
+    }
+
+    @CommandLine.Command(name = "regenerate", mixinStandardHelpOptions = true,
+            description = {"Generate one release output again on an open release request: the entity diagram, the "
+                    + "screenshot baselines, the dependency bump or the estate pins.",
+                    "QA checks the entity diagram and the screenshot baselines and fails when they are stale; it "
+                            + "does not regenerate them. This command asks for the run. The automation commits the "
+                            + "output to maintenance/automations/<kind>/<request id>, the request folds again with "
+                            + "it, and QA then runs again. It prints the run's id."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-landing-app regenerate "
+                            + "--kind screenshot-baselines",
+                    "  qits release-request --project qits --repository qits-projects-service regenerate "
+                            + "--request 4f2a91c0 --kind entity-diagram",
+                    "",
+                    "- Without --request it takes the repository's one open request. A REJECTED request is open: "
+                            + "a red QA is the usual reason to regenerate.",
+                    "- 409 means a run of this kind is already active for the request, the request is not open or "
+                            + "has no fold, or bumping is off. 404 means the platform knows no such kind or "
+                            + "request. 503 means qits-maintenance cannot be reached; nothing ran.",
+                    "- `qits maintenance automations --request <id>` shows each kind's state, and "
+                            + "`qits maintenance bump <run id>` how the run went."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED,
+                    "2:Used wrongly (for example no --request when the repository has no open request or more "
+                            + "than one), not signed in, or the session ended."})
+    public static class RegenerateCommand extends PlatformCommand {
+
+        /** The kinds the platform runs today; the service is the authority, this list is for the sentences. */
+        static final String KINDS = "entity-diagram, screenshot-baselines, dependency-bump and estate-pins";
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @Completes(ReleaseRequestSource.class)
+        @CommandLine.Option(names = "--request", paramLabel = "<id>",
+                description = "The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the "
+                        + "uuid. Default: the repository's one open request.")
+        String request;
+
+        @CommandLine.Option(names = "--kind", paramLabel = "<kind>", required = true,
+                description = "What to generate: entity-diagram, screenshot-baselines, dependency-bump or "
+                        + "estate-pins.")
+        String kind;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (kind.isBlank() || (request != null && request.isBlank())) {
+                throw new CliFailure("--kind and --request must not be empty.", CliFailure.USAGE);
+            }
+            String wantedKind = kind.strip().toLowerCase(Locale.ROOT);
+            Target target = parent.target(context);
+            JsonNode found = request == null ? onlyOpen(target) : find(target, request.strip());
+            String requestId = text(found, "id");
+            JsonNode answer;
+            try {
+                answer = target.api().rerunReleaseRequestAutomation(target.repoId(), requestId, wantedKind);
+            } catch (CliFailure refused) {
+                throw explain(refused, requestId, wantedKind);
+            }
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            String runId = text(answer, "id");
+            context.out().println("Asked for " + wantedKind + " on release request " + requestId + ": run " + runId);
+            context.out().println("The request folds again when the output is committed to maintenance/automations/"
+                    + wantedKind + "/" + requestId + "; QA then runs again.");
+            context.out().println("Follow the run with `qits maintenance bump " + runId + "`.");
+            return 0;
+        }
+
+        /** The repository's one request that is still open; anything else needs --request. */
+        private static JsonNode onlyOpen(Target target) throws CliFailure, InterruptedException {
+            List<JsonNode> open = new ArrayList<>();
+            target.api().releaseRequests(target.repoId(), null).path("requests").forEach(r -> {
+                if (!CLOSED.contains(text(r, "state").toUpperCase(Locale.ROOT))) {
+                    open.add(r);
+                }
+            });
+            if (open.isEmpty()) {
+                throw new CliFailure("Repository " + target.repoName() + " has no open release request. "
+                        + "Name one with --request.", CliFailure.USAGE);
+            }
+            if (open.size() > 1) {
+                throw new CliFailure("Repository " + target.repoName() + " has more than one open release request: "
+                        + open.stream().map(r -> ReleaseRequestRefs.label(r) + " (" + text(r, "state") + ")")
+                                .collect(Collectors.joining(", "))
+                        + ". Name one with --request.", CliFailure.USAGE);
+            }
+            return open.getFirst();
+        }
+
+        /** The three refusals the door names get a sentence that says what to do next. */
+        private static CliFailure explain(CliFailure refused, String requestId, String kind) {
+            return switch (refused.status()) {
+                case 404 -> new CliFailure("The platform knows no kind '" + kind + "' or no release request "
+                        + requestId + " (HTTP 404). The kinds are " + KINDS + ". " + refused.getMessage(),
+                        CliFailure.FAILED);
+                case 409 -> new CliFailure("The platform will not run " + kind + " on release request " + requestId
+                        + " now (HTTP 409): a run of it may be active already, the request may not be open or have "
+                        + "no fold, or bumping may be off. `qits maintenance automations --request " + ReleaseRequestRefs.label("", requestId)
+                        + "` shows the kind's state. " + refused.getMessage(), CliFailure.FAILED);
+                case 503 -> new CliFailure("qits-maintenance cannot be reached or is not set up, so nothing ran "
+                        + "(HTTP 503). Try again later. " + refused.getMessage(), CliFailure.FAILED);
+                default -> refused;
+            };
         }
     }
 

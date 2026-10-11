@@ -147,6 +147,16 @@ public final class ProjectsApi {
     }
 
     /**
+     * {@code {"id"}}: the run qits-maintenance accepted for one release-request automation on the
+     * request's current fold (202). No body: the address names the request and the kind.
+     */
+    public JsonNode rerunReleaseRequestAutomation(String repoId, String requestId, String kind)
+            throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/automations/" + segment(kind) + "/runs"));
+    }
+
+    /**
      * Where one work item is addressed: {@code /projects/api/work/{entity}}. {@code entity} is its
      * qualified id ({@code qits-100}) or its id, and goes as it was given: the service resolves
      * either, so the CLI never looks an item up to find its UUID.
