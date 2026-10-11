@@ -479,9 +479,13 @@ class ScreenshotsReportKindTest {
     }
 
     static Git.Result git(Path directory, String... arguments) throws Exception {
-        String[] all = new String[arguments.length + 4];
-        System.arraycopy(new String[] {"-c", "user.name=qits", "-c", "user.email=qits@example.invalid"}, 0, all, 0, 4);
-        System.arraycopy(arguments, 0, all, 4, arguments.length);
+        // No automatic gc or maintenance: a 1001-file commit starts one in the background, and it
+        // still writes .git/objects while @TempDir deletes the directory.
+        String[] config = {"-c", "user.name=qits", "-c", "user.email=qits@example.invalid",
+                "-c", "gc.auto=0", "-c", "maintenance.auto=false"};
+        String[] all = new String[arguments.length + config.length];
+        System.arraycopy(config, 0, all, 0, config.length);
+        System.arraycopy(arguments, 0, all, config.length, arguments.length);
         return new Git(directory).run(all);
     }
 }
