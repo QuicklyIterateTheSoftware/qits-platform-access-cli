@@ -194,7 +194,7 @@ public final class GoldenMasters {
                         params(state),
                         operationId,
                         op.path("method").asText(),
-                        op.path("path").asText(),
+                        pathWithQuery(op),
                         body == null || body.isNull() ? null : body,
                         op.path("status").asInt(),
                         op.path("file").asText(),
@@ -207,6 +207,28 @@ public final class GoldenMasters {
         }
         throw new IllegalArgumentException(
                 "qits-projects' golden masters record no operation " + operationId + " in state '" + state + "'");
+    }
+
+    /**
+     * The recorded path, with the query appended as {@code ?name=value}. Newer recorders keep the
+     * query apart, in a {@code query} object; older ones left it in the path. Both read the same.
+     */
+    private static String pathWithQuery(JsonNode op) {
+        StringBuilder path = new StringBuilder(op.path("path").asText());
+        char separator = path.indexOf("?") < 0 ? '?' : '&';
+        for (Map.Entry<String, JsonNode> e : op.path("query").properties()) {
+            List<JsonNode> values = new ArrayList<>();
+            if (e.getValue().isArray()) {
+                e.getValue().forEach(values::add);
+            } else {
+                values.add(e.getValue());
+            }
+            for (JsonNode value : values) {
+                path.append(separator).append(e.getKey()).append('=').append(value.asText());
+                separator = '&';
+            }
+        }
+        return path.toString();
     }
 
     /** The recorded JSON for one (state, operation), byte for byte as the jar carries it. */

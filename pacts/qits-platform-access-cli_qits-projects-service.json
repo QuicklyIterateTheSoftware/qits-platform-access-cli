@@ -1663,7 +1663,12 @@
           }
         },
         "method": "GET",
-        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/commits/e447df8a0cabaeafedbf4c0235e013bb29697cd9/diff"
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/commits/e447df8a0cabaeafedbf4c0235e013bb29697cd9/diff",
+        "query": {
+          "path": [
+            "README.md"
+          ]
+        }
       },
       "response": {
         "body": {
