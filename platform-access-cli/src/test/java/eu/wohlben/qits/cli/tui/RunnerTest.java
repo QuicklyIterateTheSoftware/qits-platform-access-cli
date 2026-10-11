@@ -63,7 +63,8 @@ class RunnerTest {
     @Test
     void aFinishedCommandShowsItsOutputAndItsExitCode() {
         runner.start(List.of("-c", "echo first; echo second >&2; exit 2"), false);
-        assertThat(runner.title()).isEqualTo("running");
+        // A child this short may have finished already, so either title is right here.
+        assertThat(runner.title()).isIn("running", "exit 2");
         settled(runner, "exit 2");
         assertThat(runner.lines()).contains("first", "second");
     }

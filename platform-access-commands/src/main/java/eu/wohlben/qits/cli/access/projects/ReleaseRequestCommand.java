@@ -195,7 +195,7 @@ public class ReleaseRequestCommand implements Runnable {
             }
             answer = limited(answer, limit);
             if (json) {
-                ProjectsApi.printJson(context.out(), answer);
+                SafeJson.print(context.out(), answer);
                 return 0;
             }
             List<JsonNode> requests = new ArrayList<>();
@@ -301,7 +301,7 @@ public class ReleaseRequestCommand implements Runnable {
             Target target = parent.target(context);
             JsonNode answer = target.api().createReleaseRequest(target.repoId(), branch.strip(), summary.strip(), priority);
             if (json) {
-                ProjectsApi.printJson(context.out(), answer);
+                SafeJson.print(context.out(), answer);
                 return 0;
             }
             printRequest(context.out(), answer.path("request"));
@@ -361,7 +361,7 @@ public class ReleaseRequestCommand implements Runnable {
                 throw explain(refused, found);
             }
             if (json) {
-                ProjectsApi.printJson(context.out(), answer);
+                SafeJson.print(context.out(), answer);
                 return 0;
             }
             printRequest(context.out(), answer.path("request"));
@@ -431,7 +431,7 @@ public class ReleaseRequestCommand implements Runnable {
                 throw explain(refused, found);
             }
             if (json) {
-                ProjectsApi.printJson(context.out(), answer);
+                SafeJson.print(context.out(), answer);
                 return 0;
             }
             printRequest(context.out(), answer.path("request"));
