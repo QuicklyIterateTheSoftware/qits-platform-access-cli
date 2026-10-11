@@ -105,6 +105,41 @@ class BumpMessageTest {
         return "{\"eventId\":\"e\",\"changes\":[" + String.join(",", changes) + "]}";
     }
 
+    /**
+     * qits-1193: qits-maintenance leaves 2026.1011.81850 and 2026.1011.115738 out of the range (they
+     * published nothing), so the one changelog read is 2026.1011.134206's, and it lists their commits.
+     */
+    @Test
+    void aBumpAcrossSkippedReleasesCarriesTheirCommits() throws IOException {
+        changelog("qits-workspace-daemon", "2026.1011.134206", """
+                # qits-workspace-daemon 2026.1011.134206
+
+                Release request `qits-workspace-daemon-rr-102`, released 2026-10-11T13:42:06Z.
+
+                ## Commits
+
+                With the commits of 2026.1011.81850 (`qits-workspace-daemon-rr-100`) and 2026.1011.115738 (`qits-workspace-daemon-rr-101`), which published no changelog.
+
+                - `4ba0369` chore(qits-1174): attach only the central qits MCP server and the browser (wohlben)
+                - `cab706e` chore(qits-1174): bump(qits-1174): 2 dependencies (qits maintenance)
+                - `285886b` chore(qits-1174): drop the retired-server filter (wohlben)
+                - `6d19d76` docs(qits-1174): say why a rerun release step cannot publish the daemon jar again (wohlben)
+
+                ## Tickets
+
+                - [`qits-1174`](https://qits.wohlben.eu/projects/qits/work/detail/qits-1174) Central MCP
+
+                associated tickets: `qits-1174`
+                """);
+
+        Run run = run(payload(change("gitlink", "qits-workspace-daemon", "qits-workspace-daemon", "2026.1011.134206")),
+                "gitlink\tqits-workspace-daemon\n");
+
+        assertThat(run.code()).as(run.err()).isZero();
+        assertThat(run.out()).startsWith("chore(qits-1174): bump(targeted): 1 dependencies\n")
+                .contains("- `4ba0369` ", "- `cab706e` ", "- `285886b` ", "- `6d19d76` ");
+    }
+
     @Test
     void repositoriesByNameVersionsInVersionOrderTicketsUnitedAndSorted() throws IOException {
         changelog("qits-ci", "2026.1009.5", doc("qits-ci", "2026.1009.5", " `qits-10`"));

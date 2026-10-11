@@ -2755,7 +2755,7 @@ qits artifacts publish docs submit --site @apidocs/qits-projects --version 2026.
 
 Write this release's CHANGELOG.md and publish it as the docs site @changelog/<repository> at --version. Run in a release's publish step.
 
-The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId, releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits; the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
+The release comes from QITS_EVENT_PAYLOAD (its repository, repositoryName, releaseRequestId, releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and without the request's own merge commits, after those of every earlier release cut since the newest one that published a changelog (a release whose publish never completed has none of its own); the tickets from the commits' subjects (`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.
 
 The second line's time is the payload's occurredAt, or QITS_EVENT_OCCURRED_AT when the payload has none; both are optional, and a value that does not parse as an ISO-8601 time is dropped rather than refused, so the line is left without a time instead.
 

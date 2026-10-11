@@ -47,6 +47,33 @@ class ChangelogTest {
     }
 
     @Test
+    void anEarlierReleaseWithoutAChangelogIsNamedAboveTheCommits() {
+        String text = Changelog.render(RELEASE,
+                List.of(new Changelog.Earlier("2026.1011.81850", "qits-ci-rr-100")),
+                List.of(new Changelog.Commit("aaa1111", "feat(qits-9): one", "Alice")),
+                List.of(), List.of());
+
+        assertThat(text).contains("""
+                ## Commits
+
+                With the commits of 2026.1011.81850 (`qits-ci-rr-100`), which published no changelog.
+
+                - `aaa1111` feat(qits-9): one (Alice)
+                """);
+    }
+
+    @Test
+    void severalEarlierReleasesAreNamedInVersionOrder() {
+        String text = Changelog.render(RELEASE,
+                List.of(new Changelog.Earlier("1", "rr-1"), new Changelog.Earlier("2", "rr-2"),
+                        new Changelog.Earlier("3", "rr-3")),
+                List.of(), List.of(), List.of());
+
+        assertThat(text).contains("With the commits of 1 (`rr-1`), 2 (`rr-2`) and 3 (`rr-3`), which published no "
+                + "changelog.\n\nNone.\n");
+    }
+
+    @Test
     void emptySectionsSayNoneAndNoHighlightsLeaveTheirSectionOut() {
         String text = Changelog.render(new Changelog.Release("r", "1", "rr", null), List.of(), List.of(), List.of());
 
