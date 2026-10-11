@@ -9,7 +9,7 @@ Commands:
 - `qits session-daemon` keeps that session fresh for as long as it runs.
 - `qits projects list`, `qits repositories … list`,
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
-  and `qits release-request … list|create|join|withdraw` read from and ask the projects service.
+  and `qits release-request … list|create|join|withdraw|regenerate` read from and ask the projects service.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
   failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
@@ -477,6 +477,8 @@ Installing it is not part of this version.
         --request <id> --branch <branch> [--priority <priority>]
     qits release-request --project <project> --repository <repository> withdraw \
         --request <id> [--reason <text>]
+    qits release-request --project <project> --repository <repository> regenerate \
+        --kind <kind> [--request <id>]
     qits ci runs --project <project> --repository <repository> [--branch <branch>] \
         [--status <STATUS>] [--release-request <id>] [--limit <n>]
     qits ci run <run id> [--logs] [--project <project> --repository <repository>]
@@ -729,6 +731,18 @@ for one of its branches opens a new request. The command prints the request that
 - A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409, exit code 1).
 - HTTP 404 means the platform has no such request (exit code 1).
 
+`regenerate` runs one release output again on an open request: `--kind` is `entity-diagram`,
+`screenshot-baselines`, `dependency-bump` or `estate-pins` (qits-1182). QA checks the entity diagram
+and the screenshot baselines and fails when they are stale, but does not regenerate them; this is
+how a person or an agent asks for that. Without `--request` it takes the repository's one open
+request (a REJECTED one counts), and refuses when there is none or more than one. The automation
+commits the output to `maintenance/automations/<kind>/<request id>`, the request folds again with
+it, and QA runs again. It prints the run's id; `qits maintenance bump <run id>` shows how it went.
+
+- HTTP 409 means a run of that kind is already active for the request, the request is not open or
+  has no fold, or bumping is off. HTTP 404 means no such kind or request. HTTP 503 means
+  qits-maintenance cannot be reached and nothing ran. Each is exit code 1, with a sentence.
+
     qits release-request --project qits list
     qits release-request --project qits list --state all --limit 20
     qits release-request --project qits --repository qits-ci-service list
@@ -739,6 +753,8 @@ for one of its branches opens a new request. The command prints the request that
         --request 4f2a91c0 --branch feature/log-search
     qits release-request --project qits --repository qits-ci-service withdraw \
         --request 4f2a91c0 --reason "The log view moves to qits-observability"
+    qits release-request --project qits --repository qits-landing-app regenerate \
+        --kind screenshot-baselines
 
 A red gating build that was the platform's fault and not the code's (a flaked container, a registry
 that was down) is retried with `qits ci retry`, not with a new request and not with `withdraw`.

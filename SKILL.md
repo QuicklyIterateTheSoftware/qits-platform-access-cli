@@ -1276,7 +1276,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits release-request
 
-Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, and withdraw ends a request that must not ship.
+Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, and regenerate runs one release output again.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
@@ -1433,6 +1433,42 @@ qits release-request --project qits --repository qits-ci-service withdraw --requ
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
+
+## qits release-request regenerate
+
+Generate one release output again on an open release request: the entity diagram, the screenshot baselines, the dependency bump or the estate pins.
+
+QA checks the entity diagram and the screenshot baselines and fails when they are stale; it does not regenerate them. This command asks for the run. The automation commits the output to maintenance/automations/<kind>/<request id>, the request folds again with it, and QA then runs again. It prints the run's id.
+
+```
+qits release-request regenerate --kind <kind> [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--request <id>]
+```
+
+| Name | What it does |
+|---|---|
+| `--kind <kind>` | Required. What to generate: entity-diagram, screenshot-baselines, dependency-bump or estate-pins. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository: its id or name. |
+| `--request <id>` | The request: its id, or enough of its start to name one (list shows 8 characters). Default: the repository's one open request. |
+
+### Examples
+
+```
+qits release-request --project qits --repository qits-landing-app regenerate --kind screenshot-baselines
+qits release-request --project qits --repository qits-projects-service regenerate --request 4f2a91c0 --kind entity-diagram
+```
+
+- Without --request it takes the repository's one open request. A REJECTED request is open: a red QA is the usual reason to regenerate.
+- 409 means a run of this kind is already active for the request, the request is not open or has no fold, or bumping is off. 404 means the platform knows no such kind or request. 503 means qits-maintenance cannot be reached; nothing ran.
+- `qits maintenance automations --request <id>` shows each kind's state, and `qits maintenance bump <run id>` how the run went.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example no --request when the repository has no open request or more than one), not signed in, or the session ended.
 
 ## qits ci
 

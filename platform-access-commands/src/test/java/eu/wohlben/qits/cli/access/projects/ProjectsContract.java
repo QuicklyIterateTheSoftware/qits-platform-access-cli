@@ -23,10 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
- * {@code /work} doors and four more: the release request's commits, which {@code qits artifacts
+ * {@code /work} doors and five more: the release request's commits, which {@code qits artifacts
  * publish changelog} reads in every release step (qits-893), a commit's changes and one file's
- * diff, and the project's release requests, which {@code qits release-request list} reads when no
- * repository is named. {@code qits projects}, the other {@code repositories} reads and {@code
+ * diff, the project's release requests, which {@code qits release-request list} reads when no
+ * repository is named, and an automation run, which {@code qits release-request regenerate} asks
+ * for (qits-1182). {@code qits projects}, the other {@code repositories} reads and the other {@code
  * release-request} calls are not part of this pact yet, and neither is the OpenAPI document the
  * payload commands read their schema from. Neither is {@code list --state}: the provider records
  * the project list without a query only. Doors the provider records in no state (branches,
@@ -70,6 +71,7 @@ final class ProjectsContract {
     static final String CAMPAIGN_TO_EDIT = "a campaign with members to edit";
     static final String AWAITING_REQUEST = "a release request awaiting approval";
     static final String PENDING_REQUESTS = "a project with pending release requests";
+    static final String HELD_BY_A_FAILED_AUTOMATION = "a release request held by a failed automation";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -326,6 +328,13 @@ final class ProjectsContract {
         });
     };
 
+    /** {@code qits release-request regenerate}: the kind is the recording's path segment; it prints the run's id. */
+    private static final Call REGENERATE = (api, params, recorded) -> {
+        JsonNode run = api.rerunReleaseRequestAutomation(params.get("repositoryId"), params.get("requestId"),
+                segmentAfter(recorded, "/automations/"));
+        assertThat(ProjectsApi.text(run, "id")).isNotBlank();
+    };
+
     static final List<Case> CASES = List.of(
             row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", LIST),
             row("qits work details", EPIC_IN_DETAIL, "getWork", GET),
@@ -364,7 +373,9 @@ final class ProjectsContract {
             row("qits repositories commit-changes", AWAITING_REQUEST, "listCommitChanges", COMMIT_CHANGES),
             row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", COMMIT_DIFF),
             row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
-                    PROJECT_RELEASE_REQUESTS));
+                    PROJECT_RELEASE_REQUESTS),
+            row("qits release-request regenerate", HELD_BY_A_FAILED_AUTOMATION, "rerunReleaseRequestAutomation",
+                    REGENERATE));
 
     private static Case row(String command, String state, String operationId, Call call) {
         return new Case(Trigger.command(command), state, operationId, JSON_BODY, call);
