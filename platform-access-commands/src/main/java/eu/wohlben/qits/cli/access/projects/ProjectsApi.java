@@ -216,10 +216,23 @@ public final class ProjectsApi {
      */
     public JsonNode projectWork(String project, String archetype, String status, String parent)
             throws CliFailure, InterruptedException {
+        return projectWork(project, archetype, status, parent, null, null);
+    }
+
+    /**
+     * The same list with the two filters qits-248 adds: {@code outcome} (why a DROPPED item was
+     * dropped) and {@code supersededBy} (the items naming that one, a qualified id or an id, as
+     * theirs). A service older than qits-248 ignores both and answers the unfiltered list, so a
+     * caller that relies on either filters the answer again itself.
+     */
+    public JsonNode projectWork(String project, String archetype, String status, String parent, String outcome,
+            String supersededBy) throws CliFailure, InterruptedException {
         List<String> query = new ArrayList<>();
         addQuery(query, "archetype", archetype);
         addQuery(query, "status", status);
         addQuery(query, "parent", parent);
+        addQuery(query, "outcome", outcome);
+        addQuery(query, "supersededBy", supersededBy);
         return client.get(uri("/projects/api/projects/" + segment(project) + "/work"
                 + (query.isEmpty() ? "" : "?" + String.join("&", query))));
     }

@@ -387,7 +387,7 @@ An epic's or a ticket's dossier (dossier), a campaign's members and progress (me
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
-Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. Features and tasks walk the same nine words as epics and tickets; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
+Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an outcome saying why (status names them). Features and tasks walk the same nine words as epics and tickets; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
 
 ### Notes
 
@@ -398,18 +398,19 @@ Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING,
 
 ## qits work list
 
-A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked.
+A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).
 
 Each filter narrows the list; without one it shows everything.
 
 ```
-qits work list [--archetype <archetype>] [--entity <entity>] [--output table|json] [--parent <entity>] [--project <project>] [--projects-url <url>] [--status <status>]
+qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome>] [--output table|json] [--parent <entity>] [--project <project>] [--projects-url <url>] [--status <status>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--archetype <archetype>` | Only items of this archetype: EPIC, TICKET, FEATURE, TASK or CAMPAIGN. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--outcome <outcome>` | Only DROPPED items dropped with this outcome: DUPLICATE, RESOLVED_ELSEWHERE, SUPERSEDED, OBSOLETE, INVALID or WONT_DO. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--parent <entity>` | Only the children of this item: its id or its qualified id. |
 | `--project <project>` | The project (required): its id or its slug. |
@@ -422,9 +423,10 @@ qits work list [--archetype <archetype>] [--entity <entity>] [--output table|jso
 qits work list --project qits
 qits work list --project qits --archetype epic --status REFINED
 qits work list --project qits --parent qits-120 -o json
+qits work list --project qits --status DROPPED --outcome duplicate
 ```
 
-- --archetype and --status are case-insensitive. --parent lists the children of one item.
+- --archetype, --status and --outcome are case-insensitive. --parent lists the children of one item.
 
 ### Exit codes
 
@@ -434,7 +436,7 @@ qits work list --project qits --parent qits-120 -o json
 
 ## qits work details
 
-One work item: its fields, its description, its comment thread and its children.
+One work item: its fields, its description, its comment thread, its children, and what it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by it, or superseded by it). A DROPPED item shows its outcome beside the status, and its supersededBy as duplicate of, resolved by or superseded by.
 
 ```
 qits work details [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -453,7 +455,7 @@ qits work --entity qits-100 details
 qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json
 ```
 
-- -o json prints one object: the item as the service answers it, its comments and its children. Control characters are written as escapes.
+- -o json prints one object: the item as the service answers it, its comments, its children and supersedes, the items it closes. Control characters are written as escapes.
 
 ### Exit codes
 
@@ -532,7 +534,7 @@ echo '{"assignee":null}' | qits work update --entity qits-100 -o json
 
 Reshape a work item into another archetype (a ticket into an epic, a feature into a task, ...), keeping its id, its number and its thread.
 
-The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/work/transition, keyed by --entity as it was given.
+The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, outcome, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/work/transition, keyed by --entity as it was given.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/work/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
 
@@ -574,6 +576,8 @@ Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMEN
 
 Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/work/{entity}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
+A move into DROPPED says why in "outcome": DUPLICATE (another item asks for the same thing), RESOLVED_ELSEWHERE (another item's change already resolved it), SUPERSEDED (a successor replaced it), OBSOLETE (the subject went away by itself), INVALID (it never was a problem) or WONT_DO (a decision was taken not to do it; scratch and probe items too). The first three name that other item in "supersededBy" (qualified id or id); the last three take none; any other move takes neither. Each breach is HTTP 400. Do not drop an item merely because it is hard or stale: block it instead. DROPPED moves back only to REPORTED, which clears both.
+
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/work/archetypes) states them, and exits with 0.
 
 ```
@@ -591,6 +595,8 @@ qits work status [--entity <entity>] [--output table|json] [--projects-url <url>
 ```
 qits work --entity qits-100 status </dev/null
 echo '{"target":"REFINED"}' | qits work --entity qits-100 status
+echo '{"target":"DROPPED","outcome":"DUPLICATE","supersededBy":"qits-90"}' | qits work --entity qits-100 status
+echo '{"target":"DROPPED","outcome":"OBSOLETE"}' | qits work --entity qits-100 status
 ```
 
 - An epic's status move takes qits:admin; an agent is answered HTTP 403.
@@ -599,7 +605,7 @@ echo '{"target":"REFINED"}' | qits work --entity qits-100 status
 ### Exit codes
 
 - `0` The item moved, or nothing was put in and the legal targets are printed.
-- `1` The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
+- `1` The platform refused (for example a drop without its outcome or reference, HTTP 400, a move the lifecycle does not allow, HTTP 409, your roles or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example no --entity, an item on a service whose registry has not yet given its archetype a lifecycle, or a payload that is not a JSON object), not signed in, or the session ended.
 
 ## qits work block

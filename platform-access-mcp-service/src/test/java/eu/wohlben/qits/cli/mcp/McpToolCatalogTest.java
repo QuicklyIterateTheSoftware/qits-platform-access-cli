@@ -347,6 +347,28 @@ class McpToolCatalogTest {
         assertThat(property(tool("work_update"), ToolCatalog.PAYLOAD)).containsEntry("type", "object");
     }
 
+    /**
+     * qits-248: an agent drops work through work_status, so the tool's description is where it
+     * learns that a drop says why. The six outcomes, the reference rule and "block instead" reach it
+     * from the command's own help; work_list takes the outcome filter.
+     */
+    @Test
+    void workStatusTellsAnAgentHowToDropAndWorkListFiltersByOutcome() {
+        String status = tool("work_status").description();
+        for (String outcome : List.of("DUPLICATE", "RESOLVED_ELSEWHERE", "SUPERSEDED", "OBSOLETE", "INVALID",
+                "WONT_DO")) {
+            assertThat(status).as(outcome).contains(outcome + " (");
+        }
+        assertThat(status).contains("\"supersededBy\"")
+                .contains("Do not drop an item merely because it is hard or stale: block it instead.")
+                .contains("{\"target\":\"DROPPED\",\"outcome\":\"DUPLICATE\",\"supersededBy\":\"qits-90\"}")
+                .endsWith(ToolCatalog.PAYLOAD_HINT);
+        assertThat(property(tool("work_list"), "outcome")).containsEntry("type", "string");
+        assertThat((String) property(tool("work_list"), "outcome").get("description"))
+                .contains("DUPLICATE, RESOLVED_ELSEWHERE, SUPERSEDED, OBSOLETE, INVALID or WONT_DO");
+        assertThat(tool("work_details").description()).contains("what it closes");
+    }
+
     @Test
     void theDescriptionIsTheUsageTextAndTheOutputDefaultsToJson() {
         Tool runs = tool("ci_runs");

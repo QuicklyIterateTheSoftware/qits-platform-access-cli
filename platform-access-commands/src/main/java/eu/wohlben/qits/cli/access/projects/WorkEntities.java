@@ -27,10 +27,58 @@ final class WorkEntities {
      * field names, not a schema: which of them a target archetype takes is the served schema's call,
      * and whatever it does not list is dropped.
      */
-    static final List<String> CARRIED = List.of("title", "description", "status", "ticketType", "impetus", "assignee",
-            "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn", "acceptanceCriteria");
+    static final List<String> CARRIED = List.of("title", "description", "status", "outcome", "ticketType", "impetus",
+            "assignee", "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn", "acceptanceCriteria");
+
+    /**
+     * Why a DROPPED item was dropped (qits-248), in the service's order. The first three name the
+     * other item in {@code supersededBy}; the last three take none.
+     */
+    static final List<String> OUTCOMES = List.of("DUPLICATE", "RESOLVED_ELSEWHERE", "SUPERSEDED", "OBSOLETE",
+            "INVALID", "WONT_DO");
+
+    /** The outcomes that name another item in {@code supersededBy}. */
+    static final List<String> REFERENCING = OUTCOMES.subList(0, 3);
 
     private WorkEntities() {
+    }
+
+    /**
+     * The rows whose {@code outcome} is {@code outcome}. Applied after the service's own filter too,
+     * because a service older than qits-248 ignores {@code ?outcome=} and answers every row.
+     */
+    static List<JsonNode> withOutcome(List<JsonNode> rows, String outcome) {
+        return rows.stream().filter(e -> outcome.equals(text(e, "outcome"))).toList();
+    }
+
+    /**
+     * The rows that name {@code entity} as their {@code supersededBy}: what it closes. The service
+     * stores a UUID, so the id is what matches; the qualified id is tried as well. Applied after the
+     * service's own filter too, because a service older than qits-248 ignores {@code ?supersededBy=}
+     * and answers the whole project.
+     */
+    static List<JsonNode> superseding(List<JsonNode> rows, JsonNode entity) {
+        String id = text(entity, "id");
+        String qualified = text(entity, "qualifiedId");
+        return rows.stream().filter(e -> {
+            String by = text(e, "supersededBy");
+            return !by.isEmpty() && (by.equals(id) || by.equals(qualified));
+        }).toList();
+    }
+
+    /** The status, with the outcome beside it when the service sent one: {@code DROPPED (DUPLICATE)}. */
+    static String status(JsonNode e) {
+        String outcome = text(e, "outcome");
+        return outcome.isEmpty() ? text(e, "status") : text(e, "status") + " (" + outcome + ")";
+    }
+
+    /** How details labels {@code supersededBy}: by the outcome that names it, when there is one. */
+    private static String supersededByLabel(JsonNode e) {
+        return switch (text(e, "outcome")) {
+            case "DUPLICATE" -> "duplicate of";
+            case "RESOLVED_ELSEWHERE" -> "resolved by";
+            default -> "superseded by";
+        };
     }
 
     /** The row as the full state the transition door takes: what it carries now, nothing else. */
@@ -177,8 +225,8 @@ final class WorkEntities {
         headers.add("UPDATED");
         Table.print(out, indent, headers, entities.stream().map(e -> {
             List<String> row = new ArrayList<>(List.of(cell(label(e), 40), cell(text(e, "archetype"), 9),
-                    // 11, so that IMPLEMENTED, the longest status, is not cut
-                    cell(text(e, "status"), 11)));
+                    // 30, so that DROPPED (RESOLVED_ELSEWHERE), the longest status with its outcome, is not cut
+                    cell(status(e), 30)));
             if (anyBlocked) {
                 row.add(blockedCell(e));
             }
@@ -188,13 +236,17 @@ final class WorkEntities {
         }).toList());
     }
 
-    /** One item in full: its fields, its description, its thread and its children. */
-    static void printDetails(PrintStream out, JsonNode e, List<JsonNode> comments, List<JsonNode> children) {
+    /**
+     * One item in full: its fields, its description, its thread, its children and what it closes
+     * (the items naming it as their {@code supersededBy}; null when that could not be read).
+     */
+    static void printDetails(PrintStream out, JsonNode e, List<JsonNode> comments, List<JsonNode> children,
+            List<JsonNode> closes) {
         out.println(SafeText.line(text(e, "archetype")) + " " + SafeText.line(label(e)) + "  ("
                 + SafeText.line(text(e, "id")) + ")");
         List<List<String>> rows = new ArrayList<>();
         rows.add(row("title", text(e, "title")));
-        rows.add(row("status", text(e, "status")));
+        rows.add(row("status", status(e)));
         if (e.has("blocked") && !e.get("blocked").isNull()) {
             rows.add(row("blocked", blockedDetail(e)));
         }
@@ -205,7 +257,7 @@ final class WorkEntities {
         optional(rows, e, "position", "position");
         optional(rows, e, "depends on", "dependsOn");
         optional(rows, e, "repository", "repositoryId");
-        optional(rows, e, "superseded by", "supersededBy");
+        optional(rows, e, supersededByLabel(e), "supersededBy");
         if (!text(e, "implementedAt").isEmpty()) {
             rows.add(List.of("implemented", Table.time(text(e, "implementedAt"))));
         }
@@ -235,6 +287,14 @@ final class WorkEntities {
         } else {
             out.println("Children (" + children.size() + "):");
             printRows(out, "  ", children);
+        }
+        if (closes == null) {
+            out.println("Closes: could not be read.");
+        } else if (closes.isEmpty()) {
+            out.println("Closes: none.");
+        } else {
+            out.println("Closes (" + closes.size() + "), the items naming this one as their supersededBy:");
+            printRows(out, "  ", closes);
         }
     }
 

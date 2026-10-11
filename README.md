@@ -608,7 +608,7 @@ better), `REFINED` (it says what to do), `IMPLEMENTING` (an epic, ticket, featur
 worked; campaigns never enter it), `IMPLEMENTED` (released and deployed, not merely merged),
 `VERIFYING` (the platform's own verify dispatch was pressed; campaigns never enter it either),
 `VERIFIED` (somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit
-for work a decision was taken not to do. A SKIP transition lets `REFINED` move straight to
+for work a decision was taken not to do, carrying an `outcome` that says why (see `status` below). A SKIP transition lets `REFINED` move straight to
 `IMPLEMENTED`, bypassing `IMPLEMENTING`, and `IMPLEMENTED` move straight to `VERIFIED`, bypassing
 `VERIFYING`. Features and tasks walk the same eight words as epics and tickets; campaigns keep a
 shorter walk. A ticket is also blocked or not: the phase its status belongs to cannot proceed.
@@ -623,11 +623,17 @@ id: the service resolves either, so the CLI never looks an item up to learn its 
 
 **Reads.** `list --project <p>` shows a project's items in the service's order (`GET
 /projects/api/projects/{p}/work`): qualified id, archetype, status, a `BLOCKED` column when a
-ticket is blocked, title and when it last changed. `--archetype`, `--status` and `--parent` narrow
-it; the first two are case-insensitive, and `--parent` takes a qualified id or an id. `details`
-shows one item (`GET /projects/api/work/{entity}`): its fields, its description, its comment thread
-(`…/comments`) and its children (`…/children`: an epic's features, a feature's tasks). `-o json`
-prints `{"entity": …, "comments": […], "children": […]}`.
+ticket is blocked, title and when it last changed; a dropped item's status reads `DROPPED
+(DUPLICATE)`. `--archetype`, `--status`, `--parent` and `--outcome` narrow it; all but `--parent`
+are case-insensitive, and `--parent` takes a qualified id or an id. `--outcome` is sent as
+`?outcome=` and applied to the answer again, because a service older than qits-248 ignores the
+parameter. `details` shows one item (`GET /projects/api/work/{entity}`): its fields (the outcome
+beside a dropped item's status, and its `supersededBy` labelled `duplicate of`, `resolved by` or
+`superseded by`), its description, its comment thread (`…/comments`), its children (`…/children`:
+an epic's features, a feature's tasks) and what it closes: the items naming it as their
+`supersededBy`, read from `GET /projects/api/projects/{projectId}/work?supersededBy={id}` and
+filtered again for the same reason. When that read is refused, stderr says so and the item is still
+printed. `-o json` prints `{"entity": …, "comments": […], "children": […], "supersedes": […]}`.
 
 **Writes read a JSON payload on stdin.** A payload that is not one JSON object is a usage error
 (exit code 2), and nothing is sent. With nothing put in - stdin a terminal, or empty, as with
@@ -644,7 +650,7 @@ bare schema.
   looks the item up for its archetype and prints that archetype's `update` schema.
 - `transition --archetype <B>` reshapes the item into another archetype. The door (`POST
   /projects/api/work/transition`) is full-state: what the request leaves out is cleared. So the
-  command starts from the item as it stands (`title`, `description`, `status`, `ticketType`,
+  command starts from the item as it stands (`title`, `description`, `status`, `outcome`, `ticketType`,
   `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementingAt`, `implementedAt`, `dependsOn`, and
   `membership {parent, position}` when it has a parent), merges the payload over it (RFC 7396),
   sets `archetype`, and drops every property B's `transition` schema has no slot for, naming them
@@ -658,6 +664,12 @@ bare schema.
   registry (`GET /projects/api/work/archetypes`) opens from the item's current status. An item
   on a service whose registry has not yet given its archetype a lifecycle is a usage error. A move
   the lifecycle does not allow is HTTP 409.
+  A move into `DROPPED` says why in `outcome` (qits-248): `DUPLICATE`, `RESOLVED_ELSEWHERE` or
+  `SUPERSEDED`, each of which also names the other item in `supersededBy` (a qualified id or an
+  id), or `OBSOLETE`, `INVALID` or `WONT_DO`, which take none; any other move takes neither. The
+  service answers each breach with HTTP 400. When `DROPPED` is an open move, the printed schema
+  carries both properties and the rules as `if`/`then` conditionals. Work that is hard or stale is
+  blocked, not dropped.
 - `comment create` sends the payload (`{"body": "..."}`, Markdown) to `POST
   /projects/api/work/{entity}/comments`. `comment update --comment <id>` sends the payload as a JSON
   merge patch to `PATCH /projects/api/work/{entity}/comments/{id}`: the path names the item and the
@@ -681,7 +693,8 @@ form takes terminal control characters out of every value, and `-o json` writes 
         | qits work create --archetype ticket
     echo '{"title":"The log view stops at 64 KiB"}' | qits work --entity qits-100 update
     qits work --entity qits-100 transition --archetype epic </dev/null
-    echo '{"target":"DROPPED"}' | qits work --entity qits-100 status
+    echo '{"target":"DROPPED","outcome":"DUPLICATE","supersededBy":"qits-90"}' | qits work --entity qits-100 status
+    qits work list --project qits --status DROPPED --outcome obsolete
     echo '{"body":"I can reproduce it."}' | qits work --entity qits-100 comment create
     echo '{"body":"Fixed."}' | qits work --entity qits-100 comment update --comment <comment id>
 

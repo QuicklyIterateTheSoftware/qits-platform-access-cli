@@ -53,7 +53,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
                         + "served by the service for that archetype.",
                 "Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, "
-                        + "VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do. "
+                        + "VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an "
+                        + "outcome saying why (status names them). "
                         + "Features and tasks walk the same nine words as epics and tickets; campaigns keep a "
                         + "shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets "
                         + "READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED "
@@ -138,15 +139,18 @@ public class WorkCommand implements Runnable {
             description = {"A project's work items, every archetype, in the service's order: id (qualified), "
                     + "archetype, status, title and when it last changed. BLOCKED appears when a ticket is: "
                     + "yes for an explicit block, waiting when the only reason is an agent session sitting "
-                    + "idle, and - when it is not blocked.",
+                    + "idle, and - when it is not blocked. A DROPPED item shows its outcome beside the status: "
+                    + "DROPPED (DUPLICATE).",
                     "Each filter narrows the list; without one it shows everything."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work list --project qits",
                     "  qits work list --project qits --archetype epic --status REFINED",
                     "  qits work list --project qits --parent qits-120 -o json",
+                    "  qits work list --project qits --status DROPPED --outcome duplicate",
                     "",
-                    "- --archetype and --status are case-insensitive. --parent lists the children of one item."},
+                    "- --archetype, --status and --outcome are case-insensitive. --parent lists the children of "
+                            + "one item."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an unknown archetype or status, HTTP 400, or a project it "
@@ -175,18 +179,38 @@ public class WorkCommand implements Runnable {
                 description = "Only the children of this item: its id or its qualified id.")
         String parent;
 
+        @CommandLine.Option(names = "--outcome", paramLabel = "<outcome>",
+                description = "Only DROPPED items dropped with this outcome: DUPLICATE, RESOLVED_ELSEWHERE, "
+                        + "SUPERSEDED, OBSOLETE, INVALID or WONT_DO.")
+        String outcome;
+
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = json(work.options.output);
             String wanted = RepositoriesCommand.required(project, RepositoriesCommand.NAME_THE_PROJECT);
+            String why = upper(outcome);
+            if (why != null && !WorkEntities.OUTCOMES.contains(why)) {
+                throw new CliFailure("--outcome is one of " + String.join(", ", WorkEntities.OUTCOMES) + ", not "
+                        + SafeText.line(outcome.strip()) + ".", CliFailure.USAGE);
+            }
             ProjectsApi api = work.api(context);
             String parentEntity = parent == null || parent.isBlank() ? null : parent.strip();
-            JsonNode answer = api.projectWork(wanted, upper(archetype), upper(status), parentEntity);
+            JsonNode answer = api.projectWork(wanted, upper(archetype), upper(status), parentEntity, why, null);
+            List<JsonNode> entities = WorkEntities.list(answer);
+            if (why != null) {
+                // Again here: a service older than qits-248 ignores ?outcome= and answers every row.
+                entities = WorkEntities.withOutcome(entities, why);
+                if (answer.isObject()) {
+                    ObjectNode narrowed = ((ObjectNode) answer).deepCopy();
+                    ArrayNode kept = narrowed.putArray("entities");
+                    entities.forEach(kept::add);
+                    answer = narrowed;
+                }
+            }
             if (json) {
                 SafeJson.print(context.out(), answer);
                 return 0;
             }
-            List<JsonNode> entities = WorkEntities.list(answer);
             if (entities.isEmpty()) {
                 context.out().println("No work items match.");
                 return 0;
@@ -199,14 +223,18 @@ public class WorkCommand implements Runnable {
     // --- details ---
 
     @CommandLine.Command(name = "details", mixinStandardHelpOptions = true,
-            description = {"One work item: its fields, its description, its comment thread and its children."},
+            description = {"One work item: its fields, its description, its comment thread, its children, and what "
+                    + "it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by "
+                    + "it, or superseded by it). A DROPPED item shows its outcome beside the status, and its "
+                    + "supersededBy as duplicate of, resolved by or superseded by."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 details",
                     "  qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json",
                     "",
-                    "- -o json prints one object: the item as the service answers it, its comments and its "
-                            + "children. Control characters are written as escapes."},
+                    "- -o json prints one object: the item as the service answers it, its comments, its "
+                            + "children and supersedes, the items it closes. Control characters are written as "
+                            + "escapes."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.",
@@ -225,6 +253,7 @@ public class WorkCommand implements Runnable {
             JsonNode entity = api.work(wanted);
             List<JsonNode> comments = ProjectsApi.entries(api.workComments(wanted), "comment");
             List<JsonNode> children = WorkEntities.children(api.workChildren(wanted));
+            List<JsonNode> closes = closes(context, api, entity);
             if (json) {
                 ObjectNode all = JsonNodeFactory.instance.objectNode();
                 all.set("entity", entity);
@@ -232,11 +261,40 @@ public class WorkCommand implements Runnable {
                 comments.forEach(thread::add);
                 ArrayNode kids = all.putArray("children");
                 children.forEach(kids::add);
+                if (closes != null) {
+                    ArrayNode supersedes = all.putArray("supersedes");
+                    closes.forEach(supersedes::add);
+                }
                 SafeJson.print(context.out(), all);
                 return 0;
             }
-            WorkEntities.printDetails(context.out(), entity, comments, children);
+            WorkEntities.printDetails(context.out(), entity, comments, children, closes);
             return 0;
+        }
+
+        /**
+         * The items naming this one as their supersededBy, from its project's list filtered by
+         * {@code ?supersededBy=} and filtered again here, because a service older than qits-248
+         * ignores the parameter and answers the whole project. A secondary read: when it is refused,
+         * stderr says so and the rest of the item is still printed; null then.
+         */
+        private static List<JsonNode> closes(CliContext context, ProjectsApi api, JsonNode entity)
+                throws CliFailure, InterruptedException {
+            String project = text(entity, "projectId");
+            String id = text(entity, "id");
+            if (project.isEmpty() || id.isEmpty()) {
+                return null;
+            }
+            try {
+                return WorkEntities.superseding(
+                        WorkEntities.list(api.projectWork(project, null, null, null, null, id)), entity);
+            } catch (CliFailure refused) {
+                if (refused.exitCode() == CliFailure.USAGE) {
+                    throw refused;
+                }
+                context.err().println("The items this one closes could not be read: " + refused.getMessage());
+                return null;
+            }
         }
     }
 
@@ -358,7 +416,7 @@ public class WorkCommand implements Runnable {
             description = {"Reshape a work item into another archetype (a ticket into an epic, a feature into a "
                     + "task, ...), keeping its id, its number and its thread.",
                     "The door is full-state: what the request leaves out is cleared. So the command starts from the "
-                            + "item as it stands (title, description, status, ticketType, impetus, assignee, "
+                            + "item as it stands (title, description, status, outcome, ticketType, impetus, assignee, "
                             + "supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, "
                             + "position} if it has a parent), merges the JSON object on stdin over it as a merge "
                             + "patch (null clears), sets \"archetype\", and drops every property the target "
@@ -496,6 +554,14 @@ public class WorkCommand implements Runnable {
                     "Reads {\"target\":\"<STATUS>\"} on stdin and sends it unchanged to POST "
                             + "/projects/api/work/{entity}/status. The service refuses a move its lifecycle does not "
                             + "allow (HTTP 409).",
+                    "A move into DROPPED says why in \"outcome\": DUPLICATE (another item asks for the same "
+                            + "thing), RESOLVED_ELSEWHERE (another item's change already resolved it), SUPERSEDED "
+                            + "(a successor replaced it), OBSOLETE (the subject went away by itself), INVALID (it "
+                            + "never was a problem) or WONT_DO (a decision was taken not to do it; scratch and probe "
+                            + "items too). The first three name that other item in \"supersededBy\" (qualified id "
+                            + "or id); the last three take none; any other move takes neither. Each breach is HTTP "
+                            + "400. Do not drop an item merely because it is hard or stale: block it instead. "
+                            + "DROPPED moves back only to REPORTED, which clears both.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the "
                             + "payload's schema, whose target enum is the moves open from the item's current status "
                             + "as the service's archetype registry (GET /projects/api/work/archetypes) states "
@@ -504,13 +570,17 @@ public class WorkCommand implements Runnable {
             footer = {
                     "  qits work --entity qits-100 status </dev/null",
                     "  echo '{\"target\":\"REFINED\"}' | qits work --entity qits-100 status",
+                    "  echo '{\"target\":\"DROPPED\",\"outcome\":\"DUPLICATE\",\"supersededBy\":\"qits-90\"}' "
+                            + "| qits work --entity qits-100 status",
+                    "  echo '{\"target\":\"DROPPED\",\"outcome\":\"OBSOLETE\"}' | qits work --entity qits-100 status",
                     "",
                     "- An epic's status move takes qits:admin; an agent is answered HTTP 403.",
                     "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "
                             + "an agent credential is refused (HTTP 409, or HTTP 403 for an epic)."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item moved, or nothing was put in and the legal targets are printed.",
-                    "1:The platform refused (for example a move the lifecycle does not allow, HTTP 409, your roles "
+                    "1:The platform refused (for example a drop without its outcome or reference, HTTP 400, a "
+                            + "move the lifecycle does not allow, HTTP 409, your roles "
                             + "or another project, HTTP 403, or an item it does not know, HTTP 404), or cannot be "
                             + "reached.",
                     "2:Used wrongly (for example no --entity, an item on a service whose registry has not yet given "
@@ -546,23 +616,79 @@ public class WorkCommand implements Runnable {
                 for (JsonNode move : declared.path("transitions").path(current)) {
                     targets.add(move.isTextual() ? move.asText() : text(move, "to"));
                 }
-                ObjectNode schema = JsonNodeFactory.instance.objectNode();
-                schema.put("title", kind + " status move from " + current);
-                schema.put("type", "object");
-                schema.putObject("properties").putObject("target").set("enum", targets);
-                schema.putArray("required").add("target");
-                schema.put("additionalProperties", false);
+                ObjectNode schema = statusSchema(kind, current, targets);
+                List<String> notes = new ArrayList<>();
+                notes.add("Current status: " + SafeText.line(current) + ". Open moves: "
+                        + (targets.isEmpty() ? "none" : String.join(", ", WorkEntities.texts(targets))) + ".");
+                if (schema.path("properties").has("outcome")) {
+                    notes.add(DROP_NOTE);
+                }
                 usageAndSchema(context, spec, json, schema,
                         "From the service: GET " + ProjectsApi.ARCHETYPES + ", the moves of " + SafeText.line(kind)
-                                + " from " + SafeText.line(current) + ".",
-                        List.of("Current status: " + SafeText.line(current) + ". Open moves: "
-                                + (targets.isEmpty() ? "none" : String.join(", ",
-                                        WorkEntities.texts(targets))) + "."));
+                                + " from " + SafeText.line(current) + ".", notes);
                 return 0;
             }
             JsonNode answer = api.setWorkStatus(wanted, payload);
             WorkEntities.printAnswer(context.out(), json, answer);
             return 0;
+        }
+
+        static final String DROP_NOTE = "DROPPED takes \"outcome\"; DUPLICATE, RESOLVED_ELSEWHERE and SUPERSEDED "
+                + "also take \"supersededBy\", the other item. Do not drop work merely because it is hard or stale: "
+                + "block it instead.";
+
+        /**
+         * The move's payload: {@code target}, one of the open moves. When DROPPED is one of them, also
+         * {@code outcome} and {@code supersededBy}, with the service's rules as conditionals: DROPPED
+         * requires an outcome and nothing else takes one; the three referencing outcomes require
+         * supersededBy and nothing else takes it. {@code additionalProperties} stays false either way.
+         */
+        static ObjectNode statusSchema(String kind, String current, ArrayNode targets) {
+            JsonNodeFactory f = JsonNodeFactory.instance;
+            ObjectNode schema = f.objectNode();
+            schema.put("title", kind + " status move from " + current);
+            schema.put("type", "object");
+            ObjectNode properties = schema.putObject("properties");
+            properties.putObject("target").set("enum", targets);
+            schema.putArray("required").add("target");
+            schema.put("additionalProperties", false);
+            boolean drops = false;
+            for (JsonNode target : targets) {
+                drops |= "DROPPED".equals(target.asText());
+            }
+            if (!drops) {
+                return schema;
+            }
+            ObjectNode outcome = properties.putObject("outcome");
+            outcome.put("type", "string");
+            outcome.put("description", "Why the item is dropped; only with target DROPPED, and required there. "
+                    + "DUPLICATE: another item asks for the same thing. RESOLVED_ELSEWHERE: another item's change "
+                    + "already resolved it. SUPERSEDED: a successor replaced it. OBSOLETE: the subject went away by "
+                    + "itself. INVALID: it never was a problem. WONT_DO: a decision was taken not to do it (scratch "
+                    + "and probe items too). Not because it is hard or stale: block it instead.");
+            ArrayNode outcomes = outcome.putArray("enum");
+            WorkEntities.OUTCOMES.forEach(outcomes::add);
+            ObjectNode supersededBy = properties.putObject("supersededBy");
+            supersededBy.put("type", "string");
+            supersededBy.put("description", "The other item, a qualified id or an id: required with DUPLICATE, "
+                    + "RESOLVED_ELSEWHERE and SUPERSEDED, refused with any other outcome or move.");
+            ArrayNode rules = schema.putArray("allOf");
+            // DROPPED requires an outcome; any other target takes neither field.
+            ObjectNode drop = rules.addObject();
+            drop.putObject("if").putObject("properties").putObject("target").put("const", "DROPPED");
+            drop.putObject("then").putArray("required").add("outcome");
+            ArrayNode neither = drop.putObject("else").putObject("not").putArray("anyOf");
+            neither.addObject().putArray("required").add("outcome");
+            neither.addObject().putArray("required").add("supersededBy");
+            // A referencing outcome requires supersededBy; any other outcome refuses it.
+            ObjectNode reference = rules.addObject();
+            ObjectNode referencing = reference.putObject("if");
+            ArrayNode named = referencing.putObject("properties").putObject("outcome").putArray("enum");
+            WorkEntities.REFERENCING.forEach(named::add);
+            referencing.putArray("required").add("outcome");
+            reference.putObject("then").putArray("required").add("supersededBy");
+            reference.putObject("else").putObject("not").putArray("required").add("supersededBy");
+            return schema;
         }
     }
 

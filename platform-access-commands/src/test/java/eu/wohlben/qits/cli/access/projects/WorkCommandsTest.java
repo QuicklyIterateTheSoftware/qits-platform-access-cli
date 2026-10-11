@@ -126,6 +126,30 @@ class WorkCommandsTest {
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","blocked":false}
             """.formatted(NOT_BLOCKED_TICKET, PROJECT);
 
+    // --- outcome (qits-248): a ticket dropped as qits-548's duplicate, one dropped as obsolete, and an
+    // epic dropped before the service sent outcomes at all. ---
+
+    private static final String PROJECT_LIST = "/projects/api/projects/" + PROJECT + "/work";
+
+    private static final String DUPLICATE_TICKET = "d1d1d1d1-0000-4000-8000-00000000000a";
+    private static final String DUPLICATE_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":710,"qualifiedId":"qits-710",
+             "title":"Same as 548","description":"d","status":"DROPPED","outcome":"DUPLICATE","supersededBy":"%s",
+             "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
+            """.formatted(DUPLICATE_TICKET, PROJECT, TICKET);
+
+    private static final String OBSOLETE_ROW = """
+            {"id":"d2d2d2d2-0000-4000-8000-00000000000b","archetype":"TICKET","projectId":"%s","number":711,
+             "qualifiedId":"qits-711","title":"Gone by itself","status":"DROPPED","outcome":"OBSOLETE",
+             "supersededBy":null,"createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
+            """.formatted(PROJECT);
+
+    private static final String LEGACY_DROPPED_ROW = """
+            {"id":"d3d3d3d3-0000-4000-8000-00000000000c","archetype":"EPIC","projectId":"%s","number":712,
+             "qualifiedId":"qits-712","title":"Dropped long ago","status":"DROPPED","supersededBy":"%s",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
+            """.formatted(PROJECT, TICKET);
+
     private static final String TICKET_CREATE = """
             {"title":"TICKET create","type":"object","additionalProperties":false,
              "required":["title","ticketType","impetus","project"],
@@ -267,6 +291,8 @@ class WorkCommandsTest {
                   "createdAt":"2026-09-29T09:30:00Z","updatedAt":"2026-09-29T09:30:00Z"}}]}
                 """.formatted(TICKET));
         platform.answer("GET", LIST, "{\"entities\":[" + TICKET_ROW + "," + EPIC_ROW + "]}");
+        // The project by its id, as details asks it for the items closing one; nothing closes anything here.
+        platform.answer("GET", PROJECT_LIST, "{\"entities\":[" + TICKET_ROW + "," + EPIC_ROW + "]}");
         platform.answer("POST", WORK, 201, TICKET_ROW.replace("qits-548", "qits-600"));
         platform.answer("PATCH", WORK + "/qits-548", TICKET_ROW);
         platform.answer("POST", WORK + "/transition", "{\"qits-548\":"
@@ -531,6 +557,85 @@ class WorkCommandsTest {
     }
 
     @Test
+    void statusSchemaOffersTheOutcomeAndItsRulesWhenDroppedIsAnOpenMove() throws Exception {
+        Result json = run("work", "--entity", "qits-548", "status", "-o", "json");
+        assertThat(json.exit()).as(json.err()).isZero();
+        JsonNode schema = JSON.readTree(json.out());
+
+        assertThat(schema.path("additionalProperties").asBoolean(true)).isFalse();
+        assertThat(schema.path("required")).isEqualTo(JSON.readTree("[\"target\"]"));
+        assertThat(schema.path("properties").path("outcome").path("enum")).isEqualTo(JSON.readTree(
+                "[\"DUPLICATE\",\"RESOLVED_ELSEWHERE\",\"SUPERSEDED\",\"OBSOLETE\",\"INVALID\",\"WONT_DO\"]"));
+        assertThat(schema.path("properties").path("outcome").path("description").asText())
+                .contains("only with target DROPPED").contains("block it instead");
+        assertThat(schema.path("properties").path("supersededBy").path("type").asText()).isEqualTo("string");
+        assertThat(schema.path("properties").path("supersededBy").path("description").asText())
+                .contains("required with DUPLICATE, RESOLVED_ELSEWHERE and SUPERSEDED");
+        assertThat(schema.path("allOf")).isEqualTo(JSON.readTree("""
+                [{"if":{"properties":{"target":{"const":"DROPPED"}}},
+                  "then":{"required":["outcome"]},
+                  "else":{"not":{"anyOf":[{"required":["outcome"]},{"required":["supersededBy"]}]}}},
+                 {"if":{"properties":{"outcome":{"enum":["DUPLICATE","RESOLVED_ELSEWHERE","SUPERSEDED"]}},
+                        "required":["outcome"]},
+                  "then":{"required":["supersededBy"]},
+                  "else":{"not":{"required":["supersededBy"]}}}]
+                """));
+
+        Result table = run("work", "--entity", "qits-548", "status");
+        assertThat(table.out()).contains("DROPPED takes \"outcome\"; DUPLICATE, RESOLVED_ELSEWHERE and SUPERSEDED "
+                + "also take \"supersededBy\"");
+        assertThat(anyWrite()).isFalse();
+    }
+
+    @Test
+    void statusSchemaIsTheTargetAloneWhenDroppedIsNotAnOpenMove() throws Exception {
+        // A REFINED ticket's only open move is IMPLEMENTED: no outcome, and no drop note.
+        platform.answer("GET", WORK + "/qits-704", NOT_BLOCKED_ROW);
+        Result json = run("work", "--entity", "qits-704", "status", "-o", "json");
+        assertThat(json.exit()).as(json.err()).isZero();
+        JsonNode schema = JSON.readTree(json.out());
+        assertThat(schema.path("properties").fieldNames()).toIterable().containsExactly("target");
+        assertThat(schema.has("allOf")).isFalse();
+        assertThat(run("work", "--entity", "qits-704", "status").out()).doesNotContain("DROPPED takes");
+    }
+
+    @Test
+    void aDropIsSentWithItsOutcomeAndReferenceUnchanged() throws Exception {
+        String drop = "{\"target\":\"DROPPED\",\"outcome\":\"DUPLICATE\",\"supersededBy\":\"qits-90\"}";
+        platform.answer("POST", WORK + "/qits-548/status", DUPLICATE_ROW);
+        Result r = runWithInput(drop, "work", "--entity", "qits-548", "status");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(sent("POST", WORK + "/qits-548/status")).isEqualTo(JSON.readTree(drop));
+        assertThat(r.out()).contains("DROPPED (DUPLICATE)");
+    }
+
+    @Test
+    void aDropTheServiceRefusesForItsMissingOutcomeIsTheServicesAnswer() {
+        platform.answer("POST", WORK + "/qits-548/status", 400,
+                "{\"message\":\"a move into DROPPED must say why: outcome is required\"}");
+        Result r = runWithInput("{\"target\":\"DROPPED\"}", "work", "--entity", "qits-548", "status");
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("HTTP 400").contains("outcome is required");
+    }
+
+    @Test
+    void theStatusHelpNamesTheSixOutcomesTheReferenceRuleAndBlockInstead() {
+        Result status = run("work", "status", "--help");
+        assertThat(status.exit()).isZero();
+        String text = status.out().replaceAll("\\s+", " ");
+        assertThat(text).contains("DUPLICATE (another item asks for the same thing)")
+                .contains("RESOLVED_ELSEWHERE (another item's change already resolved it)")
+                .contains("SUPERSEDED (a successor replaced it)")
+                .contains("OBSOLETE (the subject went away by itself)")
+                .contains("INVALID (it never was a problem)")
+                .contains("WONT_DO (a decision was taken not to do it; scratch and probe items too)")
+                .contains("The first three name that other item in \"supersededBy\"")
+                .contains("the last three take none")
+                .contains("Do not drop an item merely because it is hard or stale: block it instead.");
+    }
+
+    @Test
     void statusSendsThePayloadUnchangedToTheEntityAsGiven() throws Exception {
         Result r = runWithInput("{\"target\":\"REFINED\"}", "work", "--entity", "qits-548", "status");
 
@@ -619,6 +724,52 @@ class WorkCommandsTest {
     }
 
     @Test
+    void listShowsTheOutcomeBesideDropped() {
+        platform.answer("GET", LIST, "{\"entities\":[" + DUPLICATE_ROW + "," + OBSOLETE_ROW + ","
+                + LEGACY_DROPPED_ROW + "]}");
+        Result r = run("work", "list", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        List<String> lines = r.out().lines().toList();
+        assertThat(lines.get(1)).startsWith("qits-710").contains("DROPPED (DUPLICATE)");
+        assertThat(lines.get(2)).startsWith("qits-711").contains("DROPPED (OBSOLETE)");
+        // A row dropped before outcomes existed shows the bare status.
+        assertThat(lines.get(3)).startsWith("qits-712").contains("DROPPED").doesNotContain("DROPPED (");
+    }
+
+    @Test
+    void listByOutcomeAsksTheServiceAndFiltersTheAnswerAgain() throws Exception {
+        // As the deployed service answers: it ignores ?outcome= and sends every row.
+        platform.answer("GET", LIST, "{\"entities\":[" + TICKET_ROW + "," + DUPLICATE_ROW + "," + OBSOLETE_ROW
+                + "," + LEGACY_DROPPED_ROW + "]}");
+
+        Result r = run("work", "list", "--project", "qits", "--status", "dropped", "--outcome", "duplicate");
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", LIST).getFirst().query()).isEqualTo("status=DROPPED&outcome=DUPLICATE");
+        List<String> lines = r.out().lines().toList();
+        assertThat(lines).hasSize(2);
+        assertThat(lines.get(1)).startsWith("qits-710");
+
+        Result json = run("work", "list", "--project", "qits", "--outcome", "DUPLICATE", "-o", "json");
+        assertThat(json.exit()).as(json.err()).isZero();
+        JsonNode entities = JSON.readTree(json.out()).path("entities");
+        assertThat(entities).hasSize(1);
+        assertThat(entities.get(0).path("qualifiedId").asText()).isEqualTo("qits-710");
+
+        Result none = run("work", "list", "--project", "qits", "--outcome", "WONT_DO");
+        assertThat(none.out()).contains("No work items match.");
+    }
+
+    @Test
+    void anOutcomeThatIsNoneOfTheSixIsAUsageErrorWithNoRequest() {
+        Result r = run("work", "list", "--project", "qits", "--outcome", "boring");
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("--outcome is one of DUPLICATE, RESOLVED_ELSEWHERE, SUPERSEDED, OBSOLETE, "
+                + "INVALID, WONT_DO, not boring.");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
     void listWithoutAProjectIsAUsageError() {
         Result r = run("work", "list");
         assertThat(r.exit()).isEqualTo(2);
@@ -646,6 +797,52 @@ class WorkCommandsTest {
         assertThat(all.path("entity").path("id").asText()).isEqualTo(TICKET);
         assertThat(all.path("comments").get(0).path("author").asText()).isEqualTo("carol");
         assertThat(all.path("children").get(0).path("qualifiedId").asText()).isEqualTo("qits-601");
+    }
+
+    @Test
+    void detailsListsWhatTheItemClosesFilteringTheProjectAgain() throws Exception {
+        // As the deployed service answers: it ignores ?supersededBy= and sends the whole project.
+        platform.answer("GET", PROJECT_LIST, "{\"entities\":[" + TICKET_ROW + "," + DUPLICATE_ROW + ","
+                + OBSOLETE_ROW + "," + LEGACY_DROPPED_ROW + "]}");
+
+        Result r = run("work", "--entity", "qits-548", "details");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", PROJECT_LIST).getFirst().query()).isEqualTo("supersededBy=" + TICKET);
+        String closes = r.out().substring(r.out().indexOf("Closes (2)"));
+        assertThat(closes).contains("qits-710").contains("DROPPED (DUPLICATE)").contains("qits-712")
+                .doesNotContain("qits-711").doesNotContain("qits-548");
+
+        Result json = run("work", "--entity", "qits-548", "details", "-o", "json");
+        JsonNode supersedes = JSON.readTree(json.out()).path("supersedes");
+        assertThat(supersedes).hasSize(2);
+        assertThat(supersedes.get(0).path("qualifiedId").asText()).isEqualTo("qits-710");
+        assertThat(supersedes.get(1).path("qualifiedId").asText()).isEqualTo("qits-712");
+    }
+
+    @Test
+    void detailsShowsTheOutcomeBesideTheStatusAndLabelsTheReferenceByIt() {
+        Result r = detailsOf("qits-710", DUPLICATE_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("DROPPED (DUPLICATE)").contains("duplicate of").contains(TICKET)
+                .doesNotContain("superseded by").contains("Closes: none.");
+
+        Result legacy = detailsOf("qits-712", LEGACY_DROPPED_ROW);
+        assertThat(legacy.out()).contains("superseded by").doesNotContain("DROPPED (");
+    }
+
+    @Test
+    void detailsStillPrintsTheItemWhenWhatItClosesCannotBeRead() throws Exception {
+        platform.answer("GET", PROJECT_LIST, 403, "{\"message\":\"another project\"}");
+
+        Result r = run("work", "--entity", "qits-548", "details");
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("TICKET qits-548").contains("Closes: could not be read.");
+        assertThat(r.err()).contains("The items this one closes could not be read");
+
+        Result json = run("work", "--entity", "qits-548", "details", "-o", "json");
+        assertThat(json.exit()).isZero();
+        assertThat(JSON.readTree(json.out()).has("supersedes")).isFalse();
     }
 
     @Test
