@@ -81,8 +81,21 @@ public final class ProjectsApi {
 
     /** {@code {"requests":[…]}}. A null state asks for the service's default. */
     public JsonNode releaseRequests(String repoId, String state) throws CliFailure, InterruptedException {
-        String query = state == null || state.isBlank() ? "" : "?state=" + URLEncoder.encode(state.strip(), StandardCharsets.UTF_8);
-        return client.get(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests" + query));
+        return client.get(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests" + stateQuery(state)));
+    }
+
+    /**
+     * {@code {"requests":[…]}}: the release requests of every repository of the project, most
+     * recently moved first, each with its {@code repoName}. Without a state the service answers the
+     * open ones plus the last 10 finalized, which is what the landing app shows; {@code all} is every
+     * state, and a state's name narrows to it.
+     */
+    public JsonNode projectReleaseRequests(String projectId, String state) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/release-requests" + stateQuery(state)));
+    }
+
+    private static String stateQuery(String state) {
+        return state == null || state.isBlank() ? "" : "?state=" + URLEncoder.encode(state.strip(), StandardCharsets.UTF_8);
     }
 
     /**

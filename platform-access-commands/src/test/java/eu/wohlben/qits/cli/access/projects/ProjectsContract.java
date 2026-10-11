@@ -23,12 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
- * {@code /work} doors and three more: the release request's commits, which {@code qits artifacts
- * publish changelog} reads in every release step (qits-893), and a commit's changes and one file's
- * diff. {@code qits projects}, the other {@code repositories} reads and {@code release-request} calls
- * are not part of this pact yet, and neither is the OpenAPI document the payload commands read their
- * schema from. Doors the provider records in no state (branches, commits, commit subjects, the
- * refinement designs) have no row: a row needs a recorded state.
+ * {@code /work} doors and four more: the release request's commits, which {@code qits artifacts
+ * publish changelog} reads in every release step (qits-893), a commit's changes and one file's
+ * diff, and the project's release requests, which {@code qits release-request list} reads when no
+ * repository is named. {@code qits projects}, the other {@code repositories} reads and {@code
+ * release-request} calls are not part of this pact yet, and neither is the OpenAPI document the
+ * payload commands read their schema from. Neither is {@code list --state}: the provider records
+ * the project list without a query only. Doors the provider records in no state (branches,
+ * commits, commit subjects, the refinement designs) have no row: a row needs a recorded state.
  * <p>
  * <b>Each state is one the provider records</b> in its golden masters, picked for the call: a row
  * whose (state, operation) the index does not hold fails before anything runs, naming both.
@@ -67,6 +69,7 @@ final class ProjectsContract {
     static final String CAMPAIGN_IN_DETAIL = "a campaign in detail";
     static final String CAMPAIGN_TO_EDIT = "a campaign with members to edit";
     static final String AWAITING_REQUEST = "a release request awaiting approval";
+    static final String PENDING_REQUESTS = "a project with pending release requests";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -309,6 +312,20 @@ final class ProjectsContract {
         assertThat(ProjectsApi.text(diff, "diff")).isNotBlank();
     };
 
+    /** {@code qits release-request list} without a repository: the table reads these five of each request. */
+    private static final Call PROJECT_RELEASE_REQUESTS = (api, params, recorded) -> {
+        JsonNode requests = api.projectReleaseRequests(params.get("projectId"), null).path("requests");
+        assertThat(requests.size())
+                .isEqualTo(GoldenMasters.json(recorded.state(), recorded.operationId()).path("requests").size());
+        assertThat(requests).allSatisfy(r -> {
+            assertThat(ProjectsApi.text(r, "id")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "repoName")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "state")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "summary")).isNotBlank();
+            assertThat(ProjectsApi.text(r, "updatedAt")).isNotBlank();
+        });
+    };
+
     static final List<Case> CASES = List.of(
             row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", LIST),
             row("qits work details", EPIC_IN_DETAIL, "getWork", GET),
@@ -345,7 +362,9 @@ final class ProjectsContract {
             row("qits work members condition", CAMPAIGN_TO_EDIT, "setWorkMemberCondition", MEMBER_CONDITION),
             row("qits work design list", REPORTED_TICKET, "getWorkRefinement", NO_REFINEMENT),
             row("qits repositories commit-changes", AWAITING_REQUEST, "listCommitChanges", COMMIT_CHANGES),
-            row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", COMMIT_DIFF));
+            row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", COMMIT_DIFF),
+            row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
+                    PROJECT_RELEASE_REQUESTS));
 
     private static Case row(String command, String state, String operationId, Call call) {
         return new Case(Trigger.command(command), state, operationId, JSON_BODY, call);

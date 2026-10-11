@@ -102,7 +102,8 @@ public class ProjectsPactFileTest {
   /**
    * Every {@code /work} door {@link ProjectsApi} calls has a row, and every row is a {@code /work}
    * door — or the release request's commits, the changelog's one read outside that family
-   * (qits-893), or a commit's changes and diff, which {@code qits repositories} reads; each named
+   * (qits-893), a commit's changes and diff, which {@code qits repositories} reads, or the
+   * project's release requests, {@code qits release-request list} without a repository; each named
    * here by its path. A new call on the client without its row here would ship
    * unverified; a row on another family would put a door into this pact that epic qits-965 is
    * retiring.
@@ -119,14 +120,16 @@ public class ProjectsPactFileTest {
             "setWorkBlocked", "deleteWork", "getWorkProgress", "listWorkDossier", "getWorkDossierPage",
             "createWorkDossierPage", "putWorkDossierPage", "moveWorkDossierPage", "deleteWorkDossierPage",
             "inlineWorkDossierAsset", "listWorkMembers", "addWorkMember", "moveWorkMember", "removeWorkMember",
-            "setWorkMemberCondition", "getWorkRefinement", "listCommitChanges", "getCommitFileDiff")),
+            "setWorkMemberCondition", "getWorkRefinement", "listCommitChanges", "getCommitFileDiff",
+            "listProjectReleaseRequests")),
         covered);
     for (JsonNode interaction : MAPPER.readTree(normalise(written())).path("interactions")) {
       String path = interaction.path("request").path("path").asText();
       assertTrue(
           path.startsWith("/projects/api/work") || path.matches("/projects/api/projects/[^/]+/work")
               || path.matches("/projects/api/repositories/[^/]+/release-requests/[^/]+/commits")
-              || path.matches("/projects/api/repositories/[^/]+/commits/[^/]+/(changes|diff)"),
+              || path.matches("/projects/api/repositories/[^/]+/commits/[^/]+/(changes|diff)")
+              || path.matches("/projects/api/projects/[^/]+/release-requests"),
           interaction.path("description").asText() + ": " + path + " is not a /work door");
     }
   }

@@ -1276,7 +1276,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits release-request
 
-The release requests of one repository: the one way to release it. list shows them, create asks for a branch to be released, join adds a branch to an open request, and withdraw ends a request that must not ship.
+Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, and withdraw ends a request that must not ship.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
@@ -1285,29 +1285,36 @@ A request folds main and its branches into one commit, and the builds of that co
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.
 - When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request, and do not withdraw this one.
 - `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any more. WITHDRAWN is final.
-- --project and --repository may come before or after the command.
+- --project and --repository may come before or after the command. Only list works without --repository.
 
 ## qits release-request list
 
-List the repository's open release requests.
+List release requests: of the whole project, or of one repository with --repository.
 
-Open means every state but FINALIZED, WITHDRAWN and OBSOLETE. --state asks for other ones. The ID column shows the first 8 characters of the id, which is enough for `join`.
+Without --repository it shows every repository's requests, as the landing app does: the open ones and the last 10 FINALIZED, most recently moved first, with a REPOSITORY and an APPROVAL column.
+
+With --repository it shows that repository's open requests only. Open means every state but FINALIZED, WITHDRAWN and OBSOLETE.
+
+--state asks for other ones in both forms. The ID column shows the first 8 characters of the id, which is enough for `join`.
 
 ```
-qits release-request list [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--state <STATE|all>]
+qits release-request list [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--state <STATE|all>]
 ```
 
 | Name | What it does |
 |---|---|
+| `--limit <n>` | Show at most this many requests, the most recent first. Default: all that came back. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
 | `--repository <repository>` | The repository: its id or name. |
-| `--state <STATE\|all>` | Only this state (PENDING, READY, RELEASED, FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones. |
+| `--state <STATE\|all>` | Only this state (PENDING, READY, RELEASED, FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones (and, for the whole project, the last 10 FINALIZED). |
 
 ### Examples
 
 ```
+qits release-request --project qits list
+qits release-request --project qits list --state all --limit 20
 qits release-request --project qits --repository qits-ci-service list
 qits release-request --project qits --repository qits-ci-service list --state all -o json
 ```

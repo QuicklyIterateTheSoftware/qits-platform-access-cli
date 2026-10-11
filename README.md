@@ -469,7 +469,8 @@ Installing it is not part of this version.
     {"target":"<STATUS>"} | qits work --entity <id or qualified id> status
     <payload> | qits work --entity <id or qualified id> comment create
     <merge patch> | qits work --entity <id or qualified id> comment update --comment <id>
-    qits release-request --project <project> --repository <repository> list [--state <STATE|all>]
+    qits release-request --project <project> [--repository <repository>] list \
+        [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
         --branch <branch> --summary <text> [--priority <priority>]
     qits release-request --project <project> --repository <repository> join \
@@ -531,8 +532,8 @@ and `http://qits-events:8080`. The flags and variables above still come first in
 ### Output, errors and exit codes
 
 `--output table` (the default) prints aligned columns. `--output json` (or `-o json`) prints the
-service's answer, pretty-printed. The default `release-request list` leaves out the finalized
-requests in both forms (see below).
+service's answer, pretty-printed. The default `release-request list` of one repository leaves out
+the finalized requests in both forms, and `--limit` cuts both forms (see below).
 
 When the platform refuses:
 
@@ -674,7 +675,8 @@ form takes terminal control characters out of every value, and `-o json` writes 
 
 ### qits release-request
 
-`--project` as above. `--repository` is the repository's id or name within that project.
+`--project` as above. `--repository` is the repository's id or name within that project. Only
+`list` works without it.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate.
 States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining
@@ -684,11 +686,19 @@ request for the repository superseded this one before it finished). RELEASED is 
 the request still waits on its remaining gates, one of which (PUBLISH) is the tag's own release
 pipeline.
 
-`list` shows the open requests: every state but FINALIZED, WITHDRAWN and OBSOLETE. The service's
-default answer holds the open requests and the last 10 finalized ones; the command drops the
-finalized. `--state all` shows every request, and `--state PENDING` (or READY, RELEASED, FINALIZED,
-REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. Columns: id (the first 8
-characters), state, priority, summary, version, updated.
+`list` without `--repository` shows the requests of every repository of the project, as the landing
+app does: the service's default answer, which is the open requests and the last 10 finalized ones,
+most recently moved first. Columns: id (the first 8 characters), repository, state, approval,
+priority, summary, version, updated.
+
+`list --repository <repository>` shows that repository's open requests: every state but FINALIZED,
+WITHDRAWN and OBSOLETE. The service's default answer holds the open requests and the last 10
+finalized ones; the command drops the finalized. Columns: id, state, priority, summary, version,
+updated.
+
+In both forms `--state all` shows every request, and `--state PENDING` (or READY, RELEASED,
+FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. `--limit <n>` shows
+the first n; the service has no limit, so the command cuts the list it got.
 
 `create` asks for a branch to be released once its builds are green. `--branch` and `--summary`
 are required; `--priority` is LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING (the platform's
@@ -719,6 +729,8 @@ for one of its branches opens a new request. The command prints the request that
 - A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409, exit code 1).
 - HTTP 404 means the platform has no such request (exit code 1).
 
+    qits release-request --project qits list
+    qits release-request --project qits list --state all --limit 20
     qits release-request --project qits --repository qits-ci-service list
     qits release-request --project qits --repository qits-ci-service list --state all -o json
     qits release-request --project qits --repository qits-ci-service create \

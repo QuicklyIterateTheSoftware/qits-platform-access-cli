@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
@@ -28,7 +29,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
                 ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class},
-        description = {"The release requests of one repository: the one way to release it. list shows them, create "
+        description = {"Release requests: the one way to release a repository. list shows them (of the whole project, "
+                        + "or of one repository), create "
                         + "asks for a branch to be released, join adds a branch to an open request, and withdraw "
                         + "ends a request that must not ship.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
@@ -47,7 +49,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "request, and do not withdraw this one.",
                 "- `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any "
                         + "more. WITHDRAWN is final.",
-                "- --project and --repository may come before or after the command."})
+                "- --project and --repository may come before or after the command. Only list works without "
+                        + "--repository."})
 public class ReleaseRequestCommand implements Runnable {
 
     /** The tag is cut but the request is still open; version and merged sha are already stamped. */
@@ -134,11 +137,18 @@ public class ReleaseRequestCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"List the repository's open release requests.",
-                    "Open means every state but FINALIZED, WITHDRAWN and OBSOLETE. --state asks for other ones. The "
-                            + "ID column shows the first 8 characters of the id, which is enough for `join`."},
+            description = {"List release requests: of the whole project, or of one repository with --repository.",
+                    "Without --repository it shows every repository's requests, as the landing app does: the open "
+                            + "ones and the last 10 FINALIZED, most recently moved first, with a REPOSITORY and an "
+                            + "APPROVAL column.",
+                    "With --repository it shows that repository's open requests only. Open means every state but "
+                            + "FINALIZED, WITHDRAWN and OBSOLETE.",
+                    "--state asks for other ones in both forms. The ID column shows the first 8 characters of the "
+                            + "id, which is enough for `join`."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
+                    "  qits release-request --project qits list",
+                    "  qits release-request --project qits list --state all --limit 20",
                     "  qits release-request --project qits --repository qits-ci-service list",
                     "  qits release-request --project qits --repository qits-ci-service list --state all -o json"},
             exitCodeListHeading = HelpText.EXIT_CODES,
@@ -151,18 +161,39 @@ public class ReleaseRequestCommand implements Runnable {
 
         @CommandLine.Option(names = "--state", paramLabel = "<STATE|all>",
                 description = "Only this state (PENDING, READY, RELEASED, FINALIZED, REJECTED, FAILED, CONFLICTED, "
-                        + "WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones.")
+                        + "WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones (and, for the "
+                        + "whole project, the last 10 FINALIZED).")
         String state;
+
+        @CommandLine.Option(names = "--limit", paramLabel = "<n>",
+                description = "Show at most this many requests, the most recent first. Default: all that came back.")
+        Integer limit;
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = json(parent.options.output);
-            Target target = parent.target(context);
-            JsonNode answer = target.api().releaseRequests(target.repoId(), state);
-            boolean openOnly = state == null || state.isBlank();
-            if (openOnly) {
-                answer = withoutFinalized(answer);
+            if (limit != null && limit < 1) {
+                throw new CliFailure("--limit must be 1 or more.", CliFailure.USAGE);
             }
+            boolean openOnly = state == null || state.isBlank();
+            boolean wholeProject = parent.repository == null || parent.repository.isBlank();
+            String scope;
+            JsonNode answer;
+            if (wholeProject) {
+                String wantedProject = RepositoriesCommand.required(parent.project, RepositoriesCommand.NAME_THE_PROJECT);
+                ProjectsApi api = ProjectsApi.connect(context, parent.options.projectsUrl);
+                JsonNode found = api.project(wantedProject);
+                scope = "project " + ProjectsApi.projectLabel(found);
+                answer = api.projectReleaseRequests(text(found, "id"), state);
+            } else {
+                Target target = parent.target(context);
+                scope = target.repoName();
+                answer = target.api().releaseRequests(target.repoId(), state);
+                if (openOnly) {
+                    answer = withoutFinalized(answer);
+                }
+            }
+            answer = limited(answer, limit);
             if (json) {
                 ProjectsApi.printJson(context.out(), answer);
                 return 0;
@@ -171,8 +202,22 @@ public class ReleaseRequestCommand implements Runnable {
             answer.path("requests").forEach(requests::add);
             if (requests.isEmpty()) {
                 context.out().println(openOnly
-                        ? "No open release requests for " + target.repoName() + "."
-                        : "No release requests in state " + state.strip() + " for " + target.repoName() + ".");
+                        ? "No open release requests for " + scope + "."
+                        : "No release requests in state " + state.strip() + " for " + scope + ".");
+                return 0;
+            }
+            if (wholeProject) {
+                Table.print(context.out(), "", List.of("ID", "REPOSITORY", "STATE", "APPROVAL", "PRIORITY", "SUMMARY",
+                                "VERSION", "UPDATED"),
+                        requests.stream().map(r -> List.of(
+                                Table.cell(shortId(text(r, "id")), 8),
+                                Table.cell(text(r, "repoName"), 40),
+                                Table.cell(text(r, "state"), 12),
+                                Table.cell(text(r, "approvalState"), 12),
+                                Table.cell(text(r, "priority"), 10),
+                                Table.cell(text(r, "summary"), 60),
+                                Table.cell(text(r, "version"), 24),
+                                Table.time(text(r, "updatedAt")))).toList());
                 return 0;
             }
             Table.print(context.out(), "", List.of("ID", "STATE", "PRIORITY", "SUMMARY", "VERSION", "UPDATED"),
@@ -187,14 +232,23 @@ public class ReleaseRequestCommand implements Runnable {
         }
 
         /**
-         * The service's default answer holds the open requests and the last 10 finalized. The list
-         * shows open ones, so the finalized are dropped here, in both output forms.
+         * The service's default answer holds the open requests and the last 10 finalized. The
+         * repository list shows open ones, so the finalized are dropped here, in both output forms.
          */
         static JsonNode withoutFinalized(JsonNode answer) {
+            return keep(answer, Integer.MAX_VALUE, r -> !FINALIZED.equalsIgnoreCase(text(r, "state")));
+        }
+
+        /** The first {@code limit} requests, in both output forms; all of them without a limit. */
+        static JsonNode limited(JsonNode answer, Integer limit) {
+            return limit == null ? answer : keep(answer, limit, r -> true);
+        }
+
+        private static JsonNode keep(JsonNode answer, int most, Predicate<JsonNode> wanted) {
             ObjectNode copy = answer.isObject() ? ((ObjectNode) answer).deepCopy() : JsonNodeFactory.instance.objectNode();
             ArrayNode kept = copy.arrayNode();
             answer.path("requests").forEach(r -> {
-                if (!FINALIZED.equalsIgnoreCase(text(r, "state"))) {
+                if (kept.size() < most && wanted.test(r)) {
                     kept.add(r);
                 }
             });
