@@ -61,6 +61,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000002",
@@ -2206,6 +2207,132 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "listRepositoryBranches"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits repositories branches",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits repositories branches: listRepositoryBranches",
+      "key": "52313223",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request awaiting approval",
+          "params": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/branches",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/branches"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "branches": [
+              {
+                "ahead": null,
+                "behind": null,
+                "canCleanup": false,
+                "name": "bump/contract-service",
+                "parent": null
+              },
+              {
+                "ahead": null,
+                "behind": null,
+                "canCleanup": false,
+                "name": "bump/contract-service",
+                "parent": null
+              },
+              {
+                "ahead": null,
+                "behind": null,
+                "canCleanup": false,
+                "name": "bump/contract-service",
+                "parent": null
+              },
+              {
+                "ahead": null,
+                "behind": null,
+                "canCleanup": false,
+                "name": "bump/contract-service",
+                "parent": null
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.branches": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.branches[*].canCleanup": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.branches[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "listCommitChanges"
           },
           "qits-trigger": {
@@ -2429,6 +2556,452 @@
               ]
             },
             "$.path": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "measureCommitSubjects"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits repositories commit-subjects",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits repositories commit-subjects: measureCommitSubjects",
+      "key": "29626a5c",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request awaiting approval",
+          "params": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/commit-subjects",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/commit-subjects"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "branch": "main",
+            "counts": {
+              "complying": 0,
+              "exempt": 0,
+              "exemptMachine": 0,
+              "exemptMerge": 0,
+              "nonComplying": 1,
+              "total": 1
+            },
+            "guardEnabled": false,
+            "limit": 100,
+            "nonComplying": [
+              {
+                "authorEmail": "seeder@contract.example.test",
+                "authorName": "Contract Seeder",
+                "date": "2026-01-01T00:00:00Z",
+                "hash": "5eab9635f653a85136ce4d8babd44edfa83cf1da",
+                "shortHash": "5eab963",
+                "subject": "Declare the suite"
+              }
+            ],
+            "qualifiedIds": [],
+            "repositoryId": "00000000-0000-4000-8000-000000000002"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.counts.complying": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.counts.exempt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.counts.exemptMachine": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.counts.exemptMerge": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.counts.nonComplying": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.counts.total": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.guardEnabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.limit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.nonComplying": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.nonComplying[*].authorEmail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.nonComplying[*].authorName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.nonComplying[*].date": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.nonComplying[*].hash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.nonComplying[*].shortHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.nonComplying[*].subject": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.repositoryId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listBranchCommits"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits repositories commits",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits repositories commits: listBranchCommits",
+      "key": "5aa6bcc7",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request awaiting approval",
+          "params": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/commits",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/commits",
+        "query": {
+          "branch": [
+            "docs/approval"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "branch": "docs/approval",
+            "commits": [
+              {
+                "author": "Contract Seeder",
+                "date": "2026-01-01T00:00:00Z",
+                "email": "seeder@contract.example.test",
+                "files": [
+                  "README.md"
+                ],
+                "fold": false,
+                "hash": "e447df8a0cabaeafedbf4c0235e013bb29697cd9",
+                "message": "Say who approves a suite release",
+                "parents": [
+                  "5eab9635f653a85136ce4d8babd44edfa83cf1da"
+                ],
+                "shortHash": "e447df8"
+              }
+            ],
+            "parent": "main"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.commits[*].author": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].date": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.commits[*].email": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].files": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.commits[*].files[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].fold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].hash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].parents": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.commits[*].parents[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.commits[*].shortHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.parent": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2968,6 +3541,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000001",
@@ -3564,6 +4138,374 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "getRefinementDesign"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design get",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design get: getRefinementDesign",
+      "key": "9a9d13ff",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/refinements/${refinementId}/designs/${designId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/refinements/1/designs/00000000-0000-4000-8000-000000000001"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "createdAt": "2026-01-01T00:00:00Z",
+            "createdBy": "contract-seeder",
+            "html": "<!doctype html><html><body><button style=\"padding:8px\">Export CSV</button></body></html>",
+            "htmlBytes": 88,
+            "id": "00000000-0000-4000-8000-000000000001",
+            "inUse": false,
+            "sourceRoute": null,
+            "title": "Export button",
+            "truncated": false,
+            "updatedAt": "2026-01-01T00:00:00Z",
+            "version": 0
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.html": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.htmlBytes": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.inUse": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.truncated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design get",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design get: getWorkRefinement",
+      "key": "519ffc10",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "agentActivity": null,
+              "ahead": null,
+              "behind": null,
+              "branch": "refining/export-invoices-as-csv",
+              "clean": null,
+              "conflictsWithParent": false,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "daemonConnectedAt": null,
+              "daemonOutdated": null,
+              "daemonVersion": null,
+              "daemonVersionStale": false,
+              "entityId": "00000000-0000-4000-8000-000000000003",
+              "epicId": "00000000-0000-4000-8000-000000000003",
+              "id": 1,
+              "label": "refining-export-invoices-as-csv",
+              "parent": "main",
+              "pinnedDaemonVersion": "00000002",
+              "projectId": "00000000-0000-4000-8000-000000000002",
+              "repositoryId": "00000000-0000-4000-8000-000000000004",
+              "runtimeError": null,
+              "runtimeStatus": "STOPPED"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.conflictsWithParent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.refinement.daemonVersionStale": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.epicId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refinement.label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.parent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.pinnedDaemonVersion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.repositoryId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.runtimeStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "getWorkRefinement"
           },
           "qits-trigger": {
@@ -3611,6 +4553,924 @@
           ]
         },
         "matchingRules": {
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design list: getWorkRefinement",
+      "key": "857a65d0",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "agentActivity": null,
+              "ahead": null,
+              "behind": null,
+              "branch": "refining/export-invoices-as-csv",
+              "clean": null,
+              "conflictsWithParent": false,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "daemonConnectedAt": null,
+              "daemonOutdated": null,
+              "daemonVersion": null,
+              "daemonVersionStale": false,
+              "entityId": "00000000-0000-4000-8000-000000000003",
+              "epicId": "00000000-0000-4000-8000-000000000003",
+              "id": 1,
+              "label": "refining-export-invoices-as-csv",
+              "parent": "main",
+              "pinnedDaemonVersion": "00000002",
+              "projectId": "00000000-0000-4000-8000-000000000002",
+              "repositoryId": "00000000-0000-4000-8000-000000000004",
+              "runtimeError": null,
+              "runtimeStatus": "STOPPED"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.conflictsWithParent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.refinement.daemonVersionStale": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.epicId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refinement.label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.parent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.pinnedDaemonVersion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.repositoryId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.runtimeStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listRefinementDesigns"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design list: listRefinementDesigns",
+      "key": "5819860e",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/refinements/${refinementId}/designs",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/refinements/1/designs"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "designs": [
+              {
+                "createdAt": "2026-01-01T00:00:00Z",
+                "createdBy": "contract-seeder",
+                "html": null,
+                "htmlBytes": 88,
+                "id": "00000000-0000-4000-8000-000000000001",
+                "inUse": false,
+                "sourceRoute": null,
+                "title": "Export button",
+                "truncated": false,
+                "updatedAt": "2026-01-01T00:00:00Z",
+                "version": 0
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.designs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.designs[*].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.designs[*].createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.designs[*].htmlBytes": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.designs[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.designs[*].inUse": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.designs[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.designs[*].truncated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.designs[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.designs[*].version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "addRefinementDesign"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design put",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design put: addRefinementDesign",
+      "key": "24562525",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "html": "<!doctype html><html><body><p>Export CSV</p></body></html>",
+            "title": "Export dialog"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/refinements/${refinementId}/designs",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/projects/api/refinements/1/designs"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "createdAt": "2026-01-01T00:00:00Z",
+            "createdBy": "dev",
+            "html": null,
+            "htmlBytes": 58,
+            "id": "00000000-0000-4000-8000-000000000004",
+            "inUse": false,
+            "sourceRoute": null,
+            "title": "Export dialog",
+            "truncated": false,
+            "updatedAt": "2026-01-01T00:00:00Z",
+            "version": 0
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.htmlBytes": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.inUse": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.truncated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design put",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design put: getWorkRefinement",
+      "key": "7ff03d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "agentActivity": null,
+              "ahead": null,
+              "behind": null,
+              "branch": "refining/export-invoices-as-csv",
+              "clean": null,
+              "conflictsWithParent": false,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "daemonConnectedAt": null,
+              "daemonOutdated": null,
+              "daemonVersion": null,
+              "daemonVersionStale": false,
+              "entityId": "00000000-0000-4000-8000-000000000003",
+              "epicId": "00000000-0000-4000-8000-000000000003",
+              "id": 1,
+              "label": "refining-export-invoices-as-csv",
+              "parent": "main",
+              "pinnedDaemonVersion": "00000002",
+              "projectId": "00000000-0000-4000-8000-000000000002",
+              "repositoryId": "00000000-0000-4000-8000-000000000004",
+              "runtimeError": null,
+              "runtimeStatus": "STOPPED"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.conflictsWithParent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.refinement.daemonVersionStale": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.epicId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refinement.label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.parent": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.pinnedDaemonVersion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.repositoryId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.runtimeStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "updateRefinementDesign"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work design put",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work design put: updateRefinementDesign",
+      "key": "5369aee3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "html": "<!doctype html><html><body><button>Export CSV</button></body></html>",
+            "title": "Export button, primary",
+            "version": 0
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/refinements/${refinementId}/designs/${designId}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PUT",
+        "path": "/projects/api/refinements/1/designs/00000000-0000-4000-8000-000000000001"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "createdAt": "2026-01-01T00:00:00Z",
+            "createdBy": "contract-seeder",
+            "html": null,
+            "htmlBytes": 68,
+            "id": "00000000-0000-4000-8000-000000000001",
+            "inUse": false,
+            "sourceRoute": null,
+            "title": "Export button, primary",
+            "truncated": false,
+            "updatedAt": "2026-01-01T00:00:00Z",
+            "version": 1
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.createdBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.htmlBytes": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.inUse": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.truncated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
           "header": {
             "Content-Type": {
               "combine": "AND",
@@ -3701,6 +5561,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 2,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-00000000000f",
@@ -3941,6 +5802,7 @@
                 "implementedAt": "2026-01-01T00:00:00Z",
                 "implementingAt": "2026-01-01T00:00:00Z",
                 "number": 3,
+                "outcome": null,
                 "parent": "00000000-0000-4000-8000-000000000006",
                 "position": 0,
                 "projectId": "00000000-0000-4000-8000-00000000000f",
@@ -3968,6 +5830,7 @@
                 "implementedAt": "2026-01-01T00:00:00Z",
                 "implementingAt": "2026-01-01T00:00:00Z",
                 "number": 3,
+                "outcome": null,
                 "parent": "00000000-0000-4000-8000-000000000006",
                 "position": 0,
                 "projectId": "00000000-0000-4000-8000-00000000000f",
@@ -5581,6 +7444,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 1,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5608,6 +7472,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 2,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5635,6 +7500,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 3,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5662,6 +7528,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 4,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5689,6 +7556,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 5,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5716,6 +7584,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 6,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5743,6 +7612,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 7,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5770,6 +7640,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 8,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5797,6 +7668,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 9,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5824,6 +7696,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 10,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5851,6 +7724,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 11,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5878,6 +7752,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 12,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5905,6 +7780,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 13,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5932,6 +7808,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 14,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5959,6 +7836,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 15,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -5986,6 +7864,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 16,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -6013,6 +7892,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 17,
+                "outcome": "OBSOLETE",
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -6040,6 +7920,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 18,
+                "outcome": "OBSOLETE",
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -6067,6 +7948,7 @@
                 "implementedAt": null,
                 "implementingAt": null,
                 "number": 19,
+                "outcome": null,
                 "parent": null,
                 "position": null,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -6093,6 +7975,7 @@
                 "implementedAt": null,
                 "implementingAt": "2026-01-01T00:00:00Z",
                 "number": 20,
+                "outcome": null,
                 "parent": "00000000-0000-4000-8000-000000000014",
                 "position": 0,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -6119,6 +8002,7 @@
                 "implementedAt": null,
                 "implementingAt": "2026-01-01T00:00:00Z",
                 "number": 21,
+                "outcome": null,
                 "parent": "00000000-0000-4000-8000-000000000015",
                 "position": 0,
                 "projectId": "00000000-0000-4000-8000-000000000001",
@@ -6966,6 +8850,14 @@
                 }
               ]
             },
+            "$.entities[16].outcome": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.entities[16].projectId": {
               "combine": "AND",
               "matchers": [
@@ -7080,6 +8972,14 @@
               "matchers": [
                 {
                   "match": "number"
+                }
+              ]
+            },
+            "$.entities[17].outcome": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
                 }
               ]
             },
@@ -11796,6 +13696,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000001",
@@ -16194,6 +18095,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000001",
@@ -16460,6 +18362,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000002",
@@ -16717,6 +18620,7 @@
               "implementedAt": null,
               "implementingAt": null,
               "number": 1,
+              "outcome": null,
               "parent": null,
               "position": null,
               "projectId": "00000000-0000-4000-8000-000000000001",
@@ -16939,6 +18843,144 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "setWorkBlocked"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work unblock",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work unblock: setWorkBlocked",
+      "key": "a6dc7f8a",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a bug ticket in detail",
+          "params": {
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "campaignId": "00000000-0000-4000-8000-000000000002",
+            "campaignQualifiedId": "contract-00000001-1",
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
+            "csvTaskId": "00000000-0000-4000-8000-000000000005",
+            "epicId": "00000000-0000-4000-8000-000000000006",
+            "featureId": "00000000-0000-4000-8000-000000000007",
+            "figureAssetId": "00000000-0000-4000-8000-000000000008",
+            "figurePageId": "00000000-0000-4000-8000-000000000009",
+            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
+            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "qualifiedId": "contract-00000001-10",
+            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
+            "taskId": "00000000-0000-4000-8000-000000000011",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "blocked": false,
+            "reason": "The database team confirmed the new limit."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/blocked",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/projects/api/work/contract-00000001-10/blocked"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "block": {
+              "archetype": "TICKET",
+              "blocked": false,
+              "entityId": "00000000-0000-4000-8000-000000000001",
+              "status": "IMPLEMENTING"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.block.archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.block.blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.block.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.block.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "getWork"
           },
           "qits-trigger": {
@@ -16992,6 +19034,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000002",
@@ -17245,6 +19288,7 @@
             "implementedAt": null,
             "implementingAt": null,
             "number": 1,
+            "outcome": null,
             "parent": null,
             "position": null,
             "projectId": "00000000-0000-4000-8000-000000000001",

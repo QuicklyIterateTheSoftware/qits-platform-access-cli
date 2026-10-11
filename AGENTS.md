@@ -417,7 +417,10 @@ enforces. Two rows are not `/work` doors, and that test names their paths: `qits
 changelog` reads the release request's commits (`listReleaseRequestCommits`, state `a released
 release request`), and every command that takes a release request finds it among the repository's
 requests of every state by its logical id (`listRepositoryReleaseRequests` with `state=all`, state
-`a repository with a release not merged to main`; qits-1158). A recorded query is part of the
+`a repository with a release not merged to main`; qits-1158). The other doors outside `/work` are
+the git reads of `qits repositories` (branches, commits, commit changes and diff, commit subjects)
+and a refinement's designs for `qits work design` (state `a ticket with a design`; qits-1174). A
+recorded query is part of the
 interaction (`GoldenMasters.query`). `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session

@@ -23,17 +23,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * calls, with the state's frozen example as its argument and the recorded request as its body,
  * and asserts what the command then reads from the answer. Every call goes to the {@code /work}
  * family by qualified id (epic qits-965): the CLI never resolves one to a UUID. The rows are
- * {@code /work} doors and six more: the release request's commits, which {@code qits artifacts
- * publish changelog} reads in every release step (qits-893), a commit's changes and one file's
- * diff, the project's release requests, which {@code qits release-request list} reads when no
+ * {@code /work} doors and these: the release request's commits, which {@code qits artifacts
+ * publish changelog} reads in every release step (qits-893), the git reads of {@code qits
+ * repositories} (branches, a branch's commits, a commit's changes and one file's diff, the commit
+ * subjects), the project's release requests, which {@code qits release-request list} reads when no
  * repository is named, the repository's requests of every state, where every command that takes
- * a request finds it by its logical id (qits-1158), and an automation run, which {@code qits
- * release-request regenerate} asks for (qits-1182). {@code qits projects}, the other {@code
+ * a request finds it by its logical id (qits-1158), an automation run, which {@code qits
+ * release-request regenerate} asks for (qits-1182), and a refinement's designs, which {@code qits
+ * work design} reads and writes (qits-1174). {@code qits projects}, the other {@code
  * repositories} reads and the other {@code release-request} calls are not part of this pact yet,
  * and neither is the OpenAPI document the payload commands read their schema from. Neither is
- * {@code list --state}: the provider records the project list without a query only. Doors the
- * provider records in no state (branches, commits, commit subjects, the refinement designs) have
- * no row: a row needs a recorded state.
+ * {@code list --state}: the provider records the project list without a query only.
  * <p>
  * <b>Each state is one the provider records</b> in its golden masters, picked for the call: a row
  * whose (state, operation) the index does not hold fails before anything runs, naming both.
@@ -75,6 +75,7 @@ final class ProjectsContract {
     static final String AWAITING_REQUEST = "a release request awaiting approval";
     static final String PENDING_REQUESTS = "a project with pending release requests";
     static final String HELD_BY_A_FAILED_AUTOMATION = "a release request held by a failed automation";
+    static final String TICKET_WITH_A_DESIGN = "a ticket with a design";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -314,6 +315,96 @@ final class ProjectsContract {
         });
     };
 
+    /** {@code qits work unblock}: the flag as the write left it. */
+    private static final Call UNBLOCK = (api, params, recorded) -> {
+        JsonNode block = api.setWorkBlocked(params.get("qualifiedId"), recorded.exampleBody()).path("block");
+        assertThat(block.path("blocked").isBoolean()).isTrue();
+        assertThat(block.path("blocked").asBoolean()).isFalse();
+        assertThat(ProjectsApi.text(block, "archetype")).isNotBlank();
+        assertThat(ProjectsApi.text(block, "status")).isNotBlank();
+    };
+
+    /** Every `design` command finds the item's open refinement by its id first. */
+    private static final Call OPEN_REFINEMENT = (api, params, recorded) ->
+            assertThat(WorkDesignCommand.refinement(api, params.get("qualifiedId"))).isNotBlank();
+
+    /** A design as `design list` prints it: no document. */
+    private static void design(JsonNode d) {
+        assertThat(ProjectsApi.text(d, "id")).isNotBlank();
+        assertThat(ProjectsApi.text(d, "title")).isNotBlank();
+        assertThat(d.path("version").isNumber()).isTrue();
+        assertThat(d.path("htmlBytes").isNumber()).isTrue();
+        assertThat(d.path("inUse").isBoolean()).isTrue();
+        assertThat(ProjectsApi.text(d, "updatedAt")).isNotBlank();
+    }
+
+    private static final Call DESIGNS = (api, params, recorded) -> {
+        JsonNode designs = api.refinementDesigns(params.get("refinementId")).path("designs");
+        assertThat(designs.size())
+                .isEqualTo(GoldenMasters.json(recorded.state(), recorded.operationId()).path("designs").size());
+        designs.forEach(ProjectsContract::design);
+    };
+
+    /** `design get` prints the whole document, which a rewrite sends back with this version. */
+    private static final Call DESIGN_GET = (api, params, recorded) -> {
+        JsonNode d = api.refinementDesign(params.get("refinementId"), params.get("designId"));
+        design(d);
+        assertThat(ProjectsApi.text(d, "html")).isNotBlank();
+    };
+
+    private static final Call DESIGN_ADD = (api, params, recorded) -> {
+        JsonNode d = api.addRefinementDesign(params.get("refinementId"), recorded.exampleBody());
+        design(d);
+        assertThat(ProjectsApi.text(d, "title")).isEqualTo(recorded.exampleBody().path("title").asText());
+    };
+
+    private static final Call DESIGN_UPDATE = (api, params, recorded) -> {
+        JsonNode d = api.updateRefinementDesign(params.get("refinementId"), params.get("designId"),
+                recorded.exampleBody());
+        design(d);
+        assertThat(ProjectsApi.text(d, "title")).isEqualTo(recorded.exampleBody().path("title").asText());
+    };
+
+    /** {@code qits repositories branches}: the table reads each branch's name, parent, ahead, behind and cleanup. */
+    private static final Call BRANCHES = (api, params, recorded) -> {
+        JsonNode branches = api.branches(params.get("repositoryId")).path("branches");
+        assertThat(branches.size())
+                .isEqualTo(GoldenMasters.json(recorded.state(), recorded.operationId()).path("branches").size());
+        assertThat(branches).isNotEmpty().allSatisfy(b -> {
+            assertThat(ProjectsApi.text(b, "name")).isNotBlank();
+            assertThat(b.path("canCleanup").isBoolean()).isTrue();
+        });
+    };
+
+    /** {@code qits repositories commits}: hash, date, author, files and subject of each commit. */
+    private static final Call COMMITS = (api, params, recorded) -> {
+        String branch = recorded.path().substring(recorded.path().indexOf("?branch=") + "?branch=".length());
+        JsonNode answer = api.commits(params.get("repositoryId"), branch);
+        assertThat(ProjectsApi.text(answer, "branch")).isEqualTo(branch);
+        assertThat(answer.path("commits")).isNotEmpty().allSatisfy(c -> {
+            assertThat(ProjectsApi.text(c, "shortHash")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "date")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "author")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "message")).isNotBlank();
+            assertThat(c.path("files").isArray()).isTrue();
+        });
+    };
+
+    /** {@code qits repositories commit-subjects}: the branch, the counts, the guard and the commits that do not comply. */
+    private static final Call COMMIT_SUBJECTS = (api, params, recorded) -> {
+        JsonNode answer = api.commitSubjects(params.get("repositoryId"), null, null);
+        assertThat(ProjectsApi.text(answer, "branch")).isNotBlank();
+        assertThat(answer.path("guardEnabled").isBoolean()).isTrue();
+        for (String count : List.of("total", "complying", "nonComplying", "exempt")) {
+            assertThat(answer.path("counts").path(count).isNumber()).as(count).isTrue();
+        }
+        assertThat(answer.path("nonComplying")).isNotEmpty().allSatisfy(c -> {
+            assertThat(ProjectsApi.text(c, "shortHash")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "authorName")).isNotBlank();
+            assertThat(ProjectsApi.text(c, "subject")).isNotBlank();
+        });
+    };
+
     /** `design` asks the item for its refinement first; an item with none answers null. */
     private static final Call NO_REFINEMENT = (api, params, recorded) ->
             assertThat(api.workRefinement(params.get("qualifiedId")).path("refinement").isNull()).isTrue();
@@ -389,9 +480,20 @@ final class ProjectsContract {
             row("qits work members move", CAMPAIGN_TO_EDIT, "moveWorkMember", MEMBER_MOVE),
             row("qits work members remove", CAMPAIGN_TO_EDIT, "removeWorkMember", MEMBER_REMOVE),
             row("qits work members condition", CAMPAIGN_TO_EDIT, "setWorkMemberCondition", MEMBER_CONDITION),
+            row("qits work unblock", BUG_TICKET_IN_DETAIL, "setWorkBlocked", UNBLOCK),
             row("qits work design list", REPORTED_TICKET, "getWorkRefinement", NO_REFINEMENT),
+            row("qits work design list", TICKET_WITH_A_DESIGN, "getWorkRefinement", OPEN_REFINEMENT),
+            row("qits work design list", TICKET_WITH_A_DESIGN, "listRefinementDesigns", DESIGNS),
+            row("qits work design get", TICKET_WITH_A_DESIGN, "getWorkRefinement", OPEN_REFINEMENT),
+            row("qits work design get", TICKET_WITH_A_DESIGN, "getRefinementDesign", DESIGN_GET),
+            row("qits work design put", TICKET_WITH_A_DESIGN, "getWorkRefinement", OPEN_REFINEMENT),
+            row("qits work design put", TICKET_WITH_A_DESIGN, "addRefinementDesign", DESIGN_ADD),
+            row("qits work design put", TICKET_WITH_A_DESIGN, "updateRefinementDesign", DESIGN_UPDATE),
+            row("qits repositories branches", AWAITING_REQUEST, "listRepositoryBranches", BRANCHES),
+            row("qits repositories commits", AWAITING_REQUEST, "listBranchCommits", COMMITS),
             row("qits repositories commit-changes", AWAITING_REQUEST, "listCommitChanges", COMMIT_CHANGES),
             row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", COMMIT_DIFF),
+            row("qits repositories commit-subjects", AWAITING_REQUEST, "measureCommitSubjects", COMMIT_SUBJECTS),
             row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
                     PROJECT_RELEASE_REQUESTS),
             row("qits release-request join", REQUESTS_OF_EVERY_STATE, "listRepositoryReleaseRequests", FIND_REQUEST),
