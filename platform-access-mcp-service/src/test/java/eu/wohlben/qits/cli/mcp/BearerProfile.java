@@ -33,13 +33,23 @@ public class BearerProfile implements QuarkusTestProfile {
                         .replace("-----BEGIN PUBLIC KEY-----", "")
                         .replace("-----END PUBLIC KEY-----", "")
                         .replaceAll("\\s", ""),
-                "QITS_PROJECTS_URL", "http://localhost:${quarkus.http.test-port:8081}");
+                "QITS_PROJECTS_URL", "http://localhost:${quarkus.http.test-port:8081}",
+                "QITS_WORKSPACES_URL", "http://localhost:${quarkus.http.test-port:8081}");
     }
 
     /** A token as the idp gives an agent: the platform's audience, its role in {@code groups}. */
     static String agentToken(String audience) {
+        return agentToken(audience, null);
+    }
+
+    /** The same, with the {@code agent} claim that names the caller's agent, when {@code agent} is not null. */
+    static String agentToken(String audience, String agent) {
         try {
-            return Jwt.claims()
+            var claims = Jwt.claims();
+            if (agent != null) {
+                claims.claim("agent", agent);
+            }
+            return claims
                     .issuer("http://dev-qits-idp:8080/idp")
                     .subject("workspace-7f3a")
                     .audience(Set.of(audience))

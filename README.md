@@ -1169,8 +1169,10 @@ command sends the wait to qits-workspaces (`POST /workspaces/api/agents/{agentId
 and returns at once. It never blocks. Declare the wait, then end the turn: the next turn names what
 fired, the event or the timeout. Never poll for the same thing in a background loop.
 
-The agent is `QITS_AGENT_ID`, which the harness sets, or `--agent`. Without either the command exits
-with 2. An agent may declare and cancel waits for itself only.
+The agent is `--agent`, else `QITS_AGENT_ID`. The harness sets the variable in an agent's
+environment; the MCP server runs the command without that environment, so it sets the variable from
+the `agent` claim of the caller's token. Without either the command exits with 2. An agent may
+declare and cancel waits for itself only.
 
 Each `--when` is one group of conditions that must all hold; an event that fits any group matches,
 and with no `--when` every event of the name does. The conditions are those of `qits observe`, on

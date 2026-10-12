@@ -49,8 +49,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "one group that go through the same name[] must hold on the same element "
                         + "(entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or "
                         + "is empty: label=\"two words\", note=\"\". At most 8 groups of 8 conditions.",
-                "The agent is QITS_AGENT_ID, which the harness sets, or --agent. An agent may declare and cancel "
-                        + "waits for itself only."},
+                "The agent is --agent, else QITS_AGENT_ID: the harness sets it in an agent's environment, and the "
+                        + "MCP server sets it from the caller's token. An agent may declare and cancel waits for "
+                        + "itself only."},
         footerHeading = "%nWaiting on the platform:%n",
         footer = {
                 "- Declare the wait, then end your turn. You get a new turn that names what fired: the event, or "
@@ -94,7 +95,8 @@ public class WaitCommand extends PlatformCommand {
     Declaration declaration;
 
     @CommandLine.Option(names = "--agent", paramLabel = "<id>", scope = CommandLine.ScopeType.INHERIT,
-            description = "The agent whose waits these are. Default: QITS_AGENT_ID.")
+            description = "The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the "
+                    + "caller's token).")
     String agent;
 
     @CommandLine.Option(names = "--workspaces-url", paramLabel = "<url>", scope = CommandLine.ScopeType.INHERIT,
@@ -146,12 +148,16 @@ public class WaitCommand extends PlatformCommand {
         return declare(context, json, name, groups, declaration, null);
     }
 
-    /** The agent: --agent, else QITS_AGENT_ID; a usage failure without either. */
+    /**
+     * The agent: --agent, else QITS_AGENT_ID; a usage failure without either. On the MCP server the
+     * variable comes from the caller's token, not the agent's container (qits-1213).
+     */
     String agentId(CliContext context) throws CliFailure {
         String given = agent != null && !agent.isBlank() ? agent : context.env().get(AGENT_VARIABLE);
         if (given == null || given.isBlank()) {
             throw new CliFailure("No agent: " + AGENT_VARIABLE + " is not set and --agent was not given. A wait belongs "
-                    + "to one agent; the harness sets " + AGENT_VARIABLE + " in an agent's environment.",
+                    + "to one agent; the harness sets " + AGENT_VARIABLE + " in an agent's environment, and the MCP "
+                    + "server sets it from the caller's token when the token names an agent.",
                     CliFailure.USAGE);
         }
         return given.strip();

@@ -26,6 +26,9 @@ class McpServiceTest {
     @Inject
     ProjectsStub projects;
 
+    @Inject
+    WorkspacesStub workspaces;
+
     private static final String INITIALIZE = """
             {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18",
              "capabilities":{},"clientInfo":{"name":"test","version":"1"}}}""";
@@ -88,6 +91,35 @@ class McpServiceTest {
             assertThat(new JsonObject(text).getJsonArray("entries")).hasSize(1);
         }).thenAssertResults();
         assertThat(projects.seen()).containsExactly("Bearer " + token);
+    }
+
+    // --- the agent of the caller's token (qits-1213) ---
+
+    private static final String AGENT = "07a79d74-b3ff-40a3-9b66-bceda7435a37";
+
+    @Test
+    void aWaitWithoutAgentDeclaresForTheAgentOfTheToken() {
+        workspaces.agents().clear();
+        client(BearerProfile.agentToken("qits-platform", AGENT)).when()
+                .toolsCall("wait", Map.of("event", "BuildFailed"), response -> {
+                    String text = response.content().stream().map(c -> c.asText().text())
+                            .collect(Collectors.joining("\n"));
+                    assertThat(response.isError()).as(text).isFalse();
+                }).thenAssertResults();
+        assertThat(workspaces.agents()).containsExactly(AGENT);
+    }
+
+    @Test
+    void aWaitWithoutAgentOrClaimIsRefusedAsBefore() {
+        workspaces.agents().clear();
+        client(BearerProfile.agentToken("qits-platform")).when()
+                .toolsCall("wait", Map.of("event", "BuildFailed"), response -> {
+                    String text = response.content().stream().map(c -> c.asText().text())
+                            .collect(Collectors.joining("\n"));
+                    assertThat(response.isError()).isTrue();
+                    assertThat(text).contains("QITS_AGENT_ID").contains("exit 2");
+                }).thenAssertResults();
+        assertThat(workspaces.agents()).isEmpty();
     }
 
     // --- the read-only mode ---

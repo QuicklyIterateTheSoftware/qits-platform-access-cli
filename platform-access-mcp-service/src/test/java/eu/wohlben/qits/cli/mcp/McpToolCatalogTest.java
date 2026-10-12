@@ -614,9 +614,23 @@ class McpToolCatalogTest {
     @Test
     void theCommandsSeeTheServicesEnvironmentAndNothingElse() {
         Map<String, String> env = ToolRunner.environment(Map.of("QITS_ENV", "prod", "QITS_COMMISSIONED_CLIENT_ID", "x",
-                "HOME", "/root", "QITS_OBSERVABILITY_URL", "http://prod-qits-observability:8080")::get);
+                "HOME", "/root", "QITS_OBSERVABILITY_URL", "http://prod-qits-observability:8080",
+                "QITS_AGENT_ID", "0a0b0c0d-0000-4000-8000-000000000009")::get);
         assertThat(env).containsExactlyInAnyOrderEntriesOf(Map.of("QITS_PLATFORM", "true", "QITS_ENV", "prod",
                 "QITS_OBSERVABILITY_URL", "http://prod-qits-observability:8080"));
+    }
+
+    /** qits-1213: the agent comes from the caller's token, and only a uuid counts. */
+    @Test
+    void aCallAddsTheAgentOfTheCallersToken() {
+        String agent = "07a79d74-b3ff-40a3-9b66-bceda7435a37";
+        assertThat(ToolRunner.callEnvironment(agent)).isEqualTo(Map.of("QITS_AGENT_ID", agent));
+        assertThat(ToolRunner.callEnvironment(jakarta.json.Json.createValue(agent)))
+                .isEqualTo(Map.of("QITS_AGENT_ID", agent));
+        assertThat(ToolRunner.callEnvironment(null)).isEmpty();
+        assertThat(ToolRunner.callEnvironment("")).isEmpty();
+        assertThat(ToolRunner.callEnvironment("../projects")).isEmpty();
+        assertThat(ToolRunner.callEnvironment(42)).isEmpty();
     }
 
     @Test

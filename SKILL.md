@@ -2144,7 +2144,7 @@ Bare, it takes the event's name and its conditions. release-request, work and ci
 
 Each --when is one group of conditions, separated by spaces, that must all hold. An event that fits any group matches; with no --when, every event of the name does. Conditions: path=value equal, path^=value starts with, path? present, !path absent. A path is the payload's fields joined by dots; [] after a field means some element of that array, and the conditions of one group that go through the same name[] must hold on the same element (entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or is empty: label="two words", note="". At most 8 groups of 8 conditions.
 
-The agent is QITS_AGENT_ID, which the harness sets, or --agent. An agent may declare and cancel waits for itself only.
+The agent is --agent, else QITS_AGENT_ID: the harness sets it in an agent's environment, and the MCP server sets it from the caller's token. An agent may declare and cancel waits for itself only.
 
 ```
 qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json] [--timeout <duration>] [--when <conditions>...] [--workspaces-url <url>]
@@ -2152,7 +2152,7 @@ qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json]
 
 | Name | What it does |
 |---|---|
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
 | `--event <Name>` | Required, unless a preset is named. The event's name, as the bus carries it: BuildFailed, EntityTransitioned. |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
@@ -2196,7 +2196,7 @@ qits wait release-request [--agent <id>] [--label <text>] [--output table|json] 
 | Name | What it does |
 |---|---|
 | `<id>` | The release request: its id (qits-ci-service-rr-12) or its whole uuid. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
@@ -2232,7 +2232,7 @@ qits wait work --status <STATUS> [--agent <id>] [--label <text>] [--output table
 |---|---|
 | `<entity>` | The work item: its qualified id (qits-123) or its id. |
 | `--status <STATUS>` | Required. The status to wait for: REFINED, READY_FOR_DEV, IMPLEMENTED, VERIFIED, DONE, DROPPED or another word of the item's lifecycle. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where the item is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
@@ -2265,7 +2265,7 @@ qits wait ci-run [--agent <id>] [--label <text>] [--output table|json] [--timeou
 | Name | What it does |
 |---|---|
 | `<run id>` | The run's whole id. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
@@ -2295,7 +2295,7 @@ qits wait list [--agent <id>] [--output table|json] [--state <STATE>] [--workspa
 
 | Name | What it does |
 |---|---|
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--state <STATE>` | Only the waits in this state: OPEN, MATCHED, TIMED_OUT or CANCELLED. Default: all. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
@@ -2324,7 +2324,7 @@ qits wait cancel [--agent <id>] [--output table|json] [--workspaces-url <url>] <
 | Name | What it does |
 |---|---|
 | `<wait id>` | The wait's id, as `qits wait list` shows it. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID. |
+| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
 

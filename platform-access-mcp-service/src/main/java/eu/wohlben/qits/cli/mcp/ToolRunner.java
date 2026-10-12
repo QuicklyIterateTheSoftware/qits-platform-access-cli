@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * One tool call, run as the command it is: in this process, with a fresh {@link CommandLine}, the
@@ -42,6 +43,15 @@ public final class ToolRunner {
 
     /** picocli's own exit code for a command line it could not read; the CLI's {@code USAGE}. */
     static final int USAGE = 2;
+
+    /** The variable `qits wait` reads its agent from; on this server it comes from the caller's token. */
+    static final String AGENT_VARIABLE = "QITS_AGENT_ID";
+
+    /** The claim of the caller's token that names its agent (qits-1213). */
+    public static final String AGENT_CLAIM = "agent";
+
+    private static final Pattern UUID =
+            Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -62,10 +72,10 @@ public final class ToolRunner {
     }
 
     /**
-     * The environment every call runs in, and the whole of it: in-platform, the environment's label
-     * and the service addresses this service was configured with. Nothing from the caller, and none
-     * of this process's own environment beyond those names — in particular no commissioned client,
-     * which this service never has.
+     * The environment every call runs in: in-platform, the environment's label and the service
+     * addresses this service was configured with. None of this process's own environment beyond
+     * those names — in particular no commissioned client, which this service never has. The one
+     * thing a call adds is from the caller's token: see {@link #callEnvironment}.
      *
      * @param config what this service was configured with, by variable name; null for an unset one
      */
@@ -73,7 +83,7 @@ public final class ToolRunner {
         Map<String, String> env = new TreeMap<>();
         env.put(Mode.OVERRIDE, "true");
         for (String name : List.of("QITS_ENV", "QITS_PROJECTS_URL", "QITS_CI_URL", "QITS_EVENTS_URL",
-                "QITS_OBSERVABILITY_URL")) {
+                "QITS_OBSERVABILITY_URL", "QITS_WORKSPACES_URL")) {
             String value = config.apply(name);
             if (value != null && !value.isBlank()) {
                 env.put(name, value.strip());
@@ -98,8 +108,39 @@ public final class ToolRunner {
         }
     }
 
+    /**
+     * What one call adds to {@link #environment}, from the caller's token: QITS_AGENT_ID when the
+     * token's {@value #AGENT_CLAIM} claim names an agent. The command runs here, not in the agent's
+     * container, so the variable the harness sets there never reaches it (qits-1213). A claim that is
+     * not one uuid adds nothing.
+     *
+     * @param agentClaim the claim's value as the token gives it, or null
+     */
+    public static Map<String, String> callEnvironment(Object agentClaim) {
+        String agent = agentClaim == null ? null : agentClaim instanceof String text ? text
+                : agentClaim instanceof jakarta.json.JsonString json ? json.getString() : null;
+        if (agent == null || !UUID.matcher(agent.strip()).matches()) {
+            return Map.of();
+        }
+        return Map.of(AGENT_VARIABLE, agent.strip());
+    }
+
     /** Runs {@code tool} with {@code arguments} as {@code credential}'s holder. */
     public Result run(Tool tool, Map<String, Object> arguments, Credential credential) {
+        return run(tool, arguments, credential, Map.of());
+    }
+
+    /**
+     * Runs {@code tool} with {@code arguments} as {@code credential}'s holder, with {@code call} added
+     * to the environment for this call only.
+     */
+    public Result run(Tool tool, Map<String, Object> arguments, Credential credential, Map<String, String> call) {
+        Map<String, String> env = environment;
+        if (!call.isEmpty()) {
+            Map<String, String> merged = new TreeMap<>(environment);
+            merged.putAll(call);
+            env = Map.copyOf(merged);
+        }
         List<String> argv;
         byte[] stdin;
         try {
@@ -114,7 +155,7 @@ public final class ToolRunner {
         PrintStream outStream = new PrintStream(out, true, StandardCharsets.UTF_8);
         PrintStream errStream = new PrintStream(err, true, StandardCharsets.UTF_8);
         InputStream in = stdin == null ? InputStream.nullInputStream() : new ByteArrayInputStream(stdin);
-        CliContext context = new CliContext(environment, in, outStream, errStream, clock, Sleeper.real(),
+        CliContext context = new CliContext(env, in, outStream, errStream, clock, Sleeper.real(),
                 TokenClient::new, stop -> {
                     // Nothing to install: a call ends when its command returns, and no signal is
                     // this call's to answer.

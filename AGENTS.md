@@ -101,8 +101,10 @@ that keeps it in step (`SkillDocumentTest`) resolves it one directory up and say
                  payload as stdin, buffered stdout/stderr, a CliContext on every PlatformCommand
                  with the caller's bearer (`RequestCredential`) and a fixed environment
                  (`QITS_PLATFORM=true`, `QITS_ENV`, the `QITS_<APP>_URL` overrides the service was
-                 configured with, nothing else). Exit 0 is the stdout (and stderr, when it says
-                 something); anything else is `isError` with stderr, `exit <n>` and stdout.
+                 configured with, nothing else). One call adds `QITS_AGENT_ID` from the `agent`
+                 claim of the caller's token, so `qits wait` finds the calling agent (qits-1213).
+                 Exit 0 is the stdout (and stderr, when it says something); anything else is
+                 `isError` with stderr, `exit <n>` and stdout.
     McpTools     registers the catalog with `ToolManager` under the server `qits`, runs each call on
                  a worker thread (the commands block), and answers `instructions`. It sets
                  `QITS_MCP_SERVICE` first, so `CliContext.system()` throws in this process.
