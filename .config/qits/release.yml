@@ -119,13 +119,6 @@ release-request:
       # request rather than the release. No `--output` at all: buildctl solves the graph and exports
       # nothing, as the java-service archetype's QA build does. The same args and secrets as every
       # other invocation here, so the release step's image build is cache hits.
-      #
-      # IT ALSO RUNS THE RUNNER'S INTEGRATION TESTS (qits-1226): the `service` target takes its
-      # runner from docker/Dockerfile's `service-it` stage, which starts that runner under failsafe's
-      # @QuarkusIntegrationTest classes, McpWireJsonIT among them. A red IT fails this buildctl call
-      # and so the request, on the very bytes the release step will push; the first step's `verify`
-      # cannot, because it has no native runner and the service pom binds failsafe under -Dnative
-      # only.
       buildctl build --frontend dockerfile.v0 \
         --local context=. --local dockerfile=docker \
         --opt target=service \
