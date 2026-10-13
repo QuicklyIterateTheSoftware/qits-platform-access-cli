@@ -96,6 +96,7 @@ class McpServiceTest {
     // --- the agent of the caller's token (qits-1213) ---
 
     private static final String AGENT = "07a79d74-b3ff-40a3-9b66-bceda7435a37";
+    private static final String OTHER = "5d1e2c3b-4a59-4687-9a01-23456789abcd";
 
     @Test
     void aWaitWithoutAgentDeclaresForTheAgentOfTheToken() {
@@ -120,6 +121,18 @@ class McpServiceTest {
                     assertThat(text).contains("QITS_AGENT_ID").contains("exit 2");
                 }).thenAssertResults();
         assertThat(workspaces.agents()).isEmpty();
+    }
+
+    @Test
+    void anExplicitAgentWinsOverTheAgentOfTheToken() {
+        workspaces.agents().clear();
+        client(BearerProfile.agentToken("qits-platform", AGENT)).when()
+                .toolsCall("wait", Map.of("event", "BuildFailed", "agent", OTHER), response -> {
+                    String text = response.content().stream().map(c -> c.asText().text())
+                            .collect(Collectors.joining("\n"));
+                    assertThat(response.isError()).as(text).isFalse();
+                }).thenAssertResults();
+        assertThat(workspaces.agents()).containsExactly(OTHER);
     }
 
     // --- the read-only mode ---
