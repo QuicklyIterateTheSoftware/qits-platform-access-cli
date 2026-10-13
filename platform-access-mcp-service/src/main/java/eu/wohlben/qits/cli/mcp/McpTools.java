@@ -9,6 +9,7 @@ import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.ToolManager;
 import io.quarkiverse.mcp.server.ToolResponse;
 import io.quarkus.runtime.Startup;
+import io.quarkus.vertx.runtime.jackson.QuarkusJacksonJsonCodec;
 import io.vertx.core.json.JsonObject;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -64,6 +65,25 @@ public class McpTools implements InitialResponseInfo {
     @PostConstruct
     void register() {
         System.setProperty(CliContext.MCP_SERVICE, "true");
+        // THE VERT.X JSON CODEC IS RESET BEFORE ANYTHING IS SERVED, and every tool result depends on
+        // it (qits-1226). The MCP extension writes a result with JsonObject.mapFrom, which is Vert.x's
+        // Json.CODEC, which is QuarkusJacksonJsonCodec: a static mapper that copies the CDI
+        // ObjectMapper the first time it is used — the one McpObjectMapperCustomizer gave its
+        // NON_NULL mixins — but only if Arc is up then, and a bare `new ObjectMapper()` if it is not.
+        // This application carries no quarkus-rest-jackson, the only kind of extension that asks
+        // for the codec to be initialised at run time, so the native image initialises it at BUILD
+        // time; whenever something touches it during the image build, before Arc exists, the bare
+        // mapper is frozen into the runner and every content item goes out as
+        // `{"text":…,"_meta":null,"annotations":null,"type":"text"}` beside
+        // `"structuredContent":null`, which MCP clients reject whole. Whether a build does that is
+        // not up to us: 2026.1012.174516 froze it, 2026.1013.194420 from the same main code did not.
+        // Here Arc is up and no request has been answered, so the next use copies the customised
+        // mapper — the state of a good build, whatever the build did. McpWireJsonIT holds it against
+        // the native runner the release ships.
+        //
+        // QuarkusJacksonJsonCodec is a Quarkus-internal runtime class, not an API: on a Quarkus
+        // upgrade, check that reset() still exists and still means "copy the CDI mapper next time".
+        QuarkusJacksonJsonCodec.reset();
         catalog = ToolCatalog.of(new CommandLine(new AccessCli()));
         reads = catalog.tools().stream().filter(Tool::read).map(Tool::name).collect(Collectors.toUnmodifiableSet());
         runner = new ToolRunner(factory -> new CommandLine(new AccessCli(), factory),
