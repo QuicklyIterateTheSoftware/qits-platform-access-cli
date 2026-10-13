@@ -4,7 +4,8 @@
 #
 # AND THE ONE IMAGE THIS REPOSITORY SHIPS, `--target service`: the MCP service
 # (platform-access-mcp-service), the same commands served as MCP tools at /mcp. Its own build stage
-# (`service-build`), its own SBOM stage (`service-sbom`) and a ubi-minimal runtime stage (`service`),
+# (`service-build`), a stage that runs the native runner's integration tests against it
+# (`service-it`), its own SBOM stage (`service-sbom`) and a ubi-minimal runtime stage (`service`),
 # all before `binary`, so a plain build still yields `qits`. The release step builds and pushes it
 # beside the binary, from the same release (`.config/qits/release.yml`).
 #
@@ -161,9 +162,8 @@ RUN set -eu; \
 #
 # THE SAME `ldd` CHECK AS THE BINARY'S. The runtime base is ubi-minimal and has a glibc, so a
 # dynamic runner would start there; the check holds anyway, because a dynamic runner means the musl
-# flags did not reach this compile, and then this is not the build the header describes. There is
-# no smoke run of the runner here: a service started in a RUN would wait for requests, and the
-# readiness gate of the deployment is what proves it starts.
+# flags did not reach this compile, and then this is not the build the header describes. The runner
+# is not started on this RUN; `service-it` below starts it under its tests and stops it again.
 FROM ${BUILDER_IMAGE} AS service-build
 USER root
 WORKDIR /qits-build
@@ -187,6 +187,44 @@ RUN --mount=type=secret,id=qits-client-id \
  && ldd platform-access-mcp-service/target/qits-platform-access-mcp-service 2>&1 \
       | grep -qE "statically linked|not a dynamic executable"
 
+# THE MCP SERVICE'S NATIVE RUNNER, UNDER ITS OWN TESTS (qits-1226): failsafe's *IT classes, which
+# are @QuarkusIntegrationTest and start the runner `service-build` made as a process of its own —
+# McpWireJsonIT first, which fails a runner whose Vert.x JSON codec was frozen at image build time
+# with a bare ObjectMapper (every tool result then goes out with `"_meta":null` and
+# `"structuredContent":null`, and MCP clients reject it). Whether a native build freezes it is not
+# deterministic, so only the very bytes the image ships can be tested for it, and a JVM test never
+# sees it. A red IT fails this RUN, so the buildctl build, so the release request's QA step.
+#
+# A STAGE OF ITS OWN, AND THE IMAGE TAKES ITS RUNNER FROM HERE. BuildKit builds only what the target
+# reaches; `service` copying the runner out of this stage is what makes every `--target service`
+# build run the tests, and makes the image the runner that passed them. The compile above stays its
+# own cached layer: a re-run after a red IT is the tests again, never a second native compile. The
+# release step's `service` build is the QA build's, args and secrets byte for byte, so it is cache
+# hits here too and the tests do not run twice. `service-sbom` stays on `service-build`: the document
+# describes the compile, which the tests do not change.
+#
+# NO SECOND COMPILE, NO RE-PACKAGE. The goals are named, not the lifecycle: `verify` would run the
+# quarkus build goal again. `test-compile` over the same `-pl … -am` reactor is up to date (the test
+# classes were compiled by `service-build`'s `-DskipTests` package) and is what lets the reactor
+# hand the service module the commands module's classes; `-Dnative` is the service pom's native
+# profile, which binds failsafe and points it at target/qits-platform-access-mcp-service, the runner
+# target/quarkus-artifact.properties already names. The same secrets and the same derived addresses
+# as `service-build`'s RUN, because the local repository that RUN filled has every dependency but
+# what only a test run resolves — failsafe itself and its JUnit provider — and those come from the
+# same two hosts. The runner listens on the RUN's own loopback, on quarkus.http.test-port's 8081.
+FROM service-build AS service-it
+ARG QITS_DOMAIN=wohlben.eu
+RUN --mount=type=secret,id=qits-client-id \
+    --mount=type=secret,id=qits-client-secret \
+    export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
+    export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
+    export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
+    export QITS_MAVEN_REPOSITORY_URL="https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven"; \
+    ./mvnw -B -ntp -s .qits-maven-settings.xml -Dnative \
+      -Dqits.maven.repository.url="$QITS_MAVEN_REPOSITORY_URL" \
+      -pl platform-access-mcp-service -am \
+      test-compile failsafe:integration-test failsafe:verify
+
 # The CycloneDX document, for the release step's SBOM PUT. Before `binary`, so that stays the
 # default. The application module's document: the closure that made the bytes.
 FROM scratch AS sbom
@@ -201,10 +239,11 @@ COPY --from=service-build /qits-build/platform-access-mcp-service/target/sbom.js
 # (`.config/qits/deployments.yml`). The runtime base and its shape are qits-ci-service's final
 # stage: `mirror.dev.localhost:8080/redhat/…` is qits-platform-mirror pointed at
 # registry.access.redhat.com, /work, user 1001, nothing installed. The runner keeps its
-# `quarkus.package.output-name`, so `ps` shows what the edge routes to.
+# `quarkus.package.output-name`, so `ps` shows what the edge routes to. It comes from `service-it`,
+# not `service-build`: the same bytes, and the reason the tests run at all (see that stage).
 FROM mirror.dev.localhost:8080/redhat/ubi9/ubi-minimal:9.6 AS service
 WORKDIR /work
-COPY --from=service-build --chown=1001:root \
+COPY --from=service-it --chown=1001:root \
      /qits-build/platform-access-mcp-service/target/qits-platform-access-mcp-service \
      /work/qits-platform-access-mcp-service
 RUN chmod +x /work/qits-platform-access-mcp-service

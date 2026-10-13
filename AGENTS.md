@@ -112,8 +112,22 @@ that keeps it in step (`SkillDocumentTest`) resolves it one directory up and say
 A new command or option on the CLI is a tool or a schema property with no change here.
 `McpToolCatalogTest` walks the real tree and fails when that stops being true; `McpServiceTest`
 proves the 401 without a bearer, `tools/list`, the instructions and a call carrying the caller's
-bearer. A plain `mvn verify` runs both; neither needs docker or an idp (the bearer tests sign with
-a key under `src/test/resources`).
+bearer; `McpWireJsonTest` reads a `tools/call` answer as bytes and fails on any `null` member
+(`"_meta":null`, `"annotations":null`, `"structuredContent":null`), which MCP clients reject. A
+plain `mvn verify` runs all three; none needs docker or an idp (the bearer tests sign with a key
+under `src/test/resources`).
+
+**The native runner has tests of its own**, because one failure exists only there (qits-1226):
+Vert.x's JSON codec, which writes every tool result, may be initialised at native-image build time
+with a bare ObjectMapper instead of the one carrying the MCP extension's NON_NULL mixins, and then
+every result carries those nulls. Whether a build does it is not deterministic. `McpTools` resets
+the codec at startup (`QuarkusJacksonJsonCodec.reset()`, a Quarkus-internal class: re-check it on a
+Quarkus upgrade), and `McpWireJsonIT` — `McpWireJsonTest` as a `@QuarkusIntegrationTest` — holds it
+against the runner. Failsafe is bound in the service pom's `native` profile only, so a plain `verify`
+never looks for a runner; `./mvnw verify -Dnative -pl platform-access-mcp-service -am` builds one and
+runs it, `-Dnative.image.path=<runner>` with the goals `test-compile failsafe:integration-test
+failsafe:verify` tests any runner without compiling, and docker/Dockerfile's `service-it` stage does
+exactly that to the runner the image ships, so a red IT fails the release request.
 
 ## Layout
 
@@ -367,7 +381,8 @@ Dockerfile's `binary` stage still exports `out/qits` and its `sbom` stage `/sbom
 outside the Dockerfile moved when the reactor split.
 The same release step builds the MCP service from the Dockerfile's `service` target (a second
 native compile in its own `service-build` stage, never on the binary's RUN: two native-image
-processes would not fit the 4g cap) and pushes it as `qits/qits-platform-access-mcp-service`; its
+processes would not fit the 4g cap; then `service-it` runs the runner's ITs, and the image takes the
+runner from there, so the QA step's `service` build is the gate) and pushes it as `qits/qits-platform-access-mcp-service`; its
 SBOM comes from `service-sbom` into `out/service/`, and the composed postlude submits both declared
 SBOMs from that one step, which is why the image is built there and not in a step of its own.
 `.config/qits/deployments.yml` makes qits-deployments deploy it (application

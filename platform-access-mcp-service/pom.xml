@@ -148,7 +148,40 @@
                 <!-- Pkce holds a SecureRandom in a static field and is in the commands jar this
                      service carries. Seeded at build time, every image would carry the same seed. -->
                 <quarkus.native.additional-build-args>--initialize-at-run-time=eu.wohlben.qits.cli.access.login.Pkce</quarkus.native.additional-build-args>
+                <!-- The runner the ITs start; `-Dnative.image.path=<runner>` points them at another
+                     one, a released runner for instance. -->
+                <native.image.path>${project.build.directory}/qits-platform-access-mcp-service</native.image.path>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- THE NATIVE RUNNER'S OWN TESTS, the *IT classes (@QuarkusIntegrationTest):
+                             what only a native image can get wrong, McpWireJsonIT first (qits-1226).
+                             Here and not in the default build, because without -Dnative there is no
+                             runner to start, so the release request's plain `verify` never runs
+                             them. `./mvnw verify -Dnative` builds the runner and then runs them;
+                             docker/Dockerfile's `service-it` stage names the two goals on the runner
+                             `service-build` already made, so nothing is compiled twice.
+                             Configuration at plugin level, not on the execution, so a goal named on
+                             the command line gets it too. -->
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <native.image.path>${native.image.path}</native.image.path>
+                                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                            </systemPropertyVariables>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>

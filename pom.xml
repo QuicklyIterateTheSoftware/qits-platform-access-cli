@@ -152,6 +152,14 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${surefire-plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <!-- Released in step with surefire, so one version for both. Bound only by the MCP
+                         service's native profile, where it runs McpWireJsonIT against the runner;
+                         pinned here so a `failsafe:` goal named on the command line resolves to this
+                         version in every module of a `-am` reactor, not to whatever is newest. -->
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${surefire-plugin.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
