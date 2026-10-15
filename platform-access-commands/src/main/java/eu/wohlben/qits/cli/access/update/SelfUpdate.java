@@ -14,10 +14,12 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * One check, and when a newer version is released, one replacement of the running binary.
@@ -26,7 +28,9 @@ import java.util.concurrent.TimeUnit;
  * one directory, which is atomic: a command started at any moment runs either the old binary or the
  * new one, never half of either. Before that rename the file has to have the length and the sha256
  * digest the store announced, and has to answer {@code -V} with the version it was downloaded as.
- * Any failure on the way deletes the temporary file and leaves the old binary as it was.
+ * Any failure on the way deletes the temporary file and leaves the old binary as it was. A process
+ * killed hard mid-download cannot run that cleanup, so {@link #fetch} also sweeps the directory for
+ * one of its own temporary files left over an hour before writing a new one.
  * <p>
  * Every part of the world is a seam (the store, the running binary's path, the {@code -V} probe), so
  * the tests run it in a temporary directory with a script standing in for the binary.
@@ -64,6 +68,13 @@ final class SelfUpdate {
 
     /** How long a downloaded binary has to answer {@code -V}. */
     static final Duration PROBE_TIMEOUT = Duration.ofSeconds(30);
+
+    /**
+     * How long a {@code .qits-update-*.tmp} is left alone before it is taken for one a killed
+     * process abandoned. Long enough that a concurrent update's own download, still being written,
+     * is never mistaken for one.
+     */
+    static final Duration STALE_DOWNLOAD_AGE = Duration.ofHours(1);
 
     private final Releases releases;
     private final Optional<String> running;
@@ -152,6 +163,7 @@ final class SelfUpdate {
         Path temporary;
         try {
             Files.createDirectories(directory);
+            clearAbandonedDownloads(directory);
             temporary = Files.createTempFile(directory, ".qits-update-", ".tmp");
         } catch (IOException e) {
             throw new CliFailure("Cannot write in " + directory + ": " + describe(e) + ".", CliFailure.FAILED);
@@ -231,6 +243,35 @@ final class SelfUpdate {
             return HexFormat.of().formatHex(digest.digest());
         } catch (NoSuchAlgorithmException impossible) {
             throw new IllegalStateException("this JDK has no SHA-256", impossible);
+        }
+    }
+
+    /**
+     * A process killed hard mid-download leaves its temporary file where {@link #fetch} wrote it,
+     * for good: nothing else ever looks at that name again. Sweep the directory for one before
+     * writing a new one, rather than on a timer, so a workstation that never updates never grows one
+     * either. Best effort and silent: a directory listing is not the download, and a stray file from
+     * a run that is still writing it (within the hour) is left for the next sweep to judge.
+     */
+    private static void clearAbandonedDownloads(Path directory) {
+        Instant cutoff = Instant.now().minus(STALE_DOWNLOAD_AGE);
+        try (Stream<Path> files = Files.list(directory)) {
+            files.filter(file -> isAbandonedDownload(file, cutoff)).forEach(SelfUpdate::deleteQuietly);
+        } catch (IOException ignored) {
+            // Best effort: a directory we cannot even list is not this run's problem to solve.
+        }
+    }
+
+    private static boolean isAbandonedDownload(Path file, Instant cutoff) {
+        String name = file.getFileName().toString();
+        if (!name.startsWith(".qits-update-") || !name.endsWith(".tmp")) {
+            return false;
+        }
+        try {
+            return Files.getLastModifiedTime(file).toInstant().isBefore(cutoff);
+        } catch (IOException e) {
+            // Gone already, or unreadable; either way there is nothing to delete.
+            return false;
         }
     }
 

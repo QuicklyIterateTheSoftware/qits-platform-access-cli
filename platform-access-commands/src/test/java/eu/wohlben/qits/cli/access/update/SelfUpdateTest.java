@@ -10,7 +10,10 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -75,6 +78,24 @@ class SelfUpdateTest {
             assertThat(files).as("no temporary file is left").containsExactly(self);
         }
         assertThat(SelfUpdate.probe(self).strip()).isEqualTo(LATEST);
+    }
+
+    @Test
+    void aStaleDownloadLeftByAKilledProcessIsSweptAwayWhileAFreshOneAndOtherFilesStay() throws Exception {
+        Path stale = bin.resolve(".qits-update-x.tmp");
+        Files.writeString(stale, "half a download");
+        Files.setLastModifiedTime(stale, FileTime.from(Instant.now().minus(Duration.ofHours(2))));
+        Path fresh = bin.resolve(".qits-update-y.tmp");
+        Files.writeString(fresh, "another update, still running");
+        Path unrelated = bin.resolve("notes.txt");
+        Files.writeString(unrelated, "leave me alone");
+
+        SelfUpdate.Outcome outcome = update().run(false, false);
+
+        assertThat(outcome.result()).isEqualTo(SelfUpdate.Result.UPDATED);
+        assertThat(stale).doesNotExist();
+        assertThat(fresh).exists();
+        assertThat(unrelated).exists();
     }
 
     @Test
