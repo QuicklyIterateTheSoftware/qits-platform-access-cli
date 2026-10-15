@@ -45,7 +45,7 @@ public final class LinkProjects {
     }
 
     /** {@code $XDG_CACHE_HOME/qits}, else {@code ~/.cache/qits}. A relative XDG_CACHE_HOME is ignored. */
-    static Path cacheDirectory(Map<String, String> env) {
+    public static Path cacheDirectory(Map<String, String> env) {
         String xdg = env.get("XDG_CACHE_HOME");
         Path base = xdg != null && !xdg.isBlank() && Path.of(xdg).isAbsolute()
                 ? Path.of(xdg)

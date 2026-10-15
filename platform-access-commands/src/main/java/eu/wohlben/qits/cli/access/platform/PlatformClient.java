@@ -9,6 +9,7 @@ import eu.wohlben.qits.cli.session.Credential;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -18,6 +19,9 @@ import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
 import java.net.http.WebSocketHandshakeException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,6 +160,60 @@ public final class PlatformClient {
             }
         } catch (IOException e) {
             throw CliFailure.retryable("Cannot reach " + uri + ": " + describe(e));
+        }
+    }
+
+    /**
+     * A HEAD: what the service says about a file without sending it ({@code Content-Length}, a
+     * digest). A refusal reads as one of {@link #get}'s.
+     */
+    public HttpHeaders head(URI uri) throws CliFailure, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(REQUEST_TIMEOUT)
+                .header("Authorization", bearer())
+                .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                .build();
+        try (HttpClient http = newClient()) {
+            HttpResponse<Void> response = http.send(request, HttpResponse.BodyHandlers.discarding());
+            int status = response.statusCode();
+            if (status < 200 || status >= 300) {
+                throw explained(status, refusal("HEAD", uri, status, response.headers(), ""));
+            }
+            return response.headers();
+        } catch (IOException e) {
+            throw CliFailure.retryable("Cannot reach " + uri + ": " + describe(e));
+        }
+    }
+
+    /**
+     * A GET whose body is a file, written to {@code target} as it arrives rather than held in
+     * memory: the {@code qits} binary is tens of megabytes. The caller decides what a partial file
+     * is worth; this only says that it failed.
+     *
+     * @return the number of bytes written
+     */
+    public long download(URI uri, Path target) throws CliFailure, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(REQUEST_TIMEOUT)
+                .header("Accept", "application/octet-stream")
+                .header("Authorization", bearer())
+                .GET()
+                .build();
+        try (HttpClient http = newClient()) {
+            HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            int status = response.statusCode();
+            try (InputStream body = response.body()) {
+                if (status < 200 || status >= 300) {
+                    String text = new String(body.readNBytes(REFUSAL_BODY_LIMIT), StandardCharsets.UTF_8);
+                    throw explained(status, refusal("GET", uri, status, response.headers(), text));
+                }
+                try (OutputStream file = Files.newOutputStream(target, StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING)) {
+                    return body.transferTo(file);
+                }
+            }
+        } catch (IOException e) {
+            throw CliFailure.retryable("Cannot download " + uri + ": " + describe(e));
         }
     }
 

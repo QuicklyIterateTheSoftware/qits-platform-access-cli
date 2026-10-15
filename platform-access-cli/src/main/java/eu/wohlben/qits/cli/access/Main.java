@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access;
 
+import eu.wohlben.qits.cli.access.update.AutoUpdate;
 import eu.wohlben.qits.cli.session.BrowserGuard;
 import eu.wohlben.qits.cli.session.Mode;
 import io.quarkus.runtime.QuarkusApplication;
@@ -13,10 +14,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * The process entry point. Its only job beyond picocli's own is a name check: a binary or a
+ * The process entry point. Beyond picocli's own job it does two things. A name check: a binary or a
  * symlink started as {@code qits-publish} behaves as {@code qits artifacts publish}, so a
  * hand-written pipeline that still calls it by that name — the binary name of the retired
- * qits-artifacts-cli, before it folded into {@code qits} — keeps working.
+ * qits-artifacts-cli, before it folded into {@code qits} — keeps working. And the automatic update
+ * ({@link AutoUpdate}), which a workstation's binary starts in the background.
  */
 @QuarkusMain
 public class Main implements QuarkusApplication {
@@ -34,7 +36,12 @@ public class Main implements QuarkusApplication {
         // browser is the one the screen reads, and one guard cannot disagree with itself.
         commandLine.setExecutionStrategy(
                 new BrowserGuard(commandLine.getExecutionStrategy(), Mode.of(System.getenv())));
-        return commandLine.execute(effectiveArgs(args, invokedAs()));
+        String[] effective = effectiveArgs(args, invokedAs());
+        // Before the command, not after: it only reads a small file and, at most once an hour,
+        // starts `qits update --background` without waiting for it, so the command is not delayed,
+        // and a command that ends the process itself (a daemon stopped by a signal) still counts.
+        AutoUpdate.beforeCommand(effective, System.getenv(), System.err);
+        return commandLine.execute(effective);
     }
 
     /**

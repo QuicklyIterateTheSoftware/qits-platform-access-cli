@@ -20,6 +20,8 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.WorkCommand;
+import eu.wohlben.qits.cli.access.update.QitsVersion;
+import eu.wohlben.qits.cli.access.update.UpdateCommand;
 import eu.wohlben.qits.cli.access.users.UsersCommand;
 import eu.wohlben.qits.cli.access.waits.WaitCommand;
 import eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand;
@@ -39,12 +41,13 @@ import picocli.CommandLine;
 @CommandLine.Command(
         name = "qits",
         mixinStandardHelpOptions = true,
+        versionProvider = QitsVersion.Provider.class,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
                 ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
-                ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class,
+                ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, UpdateCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "

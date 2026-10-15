@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access;
 
+import eu.wohlben.qits.cli.access.update.QitsVersion;
 import io.quarkus.test.junit.main.Launch;
 import io.quarkus.test.junit.main.LaunchResult;
 import io.quarkus.test.junit.main.QuarkusMainTest;
@@ -24,6 +25,18 @@ class AccessCliTest {
                 .contains("Platform rules:").contains("Exit codes:");
         assertThat(result.getOutputStream()).as("help is for agents and stays hidden")
                 .noneMatch(line -> line.strip().startsWith("help "));
+    }
+
+    @Test
+    @Launch({"-V"})
+    void dashVPrintsTheBuiltInVersion(LaunchResult result) {
+        assertThat(result.getOutput().strip()).isEqualTo(QitsVersion.current().orElseThrow());
+    }
+
+    @Test
+    @Launch({"projects", "list", "-V"})
+    void aSubcommandPrintsTheSameVersion(LaunchResult result) {
+        assertThat(result.getOutput().strip()).isEqualTo(QitsVersion.current().orElseThrow());
     }
 
     @Test

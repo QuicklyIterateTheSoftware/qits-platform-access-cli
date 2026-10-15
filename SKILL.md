@@ -4186,6 +4186,43 @@ The example is the entry in Claude's settings.json (~/.claude/settings.json).
 
 - `0` Always, also when nothing was printed.
 
+## qits update
+
+Updates qits on this workstation to the newest released version, and says what it did.
+
+It asks qits-artifacts for the newest version with the session of `qits login`, downloads it next to the running binary, checks its length, its sha256 digest and that it answers `-V` with that version, and then puts it in place of the running binary in one rename. Any failure leaves the installed qits as it was.
+
+qits also does this by itself: a signed-in qits on a workstation checks at most once an hour, in the background, so no command waits for it. A failure there is one line on stderr of the next command. `qits -V` prints the version this binary is.
+
+Only on a workstation: inside the platform, in a workspace with QITS_TOKEN and in the MCP service the image decides which qits there is, and this refuses.
+
+```
+qits update [--artifacts-url <url>] [--check]
+```
+
+| Name | What it does |
+|---|---|
+| `--artifacts-url <url>` | qits-artifacts' base URL. Default: QITS_ARTIFACTS_URL, else from the session's idp address. |
+| `--check` | Only say whether a newer version is released; download nothing. |
+
+### Examples
+
+```
+qits update
+qits update --check
+QITS_AUTO_UPDATE=false qits projects list
+```
+
+- QITS_AUTO_UPDATE=false (or 0, off, no) turns the automatic update off; `qits update` still works.
+- Where the binary's directory is not writable, the new version is downloaded and checked into $XDG_CACHE_HOME/qits/ (default ~/.cache/qits/), and the command to install it (`sudo install -m 755 ...`) is printed.
+- The store's address is https://registry.qits.<domain>, from the session's idp address; --artifacts-url or QITS_ARTIFACTS_URL sets it.
+
+### Exit codes
+
+- `0` Up to date, updated, or (with --check) a newer version reported.
+- `1` Not updated: the store refused or cannot be reached, a download failed its checks, the directory is not writable, or this build cannot update itself. The message says which.
+- `2` Used wrongly, not on a workstation, not signed in, or the session ended (run `qits login`).
+
 ## qits tui
 
 Pick a command instead of remembering it: an interactive screen over every qits command.

@@ -15,7 +15,8 @@ of the landing app's workspace pages, on the same qits-workspaces doors), `qits 
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), `qits agents claude …` (what
-Claude Code runs: the work-links hook and the work-items status line), and `qits tui` (an
+Claude Code runs: the work-links hook and the work-items status line), `qits update` (the binary
+replacing itself with the newest release, also started in the background), and `qits tui` (an
 interactive screen over all of them). The README says how each behaves.
 
 It has **two homes**. A workstation, where a person signs in with a browser and the session lives in
@@ -240,7 +241,16 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                and exit 0
                statusline work-items (TranscriptIds, the transcript's tail; WorkStates, the per-id state
                cache, refreshed by a detached --refresh <ids>; StatusMarker, a copy of qits-coding-agents'
-               session-name palette). Detached starts either refresh
+               session-name palette). Detached starts either refresh, and the background update
+    update/    qits update and the automatic update (qits-1262). QitsVersion is the built-in version
+               (`${project.version}` filtered into qits-version.properties, which
+               META-INF/native-image/qits-platform-access-commands/version/ names for the native
+               image) and `-V`'s provider, handed to every command by QitsVersion.provideTo;
+               SelfUpdate the one check-download-verify-rename, with the store (Releases,
+               ArtifactsReleases), the binary's path and the `-V` probe as seams; AutoUpdate what
+               Main runs before every command: workstation only, QITS_AUTO_UPDATE, the hourly gate in
+               update.json (UpdateState), the commands that never start a check, and the detached
+               `qits update --background` (agents/Detached). Ordering is publish/VersionOrder
     help/      qits help skill (hidden): the commands' help arranged as SKILL.md
     complete/  the five platform sources behind the TUI's dropdowns (projects, repositories,
                release requests, runs, versions), over the credential the commands use

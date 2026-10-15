@@ -4,6 +4,7 @@ import eu.wohlben.qits.cli.tui.TuiCommand;
 import io.quarkus.picocli.runtime.PicocliCommandLineFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
+import eu.wohlben.qits.cli.access.update.QitsVersion;
 import picocli.CommandLine;
 
 /**
@@ -36,6 +37,7 @@ public class QitsCommandLine {
         CommandLine help = qits.getCommandSpec().removeSubcommand("help");
         qits.addSubcommand("tui", TuiCommand.class);
         qits.addSubcommand("help", help);
-        return qits;
+        // `-V` on every command, not only on `qits` itself: picocli does not hand the provider down.
+        return QitsVersion.provideTo(qits);
     }
 }

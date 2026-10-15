@@ -38,6 +38,9 @@ Commands:
   Code status line with the session's newest work items and their states — see below.
 - `qits artifacts publish` publishes a release artifact to qits-artifacts from a CI step: an sbom,
   a docs bundle, a daemon binary, or an npm decision. It runs with no person signed in — see below.
+- `qits update` updates `qits` itself to the newest released version; a signed-in `qits` on a
+  workstation also does it by itself, at most once an hour, in the background. `qits -V` prints the
+  version — see below.
 - `qits tui` opens an interactive screen over all of the above: pick a command instead of
   remembering it, and see it run in the lower half — see below.
 
@@ -64,6 +67,9 @@ It does four things:
    `qits git-login --configure` does (see below): it replaces any earlier helper for that host,
    including one pointing at a build output such as `platform-access-cli/target/qits`, and leaves
    every other host's helper (GitHub's, for example) alone.
+
+Run it once. After `qits login`, the installed `qits` keeps itself on the newest release (see
+`qits update` below).
 
 Environment overrides:
 
@@ -125,6 +131,64 @@ and answers 401 without one. Use your own sign-in, never a machine client's id a
 - The answer carries `Docker-Content-Digest: sha256:…`, the digest the release log prints.
 - The store keeps the last two versions of every daemon. An older one goes after 90 days in which
   nobody downloaded it.
+
+## qits update
+
+`qits` keeps itself on the newest released version. Once installed and signed in, nobody has to
+install it again.
+
+    qits -V             # the version this binary is, e.g. 2026.1015.175513
+    qits update         # update now, and say what was done
+    qits update --check # only say whether a newer version is released
+
+`qits update` asks qits-artifacts for the newest version (`latestVersion` in the daemon list, the
+same list install.sh reads) with the session of `qits login`. When that is strictly newer than the
+running version (each segment of `YYYY.MMDD.HHMMSS` compared as a number), it downloads the file
+into the running binary's directory under a temporary name, and checks it: its length and its
+sha256 digest have to be what the store's HEAD announced (`Content-Length`,
+`Docker-Content-Digest`), and the file, made executable (mode 755), has to answer `-V` with the
+version it was downloaded as. Only then is it renamed over the running binary, in one step. Any
+failure deletes the temporary file and leaves the installed `qits` as it was. It prints one of:
+
+    qits is up to date (2026.1015.175513).
+    Updated qits from 2026.919.40352 to 2026.1015.175513.
+
+or, on stderr with exit code 1, why it did not update.
+
+**By itself.** Before a command runs, a `qits` on a workstation with a session file checks whether
+an hour has passed since the last check (`update.json` in the config directory, beside `t.json`).
+If it has, it records the time and starts `qits update --background` detached, without waiting for
+it, so no command is delayed and none fails because of it. The background run has no terminal: a
+failure is kept in `update.json`, and the next command prints it once, as one line on stderr.
+No check is started by `qits update` itself, by `--help` or `-V`, or by the commands whose output or
+timing another program reads: `session-daemon`, `checkout-daemon`, `git-credential`,
+`mcp-credential`, `agents …` (Claude's hook and status line) and `help`.
+
+**Turning it off.** `QITS_AUTO_UPDATE=false` (or `0`, `off`, `no`) turns the automatic update off.
+`qits update` still works.
+
+**Never inside the platform.** Inside a container on the platform (the commissioned pair), in a
+workspace with `QITS_TOKEN`, and in the MCP service the image decides which `qits` there is:
+nothing is checked automatically there, and `qits update` refuses with exit code 2. Without a
+session file nothing is checked automatically either; `qits update` then says to run `qits login`.
+A build that does not know its version (one built without Maven's resource filtering) never updates.
+
+**A directory you cannot write.** When `qits` is installed where you cannot write (for example
+`/usr/local/bin`), `qits update` downloads and checks the new version into `$XDG_CACHE_HOME/qits/`
+(default `~/.cache/qits/`) and prints the command that installs it:
+
+    sudo install -m 755 ~/.cache/qits/qits-2026.1015.175513 /usr/local/bin/qits
+
+The automatic run downloads nothing there and only says, once, to run `qits update`.
+
+The store's address is `https://registry.qits.<domain>`, derived from the session's idp address
+like every other service's; `--artifacts-url` or `QITS_ARTIFACTS_URL` sets it.
+
+**Where the version comes from.** The release stamps every pom of the reactor with the version it
+tags and publishes the binary under, and the build filters `${project.version}` into
+`qits-version.properties` in the commands jar (named in that jar's native-image resource config, so
+the binary carries it). A build from a working tree therefore names the release it was branched
+from.
 
 ## Build
 

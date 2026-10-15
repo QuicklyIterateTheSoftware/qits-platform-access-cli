@@ -42,6 +42,15 @@ public final class PlatformUrls {
         return resolve("workspaces", "--workspaces-url", "QITS_WORKSPACES_URL", flag, env, idpUrl);
     }
 
+    /**
+     * qits-artifacts, which answers on the host {@code registry}: {@code
+     * https://registry.qits.wohlben.eu}. {@code QITS_ARTIFACTS_URL} is the variable install.sh reads
+     * for the same address.
+     */
+    public static String artifacts(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        return resolve("registry", "--artifacts-url", "QITS_ARTIFACTS_URL", flag, env, idpUrl);
+    }
+
     /** The git host's origin, which Git pushes to through the edge. */
     public static String gitHost(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);

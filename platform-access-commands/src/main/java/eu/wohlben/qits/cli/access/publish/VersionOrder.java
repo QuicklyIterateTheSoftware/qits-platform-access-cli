@@ -32,13 +32,17 @@ package eu.wohlben.qits.cli.access.publish;
  * is the one that enforces semver precedence when {@code latest} moves. What this decides is only
  * whether a publish is a <em>replay</em> — a version below the registry's latest, which must take a
  * throwaway tag rather than claim {@code latest} and pull it backwards.
+ *
+ * <p>{@code qits update} orders the CLI's own versions with it too (is the released one above the
+ * running one?), which is why it is public; it checks first that both are all digits and dots, so
+ * the zero rule never decides an update.
  */
-enum VersionOrder {
+public enum VersionOrder {
   BELOW,
   SAME,
   ABOVE;
 
-  static VersionOrder compare(String version, String latest) {
+  public static VersionOrder compare(String version, String latest) {
     String[] left = split(version);
     String[] right = split(latest == null || latest.isEmpty() ? "0" : latest);
     int length = Math.max(left.length, right.length);

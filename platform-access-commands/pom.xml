@@ -160,6 +160,29 @@
     </dependencies>
 
     <build>
+        <!-- FILTERING IS ON FOR ONE RESOURCE AND NOTHING ELSE: the version `qits -V` prints and
+             `qits update` compares, ${project.version} as the release stamped it. The pin module
+             filters its own copy the same way, and for the same reason the include/exclude pair is
+             not belt-and-braces: filtering every resource would rewrite any file here that happens
+             to contain `${`. The native image takes the file because
+             META-INF/native-image/qits-platform-access-commands/version/resource-config.json names
+             it, in this jar, so the MCP service's native build gets it too. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>eu/wohlben/qits/cli/access/update/qits-version.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>eu/wohlben/qits/cli/access/update/qits-version.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -190,6 +213,8 @@
                 <configuration>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        <!-- What QitsVersionTest holds the filtered qits-version.properties against. -->
+                        <qits.project.version>${project.version}</qits.project.version>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

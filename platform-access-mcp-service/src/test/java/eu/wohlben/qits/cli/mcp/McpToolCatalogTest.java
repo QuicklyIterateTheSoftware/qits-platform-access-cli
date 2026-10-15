@@ -209,6 +209,7 @@ class McpToolCatalogTest {
         assertThat(catalog.tool("git-credential")).isEmpty();
         assertThat(catalog.tool("login")).isEmpty();
         assertThat(catalog.tool("help_skill")).isEmpty();
+        assertThat(catalog.tool("update")).as("it replaces a file on the caller's machine").isEmpty();
         assertThat(catalog.tools()).extracting(Tool::name)
                 .contains("projects_list", "work_update", "work_comment_create", "release-request_join", "ci_runs",
                         "repositories_create");
