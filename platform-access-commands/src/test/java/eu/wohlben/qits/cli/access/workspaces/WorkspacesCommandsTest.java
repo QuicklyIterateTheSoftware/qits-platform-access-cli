@@ -42,6 +42,7 @@ class WorkspacesCommandsTest {
     private static final String EPIC = "45a14f8e-f550-45bb-a117-6b34d8c472e3";
     private static final String RUNNER = "00000000-0000-4000-8000-000000000020";
     private static final String PROCESS = "00000000-0000-4000-8000-000000000100";
+    private static final String REPOSITORY = "0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a";
 
     @TempDir
     Path home;
@@ -91,14 +92,51 @@ class WorkspacesCommandsTest {
                  "placement":"RUNNER","runner":{"name":"localhost"},"admin":false,"queuedAt":null}}]}
                 """);
 
-        Result table = run("workspaces", "list");
+        Result table = run("workspaces", "list", "--repository", REPOSITORY);
         assertThat(table.exit()).as(table.err()).isZero();
         assertThat(table.out()).contains("SLOT").contains("CONTAINER")
                 .containsPattern("1\\s+ws-contract\\s+RUNNING\\s+RUNNER\\s+localhost\\s+false");
+        assertThat(platform.requests("GET", "/workspaces/api/workspaces").getFirst().query())
+                .isEqualTo("repositoryId=" + REPOSITORY);
 
-        Result json = run("workspaces", "list", "-o", "json");
+        Result json = run("workspaces", "list", "--repository", REPOSITORY, "-o", "json");
         assertThat(JSON.readTree(json.out()).path("entries").get(0).path("workspace").path("workspaceId").asText())
                 .isEqualTo("ws-contract");
+    }
+
+    @Test
+    void listResolvesARepositoryNameWithProjectAndSendsItsUuid() throws Exception {
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"11111111-1111-4111-8111-111111111111","slug":"qits","name":"qits"}}]}
+                """);
+        platform.answer("GET", "/projects/api/projects/11111111-1111-4111-8111-111111111111/repositories", """
+                {"entries":[{"repository":{"id":"%s","name":"qits-qits"}}]}
+                """.formatted(REPOSITORY));
+        platform.answer("GET", "/workspaces/api/workspaces", "{\"entries\":[]}");
+
+        Result named = run("workspaces", "list", "--project", "qits", "--repository", "qits-qits");
+
+        assertThat(named.exit()).as(named.err()).isZero();
+        assertThat(platform.requests("GET", "/workspaces/api/workspaces").getFirst().query())
+                .isEqualTo("repositoryId=" + REPOSITORY);
+    }
+
+    @Test
+    void listRefusesAMissingRepository() {
+        Result missing = run("workspaces", "list");
+
+        assertThat(missing.exit()).isEqualTo(2);
+        assertThat(missing.err()).contains("--repository");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void listRefusesANamedRepositoryWithoutAProject() {
+        Result named = run("workspaces", "list", "--repository", "qits-qits");
+
+        assertThat(named.exit()).isEqualTo(2);
+        assertThat(named.err()).contains("--project");
+        assertThat(platform.requests).isEmpty();
     }
 
     @Test

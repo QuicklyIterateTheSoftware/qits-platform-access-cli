@@ -509,7 +509,7 @@ Installing it is not part of this version.
     qits wait ci-run <run id> [--timeout <duration>] [--label <text>]
     qits wait list [--state OPEN|MATCHED|TIMED_OUT|CANCELLED]
     qits wait cancel <wait id>
-    qits workspaces list [--repository <id>] | show <n> | active-process <n> | items | history <work>
+    qits workspaces list --repository <id|name> [--project <project>] | show <n> | active-process <n> | items | history <work>
     qits workspaces start|stop|recreate <n>
     qits workspaces log <process id>
     qits workspaces agents list [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
@@ -1291,7 +1291,8 @@ page calls, with the same method, path, query and body, and the caller's own cre
 `platform-access-commands/src/test/resources/workspaces/landing-pacts/`): every recorded call is made
 by one command, the same way.
 
-    qits workspaces list [--repository <id>]      GET  /workspaces/api/workspaces[?repositoryId=]
+    qits workspaces list --repository <id|name>   GET  /workspaces/api/workspaces?repositoryId=
+      [--project <project>]
     qits workspaces show <n>                      GET  /workspaces/api/workspaces/{n}
     qits workspaces active-process <n>            GET  /workspaces/api/workspaces/{n}/active-process
     qits workspaces start|stop|recreate <n>       POST /workspaces/api/workspaces/{n}/ensure-container,
