@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -2339,6 +2339,1101 @@ qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
 - `0` Done.
 - `1` The platform refused (for example a wait it does not know, HTTP 404), or cannot be reached.
 - `2` Used wrongly (no agent id), not signed in, or the session ended.
+
+## qits workspaces
+
+The workspaces of qits-workspaces, with every action the landing app's workspace pages offer, each on the same door the page calls: the slots and their containers, the agents working in them (agents), and the runners the slots are placed on (runners).
+
+A slot is a workspace row, named by its number (`qits workspaces list` shows it). It hosts agents; an agent works on one work item. Starting a container is a technical process, whose log `qits workspaces log` follows.
+
+### Notes
+
+- Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin or qits:admin-agent, which a person's token carries; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
+- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks no role, only that the slot is ACTIVE.
+- An interactive terminal and the live chat socket are the landing app's: the CLI reads the chat's transcript and sends prompts, but attaches to no terminal.
+- --workspaces-url, --projects-url and --output may come before or after the command.
+
+## qits workspaces list
+
+The ACTIVE workspace slots, of one repository with --repository: each with its container, placement and runner. The project's Workspaces page.
+
+GET /workspaces/api/workspaces[?repositoryId=]. Any credential may read it, qits:agent included.
+
+```
+qits workspaces list [--output table|json] [--projects-url <url>] [--repository <id>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--repository <id>` | Only the slots of this wrapper repository: its id, as `qits repositories list -o json` shows it. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces list
+qits workspaces list --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces show
+
+One workspace slot: its container (and its error), placement, runner and daemon. The status strip of a slot's page.
+
+GET /workspaces/api/workspaces/{id}. Any credential may read it, qits:agent included.
+
+```
+qits workspaces show [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
+```
+
+| Name | What it does |
+|---|---|
+| `<workspace>` | The slot's number. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces show 1
+qits workspaces show 1 -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces active-process
+
+The technical process starting a slot's container, if one is live. Its log is `qits workspaces log <process id>`.
+
+GET /workspaces/api/workspaces/{id}/active-process. Any credential may read it, qits:agent included.
+
+```
+qits workspaces active-process [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
+```
+
+| Name | What it does |
+|---|---|
+| `<workspace>` | The slot's number. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces active-process 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces start
+
+Bring a slot's container up, or join the start already running. Start on a slot's page.
+
+POST /workspaces/api/workspaces/{id}/ensure-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces start [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
+```
+
+| Name | What it does |
+|---|---|
+| `<workspace>` | The slot's number. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces start 1
+```
+
+- A slot on an offline runner is refused: HTTP 409 RUNNER_UNAVAILABLE.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces stop
+
+Stop a slot's container. Stop on a slot's page.
+
+POST /workspaces/api/workspaces/{id}/stop-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces stop [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
+```
+
+| Name | What it does |
+|---|---|
+| `<workspace>` | The slot's number. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces stop 1
+```
+
+- A slot on an offline runner is refused: HTTP 409 RUNNER_UNAVAILABLE.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces recreate
+
+Replace a slot's container with a new one. Recreate on a slot's page.
+
+POST /workspaces/api/workspaces/{id}/recreate-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces recreate [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
+```
+
+| Name | What it does |
+|---|---|
+| `<workspace>` | The slot's number. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces recreate 1
+```
+
+- Refused (HTTP 400) unless the service can prove the working tree clean: commit or discard the changes, and have the daemon connected, first. An offline runner is HTTP 409.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces log
+
+Follow a technical process's log, such as a container's start, until the process ends: its segments, their lines and how each settled. The log of a slot's page.
+
+Each connection replays what the process logged so far, then streams. With -o json, one frame per line as the service sends it; pings are left out. Stops on SIGINT or SIGTERM too.
+
+GET /workspaces/api/technical-processes/{id}/events (Server-Sent Events). Any credential may read it, qits:agent included.
+
+```
+qits workspaces log [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <process>
+```
+
+| Name | What it does |
+|---|---|
+| `<process>` | The technical process's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces log 00000000-0000-4000-8000-000000000100
+```
+
+- `qits workspaces start` and `qits workspaces active-process` name the process.
+
+### Exit codes
+
+- `0` The process ended, or the command was stopped.
+- `1` The platform refused (for example a process it does not know, HTTP 404), or the stream dropped.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces items
+
+The work items that have an ACTIVE workspace: the Workspace links on the work pages.
+
+GET /workspaces/api/work/workspaces. Any credential may read it, qits:agent included.
+
+```
+qits workspaces items [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces items
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces history
+
+One work item's workspaces in every state, newest first: state, branch, opened and closed. The work item page's list.
+
+GET /workspaces/api/work/{workRef}/workspaces. Any credential may read it, qits:agent included.
+
+```
+qits workspaces history [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <work>
+```
+
+| Name | What it does |
+|---|---|
+| `<work>` | The work item: its qualified id (qits-123) or its id. The service takes either. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces history qits-123
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents
+
+The agents in the workspace slots: list, create and discard them, send one a prompt, keep its prompt draft, read its chat, and what its tabs show of its container (files, harness, sign-in, plugins).
+
+An agent is named by its id (`qits workspaces agents list` shows it); a work item by its qualified id (qits-123) or its id. The commands that read the agent's container take its slot with --workspace.
+
+### Notes
+
+- create, discard, prompt, draft save and draft discard need qits:admin or qits:admin-agent; qits:agent is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
+
+## qits workspaces agents list
+
+Agents, newest first: what each works on, its slot, how it runs and what it waits on. Bare, every agent (the project's Workspaces page); --work, one item's (its agent page); --workspace, one slot's (the slot's page); --state ACTIVE, the In Progress tab's.
+
+GET /workspaces/api/agents[?workId=&workspaceId=&state=]. Any credential may read it, qits:agent included.
+
+```
+qits workspaces agents list [--output table|json] [--projects-url <url>] [--state <STATE>] [--work <work>] [--workspace <n>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--state <STATE>` | Only the agents in this state: ACTIVE or REMOVED. Default: all. |
+| `--work <work>` | Only this work item's agents: its qualified id (qits-123) or its id. |
+| `--workspace <n>` | Only the agents this slot hosts. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents list --state ACTIVE
+qits workspaces agents list --work qits-123
+qits workspaces agents list --workspace 1 -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents create
+
+Start an agent on a ticket or an epic, in a harness and posture of your choosing. An item that already has an ACTIVE agent answers that one (fresh: false). Create agent on the Workspaces page.
+
+POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, instruction?}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces agents create --repository <id> --work <work> [--admin] [--entity <qualified id>] [--harness CLAUDE|KIMI] [--instruction <text>] [--kind TICKET|EPIC] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--repository <id>` | Required. The wrapper repository the agent works in: its id. |
+| `--work <work>` | Required. The work item: its qualified id (qits-123) or its id. |
+| `--admin` | Admin mode: the agent runs in a slot that holds the host's docker socket. |
+| `--entity <qualified id>` | The item's qualified id, sent as entityId. Default: the one the lookup of --work found. |
+| `--harness CLAUDE\|KIMI` | The harness the agent runs in. Default: the service's. |
+| `--instruction <text>` | The agent's first turn. |
+| `--kind TICKET\|EPIC` | What the item is. Default: EPIC for an epic the lookup found, else TICKET. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents create --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a --work qits-123
+qits workspaces agents create --repository <id> --work qits-120 --kind EPIC --harness CLAUDE --instruction 'Plan the epic first.'
+```
+
+- A qualified id is looked up in the projects service for the item's id; it is sent as entityId, and an EPIC item makes --kind EPIC unless --kind says otherwise.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents discard
+
+Remove an agent: its worktrees, credential and draft go. Discard on a slot's or an item's agent page; --force is Discard anyway.
+
+POST /workspaces/api/agents/{id}/discard with {"force": false|true}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces agents discard [--force] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `--force` | Remove it despite leftover work or a daemon that does not answer. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1
+qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1 --force
+```
+
+- Without --force the service refuses (HTTP 409) an agent whose worktrees hold work that never reached the git host (AGENT_HAS_LEFTOVER_WORK), whose daemon does not answer (AGENT_DAEMON_UNREACHABLE) or that is still busy (AGENT_BUSY). --force removes it anyway and throws the leftover work away.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents prompt
+
+Send a prompt to a work item's agent: said at its next turn, as its first turn, or to a yielded agent that resumes to hear it. An item with no agent is told so, and nothing is created. Send on an agent's Chat tab.
+
+POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces agents prompt [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <work> <text>
+```
+
+| Name | What it does |
+|---|---|
+| `<work>` | The work item whose agent hears it: its qualified id (qits-123) or its id. |
+| `<text>` | The prompt. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents prompt qits-123 'The ticket moved to REVIEW.'
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents draft
+
+An agent's saved prompt draft: what the prompt box on its Chat tab holds, kept on the service so it survives a reload and another device.
+
+## qits workspaces agents draft show
+
+The agent's saved prompt draft: its text and when it was written. An agent with none says so.
+
+GET /workspaces/api/agents/{id}/prompt-draft (HTTP 404: nothing was composed). Any credential may read it, qits:agent included.
+
+```
+qits workspaces agents draft show [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents draft show 00000000-0000-4000-8000-0000000000a1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents draft save
+
+Save the agent's prompt draft, as typing in its prompt box does. The draft holds the text and no picked file ranges.
+
+PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{"text":<text>,"picked":[]}', serializedPrompt: <text, trimmed>}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces agents draft save [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <text>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `<text>` | The draft's text. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents draft save 00000000-0000-4000-8000-0000000000a1 'Check the rounding.'
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents draft discard
+
+Delete the agent's saved prompt draft: Discard on a restored draft.
+
+DELETE /workspaces/api/agents/{id}/prompt-draft. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+
+```
+qits workspaces agents draft discard [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents draft discard 00000000-0000-4000-8000-0000000000a1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents chat
+
+Read the agent's conversation: its harness command's transcript, in order. The agent's Chat tab, without the live socket.
+
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents chat --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--command <id>` | The harness command whose transcript to read. Default: the agent's last. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1
+qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1 -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused, cannot be reached, or the agent has no harness command.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents terminate
+
+End the agent's running harness command: Terminate on a live chat.
+
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents terminate --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--command <id>` | The command to end. Default: the agent's last harness command. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents terminate 00000000-0000-4000-8000-0000000000a1 --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused, cannot be reached, or the agent has no harness command.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents refine
+
+Rewrite rough notes into a prompt, in the slot's container: Refine in the prompt box. Prints the rewrite; nothing is sent to an agent.
+
+POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents refine --workspace <n> [--output table|json] [--preamble <text>] [--projects-url <url>] [--workspaces-url <url>] <notes>
+```
+
+| Name | What it does |
+|---|---|
+| `<notes>` | The rough notes. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--preamble <text>` | What the prompt is about, which the rewrite keeps in front. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents refine --workspace 1 --preamble 'Fix the login' 'uh so the login fails when the name has spaces'
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents harness
+
+The agent's harness on its slot's daemon: its last command, whether it still runs, and as a terminal or a chat. What the Terminal and Chat tabs attach to.
+
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents harness --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents files
+
+The agent's worktree, as its Files tab shows it: the tree, one file, and the frameworks and test links the tab draws.
+
+## qits workspaces agents files list
+
+The agent's worktree: without --path the whole tree, every gitignored directory a stub with its entry count; with --path that directory, one level deep.
+
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents files list --workspace <n> [--output table|json] [--path <dir>] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--path <dir>` | A directory of the worktree, relative to its root. Default: the whole tree. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspace 1
+qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspace 1 --path node_modules
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents files read
+
+One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB cap, is not shown.
+
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents files read --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <path>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `<path>` | The file, relative to the worktree's root. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents files read 00000000-0000-4000-8000-0000000000a1 src/main/java/app/Login.java --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (HTTP 404: the path names nothing), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents files detect
+
+The frameworks the agent's worktree holds (each with its member paths) and which tests reach each source file: the Files tab's footer and its test links.
+
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents files detect --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+```
+
+| Name | What it does |
+|---|---|
+| `<agent>` | The agent's id. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents files detect 00000000-0000-4000-8000-0000000000a1 --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents sign-in
+
+Whether anybody signed the slot's harnesses in, on the credential volume every container shares, and the sign-in terminal that does it: the notice on an agent's Terminal tab.
+
+## qits workspaces agents sign-in status
+
+Each harness of the slot's daemon, whether it is signed in, and the daemon's hint when it is not.
+
+GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents sign-in status --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents sign-in status --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents sign-in open
+
+Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an interactive terminal; finish it on the agent's Terminal tab in the landing app, since the CLI attaches to no terminal.
+
+POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--harness CLAUDE\|KIMI` | The harness to sign in. Default: the daemon's. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents sign-in open --workspace 1 --harness CLAUDE
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents plugins
+
+The plugins on the agent home every container of the slot's daemon shares: the plugins section of an agent's Terminal tab.
+
+## qits workspaces agents plugins list
+
+The plugins installed, each marketplace-qualified, and whether it is switched on.
+
+GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents plugins list --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents plugins list --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces agents plugins install
+
+Install a plugin on the shared agent home: Install on a plugin not installed yet. Prints the installed set as it now is.
+
+POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces agents plugins install --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <plugin>
+```
+
+| Name | What it does |
+|---|---|
+| `<plugin>` | The plugin's id, as the catalogue names it. |
+| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces agents plugins install pyright-lsp --workspace 1
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners
+
+The workspace runners, the nodes slots are placed on: list them with their connection, slots, health and node login, read a runner's newest health check, update its slots, description and memory caps, lift a quarantine, ask for a health check or a login check, and delete one. The Runners page.
+
+A runner is named by its id (`qits workspaces runners list -o json` shows it).
+
+### Notes
+
+- Reading, and asking for a health check, are open to qits:agent. update, greenlight and delete need qits:admin, qits:admin-agent or qits:system; login-check needs qits:admin or qits:admin-agent. qits:agent is refused those (HTTP 403) by design.
+- Registering a runner and rotating its registration token are the landing app's only: their answer is a one-time token, and qits never prints a token.
+
+## qits workspaces runners list
+
+Every runner: connected or not, version, slots (running, owned, queued), quarantine, the last health check and the node's agent login.
+
+GET /workspaces/api/runners. Any credential may read it, qits:agent included.
+
+```
+qits workspaces runners list [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners list
+qits workspaces runners list -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners health
+
+A runner's newest health check, every check with its data: Node details on a runner. A runner never checked says so.
+
+GET /workspaces/api/runners/{id}/health (HTTP 204: never checked). Any credential may read it, qits:agent included.
+
+```
+qits workspaces runners health [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <runner>
+```
+
+| Name | What it does |
+|---|---|
+| `<runner>` | The runner's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners health 00000000-0000-4000-8000-000000000020
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners update
+
+Change a runner's slots, description or memory caps: Save on a runner. Only what is given is sent; a memory cap reaches the next workspace launched on it, never a running one.
+
+PATCH /workspaces/api/runners/{id} with {slots?, description?, workspaceMemoryLimit?, workspaceMemorySwapLimit?}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token carries. qits:agent is refused (HTTP 403) by design.
+
+```
+qits workspaces runners update [--description <text>] [--memory <size>] [--memory-swap <size>] [--output table|json] [--projects-url <url>] [--slots <n>] [--workspaces-url <url>] <runner>
+```
+
+| Name | What it does |
+|---|---|
+| `<runner>` | The runner's id. |
+| `--description <text>` | Free text. |
+| `--memory <size>` | The --memory its workspace containers get, a docker size such as 12g (at least 6m). |
+| `--memory-swap <size>` | Their --memory-swap: memory plus swap, at least --memory; or -1 for unlimited swap. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--slots <n>` | How many workspaces it may run at once. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners update 00000000-0000-4000-8000-000000000020 --slots 2 --description 'The build machine under the desk'
+qits workspaces runners update 00000000-0000-4000-8000-000000000020 --memory 8g --memory-swap 8g
+```
+
+- --slots 0 drains the runner. A blank --description, --memory or --memory-swap clears it back to the default. --memory-swap -1 is unlimited swap.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners greenlight
+
+Lift a runner's quarantine: Greenlight on a quarantined runner. The service quarantines a runner itself, after a failed health check.
+
+POST /workspaces/api/runners/{id}/greenlight, no body. It needs qits:admin, qits:admin-agent or qits:system, which a person's token carries. qits:agent is refused (HTTP 403) by design.
+
+```
+qits workspaces runners greenlight [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <runner>
+```
+
+| Name | What it does |
+|---|---|
+| `<runner>` | The runner's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners greenlight 00000000-0000-4000-8000-000000000020
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners healthcheck
+
+Queue a health check on a connected runner's node: Run health check. The result arrives with a later `qits workspaces runners health`.
+
+POST /workspaces/api/runners/{id}/healthcheck, no body (HTTP 202). Any credential may ask, qits:agent included.
+
+```
+qits workspaces runners healthcheck [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <runner>
+```
+
+| Name | What it does |
+|---|---|
+| `<runner>` | The runner's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners healthcheck 00000000-0000-4000-8000-000000000020
+```
+
+- An offline runner is refused: HTTP 409 RUNNER_UNAVAILABLE.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners login-check
+
+Ask a connected runner to probe its node's agent login again: Re-check on a runner. The result shows in a later `qits workspaces runners list`.
+
+POST /workspaces/api/runners/{id}/login-check, no body (HTTP 202). It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design.
+
+```
+qits workspaces runners login-check [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <runner>
+```
+
+| Name | What it does |
+|---|---|
+| `<runner>` | The runner's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners login-check 00000000-0000-4000-8000-000000000020
+```
+
+- An offline runner is refused: HTTP 409 RUNNER_UNAVAILABLE.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces runners delete
+
+Decommission a runner: Delete on a runner.
+
+DELETE /workspaces/api/runners/{id}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token carries. qits:agent is refused (HTTP 403) by design.
+
+```
+qits workspaces runners delete [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <runner>
+```
+
+| Name | What it does |
+|---|---|
+| `<runner>` | The runner's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces runners delete 00000000-0000-4000-8000-000000000020
+```
+
+- A runner that still owns ACTIVE workspaces is refused (HTTP 409 RUNNER_OWNS_WORKSPACES); the message names their slots.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits git-login
 

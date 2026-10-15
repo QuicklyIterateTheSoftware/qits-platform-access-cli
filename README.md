@@ -22,6 +22,10 @@ Commands:
 - `qits wait` declares what an agent waits on (a release request to end, a work item to reach a
   status, a CI run to end, or any domain event that fits a selection); the platform gives the agent
   a turn when it happens. `qits wait list|cancel` show and end the agent's waits.
+- `qits workspaces` is every action the landing app's workspace pages offer, one command each, on
+  the same qits-workspaces door: the slots and their containers (start, stop, recreate, the start's
+  log), the agents (create, discard, prompt, the prompt draft, the chat, the files, the harness,
+  sign-in, plugins) and the runners.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -499,6 +503,30 @@ Installing it is not part of this version.
     qits wait ci-run <run id> [--timeout <duration>] [--label <text>]
     qits wait list [--state OPEN|MATCHED|TIMED_OUT|CANCELLED]
     qits wait cancel <wait id>
+    qits workspaces list [--repository <id>] | show <n> | active-process <n> | items | history <work>
+    qits workspaces start|stop|recreate <n>
+    qits workspaces log <process id>
+    qits workspaces agents list [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
+    qits workspaces agents create --repository <id> --work <work> [--entity <qualified id>] \
+        [--kind TICKET|EPIC] [--admin] [--harness CLAUDE|KIMI] [--instruction <text>]
+    qits workspaces agents discard <agent> [--force]
+    qits workspaces agents prompt <work> <text>
+    qits workspaces agents draft show|discard <agent>
+    qits workspaces agents draft save <agent> <text>
+    qits workspaces agents chat|terminate <agent> --workspace <n> [--command <id>]
+    qits workspaces agents harness <agent> --workspace <n>
+    qits workspaces agents refine --workspace <n> [--preamble <text>] <notes>
+    qits workspaces agents files list <agent> --workspace <n> [--path <dir>]
+    qits workspaces agents files read <agent> <path> --workspace <n>
+    qits workspaces agents files detect <agent> --workspace <n>
+    qits workspaces agents sign-in status --workspace <n>
+    qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI]
+    qits workspaces agents plugins list --workspace <n>
+    qits workspaces agents plugins install <plugin> --workspace <n>
+    qits workspaces runners list | health <runner>
+    qits workspaces runners update <runner> [--slots <n>] [--description <text>] [--memory <size>] \
+        [--memory-swap <size>]
+    qits workspaces runners greenlight|healthcheck|login-check|delete <runner>
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories`, `work` and `release-request` may come before or
@@ -529,7 +557,7 @@ its first label: `https://idp.qits.wohlben.eu/idp` gives `https://projects.qits.
 - events: `--events-url`, else `QITS_EVENTS_URL`
 - observability: `--observability-url`, else `QITS_OBSERVABILITY_URL`. The stream is a WebSocket,
   so `https` becomes `wss` and `http` becomes `ws`.
-- workspaces (`qits wait`): `--workspaces-url`, else `QITS_WORKSPACES_URL`
+- workspaces (`qits wait`, `qits workspaces`): `--workspaces-url`, else `QITS_WORKSPACES_URL`
 
 `qits checkout-daemon` reads the events service the same way, with `--events-url` or
 `QITS_EVENTS_URL`; the git host it fetches from is the checkout's own `origin`, never a flag.
@@ -1214,6 +1242,61 @@ preset gives a label of its own (`release request qits-ci-service-rr-12 to end`)
 replaces it.
 
 `qits wait list [--state <STATE>]` shows the agent's waits, and `qits wait cancel <wait id>` ends one.
+
+### qits workspaces
+
+Every action the landing app's workspace pages offer is a command here, and each calls the door the
+page calls, with the same method, path, query and body, and the caller's own credential (qits-1261).
+`workspaces/LandingPactTest` holds that against the landing app's own consumer pacts (copies under
+`platform-access-commands/src/test/resources/workspaces/landing-pacts/`): every recorded call is made
+by one command, the same way.
+
+    qits workspaces list [--repository <id>]      GET  /workspaces/api/workspaces[?repositoryId=]
+    qits workspaces show <n>                      GET  /workspaces/api/workspaces/{n}
+    qits workspaces active-process <n>            GET  /workspaces/api/workspaces/{n}/active-process
+    qits workspaces start|stop|recreate <n>       POST /workspaces/api/workspaces/{n}/ensure-container,
+                                                       stop-container, recreate-container (no body)
+    qits workspaces log <process id>              GET  /workspaces/api/technical-processes/{id}/events (SSE)
+    qits workspaces items                         GET  /workspaces/api/work/workspaces
+    qits workspaces history <work>                GET  /workspaces/api/work/{work}/workspaces
+    qits workspaces agents list                   GET  /workspaces/api/agents[?workId=&workspaceId=&state=]
+    qits workspaces agents create                 POST /workspaces/api/agents
+    qits workspaces agents discard [--force]      POST /workspaces/api/agents/{id}/discard {"force":…}
+    qits workspaces agents prompt <work> <text>   POST /workspaces/api/agent-dispatches/delivery
+    qits workspaces agents draft show|save|discard     GET|PUT|DELETE /workspaces/api/agents/{id}/prompt-draft
+    qits workspaces agents chat                   GET  …/agent-worktrees/{agent}, then
+                                                       …/commands/{command}/log?channel=TRANSCRIPT
+    qits workspaces agents terminate              POST …/commands/{command}/terminate {}
+    qits workspaces agents refine                 POST …/prompt-refinements
+    qits workspaces agents harness                GET  …/agent-worktrees/{agent}, then …/commands
+    qits workspaces agents files list|read|detect GET  …/agent-worktrees/{agent}/files[?path=],
+                                                       files/content?path=, detection
+    qits workspaces agents sign-in status|open    GET  …/agents/available, POST …/agents/sign-in
+    qits workspaces agents plugins list|install   GET  …/agent-plugins, POST …/agent-plugins/{id}/install {}
+    qits workspaces runners list|health           GET  /workspaces/api/runners, …/runners/{id}/health
+    qits workspaces runners update                PATCH /workspaces/api/runners/{id}
+    qits workspaces runners greenlight|healthcheck|login-check
+                                                  POST /workspaces/api/runners/{id}/<verb> (no body)
+    qits workspaces runners delete                DELETE /workspaces/api/runners/{id}
+
+`…` is `/workspaces/container/{n}`: qits-workspaces' container proxy to the slot's daemon, so those
+commands take the slot with `--workspace <n>`, as the page's base URL does. A work item is its
+qualified id (`qits-123`), looked up in the projects service, or its id; `history` sends either as it
+is, since the service takes both.
+
+Who may: every read is open to every credential, `qits:agent` included. The JSON API's writes (start,
+stop, recreate, agents create/discard/prompt, draft save/discard) need `qits:admin` or
+`qits:admin-agent`, which a person's token carries; `qits:agent` is refused with 403 by design. The
+runners' update, greenlight and delete need `qits:admin`, `qits:admin-agent` or `qits:system`,
+login-check `qits:admin` or `qits:admin-agent`; healthcheck is open to `qits:agent`. The container
+proxy checks no role, only that the slot is ACTIVE, so everything through it is open to `qits:agent`.
+Each command's help says which applies.
+
+Not here, on purpose: registering a runner and rotating its registration token, whose answer is a
+one-time token (qits prints no token but the two the conventions name); the interactive terminal and
+the live chat socket (`WS …/terminal|chat/commands/{id}`), which need a terminal; and the slot's
+hint stream (`/workspaces/api/workspaces/{id}/events`), which only tells a page to read again.
+`qits workspaces log` is a stream and therefore not an MCP tool.
 
 ## Git pushes from this workstation
 

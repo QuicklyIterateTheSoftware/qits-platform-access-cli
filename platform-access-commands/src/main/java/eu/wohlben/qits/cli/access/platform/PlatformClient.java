@@ -9,6 +9,7 @@ import eu.wohlben.qits.cli.session.Credential;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
@@ -127,7 +128,7 @@ public final class PlatformClient {
         try (HttpClient http = newClient()) {
             HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
             int status = response.statusCode();
-            try (InputStream body = response.body()) {
+            try (PushbackInputStream body = new PushbackInputStream(response.body())) {
                 if (status == 204) {
                     // A write that answers nothing (a stored report) has nothing to parse.
                     return NullNode.getInstance();
@@ -136,6 +137,12 @@ public final class PlatformClient {
                     String text = new String(body.readNBytes(REFUSAL_BODY_LIMIT), StandardCharsets.UTF_8);
                     throw explained(status, refusal(method, uri, status, response.headers(), text));
                 }
+                int first = body.read();
+                if (first < 0) {
+                    // A 202 that only says "queued", or a 200 with no body, answers nothing too.
+                    return NullNode.getInstance();
+                }
+                body.unread(first);
                 JsonNode node;
                 try {
                     node = JSON.readTree(body);

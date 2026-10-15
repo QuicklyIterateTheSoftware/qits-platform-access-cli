@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -49,6 +50,7 @@ public final class FakePlatform implements AutoCloseable {
     private final CountDownLatch closing = new CountDownLatch(1);
     public final List<Request> requests = Collections.synchronizedList(new ArrayList<>());
     public final BlockingDeque<StreamScript> streams = new LinkedBlockingDeque<>();
+    private final Set<String> streamPaths = ConcurrentHashMap.newKeySet();
 
     public FakePlatform() throws IOException {
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -86,6 +88,11 @@ public final class FakePlatform implements AutoCloseable {
         synchronized (requests) {
             return requests.stream().filter(r -> r.method().equals(method) && r.path().equals(path)).toList();
         }
+    }
+
+    /** Serves {@code path} from {@link #streams} too, as the events stream is: another service's SSE route. */
+    public void streamAt(String path) {
+        streamPaths.add(path);
     }
 
     /** A 200 stream that sends these lines, then ends, or stays open (silent) until the fake closes. */
@@ -126,7 +133,7 @@ public final class FakePlatform implements AutoCloseable {
                 exchange.getRequestHeaders().getFirst("Authorization"), exchange.getRequestHeaders().getFirst("Accept"), body,
                 exchange.getRequestHeaders().getFirst("Content-Type"));
         requests.add(request);
-        if (uri.getPath().equals("/events/api/stream")) {
+        if (uri.getPath().equals("/events/api/stream") || streamPaths.contains(uri.getPath())) {
             StreamScript script = streams.poll();
             try {
                 if (script == null) {

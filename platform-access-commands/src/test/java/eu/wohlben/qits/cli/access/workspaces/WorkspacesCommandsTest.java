@@ -1,0 +1,251 @@
+package eu.wohlben.qits.cli.access.workspaces;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.wohlben.qits.cli.access.FakeIdp;
+import eu.wohlben.qits.cli.access.FakePlatform;
+import eu.wohlben.qits.cli.access.FakeTime;
+import eu.wohlben.qits.cli.access.TestCli;
+import eu.wohlben.qits.cli.access.idp.TokenClient;
+import eu.wohlben.qits.cli.access.platform.CliContext;
+import eu.wohlben.qits.cli.access.session.Session;
+import eu.wohlben.qits.cli.access.session.SessionFile;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * `qits workspaces …` as a person types it, against a fake edge. Which request each command makes is
+ * {@link LandingPactTest}'s; this is what the commands print, and what they refuse before anything
+ * goes out.
+ */
+class WorkspacesCommandsTest {
+
+    private static final Instant T0 = Instant.parse("2026-10-10T10:00:00Z");
+    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
+    private static final String COMMAND = "00000000-0000-4000-8000-000000000100";
+    private static final String EPIC = "45a14f8e-f550-45bb-a117-6b34d8c472e3";
+    private static final String RUNNER = "00000000-0000-4000-8000-000000000020";
+    private static final String PROCESS = "00000000-0000-4000-8000-000000000100";
+
+    @TempDir
+    Path home;
+
+    private FakeIdp idp;
+    private FakePlatform platform;
+    private FakeTime time;
+    private final Map<String, String> env = new HashMap<>();
+
+    record Result(int exit, String out, String err) {
+    }
+
+    @BeforeEach
+    void start() throws Exception {
+        idp = new FakeIdp();
+        platform = new FakePlatform();
+        time = new FakeTime(T0);
+        env.put("XDG_CONFIG_HOME", home.toString());
+        env.put("QITS_WORKSPACES_URL", platform.url());
+        env.put("QITS_PROJECTS_URL", platform.url());
+        new SessionFile(home.resolve("qits")).write(new Session(idp.url(), "qits-cli", FakeIdp.SECRET + "access-0",
+                T0.plus(Duration.ofMinutes(10)), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30))));
+    }
+
+    @AfterEach
+    void stop() {
+        platform.close();
+        idp.close();
+    }
+
+    private Result run(String... args) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        CliContext context = new CliContext(Map.copyOf(env), InputStream.nullInputStream(),
+                new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
+                time, time, TokenClient::new, stop -> { });
+        int exit = TestCli.execute(context, args);
+        Result result = new Result(exit, out.toString(StandardCharsets.UTF_8), err.toString(StandardCharsets.UTF_8));
+        assertThat(result.out() + result.err()).doesNotContain(FakeIdp.SECRET);
+        return result;
+    }
+
+    @Test
+    void theSlotsAreATableForAPersonAndTheServicesAnswerInJson() throws Exception {
+        platform.answer("GET", "/workspaces/api/workspaces", """
+                {"entries":[{"workspace":{"id":1,"workspaceId":"ws-contract","runtimeStatus":"RUNNING",
+                 "placement":"RUNNER","runner":{"name":"localhost"},"admin":false,"queuedAt":null}}]}
+                """);
+
+        Result table = run("workspaces", "list");
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("SLOT").contains("CONTAINER")
+                .containsPattern("1\\s+ws-contract\\s+RUNNING\\s+RUNNER\\s+localhost\\s+false");
+
+        Result json = run("workspaces", "list", "-o", "json");
+        assertThat(JSON.readTree(json.out()).path("entries").get(0).path("workspace").path("workspaceId").asText())
+                .isEqualTo("ws-contract");
+    }
+
+    @Test
+    void aStartNamesTheProcessAndTheLogFollowsItUntilItEnds() {
+        platform.answer("POST", "/workspaces/api/workspaces/1/ensure-container",
+                "{\"technicalProcessId\":\"" + PROCESS + "\"}");
+        Result started = run("workspaces", "start", "1");
+        assertThat(started.out()).contains("started process " + PROCESS)
+                .contains("qits workspaces log " + PROCESS);
+
+        String events = "/workspaces/api/technical-processes/" + PROCESS + "/events";
+        platform.streamAt(events);
+        platform.streams.add(platform.stream(false,
+                "data:{\"segment\":\"pull\",\"kind\":\"segment-open\",\"seq\":0}", "",
+                "data:{\"segment\":\"pull\",\"kind\":\"line\",\"seq\":1,\"line\":\"pulling \\u001b[31mimage\"}", "",
+                "data:{\"kind\":\"ping\",\"seq\":2}", "",
+                "data:{\"segment\":\"pull\",\"kind\":\"segment-settled\",\"seq\":3,\"status\":\"ok\"}", "",
+                "data:{\"kind\":\"done\",\"seq\":4,\"status\":\"ok\"}", ""));
+
+        Result log = run("workspaces", "log", PROCESS);
+
+        assertThat(log.exit()).as(log.err()).isZero();
+        assertThat(log.out()).isEqualTo(String.join(System.lineSeparator(),
+                "== pull", "pull  pulling image", "== pull: ok", "== done: ok", ""));
+        assertThat(platform.requests("GET", events).getFirst().accept()).isEqualTo("text/event-stream");
+    }
+
+    @Test
+    void theLogInJsonIsOneFramePerLineWithoutThePings() throws Exception {
+        String events = "/workspaces/api/technical-processes/" + PROCESS + "/events";
+        platform.streamAt(events);
+        platform.streams.add(platform.stream(false,
+                "data:{\"kind\":\"ping\",\"seq\":0}", "",
+                "data:{\"segment\":\"pull\",\"kind\":\"line\",\"seq\":1,\"line\":\"x\"}", ""));
+
+        Result log = run("workspaces", "log", PROCESS, "-o", "json");
+
+        assertThat(log.exit()).as(log.err()).isZero();
+        List<String> lines = log.out().lines().toList();
+        assertThat(lines).hasSize(1);
+        assertThat(JSON.readTree(lines.getFirst()).path("line").asText()).isEqualTo("x");
+    }
+
+    @Test
+    void aWriteTheCredentialMayNotMakeSaysSoInTheServicesWords() {
+        platform.answer("POST", "/workspaces/api/agents/" + AGENT + "/discard", 403,
+                "{\"message\":\"this credential is qits:agent, which reads but does not write\"}");
+
+        Result refused = run("workspaces", "agents", "discard", AGENT);
+
+        assertThat(refused.exit()).isEqualTo(1);
+        assertThat(refused.err()).contains("Your roles do not allow this (HTTP 403)")
+                .contains("reads but does not write");
+    }
+
+    @Test
+    void createLooksTheItemUpAndAnEpicIsCreatedAsOne() throws Exception {
+        platform.answer("GET", "/projects/api/work/qits-120",
+                "{\"id\":\"" + EPIC + "\",\"qualifiedId\":\"qits-120\",\"archetype\":\"EPIC\"}");
+        platform.answer("POST", "/workspaces/api/agents", "{\"agent\":{\"agentId\":\"" + AGENT + "\"},\"fresh\":true}");
+
+        Result created = run("workspaces", "agents", "create", "--repository", "repo-1", "--work", "qits-120",
+                "--harness", "kimi");
+
+        assertThat(created.exit()).as(created.err()).isZero();
+        assertThat(created.out()).contains("Created agent " + AGENT);
+        assertThat(JSON.readTree(platform.requests("POST", "/workspaces/api/agents").getFirst().body()))
+                .isEqualTo(JSON.readTree("""
+                        {"repositoryId":"repo-1","workId":"%s","entityId":"qits-120","kind":"EPIC","admin":false,
+                         "harness":"KIMI"}
+                        """.formatted(EPIC)));
+    }
+
+    @Test
+    void anAgentWithNoDraftSaysSo() {
+        platform.answer("GET", "/workspaces/api/agents/" + AGENT + "/prompt-draft", 404, "");
+
+        Result none = run("workspaces", "agents", "draft", "show", AGENT);
+
+        assertThat(none.exit()).as(none.err()).isZero();
+        assertThat(none.out()).contains("has no saved draft");
+    }
+
+    @Test
+    void theChatFindsTheHarnessCommandAndShowsTheTurnsInOrder() {
+        platform.answer("GET", "/workspaces/container/1/agent-worktrees/" + AGENT,
+                "{\"commandId\":\"" + COMMAND + "\"}");
+        platform.answer("GET", "/workspaces/container/1/commands/" + COMMAND + "/log", """
+                {"lines":[
+                 {"sequence":2,"content":"{\\"type\\":\\"assistant\\",\\"message\\":{\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"On it.\\"},{\\"type\\":\\"tool_use\\",\\"name\\":\\"Bash\\"}]}}"},
+                 {"sequence":1,"content":"{\\"type\\":\\"user\\",\\"message\\":{\\"role\\":\\"user\\",\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"Fix the \\\\u001b[2Jlogin\\"}]}}"},
+                 {"sequence":3,"content":"{\\"type\\":\\"system\\"}"}]}
+                """);
+
+        Result chat = run("workspaces", "agents", "chat", AGENT, "--workspace", "1");
+
+        assertThat(chat.exit()).as(chat.err()).isZero();
+        assertThat(chat.out()).isEqualTo(String.join(System.lineSeparator(),
+                "user: Fix the login", "assistant: On it. [tool Bash]", ""));
+        assertThat(platform.requests("GET", "/workspaces/container/1/commands/" + COMMAND + "/log").getFirst().query())
+                .isEqualTo("channel=TRANSCRIPT");
+    }
+
+    @Test
+    void anAgentTheDaemonHasNotStartedHasNoHarness() {
+        platform.answer("GET", "/workspaces/container/1/agent-worktrees/" + AGENT, 404, "");
+
+        Result harness = run("workspaces", "agents", "harness", AGENT, "--workspace", "1");
+        assertThat(harness.exit()).as(harness.err()).isZero();
+        assertThat(harness.out()).contains("has not started agent " + AGENT);
+
+        Result chat = run("workspaces", "agents", "chat", AGENT, "--workspace", "1");
+        assertThat(chat.exit()).isEqualTo(1);
+        assertThat(chat.err()).contains("no harness command");
+    }
+
+    @Test
+    void aRunnerCheckThatAnswersNothingIsDoneAndANeverCheckedRunnerSaysSo() {
+        platform.answer("POST", "/workspaces/api/runners/" + RUNNER + "/login-check", 202, "");
+        platform.answer("GET", "/workspaces/api/runners/" + RUNNER + "/health", 204, "");
+
+        Result check = run("workspaces", "runners", "login-check", RUNNER);
+        assertThat(check.exit()).as(check.err()).isZero();
+        assertThat(check.out()).contains("Asked runner " + RUNNER);
+
+        Result health = run("workspaces", "runners", "health", RUNNER);
+        assertThat(health.exit()).as(health.err()).isZero();
+        assertThat(health.out()).contains("has no health check yet");
+    }
+
+    @Test
+    void whatCannotBeSentIsRefusedBeforeAnythingGoesOut() {
+        assertThat(run("workspaces", "agents", "chat", AGENT).exit()).isEqualTo(2);
+        assertThat(run("workspaces", "runners", "update", RUNNER).exit()).isEqualTo(2);
+        assertThat(run("workspaces", "agents", "create", "--repository", "r", "--work", EPIC, "--kind", "STORY")
+                .exit()).isEqualTo(2);
+        assertThat(run("workspaces", "agents", "sign-in", "open", "--workspace", "1", "--harness", "GPT").exit())
+                .isEqualTo(2);
+        assertThat(run("workspaces", "show", "0").exit()).isEqualTo(2);
+        assertThat(run("workspaces", "agents", "list", "--state", "GONE").exit()).isEqualTo(2);
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void aGroupAloneAsksForACommand() {
+        assertThat(run("workspaces").exit()).isEqualTo(2);
+        assertThat(run("workspaces", "agents").exit()).isEqualTo(2);
+        assertThat(run("workspaces", "runners").exit()).isEqualTo(2);
+    }
+}

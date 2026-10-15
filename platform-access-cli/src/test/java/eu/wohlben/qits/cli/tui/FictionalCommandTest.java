@@ -107,12 +107,14 @@ class FictionalCommandTest {
      * Ordinary words that happen also to be command names. The screen's own prose uses them —
      * {@code ⌃R run}, {@code list}, {@code help}, {@code run outside CI?} — and forbidding them
      * would forbid English rather than command knowledge. {@code ci} is here for the same reason:
-     * in {@code run outside CI?} it is continuous integration, not the command.
+     * in {@code run outside CI?} it is continuous integration, not the command. {@code start},
+     * {@code stop} and {@code history} joined with {@code qits workspaces} (qits-1261): the screen's
+     * {@code ⌃C stop}, {@code cannot start} and its run history are English, not those commands.
      */
     private static final Set<String> ORDINARY = Set.of(
             "qits", "tui", "run", "runs", "list", "new", "update", "create", "details", "comment",
             "plan", "submit", "join", "help", "exists", "docs", "daemon", "skill", "show", "ci", "move",
-            "sources");
+            "sources", "start", "stop", "history");
 
     private static final Pattern LITERAL = Pattern.compile("\"((?:[^\"\\\\]|\\\\.)*)\"");
     private static final Pattern WORD = Pattern.compile("[A-Za-z][A-Za-z0-9-]*");

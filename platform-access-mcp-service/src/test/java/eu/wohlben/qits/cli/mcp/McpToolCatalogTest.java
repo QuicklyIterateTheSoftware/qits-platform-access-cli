@@ -319,7 +319,12 @@ class McpToolCatalogTest {
                 "ci_runs", "ci_run", "ci_report_show", "maintenance_automations", "maintenance_bump",
                 "events", "events_query", "observe", "observe_query", "observe_sources", "observe_errors",
                 "observe_slow-spans", "observe_metrics", "help_skill", "agents_claude_hook_work-links",
-                "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message");
+                "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message",
+                "workspaces_list", "workspaces_show", "workspaces_active-process", "workspaces_items",
+                "workspaces_history", "workspaces_log", "workspaces_agents_list", "workspaces_agents_draft_show",
+                "workspaces_agents_chat", "workspaces_agents_harness", "workspaces_agents_files_list",
+                "workspaces_agents_files_read", "workspaces_agents_files_detect", "workspaces_agents_sign-in_status",
+                "workspaces_agents_plugins_list", "workspaces_runners_list", "workspaces_runners_health");
         // The default is what keeps a new command out: no marker, or a marker without an effect, is a write.
         assertThat(TuiCommands.effectOf(new Object())).isEqualTo(Effect.WRITE);
         assertThat(TuiCommands.effectOf(new eu.wohlben.qits.cli.access.projects.WorkCommand.CreateCommand()))

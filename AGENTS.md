@@ -9,7 +9,8 @@ that session fresh), `qits projects|repositories|work|release-request` (the proj
 `work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
 run's step logs, a retry, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits events` (the live event
-stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits checkout-daemon` (a local checkout held at what a repository released, root and
+stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits workspaces` (every action
+of the landing app's workspace pages, on the same qits-workspaces doors), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), `qits agents claude …` (what
@@ -198,6 +199,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
     waits/     qits wait: the --when grammar (WhenGrammar, a copy of qits-eventstream-javalib's
                selection grammar and limits, producing its wire JSON; keep the two in step), the
                --timeout reader, the presets and list/cancel on qits-workspaces' agent waits
+    workspaces/ qits workspaces: the landing app's workspace pages, one command per action (qits-1261).
+               WorkspacesApi is every door, with the method, path, query and body the page sends;
+               the daemon's doors go through the container proxy, /workspaces/container/{slot}/…;
+               Doors is who may call each kind of door, in the help's words. LandingPactTest (test)
+               runs a command for every call in the landing app's pacts (copied under
+               src/test/resources/workspaces/landing-pacts/) and fails on a call no command makes;
+               copy the pacts again when the pages change. Register runner and rotate token are
+               left out: they answer a one-time token
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
