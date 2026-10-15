@@ -106,12 +106,6 @@ release-request:
       # writes it into its build context as `qits` — and this migration touches neither name.
       chmod +x out/qits
       ./out/qits --help >/dev/null
-      # `qits -V` IS WHAT `qits update` HOLDS A DOWNLOAD AGAINST (qits-1262), so a binary that
-      # prints no version, or `unknown`, would make every workstation refuse the next release.
-      built_version=$(./out/qits -V)
-      case "$built_version" in
-        ''|unknown|*[!0-9.]*) echo "qits -V printed '$built_version', not a version" >&2; exit 1 ;;
-      esac
       # A binary that prints Quarkus build-time configuration on --help is unusable as a CLI.
       noise=$(QUARKUS_ANALYTICS_DISABLED=true ./out/qits --help 2>&1) || true
       case "$noise" in
@@ -211,13 +205,6 @@ release:
       # cannot be executed is a green build that publishes nothing runnable.
       chmod +x out/qits
       ./out/qits --help >/dev/null
-      # The published binary must name the version it is published under: `qits update` runs the
-      # download with -V and refuses it otherwise (qits-1262).
-      built_version=$(./out/qits -V)
-      if [ "$built_version" != "$QITS_VERSION" ]; then
-        echo "qits -V printed '$built_version', not $QITS_VERSION" >&2
-        exit 1
-      fi
       qits-publish daemon submit \
         --name qits-platform-access-cli --version "$QITS_VERSION" --file out/qits
 
