@@ -14,7 +14,7 @@ A workspace is the token home: on a runner node, or an admin or editor workspace
 - Sign in once with `qits login`, and keep `qits session-daemon` running so the session stays fresh.
 - Release only through a release request: `qits release-request create`, or `join` to add a branch to an open one. A push releases nothing.
 - Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from `qits git-credential`.
-- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, and `qits mcp-credential`, which Claude runs.
+- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, and `qits mcp-credential`, which Claude runs. Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new password, once).
 - To wait for something on the platform, declare it with `qits wait` and end your turn: you get a new turn when it happens. Never poll for it in a background loop.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
 
@@ -1853,6 +1853,133 @@ qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits users
+
+The people who sign in to the platform, on the idp: invite mints a register token, register spends one on a new username and shows the generated password once, list shows the users and their roles, and delete removes one.
+
+invite, list and delete need qits:admin; register needs only the token, and no sign-in.
+
+### Notes
+
+- --output and --idp-url may come before or after the command.
+
+## qits users invite
+
+Mint a register token for one new user, and print it.
+
+The token registers one user, once, with the platform's bootstrap roles. It is printed alone on stdout and nowhere else: hand it to the person privately, and they run `qits users register`. Lost, it is simply never spent; mint another. Needs qits:admin.
+
+```
+qits users invite [--idp-url <url>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
+
+### Examples
+
+```
+qits users invite
+qits users invite -o json
+```
+
+- -o json prints the idp's answer: the token's id, the token and when it was minted.
+- Not served by the qits MCP server: the token would land in a transcript.
+
+### Exit codes
+
+- `0` Done.
+- `1` The idp refused (HTTP 403: the caller is not qits:admin), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits users register
+
+Spend a register token on a new username, and print the password the idp generated for it.
+
+THE PASSWORD IS SHOWN ONLY THIS ONCE: it is printed alone on stdout, never written to a file or a log, and nobody can show it again. Store it before you do anything else. Needs no sign-in: the token is the credential. A refused username leaves the token unspent.
+
+```
+qits users register --token <token> [--idp-url <url>] [--output table|json] <username>
+```
+
+| Name | What it does |
+|---|---|
+| `<username>` | The new user's name. |
+| `--token <token>` | Required. The register token `qits users invite` printed. This call spends it. |
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
+
+### Examples
+
+```
+qits users register --token <token> jan
+qits users register --token <token> jan -o json
+```
+
+- -o json prints {"username": ..., "password": ...} and nothing of the session the idp opens.
+- Then sign in with `qits login`.
+- Not served by the qits MCP server: the password would land in a transcript.
+
+### Exit codes
+
+- `0` Done.
+- `1` The idp refused the token (unknown or spent) or the username (taken, or not a valid one), or cannot be reached.
+- `2` Used wrongly.
+
+## qits users list
+
+List the users: name, when each registered, and their roles. Needs qits:admin.
+
+```
+qits users list [--idp-url <url>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
+
+### Examples
+
+```
+qits users list
+qits users list -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The idp refused (HTTP 403: the caller is not qits:admin), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits users delete
+
+Delete a user: their sign-ins and sessions go with them. Needs qits:admin, and nobody can delete themselves.
+
+```
+qits users delete [--idp-url <url>] [--output table|json] <username>
+```
+
+| Name | What it does |
+|---|---|
+| `<username>` | The user to delete. |
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
+
+### Examples
+
+```
+qits users delete jan
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The idp refused: no such user (404), it is you (409), the caller is not qits:admin (403), or it cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits events

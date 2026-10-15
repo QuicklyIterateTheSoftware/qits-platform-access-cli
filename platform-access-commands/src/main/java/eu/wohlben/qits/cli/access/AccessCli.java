@@ -20,6 +20,7 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.WorkCommand;
+import eu.wohlben.qits.cli.access.users.UsersCommand;
 import eu.wohlben.qits.cli.access.waits.WaitCommand;
 import picocli.CommandLine;
 
@@ -39,7 +40,8 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class,
-                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, EventsCommand.class,
+                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, UsersCommand.class,
+                EventsCommand.class,
                 ObserveCommand.class, WaitCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
                 ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class,
                 HelpCommand.class},
@@ -65,7 +67,9 @@ import picocli.CommandLine;
                 "- Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from "
                         + "`qits git-credential`.",
                 "- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, "
-                        + "and `qits mcp-credential`, which Claude runs.",
+                        + "and `qits mcp-credential`, which Claude runs. Two commands print a secret meant for one "
+                        + "person: `qits users invite` (a register token) and `qits users register` (the new "
+                        + "password, once).",
                 "- To wait for something on the platform, declare it with `qits wait` and end your turn: you get a "
                         + "new turn when it happens. Never poll for it in a background loop.",
                 "- A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`."},

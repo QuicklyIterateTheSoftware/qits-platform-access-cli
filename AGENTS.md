@@ -8,7 +8,8 @@ command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `
 that session fresh), `qits projects|repositories|work|release-request` (the projects service;
 `work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
 run's step logs, a retry, a run's release reports), `qits database diagram` (a repository's entity
-diagram, generated from its compiled classes), `qits events` (the live event
+diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
+delete), `qits events` (the live event
 stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
@@ -219,6 +220,10 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                ContentHashes), MavenPublisher (flatten + bundle + link over maven-model-builder's
                effective models, MavenReactor), NpmPublisher (the tarball and publish document),
                ContractPackager and ContractDocs, and Archives (the deterministic jar and tar.gz).
+    users/     qits users invite, register, list and delete, on the idp's user doors (IdpUsersApi).
+               register sends no bearer: the register token is the credential, and the person has
+               no session yet. The idp's address is the session's, the wire alias inside
+               (PlatformEndpoints), or, for register with no session, IdpUrl's default
     mcp/       qits mcp-credential: Claude's MCP headers helper (interim, retired by qits-684)
     agents/    qits agents claude: what Claude Code runs. hook work-links (WorkLinks, the id matching;
                LinkProjects, the slug cache, refreshed by the same command's hidden --refresh started
@@ -262,6 +267,11 @@ Two packages sit outside `access/`, because neither is about one command:
   prints `{"Authorization":"Bearer <token>"}` because that is what Claude's MCP `headersHelper`
   reads (interim, until qits-684 gives every workspace a long-lived token). Nothing else prints one,
   and stderr and logs never carry one, those two commands' included.
+  Two commands print a secret that is not an access token, because handing it to one person is
+  their whole job: `qits users invite` prints a register token, and `qits users register` prints
+  the generated password, once. Each goes to stdout alone and nowhere else: never stderr, a log, a
+  file or an error message (`UsersCommandsTest` holds both). Both are `Interaction.LOCAL`, so the
+  MCP service does not serve them and neither lands in an agent's transcript.
 - **Every refresh and every write of `t.json` happens under the write lock**, and the file is read
   again under it. Refresh tokens rotate; a spent one presented again revokes the whole session.
   `SessionRefresh` is the only code that spends a `t.json` refresh token; the daemon and the

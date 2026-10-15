@@ -364,7 +364,8 @@ public final class PlatformClient {
 
     /**
      * The service's own words: {@code message} (what qits services answer), {@code errors[].message},
-     * or a validation answer's {@code violations[].message}. A body that is not JSON (an HTML page
+     * a validation answer's {@code violations[].message}, or the idp's {@code error} and
+     * {@code error_description}. A body that is not JSON (an HTML page
      * from a proxy) gives nothing; it is not quoted.
      */
     static String serviceMessage(String body) {
@@ -389,6 +390,13 @@ public final class PlatformClient {
                     messages.add(field.isEmpty() ? text : field + ": " + text);
                 }
             }
+        }
+        if (messages.isEmpty() && (node.path("error").isTextual() || node.path("error_description").isTextual())) {
+            // The idp's shape: {"error":"invalid_request","error_description":"…"}. Neither holds a
+            // credential; the idp writes the description for a person.
+            String error = node.path("error").asText("");
+            String description = node.path("error_description").asText("");
+            messages.add(error.isEmpty() ? description : description.isEmpty() ? error : error + ": " + description);
         }
         if (messages.isEmpty() && node.path("title").isTextual()) {
             messages.add(node.get("title").asText());
