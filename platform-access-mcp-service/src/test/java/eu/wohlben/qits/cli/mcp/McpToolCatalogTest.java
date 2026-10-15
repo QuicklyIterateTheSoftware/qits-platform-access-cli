@@ -215,6 +215,20 @@ class McpToolCatalogTest {
     }
 
     @Test
+    void theUserCommandsThatPrintASecretAreNotServed() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(catalog.tool("users_invite")).isEmpty();
+        assertThat(catalog.tool("users_register")).isEmpty();
+        assertThat(byCommand.get("qits users register").reason()).isEqualTo("only means something on the caller's machine");
+        assertThat(byCommand.get("qits users invite").reason()).isEqualTo("only means something on the caller's machine");
+        assertThat(catalog.tool("users_list")).isPresent();
+        assertThat(catalog.tool("users_delete")).isPresent();
+        assertThat(properties(tool("users_list"))).doesNotContainKey("idp-url");
+    }
+
+    @Test
     void everyToolsSchemaIsItsOptionsByTheRules() {
         Map<String, CommandSpec> commands = realTree();
         for (Tool tool : catalog.tools()) {
@@ -312,7 +326,7 @@ class McpToolCatalogTest {
             }
         });
         assertThat(reads).containsExactlyInAnyOrder(
-                "projects_list", "repositories_list", "repositories_branches", "repositories_commits",
+                "projects_list", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
                 "repositories_commit-changes", "repositories_commit-diff", "repositories_commit-subjects",
                 "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
                 "work_members_list", "work_design_list", "work_design_get", "release-request_list",

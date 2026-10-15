@@ -15,6 +15,8 @@ Commands:
   failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
   change adds or removes; the entity diagram's tables and columns it changes); `qits ci report submit` is the
   CI step's side that collects and uploads them.
+- `qits users invite|register|list|delete` manages the platform's users on the idp: an admin
+  mints a register token, the new user spends it and gets a generated password, shown once.
 - `qits events` prints the platform's domain events as they happen; `qits events query` prints the
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
@@ -491,6 +493,10 @@ Installing it is not part of this version.
     qits ci retry <run id> [--project <project> --repository <repository>]
     qits ci report show <run id> [--kind <kind>] [--project <project> --repository <repository>]
     qits ci report submit --exit-code <n> [--root <dir>]          (in a CI step only)
+    qits users invite
+    qits users register --token <token> <username>
+    qits users list
+    qits users delete <username>
     qits events [--filter=<names>]
     qits events query [--filter=<names>] [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits observe --filter <conditions> [--filter <conditions> …] [-o json]
@@ -975,6 +981,40 @@ with the reason.
     qits maintenance --project qits --repository qits-landing-app automations --request qits-landing-app-rr-7
     qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind screenshot-baselines
     qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+
+### qits users
+
+The people who sign in to the platform, on the idp (`/idp/api`). `invite`, `list` and `delete`
+send the caller's bearer, as every command does, and need `qits:admin`: anyone else gets
+`Managing users needs qits:admin` above the idp's 403. `register` needs no sign-in and sends no
+bearer; the register token is the credential.
+
+`invite` mints a register token (`POST /idp/api/register-tokens`) and prints it alone on stdout,
+with its id and what to do with it on stderr; `-o json` prints the idp's answer (`id`, `token`,
+`createdAt`). The token registers one user, once. Hand it over privately.
+
+`register --token <token> <username>` spends the token (`POST /idp/api/auth/register`) and prints
+the password the idp generated, alone on stdout. **It is shown only this once**: the CLI writes it
+nowhere else, not to stderr, a file or a log, and the idp cannot show it again. `-o json` prints
+`{"username", "password"}` and nothing of the session the idp opens (its cookie is ignored). A
+refused token (401: unknown or spent) says to ask for a new one; a refused username (400) names
+the idp's reason and leaves the token unspent. Then sign in with `qits login`.
+
+`list` prints USERNAME, CREATED and ROLES; `-o json` the idp's answer. `delete <username>` prints
+`Deleted user <username>.`; an unknown user is `There is no user '<username>' (HTTP 404)`, and
+deleting yourself is refused (409). Every refusal is exit code 1.
+
+The idp's address: `--idp-url` (with `/idp`), else the session's idp, else inside the platform its
+wire alias (`QITS_URL_IDP` over it, as for every service). `register` on a workstation with no
+session takes the address `qits login` would: `QITS_IDP_URL`, else `https://idp.qits.<QITS_DOMAIN>/idp`.
+
+The qits MCP server serves `list` and `delete` but not `invite` or `register`: their answer is a
+secret for one person, and a tool's answer lands in an agent's transcript.
+
+    qits users invite
+    qits users register --token <token> jan
+    qits users list
+    qits users delete jan
 
 ### qits events
 
