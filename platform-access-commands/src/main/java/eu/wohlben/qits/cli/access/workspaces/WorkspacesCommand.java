@@ -12,7 +12,10 @@ import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.platform.Table;
+import eu.wohlben.qits.cli.access.complete.ProjectSource;
+import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.tui.api.Completes;
 import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -124,6 +127,31 @@ public class WorkspacesCommand implements Runnable {
         return value != null && UUID.matcher(value.strip()).matches();
     }
 
+    /**
+     * The wrapper repository's id, as the workspaces service wants it: a uuid is sent as it is, and
+     * anything else is looked up in the projects service with {@code --project}, the same lookup
+     * {@code qits ci runs} and {@code qits release-request} do (their {@code --project} and
+     * {@code --repository}, over {@link ProjectsApi#project} and {@link ProjectsApi#repository}).
+     */
+    String repositoryId(CliContext context, String project, String repository) throws CliFailure, InterruptedException {
+        String wanted = repository == null ? "" : repository.strip();
+        if (wanted.isEmpty()) {
+            throw new CliFailure("Name the repository: --repository <id or name>.", CliFailure.USAGE);
+        }
+        if (isUuid(wanted)) {
+            return wanted;
+        }
+        String wantedProject = project == null ? "" : project.strip();
+        if (wantedProject.isEmpty()) {
+            throw new CliFailure("Name the project too: --project <id, slug or name>, since --repository '"
+                    + wanted + "' is not its uuid.", CliFailure.USAGE);
+        }
+        ProjectsApi api = ProjectsApi.connect(context, projectsUrl);
+        JsonNode found = api.project(wantedProject);
+        JsonNode repo = api.repository(found, wanted);
+        return text(repo, "id");
+    }
+
     /** {@code -o}: the shared reading of table or json, and the one JSON printer. */
     static final class Json {
 
@@ -219,11 +247,12 @@ public class WorkspacesCommand implements Runnable {
     // --- the slots ---
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"The ACTIVE workspace slots, of one repository with --repository: each with its container, "
-                    + "placement and runner. The project's Workspaces page.",
-                    "GET /workspaces/api/workspaces[?repositoryId=]. " + Doors.READ},
+            description = {"The ACTIVE workspace slots of one repository, named by --repository: each with its "
+                    + "container, placement and runner. The project's Workspaces page.",
+                    "GET /workspaces/api/workspaces?repositoryId=. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits workspaces list", "  qits workspaces list --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a"},
+            footer = {"  qits workspaces list --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a",
+                    "  qits workspaces list --project qits --repository qits-ci-service"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     @TuiCommand(effect = Effect.READ)
@@ -232,15 +261,22 @@ public class WorkspacesCommand implements Runnable {
         @CommandLine.ParentCommand
         WorkspacesCommand parent;
 
-        @CommandLine.Option(names = "--repository", paramLabel = "<id>",
-                description = "Only the slots of this wrapper repository: its id, as `qits repositories list -o json` "
-                        + "shows it.")
+        @Completes(ProjectSource.class)
+        @CommandLine.Option(names = "--project", paramLabel = "<project>",
+                description = "The project: its id, slug or name. Needed only when --repository names the "
+                        + "repository rather than giving its uuid.")
+        String project;
+
+        @Completes(RepositorySource.class)
+        @CommandLine.Option(names = "--repository", paramLabel = "<repository>", required = true,
+                description = "The wrapper repository whose slots to list: its uuid (as `qits repositories list "
+                        + "-o json` shows it), or, with --project, its id or name.")
         String repository;
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = parent.json();
-            String repositoryId = repository == null || repository.isBlank() ? null : repository.strip();
+            String repositoryId = parent.repositoryId(context, project, repository);
             JsonNode answer = parent.api(context).workspaces(repositoryId);
             if (json) {
                 Json.print(context.out(), answer);

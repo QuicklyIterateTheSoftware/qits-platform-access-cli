@@ -2482,26 +2482,27 @@ A slot is a workspace row, named by its number (`qits workspaces list` shows it)
 
 ## qits workspaces list
 
-The ACTIVE workspace slots, of one repository with --repository: each with its container, placement and runner. The project's Workspaces page.
+The ACTIVE workspace slots of one repository, named by --repository: each with its container, placement and runner. The project's Workspaces page.
 
-GET /workspaces/api/workspaces[?repositoryId=]. Any credential may read it, qits:agent included.
+GET /workspaces/api/workspaces?repositoryId=. Any credential may read it, qits:agent included.
 
 ```
-qits workspaces list [--output table|json] [--projects-url <url>] [--repository <id>] [--workspaces-url <url>]
+qits workspaces list --repository <repository> [--output table|json] [--project <project>] [--projects-url <url>] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
+| `--repository <repository>` | Required. The wrapper repository whose slots to list: its uuid (as `qits repositories list -o json` shows it), or, with --project, its id or name. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. Needed only when --repository names the repository rather than giving its uuid. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--repository <id>` | Only the slots of this wrapper repository: its id, as `qits repositories list -o json` shows it. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
 
 ### Examples
 
 ```
-qits workspaces list
 qits workspaces list --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
+qits workspaces list --project qits --repository qits-ci-service
 ```
 
 ### Exit codes
