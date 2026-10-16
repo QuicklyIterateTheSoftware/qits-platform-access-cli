@@ -22,6 +22,7 @@ import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.net.URI;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -42,7 +43,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {WorkspacesCommand.ListCommand.class, WorkspacesCommand.ShowCommand.class,
                 WorkspacesCommand.ActiveProcessCommand.class, WorkspacesCommand.StartCommand.class,
                 WorkspacesCommand.StopCommand.class, WorkspacesCommand.RecreateCommand.class,
-                WorkspacesCommand.LogCommand.class, WorkspacesCommand.ItemsCommand.class,
+                WorkspacesCommand.LogCommand.class, WorkspacesCommand.AttachCommand.class,
+                WorkspacesCommand.ItemsCommand.class,
                 WorkspacesCommand.HistoryCommand.class, WorkspaceAgentsCommand.class, WorkspaceRunnersCommand.class},
         description = {"The workspaces of qits-workspaces, with every action the landing app's workspace pages "
                         + "offer, each on the same door the page calls: the slots and their containers, the agents "
@@ -58,8 +60,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the "
                         + "slot's daemon, through qits-workspaces' container proxy, which checks no role, only that "
                         + "the slot is ACTIVE.",
-                "- An interactive terminal and the live chat socket are the landing app's: the CLI reads the chat's "
-                        + "transcript and sends prompts, but attaches to no terminal.",
+                "- `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's "
+                        + "terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads "
+                        + "the chat's transcript and sends prompts.",
                 "- --workspaces-url, --projects-url and --output may come before or after the command."})
 public class WorkspacesCommand implements Runnable {
 
@@ -617,6 +620,88 @@ public class WorkspacesCommand implements Runnable {
                     // A kind a newer service invents is left out, as the page does.
                 }
             }
+        }
+    }
+
+    // --- a command's terminal ---
+
+    /**
+     * Attaches to {@code commandId}'s terminal on {@code slot} until the command ends or the person
+     * leaves: the one way in for {@code attach}, {@code agents sign-in open --attach} and {@code agents
+     * harness --attach}. Refused in the MCP service, which has no terminal to give.
+     */
+    static int attach(CliContext context, WorkspacesApi api, long slot, String commandId,
+                      LocalTerminal.Factory terminals) throws CliFailure, InterruptedException {
+        refuseWithoutATerminal();
+        URI uri = api.terminalSocket(slot, commandId);
+        // Fails at once without a credential, rather than in the reconnect loop.
+        context.credential().bearer();
+        TerminalAttach attachment = new TerminalAttach(api.client(), uri, commandId, terminals.open(context),
+                context.out(), context.err(), context.sleeper(), TerminalAttach.BACKOFF, TerminalAttach.SIZE_POLL);
+        context.onStop().accept(attachment::stop);
+        return attachment.run();
+    }
+
+    /** A tool call in the MCP service would wait for as long as the terminal lives, with nobody typing. */
+    static void refuseWithoutATerminal() throws CliFailure {
+        if (CliContext.inMcpService()) {
+            throw new CliFailure("Attaching needs a terminal, and the MCP service has none: run `qits workspaces "
+                    + "attach` in a terminal.", CliFailure.USAGE);
+        }
+    }
+
+    @CommandLine.Command(name = "attach", mixinStandardHelpOptions = true,
+            description = {"Attach this terminal to a command's terminal on a slot's daemon: what you type goes to "
+                    + "the command, what it prints comes here. The agent's Terminal tab in the landing app.",
+                    "Command ids come from `qits workspaces agents sign-in open` (the sign-in terminal) and "
+                            + "`qits workspaces agents harness` (an agent's harness, when it runs as a terminal); "
+                            + "both also take --attach, which opens or finds the command and attaches at once.",
+                    "Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to the command. "
+                            + "The window's size goes along and follows the window. The command ending ends this "
+                            + "too. A dropped connection attaches again after 0.5, 1, 2, 4 and 4 s, and the screen is "
+                            + "cleared before the daemon replays up to 256 KB of what the terminal held.",
+                    "With stdin not a terminal (a pipe, a script, `qits tui`) it only streams what the command "
+                            + "prints: nothing is typed and the size is left alone. It still ends when the command "
+                            + "does.",
+                    "WS /workspaces/container/{slot}/terminal/commands/{commandId}. " + Doors.PROXY},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1",
+                    "  qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1 > terminal.log",
+                    "",
+                    "- Detaching never ends the command. End it with `qits workspaces agents terminate`.",
+                    "- Not an MCP tool: it needs a terminal and runs until the command ends."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The command ended, you detached (Ctrl-]), or it was stopped (SIGINT, SIGTERM); only "
+                    + "the first ends the command.",
+                    "1:The platform refused the socket, or the connection dropped and five attempts to attach again "
+                            + "failed.",
+                    HelpText.USAGE})
+    @TuiCommand(interaction = Interaction.TERMINAL)
+    public static class AttachCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        WorkspacesCommand parent;
+
+        @CommandLine.Parameters(paramLabel = "<command>", description = "The command's id.")
+        String command;
+
+        @CommandLine.Option(names = "--workspace", paramLabel = "<n>", required = true,
+                description = "The slot whose daemon runs the command: its number, as `qits workspaces list` shows "
+                        + "it.")
+        Long workspace;
+
+        /** The caller's terminal; a test hands its own. */
+        LocalTerminal.Factory terminals = LocalTerminal::of;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            String id = command == null ? "" : command.strip();
+            if (id.isEmpty()) {
+                throw new CliFailure("Name the command: its id, as `qits workspaces agents sign-in open` or "
+                        + "`qits workspaces agents harness` shows it.", CliFailure.USAGE);
+            }
+            long slot = slot(workspace);
+            return attach(context, parent.api(context), slot, id, terminals);
         }
     }
 }

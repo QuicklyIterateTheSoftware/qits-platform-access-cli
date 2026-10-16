@@ -216,6 +216,36 @@ class McpToolCatalogTest {
     }
 
     @Test
+    void attachingToATerminalIsNotServedAndSignInOpenNeverAttachesHere() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(catalog.tool("workspaces_attach")).isEmpty();
+        assertThat(byCommand.get("qits workspaces attach").interaction()).isEqualTo(Interaction.TERMINAL);
+        assertThat(byCommand.get("qits workspaces attach").reason())
+                .isEqualTo("needs a terminal; runs until the command it attaches to ends");
+        assertThat(catalog.instructions()).contains(byCommand.get("qits workspaces attach").line());
+
+        // The flag is in the schema, as every option is; a call that sets it is refused before anything opens.
+        assertThat(properties(tool("workspaces_agents_sign-in_open"))).containsKey("attach");
+        Map<String, String> config = Map.of("QITS_ENV", "dev", "QITS_WORKSPACES_URL", platform.url());
+        ToolRunner runner = new ToolRunner(factory -> new CommandLine(new AccessCli(), factory),
+                ToolRunner.environment(config::get), Clock.systemUTC());
+        for (String name : List.of("workspaces_agents_sign-in_open", "workspaces_agents_harness")) {
+            Map<String, Object> arguments = new HashMap<>(Map.of("workspace", 1, "attach", true));
+            if (name.endsWith("harness")) {
+                arguments.put("agent", "00000000-0000-4000-8000-0000000000a1");
+            }
+            ToolRunner.Result result = runner.run(tool(name), arguments, new RequestCredential(AGENT));
+
+            assertThat(result.error()).as(name).isTrue();
+            assertThat(result.texts().get(0)).as(name).contains("needs a terminal");
+            assertThat(result.texts().get(1)).as(name).isEqualTo("exit 2");
+        }
+        assertThat(platform.requests).as("nothing was opened").isEmpty();
+    }
+
+    @Test
     void theUserCommandsThatPrintASecretAreNotServed() {
         Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
         catalog.excluded().forEach(e -> byCommand.put(e.command(), e));

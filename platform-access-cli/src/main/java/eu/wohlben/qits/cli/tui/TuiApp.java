@@ -705,9 +705,13 @@ public class TuiApp {
         runner.start(selection.argv(), streaming(), selection.secrets());
     }
 
-    /** Whether the chosen command runs until it is stopped, and so has no exit code to wait for. */
+    /**
+     * Whether the chosen command runs until it is stopped, and so has no exit code to wait for. A
+     * terminal attachment is one: run from here it has no terminal, so it only streams.
+     */
     protected boolean streaming() {
-        return selection.current().interaction() == Interaction.STREAMING;
+        Interaction interaction = selection.current().interaction();
+        return interaction == Interaction.STREAMING || interaction == Interaction.TERMINAL;
     }
 
     /** {@code ⌃C}: stop the child, and stay. */

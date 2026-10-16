@@ -2477,7 +2477,7 @@ A slot is a workspace row, named by its number (`qits workspaces list` shows it)
 
 - Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin or qits:admin-agent, which a person's token carries; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
 - What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks no role, only that the slot is ACTIVE.
-- An interactive terminal and the live chat socket are the landing app's: the CLI reads the chat's transcript and sends prompts, but attaches to no terminal.
+- `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads the chat's transcript and sends prompts.
 - --workspaces-url, --projects-url and --output may come before or after the command.
 
 ## qits workspaces list
@@ -2694,6 +2694,46 @@ qits workspaces log 00000000-0000-4000-8000-000000000100
 
 - `0` The process ended, or the command was stopped.
 - `1` The platform refused (for example a process it does not know, HTTP 404), or the stream dropped.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits workspaces attach
+
+Attach this terminal to a command's terminal on a slot's daemon: what you type goes to the command, what it prints comes here. The agent's Terminal tab in the landing app.
+
+Command ids come from `qits workspaces agents sign-in open` (the sign-in terminal) and `qits workspaces agents harness` (an agent's harness, when it runs as a terminal); both also take --attach, which opens or finds the command and attaches at once.
+
+Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to the command. The window's size goes along and follows the window. The command ending ends this too. A dropped connection attaches again after 0.5, 1, 2, 4 and 4 s, and the screen is cleared before the daemon replays up to 256 KB of what the terminal held.
+
+With stdin not a terminal (a pipe, a script, `qits tui`) it only streams what the command prints: nothing is typed and the size is left alone. It still ends when the command does.
+
+WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+
+```
+qits workspaces attach --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <command>
+```
+
+| Name | What it does |
+|---|---|
+| `<command>` | The command's id. |
+| `--workspace <n>` | Required. The slot whose daemon runs the command: its number, as `qits workspaces list` shows it. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1
+qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1 > terminal.log
+```
+
+- Detaching never ends the command. End it with `qits workspaces agents terminate`.
+- Not an MCP tool: it needs a terminal and runs until the command ends.
+
+### Exit codes
+
+- `0` The command ended, you detached (Ctrl-]), or it was stopped (SIGINT, SIGTERM); only the first ends the command.
+- `1` The platform refused the socket, or the connection dropped and five attempts to attach again failed.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits workspaces items
@@ -3087,16 +3127,19 @@ qits workspaces agents refine --workspace 1 --preamble 'Fix the login' 'uh so th
 
 The agent's harness on its slot's daemon: its last command, whether it still runs, and as a terminal or a chat. What the Terminal and Chat tabs attach to.
 
+With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since `qits workspaces agents chat` reads it.
+
 GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
 
 ```
-qits workspaces agents harness --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
+qits workspaces agents harness --workspace <n> [--attach] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
 ```
 
 | Name | What it does |
 |---|---|
 | `<agent>` | The agent's id. |
 | `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--attach` | Attach to the harness's terminal once it is found, until it ends or Ctrl-] detaches. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
@@ -3105,12 +3148,15 @@ qits workspaces agents harness --workspace <n> [--output table|json] [--projects
 
 ```
 qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1
+qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1 --attach
 ```
+
+- --attach needs a terminal for typing, and the MCP service refuses it; without a terminal it streams what the harness prints, read-only.
 
 ### Exit codes
 
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
+- `0` Done; with --attach, the command ended or you detached.
+- `1` The platform refused or cannot be reached; with --attach, the agent has no terminal to attach to, or the connection could not be kept.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits workspaces agents files
@@ -3245,17 +3291,18 @@ qits workspaces agents sign-in status --workspace 1
 
 ## qits workspaces agents sign-in open
 
-Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an interactive terminal; finish it on the agent's Terminal tab in the landing app, since the CLI attaches to no terminal.
+Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an interactive terminal: --attach attaches this one to it at once, or `qits workspaces attach <command> --workspace <n>` later, with the command id this prints. The agent's Terminal tab in the landing app shows the same terminal.
 
-POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
 
 ```
-qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
+qits workspaces agents sign-in open --workspace <n> [--attach] [--harness CLAUDE|KIMI] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--attach` | Attach to the sign-in terminal once it is open, until it ends or Ctrl-] detaches. |
 | `--harness CLAUDE\|KIMI` | The harness to sign in. Default: the daemon's. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
@@ -3264,13 +3311,16 @@ qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI] [--o
 ### Examples
 
 ```
+qits workspaces agents sign-in open --workspace 1 --harness CLAUDE --attach
 qits workspaces agents sign-in open --workspace 1 --harness CLAUDE
 ```
 
+- With --attach, Ctrl-] detaches and leaves the sign-in running. --attach needs a terminal for typing, and the MCP service refuses it; without a terminal it streams, read-only.
+
 ### Exit codes
 
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
+- `0` Done; with --attach, the sign-in ended or you detached.
+- `1` The platform refused or cannot be reached; with --attach, the connection could not be kept.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits workspaces agents plugins

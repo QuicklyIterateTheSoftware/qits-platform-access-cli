@@ -95,8 +95,10 @@ that keeps it in step (`SkillDocumentTest`) resolves it one directory up and say
     ToolCatalog  the tools, read off the picocli tree: one per command that runs (a leaf, or a
                  runnable parent), named by its path joined with `_`. A command is NOT a tool when
                  the nearest `@TuiCommand(interaction)` from it upwards is BROWSER, STREAMING,
-                 CI_ONLY or LOCAL; those are listed, with their reason, in the server's
-                 `instructions`. The schema is the command's options (inherited ones included) and
+                 TERMINAL, CI_ONLY or LOCAL; those are listed, with their reason, in the server's
+                 `instructions`. A flag that would attach to a terminal (`--attach`) cannot be
+                 left out of a schema, so the command refuses it there (`CliContext.inMcpService`).
+                 The schema is the command's options (inherited ones included) and
                  positionals, minus help/version and every `*-url` option (a caller-chosen address
                  would receive the caller's bearer), plus `payload` on `input = PAYLOAD` commands.
                  `--output` defaults to `json` where the command offers it.
@@ -208,7 +210,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                runs a command for every call in the landing app's pacts (copied under
                src/test/resources/workspaces/landing-pacts/) and fails on a call no command makes;
                copy the pacts again when the pages change. Register runner and rotate token are
-               left out: they answer a one-time token
+               left out: they answer a one-time token. `attach` (and `--attach` on sign-in open
+               and harness) is the Terminal tab: TerminalAttach is the reconnecting socket to the
+               daemon's WS /terminal/commands/{id}, with the landing app's frames and backoff;
+               LocalTerminal is the caller's terminal, SttyTerminal the real one (stty on /dev/tty,
+               SIGWINCH through sun.misc.Signal plus a size poll; no JLine here), READ_ONLY the
+               answer when stdin is no terminal
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.

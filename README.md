@@ -27,7 +27,7 @@ Commands:
 - `qits workspaces` is every action the landing app's workspace pages offer, one command each, on
   the same qits-workspaces door: the slots and their containers (start, stop, recreate, the start's
   log), the agents (create, discard, prompt, the prompt draft, the chat, the files, the harness,
-  sign-in, plugins) and the runners.
+  sign-in, plugins), the runners, and a command's terminal (`qits workspaces attach`).
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -576,6 +576,7 @@ Installing it is not part of this version.
     qits workspaces list --repository <id|name> [--project <project>] | show <n> | active-process <n> | items | history <work>
     qits workspaces start|stop|recreate <n>
     qits workspaces log <process id>
+    qits workspaces attach <command id> --workspace <n>
     qits workspaces agents list [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
     qits workspaces agents create --repository <id> --work <work> [--entity <qualified id>] \
         [--kind TICKET|EPIC] [--admin] [--harness CLAUDE|KIMI] [--instruction <text>]
@@ -584,13 +585,13 @@ Installing it is not part of this version.
     qits workspaces agents draft show|discard <agent>
     qits workspaces agents draft save <agent> <text>
     qits workspaces agents chat|terminate <agent> --workspace <n> [--command <id>]
-    qits workspaces agents harness <agent> --workspace <n>
+    qits workspaces agents harness <agent> --workspace <n> [--attach]
     qits workspaces agents refine --workspace <n> [--preamble <text>] <notes>
     qits workspaces agents files list <agent> --workspace <n> [--path <dir>]
     qits workspaces agents files read <agent> <path> --workspace <n>
     qits workspaces agents files detect <agent> --workspace <n>
     qits workspaces agents sign-in status --workspace <n>
-    qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI]
+    qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI] [--attach]
     qits workspaces agents plugins list --workspace <n>
     qits workspaces agents plugins install <plugin> --workspace <n>
     qits workspaces runners list | health <runner>
@@ -1362,6 +1363,7 @@ by one command, the same way.
     qits workspaces start|stop|recreate <n>       POST /workspaces/api/workspaces/{n}/ensure-container,
                                                        stop-container, recreate-container (no body)
     qits workspaces log <process id>              GET  /workspaces/api/technical-processes/{id}/events (SSE)
+    qits workspaces attach <command id>           WS   …/terminal/commands/{id}
     qits workspaces items                         GET  /workspaces/api/work/workspaces
     qits workspaces history <work>                GET  /workspaces/api/work/{work}/workspaces
     qits workspaces agents list                   GET  /workspaces/api/agents[?workId=&workspaceId=&state=]
@@ -1398,10 +1400,30 @@ proxy checks no role, only that the slot is ACTIVE, so everything through it is 
 Each command's help says which applies.
 
 Not here, on purpose: registering a runner and rotating its registration token, whose answer is a
-one-time token (qits prints no token but the two the conventions name); the interactive terminal and
-the live chat socket (`WS …/terminal|chat/commands/{id}`), which need a terminal; and the slot's
-hint stream (`/workspaces/api/workspaces/{id}/events`), which only tells a page to read again.
-`qits workspaces log` is a stream and therefore not an MCP tool.
+one-time token (qits prints no token but the two the conventions name); the live chat socket
+(`WS …/chat/commands/{id}`), whose transcript `agents chat` reads and whose prompts `agents prompt`
+sends; and the slot's hint stream (`/workspaces/api/workspaces/{id}/events`), which only tells a page
+to read again. `qits workspaces log` is a stream and therefore not an MCP tool.
+
+`qits workspaces attach <command id> --workspace <n>` is the agent's Terminal tab (qits-1265): this
+terminal attached to a command's terminal on the slot's daemon, `WS …/terminal/commands/{id}` through
+the container proxy, with the caller's own bearer. The command ids come from `agents sign-in open`
+(the sign-in terminal) and `agents harness` (an agent's harness that runs as a terminal); both take
+`--attach` to open or find the command and attach at once.
+
+- The terminal goes raw (`stty raw -echo` on `/dev/tty`) and every key goes to the command as
+  `{"type":"data","data":…}`, Ctrl-C included. The window's size goes as
+  `{"type":"resize","cols":…,"rows":…}` on every open and on every change (SIGWINCH, and a read of
+  the size every 2 s besides). The daemon's frames are raw terminal text, written as they come.
+- **Ctrl-] detaches** and leaves the command running, as closing the page's tab does. A clean close
+  from the daemon (1000) ends it with 0: the command ended, or had ended before the attach. Any
+  other close attaches again after 0.5, 1, 2, 4 and 4 s and then gives up (exit 1); the screen is
+  cleared first, because the daemon replays up to 256 KB of what the terminal held. SIGINT and
+  SIGTERM detach too. The terminal is restored on every way out, a shutdown hook included.
+- With stdin not a terminal it only streams what the command prints, read-only: no raw mode, no key
+  and no size is sent, and it still ends when the command does.
+- It is `Interaction.TERMINAL`, so the MCP service does not serve it, and `--attach` on the other two
+  is refused there (exit 2) before anything is opened.
 
 ## Git pushes from this workstation
 

@@ -14,6 +14,13 @@ public enum Interaction {
     /** Runs until it is stopped: a stream has no exit code to wait for. */
     STREAMING,
 
+    /**
+     * Takes over the caller's terminal: raw mode, keystrokes relayed, until the command it is attached
+     * to ends or the person detaches. The screen runs it like {@link #STREAMING}; the MCP service,
+     * which has no terminal, offers none of them.
+     */
+    TERMINAL,
+
     /** Opens a browser, so it needs a person and a desktop. */
     BROWSER,
 

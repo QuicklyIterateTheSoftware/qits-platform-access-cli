@@ -152,6 +152,7 @@ public final class ToolCatalog {
         return switch (interaction) {
             case BROWSER -> "needs a browser and a person";
             case STREAMING -> "runs until stopped";
+            case TERMINAL -> "needs a terminal; runs until the command it attaches to ends";
             case CI_ONLY -> "CI-step only, reads local files";
             case LOCAL -> "only means something on the caller's machine";
             case PLAIN -> null;

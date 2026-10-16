@@ -705,13 +705,23 @@ public class WorkspaceAgentsCommand implements Runnable {
     @CommandLine.Command(name = "harness", mixinStandardHelpOptions = true,
             description = {"The agent's harness on its slot's daemon: its last command, whether it still runs, and as "
                     + "a terminal or a chat. What the Terminal and Chat tabs attach to.",
+                    "With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces "
+                            + "attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since "
+                            + "`qits workspaces agents chat` reads it.",
                     "GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/"
                             + "commands. With -o json, {worktree, command}: the first answer and the command's entry "
                             + "of the second. " + Doors.PROXY},
             footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1"},
+            footer = {"  qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1",
+                    "  qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1 --attach",
+                    "",
+                    "- --attach needs a terminal for typing, and the MCP service refuses it; without a terminal it "
+                            + "streams what the harness prints, read-only."},
             exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+            exitCodeList = {"0:Done; with --attach, the command ended or you detached.",
+                    "1:The platform refused or cannot be reached; with --attach, the agent has no terminal to "
+                            + "attach to, or the connection could not be kept.",
+                    HelpText.USAGE})
     @TuiCommand(effect = Effect.READ)
     public static class HarnessCommand extends InContainer {
 
@@ -720,6 +730,13 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @CommandLine.Parameters(paramLabel = "<agent>", description = "The agent's id.")
         String agent;
+
+        @CommandLine.Option(names = "--attach",
+                description = "Attach to the harness's terminal once it is found, until it ends or Ctrl-] detaches.")
+        boolean attach;
+
+        /** The caller's terminal, for --attach; a test hands its own. */
+        LocalTerminal.Factory terminals = LocalTerminal::of;
 
         @Override
         WorkspacesCommand root() {
@@ -731,6 +748,9 @@ public class WorkspaceAgentsCommand implements Runnable {
             boolean json = root().json();
             String id = agentId(agent);
             long slot = slot(workspace);
+            if (attach) {
+                WorkspacesCommand.refuseWithoutATerminal();
+            }
             WorkspacesApi api = root().api(context);
             JsonNode worktree;
             try {
@@ -749,6 +769,9 @@ public class WorkspaceAgentsCommand implements Runnable {
                         command = entry;
                     }
                 }
+            }
+            if (attach) {
+                return attachTo(context, api, slot, id, commandId, command);
             }
             if (json) {
                 ObjectNode both = JsonNodeFactory.instance.objectNode();
@@ -769,6 +792,23 @@ public class WorkspaceAgentsCommand implements Runnable {
                         + SafeText.line(text(command, "status")) + ".");
             }
             return 0;
+        }
+
+        /** --attach: the harness's command, when it is a terminal. What was found is said on stderr. */
+        private int attachTo(CliContext context, WorkspacesApi api, long slot, String id, String commandId,
+                             JsonNode command) throws CliFailure, InterruptedException {
+            if (command == null) {
+                throw new CliFailure("Agent " + SafeText.line(id) + " has no harness command on slot " + slot
+                        + " to attach to.", CliFailure.FAILED);
+            }
+            if (!"TERMINAL".equals(text(command, "kind"))) {
+                throw new CliFailure("Agent " + SafeText.line(id) + "'s harness runs as a chat, not a terminal: read it "
+                        + "with `qits workspaces agents chat " + SafeText.line(id) + " --workspace " + slot + "`.",
+                        CliFailure.FAILED);
+            }
+            context.err().println("Agent " + SafeText.line(id) + ": attaching to command " + SafeText.line(commandId)
+                    + " on slot " + slot + ".");
+            return WorkspacesCommand.attach(context, api, slot, commandId, terminals);
         }
     }
 
@@ -1009,14 +1049,21 @@ public class WorkspaceAgentsCommand implements Runnable {
 
     @CommandLine.Command(name = "open", mixinStandardHelpOptions = true,
             description = {"Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an "
-                    + "interactive terminal; finish it on the agent's Terminal tab in the landing app, since the "
-                    + "CLI attaches to no terminal.",
-                    "POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}. "
-                            + Doors.PROXY},
+                    + "interactive terminal: --attach attaches this one to it at once, or `qits workspaces attach "
+                    + "<command> --workspace <n>` later, with the command id this prints. The agent's Terminal tab "
+                    + "in the landing app shows the same terminal.",
+                    "POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the "
+                            + "answer's command.id is the terminal's command. " + Doors.PROXY},
             footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits workspaces agents sign-in open --workspace 1 --harness CLAUDE"},
+            footer = {"  qits workspaces agents sign-in open --workspace 1 --harness CLAUDE --attach",
+                    "  qits workspaces agents sign-in open --workspace 1 --harness CLAUDE",
+                    "",
+                    "- With --attach, Ctrl-] detaches and leaves the sign-in running. --attach needs a terminal for "
+                            + "typing, and the MCP service refuses it; without a terminal it streams, read-only."},
             exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+            exitCodeList = {"0:Done; with --attach, the sign-in ended or you detached.",
+                    "1:The platform refused or cannot be reached; with --attach, the connection could not be kept.",
+                    HelpText.USAGE})
     public static class SignInOpenCommand extends InContainer {
 
         @CommandLine.ParentCommand
@@ -1025,6 +1072,13 @@ public class WorkspaceAgentsCommand implements Runnable {
         @CommandLine.Option(names = "--harness", paramLabel = "CLAUDE|KIMI",
                 description = "The harness to sign in. Default: the daemon's.")
         String harness;
+
+        @CommandLine.Option(names = "--attach",
+                description = "Attach to the sign-in terminal once it is open, until it ends or Ctrl-] detaches.")
+        boolean attach;
+
+        /** The caller's terminal, for --attach; a test hands its own. */
+        LocalTerminal.Factory terminals = LocalTerminal::of;
 
         @Override
         WorkspacesCommand root() {
@@ -1035,15 +1089,33 @@ public class WorkspaceAgentsCommand implements Runnable {
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = root().json();
             long slot = slot(workspace);
-            JsonNode answer = root().api(context).openSignIn(slot, harness(harness));
+            String chosen = harness(harness);
+            if (attach) {
+                // Before anything opens: a sign-in nobody can reach would only wait in the container.
+                WorkspacesCommand.refuseWithoutATerminal();
+            }
+            WorkspacesApi api = root().api(context);
+            JsonNode answer = api.openSignIn(slot, chosen);
+            String commandId = text(answer.path("command"), "id");
             if (json) {
                 Json.print(context.out(), answer);
+            }
+            if (!attach) {
+                if (!json) {
+                    context.out().println("Opened the sign-in terminal on slot " + slot + ": command "
+                            + SafeText.line(commandId) + ". Attach to it with `qits workspaces attach "
+                            + SafeText.line(commandId) + " --workspace " + slot + "`.");
+                }
                 return 0;
             }
-            context.out().println("Opened the sign-in terminal on slot " + slot + ": command "
-                    + SafeText.line(text(answer.path("command"), "id"))
-                    + ". Finish the sign-in on an agent's Terminal tab in the landing app.");
-            return 0;
+            if (commandId.isEmpty()) {
+                throw new CliFailure("The daemon of slot " + slot + " opened the sign-in without naming its command, "
+                        + "so there is nothing to attach to.", CliFailure.FAILED);
+            }
+            // stdout is the terminal from here on; what was opened is said beside it.
+            context.err().println("Opened the sign-in terminal on slot " + slot + ": command "
+                    + SafeText.line(commandId) + ". Attaching.");
+            return WorkspacesCommand.attach(context, api, slot, commandId, terminals);
         }
     }
 

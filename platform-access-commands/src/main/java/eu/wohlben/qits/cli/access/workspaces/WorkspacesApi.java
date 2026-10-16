@@ -11,6 +11,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * qits-workspaces as the landing app's workspace pages call it (epic qits-1230, qits-1261): its JSON
@@ -195,6 +196,26 @@ final class WorkspacesApi {
     JsonNode installPlugin(long slot, String pluginId) throws CliFailure, InterruptedException {
         return client.post(uri(container(slot) + "/agent-plugins/" + segment(pluginId) + "/install"),
                 JsonNodeFactory.instance.objectNode());
+    }
+
+    /**
+     * The daemon's terminal socket for one command, {@code WS /terminal/commands/{id}}: the landing
+     * app's {@code terminalSocketUrl}, {@code ws} for an http base and {@code wss} for https.
+     */
+    URI terminalSocket(long slot, String commandId) throws CliFailure {
+        URI http = uri(container(slot) + "/terminal/commands/" + segment(commandId));
+        String scheme = switch (http.getScheme().toLowerCase(Locale.ROOT)) {
+            case "https", "wss" -> "wss";
+            case "http", "ws" -> "ws";
+            default -> throw new CliFailure("'" + base + "' is not a usable workspaces address. Give an http or "
+                    + "https base URL.", CliFailure.USAGE);
+        };
+        return URI.create(scheme + http.toString().substring(http.getScheme().length()));
+    }
+
+    /** The client the doors are called with; a socket opened beside them carries the same credential. */
+    PlatformClient client() {
+        return client;
     }
 
     static String container(long slot) {

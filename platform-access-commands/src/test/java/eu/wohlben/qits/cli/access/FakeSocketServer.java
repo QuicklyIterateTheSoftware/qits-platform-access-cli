@@ -31,7 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A WebSocket server in the test's own process, on a plain {@link ServerSocket}: the RFC 6455
- * opening handshake, and text, ping, pong and close frames. Each connection follows a script, one
+ * opening handshake, and text (whole or in parts), ping, pong and close frames, and a plain JSON
+ * answer for a request that is no upgrade. Each connection follows a script, one
  * script per connection in order. It records the path and the Authorization header of every upgrade
  * and every text frame a client sends, so a test can check the bearer and the subscription without
  * any output showing them.
@@ -41,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class FakeSocketServer implements AutoCloseable {
 
     private static final String ACCEPT_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    private static final int CONTINUATION = 0x0;
     private static final int TEXT = 0x1;
     private static final int CLOSE = 0x8;
     private static final int PING = 0x9;
@@ -112,7 +114,8 @@ public final class FakeSocketServer implements AutoCloseable {
             }
             String[] parts = requestLine == null ? new String[0] : requestLine.split(" ");
             upgrades.add(new Upgrade(parts.length > 1 ? parts[1] : "", headers.get("authorization")));
-            Connection connection = new Connection(socket, in, out, headers.getOrDefault("sec-websocket-key", ""));
+            Connection connection = new Connection(socket, in, out, headers.getOrDefault("sec-websocket-key", ""),
+                    Integer.parseInt(headers.getOrDefault("content-length", "0")));
             connections.add(connection);
             Script script = scripts.poll();
             if (script == null) {
@@ -142,20 +145,36 @@ public final class FakeSocketServer implements AutoCloseable {
         private final DataInputStream in;
         private final OutputStream out;
         private final String key;
+        private final int contentLength;
         public final List<String> texts = Collections.synchronizedList(new ArrayList<>());
         public final AtomicInteger pings = new AtomicInteger();
 
-        Connection(Socket socket, DataInputStream in, OutputStream out, String key) {
+        Connection(Socket socket, DataInputStream in, OutputStream out, String key, int contentLength) {
             this.socket = socket;
             this.in = in;
             this.out = out;
             this.key = key;
+            this.contentLength = contentLength;
         }
 
         /** Answers the upgrade with this status instead of 101. */
         public void refuse(int status, String body, String... headerPairs) throws IOException {
+            respond(status, "Refused", body, headerPairs);
+        }
+
+        /**
+         * Answers a plain HTTP request with 200 and this JSON, after reading its body: a door served
+         * beside the socket on the same address, as qits-workspaces serves its JSON doors and the
+         * container proxy's sockets. The request's body is kept in {@link #texts}.
+         */
+        public void answer(String json) throws IOException {
+            texts.add(new String(in.readNBytes(contentLength), StandardCharsets.UTF_8));
+            respond(200, "OK", json);
+        }
+
+        private void respond(int status, String phrase, String body, String... headerPairs) throws IOException {
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-            StringBuilder head = new StringBuilder("HTTP/1.1 " + status + " Refused\r\n");
+            StringBuilder head = new StringBuilder("HTTP/1.1 " + status + " " + phrase + "\r\n");
             for (int i = 0; i + 1 < headerPairs.length; i += 2) {
                 head.append(headerPairs[i]).append(": ").append(headerPairs[i + 1]).append("\r\n");
             }
@@ -189,6 +208,14 @@ public final class FakeSocketServer implements AutoCloseable {
 
         public void send(String text) throws IOException {
             write(TEXT, text.getBytes(StandardCharsets.UTF_8));
+        }
+
+        /** One text message in several frames: the first parts without FIN, the last as a continuation with it. */
+        public void sendInParts(String... parts) throws IOException {
+            for (int i = 0; i < parts.length; i++) {
+                int opcode = i == 0 ? TEXT : CONTINUATION;
+                write(opcode, parts[i].getBytes(StandardCharsets.UTF_8), i == parts.length - 1);
+            }
         }
 
         public void ping() throws IOException {
@@ -276,8 +303,12 @@ public final class FakeSocketServer implements AutoCloseable {
             return new Frame(first & 0x0F, payload);
         }
 
-        private synchronized void write(int opcode, byte[] payload) throws IOException {
-            out.write(0x80 | opcode);
+        private void write(int opcode, byte[] payload) throws IOException {
+            write(opcode, payload, true);
+        }
+
+        private synchronized void write(int opcode, byte[] payload, boolean fin) throws IOException {
+            out.write((fin ? 0x80 : 0) | opcode);
             if (payload.length < 126) {
                 out.write(payload.length);
             } else if (payload.length < 65536) {

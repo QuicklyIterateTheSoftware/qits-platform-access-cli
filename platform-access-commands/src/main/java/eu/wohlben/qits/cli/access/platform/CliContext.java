@@ -85,7 +85,7 @@ public record CliContext(
      *                               fall back to its own environment
      */
     public static CliContext system() {
-        if (System.getProperty(MCP_SERVICE) != null || System.getenv(MCP_SERVICE) != null) {
+        if (inMcpService()) {
             throw new IllegalStateException("A command ran without a context in the MCP service ("
                     + MCP_SERVICE + " is set): it would have called the platform as the service, not the caller.");
         }
@@ -93,6 +93,14 @@ public record CliContext(
                 new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8),
                 new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8),
                 Clock.systemUTC(), Sleeper.real(), TokenClient::new, StopSignals::install);
+    }
+
+    /**
+     * Whether this process is the MCP service ({@link #MCP_SERVICE}). A command that would take over a
+     * terminal refuses there: a tool call has none, and would wait for as long as the terminal lives.
+     */
+    public static boolean inMcpService() {
+        return System.getProperty(MCP_SERVICE) != null || System.getenv(MCP_SERVICE) != null;
     }
 
     public SessionFile sessionFile() {
