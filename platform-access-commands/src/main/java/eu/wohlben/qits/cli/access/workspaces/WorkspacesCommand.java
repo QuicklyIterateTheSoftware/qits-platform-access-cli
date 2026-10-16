@@ -15,6 +15,8 @@ import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.complete.ProjectSource;
 import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.terminal.LocalTerminal;
+import eu.wohlben.qits.cli.access.terminal.TerminalAttach;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.tui.api.Interaction;
@@ -636,7 +638,7 @@ public class WorkspacesCommand implements Runnable {
         URI uri = api.terminalSocket(slot, commandId);
         // Fails at once without a credential, rather than in the reconnect loop.
         context.credential().bearer();
-        TerminalAttach attachment = new TerminalAttach(api.client(), uri, commandId, terminals.open(context),
+        TerminalAttach attachment = new TerminalAttach(api.client(), uri, TerminalAttach.Subject.command(commandId), terminals.open(context),
                 context.out(), context.err(), context.sleeper(), TerminalAttach.BACKOFF, TerminalAttach.SIZE_POLL);
         context.onStop().accept(attachment::stop);
         return attachment.run();

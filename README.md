@@ -9,7 +9,8 @@ Commands:
 - `qits session-daemon` keeps that session fresh for as long as it runs.
 - `qits projects list`, `qits repositories … list`,
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
-  and `qits release-request … list|create|join|withdraw|regenerate` read from and ask the projects service.
+  and `qits release-request … list|create|join|withdraw|regenerate` read from and ask the projects service;
+  `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
   failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
@@ -533,6 +534,7 @@ Installing it is not part of this version.
     qits projects list
     qits repositories --project <project> list
     qits repositories --project <project> create <name> [--component <component>]
+    qits repositories --project <project> remote-login [--repository <repository>]
     qits work list --project <project> [--archetype <A>] [--status <STATUS>] [--parent <entity>]
     qits work --entity <id or qualified id> details
     <payload> | qits work create --archetype <A>
@@ -692,6 +694,36 @@ that role yet — the two read the same from here. A 403 says the door takes `qi
 service yet.
 
     qits repositories --project qits create qits-docs-app --component qits-docs
+
+### qits repositories --project \<project\> remote-login [--repository \<repository\>]
+
+The project page's "Sign in to backup remote" (qits-1268): this terminal attached to a repository's
+backup-remote sign-in, `WS /projects/api/repositories/{id}/remote-login` on qits-projects, with the
+caller's own bearer. The server runs an interactive `git push` to the backup remote; git's username
+and password prompts come here, and what is answered fills the credential store every backup of the
+project pushes with, so one sign-in clears every `AUTH_REQUIRED`. The door takes `qits:admin` or
+`qits:admin-agent`, a person's token; `qits:agent` is refused.
+
+- Without `--repository` it is the **project repository**, the list's `wrapper.repositoryId`, as the
+  page's Backups panel picks it: what the sign-in authenticates is the host, not the repository.
+  `--repository` takes a name or an id. A repository with no `backupUrl` stops with exit 1 before
+  anything is opened, since there is nothing to sign in to.
+- The terminal is `qits workspaces attach`'s (the same client, `access/terminal/`): raw mode, the
+  size on open and on every change, `{"type":"data"…}` and `{"type":"resize"…}` out, raw text in.
+  **Ctrl-] detaches**; the server keeps the sign-in about a minute, and running the command again
+  attaches to it and replays what the terminal held. Any close but a clean one attaches again after
+  0.5, 1, 2, 4 and 4 s. Without a terminal on stdin it only streams, read-only.
+- **After a clean close** (git exited, or the server wrote a refusal such as a busy repository and
+  closed) it does what the panel does: a close says the terminal ended, not that the sign-in worked,
+  so it asks for every backup of the project to run again (`POST
+  /projects/api/projects/{id}/repositories/backup-sync`, which answers how many were scheduled),
+  waits 3 s, reads the repositories once more and prints each one's last backup. The pushes run in
+  the background, so a row may still read as before; `qits repositories list -o json` asks again.
+  Nothing follows a detach or a stop.
+- It is `Interaction.TERMINAL`, so the MCP service does not serve it.
+
+    qits repositories --project qits remote-login
+    qits repositories --project qits remote-login --repository qits-ci-service
 
 ### qits work
 

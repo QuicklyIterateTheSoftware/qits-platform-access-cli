@@ -225,6 +225,9 @@ class McpToolCatalogTest {
         assertThat(byCommand.get("qits workspaces attach").reason())
                 .isEqualTo("needs a terminal; runs until the command it attaches to ends");
         assertThat(catalog.instructions()).contains(byCommand.get("qits workspaces attach").line());
+        assertThat(catalog.tool("repositories_remote-login")).isEmpty();
+        assertThat(byCommand.get("qits repositories remote-login").interaction()).isEqualTo(Interaction.TERMINAL);
+        assertThat(catalog.instructions()).contains(byCommand.get("qits repositories remote-login").line());
 
         // The flag is in the schema, as every option is; a call that sets it is refused before anything opens.
         assertThat(properties(tool("workspaces_agents_sign-in_open"))).containsKey("attach");

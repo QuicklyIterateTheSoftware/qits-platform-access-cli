@@ -1,4 +1,4 @@
-package eu.wohlben.qits.cli.access.workspaces;
+package eu.wohlben.qits.cli.access.terminal;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,17 +25,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * One attachment to a command's terminal on a slot's daemon: {@code WS /terminal/commands/{id}},
- * through qits-workspaces' container proxy, the socket the landing app's Terminal tab opens
- * ({@code TerminalSocket} and {@code ReconnectingSocket} there, whose rules this keeps).
+ * One attachment of this terminal to a remote terminal over a WebSocket. Two sockets speak this wire
+ * today: a command's terminal on a slot's daemon, {@code WS /terminal/commands/{id}} through
+ * qits-workspaces' container proxy, the socket the landing app's Terminal tab opens ({@code
+ * TerminalSocket} and {@code ReconnectingSocket} there, whose rules this keeps); and a repository's
+ * backup-remote sign-in on qits-projects, {@code WS /projects/api/repositories/{id}/remote-login}.
+ * What is attached to is only named in the log lines ({@link Subject}); the wire is the same.
  * <p>
  * <b>The wire.</b> Keystrokes go out as {@code {"type":"data","data":…}}, the window size as
  * {@code {"type":"resize","cols":…,"rows":…}}, sent on every open and again when the window changes.
  * The daemon answers with raw terminal text, and replays up to 256 KB of scrollback on each attach;
  * a reconnect therefore clears the screen first, as the page does.
  * <p>
- * <b>Closing only detaches.</b> The command outlives this socket. A clean close from the server
- * (1000) is final: the command ended, or was gone before the attach (the daemon then says so in the
+ * <b>Closing only detaches.</b> The remote side outlives this socket. A clean close from the server
+ * (1000) is final: the command ended, or was gone before the attach (the server then says so in the
  * terminal and closes). Any other end reconnects after 0.5, 1, 2, 4 and 4 seconds, counted from the
  * last open, and then gives up. A refused upgrade other than a 5xx ends at once.
  * <p>
@@ -47,15 +50,15 @@ import java.util.concurrent.TimeoutException;
  * still goes out. The terminal is restored on every way out of {@link #run()}; SIGINT and SIGTERM
  * ({@link #stop()}) leave the same way, and {@link SttyTerminal}'s shutdown hook covers the rest.
  */
-final class TerminalAttach {
+public final class TerminalAttach {
 
     /** The landing app's {@code RECONNECT_BACKOFF_MS}. */
-    static final List<Duration> BACKOFF = List.of(Duration.ofMillis(500), Duration.ofSeconds(1), Duration.ofSeconds(2),
+    public static final List<Duration> BACKOFF = List.of(Duration.ofMillis(500), Duration.ofSeconds(1), Duration.ofSeconds(2),
             Duration.ofSeconds(4), Duration.ofSeconds(4));
     /** Ctrl-]. */
     static final char DETACH = 0x1d;
     /** How often the size is read besides SIGWINCH. */
-    static final Duration SIZE_POLL = Duration.ofSeconds(2);
+    public static final Duration SIZE_POLL = Duration.ofSeconds(2);
     /** The landing app's default size, for a terminal that cannot tell its own. */
     static final LocalTerminal.Size DEFAULT_SIZE = new LocalTerminal.Size(100, 30);
     /** Home, erase the screen, erase the scrollback: what xterm's reset does to the page's screen. */
@@ -64,6 +67,18 @@ final class TerminalAttach {
     static final Duration SEND_TIMEOUT = Duration.ofSeconds(10);
     /** Far above any replay (256 KB of bytes); a larger message is a broken or hostile stream. */
     static final int MAX_MESSAGE_CHARS = 8 * 1024 * 1024;
+
+    /**
+     * What is attached to, as the log lines name it: {@code label} after "attached to", {@code noun}
+     * for what keeps running after a detach and what ended on a clean close.
+     */
+    public record Subject(String label, String noun) {
+
+        /** A command on a slot's daemon: "attached to command {id}", "the command keeps running". */
+        public static Subject command(String commandId) {
+            return new Subject("command " + SafeText.line(commandId), "the command");
+        }
+    }
 
     /** What the socket, the keyboard and the window hand to the loop. */
     private sealed interface Inbound {
@@ -95,7 +110,7 @@ final class TerminalAttach {
 
     private final PlatformClient client;
     private final URI uri;
-    private final String commandId;
+    private final Subject subject;
     private final LocalTerminal terminal;
     private final PrintStream out;
     private final PrintStream log;
@@ -104,6 +119,7 @@ final class TerminalAttach {
     private final Duration sizePoll;
 
     private volatile boolean detached;
+    private volatile boolean ended;
     private volatile boolean stopped;
     private volatile boolean raw;
     private volatile BlockingQueue<Inbound> inbox;
@@ -113,11 +129,11 @@ final class TerminalAttach {
     private String trouble;
     private LocalTerminal.Size sent;
 
-    TerminalAttach(PlatformClient client, URI uri, String commandId, LocalTerminal terminal, PrintStream out,
-                   PrintStream log, Sleeper sleeper, List<Duration> backoff, Duration sizePoll) {
+    public TerminalAttach(PlatformClient client, URI uri, Subject subject, LocalTerminal terminal, PrintStream out,
+                          PrintStream log, Sleeper sleeper, List<Duration> backoff, Duration sizePoll) {
         this.client = client;
         this.uri = uri;
-        this.commandId = commandId;
+        this.subject = subject;
         this.terminal = terminal;
         this.out = out;
         this.log = log;
@@ -126,8 +142,8 @@ final class TerminalAttach {
         this.sizePoll = sizePoll;
     }
 
-    /** Ends the attachment from any thread; the command keeps running. {@link #run()} then returns 0. */
-    void stop() {
+    /** Ends the attachment from any thread; the remote side keeps running. {@link #run()} then returns 0. */
+    public void stop() {
         stopped = true;
         leave();
     }
@@ -155,7 +171,7 @@ final class TerminalAttach {
      * 0 when the command ended, on a detach, a stop, or when stdout closed; 1 when the reconnects ran
      * out or the platform refused; 2 for a refusal the person has to act on (the session ended).
      */
-    int run() throws InterruptedException {
+    public int run() throws InterruptedException {
         boolean interactive = terminal.interactive();
         try {
             if (interactive) {
@@ -164,7 +180,7 @@ final class TerminalAttach {
                 terminal.onResize(this::resized);
                 Thread keyboard = Thread.ofPlatform().daemon().name("qits-attach-keys").unstarted(this::readKeys);
                 keyboard.start();
-                log("attached to command " + SafeText.line(commandId) + "; Ctrl-] detaches");
+                log("attached to " + subject.label() + "; Ctrl-] detaches");
             }
             return loop(interactive);
         } catch (CliFailure failure) {
@@ -224,7 +240,8 @@ final class TerminalAttach {
             switch (ending) {
                 case ENDED -> {
                     restore();
-                    log("the command's terminal closed: the command ended");
+                    ended = true;
+                    log(subject.noun() + "'s terminal closed: " + subject.noun() + " ended");
                     return 0;
                 }
                 case LEFT -> {
@@ -233,8 +250,8 @@ final class TerminalAttach {
                 case DROPPED -> {
                     if (attempt >= backoff.size()) {
                         restore();
-                        log(trouble + "; gave up after " + backoff.size() + " attempts. The command may still run: "
-                                + "attach again");
+                        log(trouble + "; gave up after " + backoff.size() + " attempts. " + capitalized(subject.noun())
+                                + " may still run: attach again");
                         return CliFailure.FAILED;
                     }
                     Duration wait = backoff.get(attempt++);
@@ -304,6 +321,18 @@ final class TerminalAttach {
         }
     }
 
+    /**
+     * Whether {@link #run()} returned because the server closed cleanly (1000): the remote side ended,
+     * rather than this side detaching, being stopped, or giving up.
+     */
+    public boolean ended() {
+        return ended;
+    }
+
+    private static String capitalized(String text) {
+        return text.isEmpty() ? text : Character.toUpperCase(text.charAt(0)) + text.substring(1);
+    }
+
     private boolean leaving() {
         return detached || stopped || outputClosed;
     }
@@ -311,11 +340,11 @@ final class TerminalAttach {
     private int left() {
         restore();
         if (detached) {
-            log("detached; the command keeps running");
+            log("detached; " + subject.noun() + " keeps running");
         } else if (stopped) {
-            log("stopped; the command keeps running");
+            log("stopped; " + subject.noun() + " keeps running");
         } else {
-            log("stdout is closed; detached, the command keeps running");
+            log("stdout is closed; detached, " + subject.noun() + " keeps running");
         }
         return 0;
     }

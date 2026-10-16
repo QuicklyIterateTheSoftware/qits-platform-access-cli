@@ -1,4 +1,4 @@
-package eu.wohlben.qits.cli.access.workspaces;
+package eu.wohlben.qits.cli.access.terminal;
 
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import sun.misc.Signal;

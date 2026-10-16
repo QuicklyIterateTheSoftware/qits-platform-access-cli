@@ -158,6 +158,8 @@ The repositories of one project: list shows them, create stands a new one up. Re
 
 branches, commits, commit-changes, commit-diff and commit-subjects read one repository's git history; each takes the repository as --repository <id or name>.
 
+remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for the credentials the project's backups push with.
+
 A repository's archetype is read off its name's role suffix, so the name is what says what kind of component it is. There is no flag for the archetype, on purpose.
 
 ## qits repositories list
@@ -377,6 +379,47 @@ qits repositories --project qits commit-subjects --repository qits-ci-service --
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories remote-login
+
+Attach this terminal to a repository's backup-remote sign-in: the server runs an interactive git push to the backup remote, and git's username and password prompts come here. What you answer fills the credential store every backup of the project pushes with, so one sign-in fixes every repository whose last backup says AUTH_REQUIRED.
+
+Without --repository it is the project repository (the one whose .gitmodules names the others), as the project page's Backups panel uses: what the sign-in authenticates is the host, not the repository. The repository needs a backup remote.
+
+Ctrl-] detaches; the sign-in waits about a minute for you to attach again (run the same command), and the server replays what the terminal held. Every other key goes to git. A dropped connection attaches again after 0.5, 1, 2, 4 and 4 s.
+
+When the sign-in ends (git exits, or the server refuses in the terminal, for example because a push is already running), it asks for every backup of the project to run again (POST /projects/api/projects/{id}/repositories/backup-sync), waits 3 s and prints each repository's last backup. The pushes run in the background, so a result still says AUTH_REQUIRED until its push has run: ask again with `qits repositories list -o json`.
+
+With stdin not a terminal it only streams what the terminal prints: nothing is typed.
+
+WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent, a person's token; qits:agent is refused.
+
+```
+qits repositories remote-login [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository whose backup remote to sign in to: its id or name. Default: the project repository. |
+
+### Examples
+
+```
+qits repositories remote-login --project qits
+qits repositories remote-login --project qits --repository qits-ci-service
+```
+
+- git asks for a username and a password: give a scoped personal access token, not the account's password. Nothing is echoed at the password prompt.
+- Not an MCP tool: it needs a terminal and runs until the sign-in ends.
+
+### Exit codes
+
+- `0` The sign-in ended and the backups were asked to run again, you detached (Ctrl-]), or it was stopped (SIGINT, SIGTERM). A 0 does not say the sign-in worked: the backups say that.
+- `1` The platform refused (the socket or the backups), the repository has no backup remote, or the connection dropped and five attempts to attach again failed.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits work

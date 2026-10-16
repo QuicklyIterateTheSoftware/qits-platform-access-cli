@@ -1,4 +1,4 @@
-package eu.wohlben.qits.cli.access.workspaces;
+package eu.wohlben.qits.cli.access.terminal;
 
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -6,14 +6,15 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 import java.io.InputStream;
 
 /**
- * The caller's own terminal, as {@code qits workspaces attach} uses it: raw mode in and out, its
+ * The caller's own terminal, as {@code qits workspaces attach} and {@code qits repositories remote-login}
+ * use it: raw mode in and out, its
  * size, a word when the window changes, and the keystrokes. The commands module has no JLine, so the
  * real one is {@code stty} on {@code /dev/tty} ({@link SttyTerminal}); a test hands a fake.
  * <p>
  * Whether there is a terminal at all is decided here, once, by {@link #of}: stdin a person's terminal
  * and {@code stty} able to read it. Without one the attachment only streams ({@link #READ_ONLY}).
  */
-interface LocalTerminal {
+public interface LocalTerminal {
 
     /** A window size, in characters. */
     record Size(int cols, int rows) {

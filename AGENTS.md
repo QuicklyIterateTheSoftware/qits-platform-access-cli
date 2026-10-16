@@ -152,7 +152,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                and the tables). Its writes take a JSON payload on stdin and, with none, print the
                usage and the schema the service serves per archetype and door (entity doors) or
                its OpenAPI document (comment doors), through WorkPayload; the CLI keeps no copy of
-               a schema and no route per archetype
+               a schema and no route per archetype. `repositories remote-login` (RemoteLoginCommand,
+               qits-1268) attaches to WS /projects/api/repositories/{id}/remote-login through
+               terminal/'s TerminalAttach; without --repository it is the list's
+               wrapper.repositoryId, as the page's Backups panel picks it, and a clean close is
+               followed by the panel's project-wide backup-sync and one re-read 3 s later
     ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
     report/    qits ci report: release reports. The framework (ReportKind, ReportParser,
                StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
@@ -211,8 +215,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                src/test/resources/workspaces/landing-pacts/) and fails on a call no command makes;
                copy the pacts again when the pages change. Register runner and rotate token are
                left out: they answer a one-time token. `attach` (and `--attach` on sign-in open
-               and harness) is the Terminal tab: TerminalAttach is the reconnecting socket to the
-               daemon's WS /terminal/commands/{id}, with the landing app's frames and backoff;
+               and harness) is the Terminal tab, on terminal/'s TerminalAttach
+    terminal/  attaching this terminal to a remote one over a WebSocket, shared by `workspaces
+               attach` and `repositories remote-login`: TerminalAttach is the reconnecting socket
+               with the landing app's frames and backoff (what is attached to is only a label in
+               its log lines, TerminalAttach.Subject; ended() tells a clean close from a detach);
                LocalTerminal is the caller's terminal, SttyTerminal the real one (stty on /dev/tty,
                SIGWINCH through sun.misc.Signal plus a size poll; no JLine here), READ_ONLY the
                answer when stdin is no terminal

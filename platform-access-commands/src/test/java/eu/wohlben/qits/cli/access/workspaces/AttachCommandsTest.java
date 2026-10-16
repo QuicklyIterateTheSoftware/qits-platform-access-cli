@@ -10,6 +10,8 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.access.terminal.FakeTerminal;
+import eu.wohlben.qits.cli.access.terminal.LocalTerminal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * `qits workspaces attach` and the two commands that attach at once (`agents sign-in open --attach`,
  * `agents harness --attach`), as a person types them, against one fake that serves both the doors and
  * the terminal socket on the same address, as qits-workspaces does. The attachment's own behaviour is
- * {@link TerminalAttachTest}'s; this is which command it attaches to, and what is refused first.
+ * {@link eu.wohlben.qits.cli.access.terminal.TerminalAttachTest}'s; this is which command it attaches to, and what is refused first.
  */
 class AttachCommandsTest {
 
@@ -154,7 +156,7 @@ class AttachCommandsTest {
 
     @Test
     void signInOpenAttachOpensTheSignInAndAttachesToTheCommandItStarted() throws Exception {
-        terminal = new TerminalAttachTest.FakeTerminal();
+        terminal = new FakeTerminal();
         server.scripts.add(c -> c.answer("""
                 {"command":{"id":"%s","kind":"TERMINAL","status":"RUNNING"}}""".formatted(COMMAND)));
         server.scripts.add(c -> {
@@ -176,7 +178,7 @@ class AttachCommandsTest {
         assertThat(opened.out()).isEqualTo("Paste code here if prompted > ");
         assertThat(opened.err()).contains("Opened the sign-in terminal on slot 1: command " + COMMAND + ". Attaching.")
                 .contains("the command ended");
-        assertThat(((TerminalAttachTest.FakeTerminal) terminal).restored()).isTrue();
+        assertThat(((FakeTerminal) terminal).restored()).isTrue();
     }
 
     @Test

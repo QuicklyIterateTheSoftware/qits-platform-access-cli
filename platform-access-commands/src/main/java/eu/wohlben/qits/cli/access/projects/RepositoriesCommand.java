@@ -21,11 +21,13 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {RepositoriesCommand.ListCommand.class, RepositoriesCommand.CreateCommand.class,
                 RepositoryGitCommands.BranchesCommand.class, RepositoryGitCommands.CommitsCommand.class,
                 RepositoryGitCommands.CommitChangesCommand.class, RepositoryGitCommands.CommitDiffCommand.class,
-                RepositoryGitCommands.CommitSubjectsCommand.class},
+                RepositoryGitCommands.CommitSubjectsCommand.class, RemoteLoginCommand.class},
         description = {"The repositories of one project: list shows them, create stands a new one up. Release "
                 + "requests take a repository's id or name as --repository.",
                 "branches, commits, commit-changes, commit-diff and commit-subjects read one repository's git "
                         + "history; each takes the repository as --repository <id or name>.",
+                "remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for "
+                        + "the credentials the project's backups push with.",
                 "A repository's archetype is read off its name's role suffix, so the name is what says what kind "
                         + "of component it is. There is no flag for the archetype, on purpose."})
 public class RepositoriesCommand implements Runnable {

@@ -423,6 +423,38 @@ public final class ProjectsApi {
         return client.get(uri(repositoryPath(repoId) + "/commit-subjects" + query(query)));
     }
 
+    // --- backups ---
+
+    /**
+     * {@code {"projectId", "scheduled"}}: every repository of the project that has a backup remote,
+     * queued for a push to it (202). The pushes run after the answer, so it says how many, never how
+     * they went; each outcome lands on its repository's {@code lastBackup}.
+     */
+    public JsonNode backupSyncProject(String projectId) throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/projects/" + segment(projectId) + "/repositories/backup-sync"));
+    }
+
+    /**
+     * The repository's backup-remote sign-in terminal, {@code WS
+     * /projects/api/repositories/{id}/remote-login}: {@code ws} for an http base and {@code wss} for
+     * https, as the workspaces terminal socket is derived.
+     */
+    public URI remoteLoginSocket(String repoId) throws CliFailure {
+        URI http = uri(repositoryPath(repoId) + "/remote-login");
+        String scheme = switch (http.getScheme().toLowerCase(Locale.ROOT)) {
+            case "https", "wss" -> "wss";
+            case "http", "ws" -> "ws";
+            default -> throw new CliFailure("'" + base + "' is not a usable projects address. Give an http or "
+                    + "https base URL.", CliFailure.USAGE);
+        };
+        return URI.create(scheme + http.toString().substring(http.getScheme().length()));
+    }
+
+    /** The client the doors are called with; a socket opened beside them carries the same credential. */
+    public PlatformClient client() {
+        return client;
+    }
+
     private static String repositoryPath(String repoId) {
         return "/projects/api/repositories/" + segment(repoId);
     }
