@@ -131,6 +131,57 @@ class DockerfileSbomTest {
   }
 
   @Test
+  void anArgDefaultResolvesTheArgsDeclaredAboveIt() throws IOException {
+    Path dockerfile = work.resolve("nested.Dockerfile");
+    Files.writeString(
+        dockerfile,
+        "ARG QITS_DOMAIN=wohlben.eu\n"
+            + "ARG BROWSER_BASE=registry.qits.${QITS_DOMAIN}/qits/build-images/node-browser-base:2026.1003.45515\n"
+            + "FROM ${BROWSER_BASE}\n");
+
+    // Docker expands the default when the ARG is declared; one level at FROM time would leave
+    // `registry.qits.${QITS_DOMAIN}/…` behind for the charset guard to refuse.
+    List<DockerfileSbom.Base> bases = DockerfileSbom.bases(List.of(dockerfile), Map.of());
+    assertEquals("registry.qits.wohlben.eu/qits/build-images/node-browser-base", bases.get(0).name());
+    assertEquals("2026.1003.45515", bases.get(0).version());
+  }
+
+  @Test
+  void aBuildArgWinsInsideANestedArgDefault() throws IOException {
+    Path dockerfile = work.resolve("nested.Dockerfile");
+    Files.writeString(
+        dockerfile,
+        "ARG QITS_DOMAIN=wohlben.eu\n"
+            + "ARG BROWSER_BASE=registry.qits.${QITS_DOMAIN}/qits/build-images/node-browser-base:2026.1003.45515\n"
+            + "FROM ${BROWSER_BASE}\n");
+
+    List<DockerfileSbom.Base> bases =
+        DockerfileSbom.bases(List.of(dockerfile), Map.of("QITS_DOMAIN", "example.org"));
+    assertEquals("registry.qits.example.org/qits/build-images/node-browser-base", bases.get(0).name());
+  }
+
+  @Test
+  void aGlobalArgResolvesInsideAFromReference() throws IOException {
+    Path dockerfile = work.resolve("global.Dockerfile");
+    Files.writeString(
+        dockerfile, "ARG QITS_DOMAIN=wohlben.eu\nFROM mirror.qits.${QITS_DOMAIN}/quay/quarkus/x:jdk-25\n");
+
+    List<DockerfileSbom.Base> bases = DockerfileSbom.bases(List.of(dockerfile), Map.of());
+    assertEquals("mirror.qits.wohlben.eu/quay/quarkus/x", bases.get(0).name());
+    assertEquals("jdk-25", bases.get(0).version());
+  }
+
+  @Test
+  void anUndefinedVariableInAnArgDefaultIsEmptyAsInDockerNotARefusal() throws IOException {
+    Path dockerfile = work.resolve("lenient.Dockerfile");
+    Files.writeString(dockerfile, "ARG BASE=alpine${NOBODY}:3.20\nFROM ${BASE}\n");
+
+    List<DockerfileSbom.Base> bases = DockerfileSbom.bases(List.of(dockerfile), Map.of());
+    assertEquals("alpine", bases.get(0).name());
+    assertEquals("3.20", bases.get(0).version());
+  }
+
+  @Test
   void scratchIsTheEmptyBaseAndNamesNoImage() {
     // ci-daemon.Dockerfile ends on two `FROM scratch` stages. A pkg:docker/scratch@latest component
     // would be a dependency on nothing.

@@ -56,7 +56,10 @@ import java.util.regex.Pattern;
  * qits-ci-daemon's own Dockerfile could not be described by it at all. Here the file's own {@code
  * ARG} defaults are substituted, {@code --build-arg} overrides them exactly as the build's do, and a
  * reference that is still unresolved after that is a refusal naming the variable. Emitting a
- * component whose version reads {@code ${BUILDER_IMAGE}} would be a document that lies.
+ * component whose version reads {@code ${BUILDER_IMAGE}} would be a document that lies. An {@code
+ * ARG} default is itself expanded when it is declared, against {@code --build-arg} and the defaults
+ * above it, so {@code ARG BASE=registry.qits.${QITS_DOMAIN}/…} resolves the way docker resolves it —
+ * and, as in docker, a variable nobody defines there reads as empty rather than refusing the line.
  */
 final class DockerfileSbom {
 
@@ -187,7 +190,8 @@ final class DockerfileSbom {
       if (arg.matches()) {
         String name = arg.group(1);
         String value = arg.group(2);
-        args.put(name, value == null ? "" : unquote(value.trim()));
+        // Docker substitutes earlier ARGs into a default at declaration time, so do it here too.
+        args.put(name, value == null ? "" : expand(unquote(value.trim()), args, buildArgs, null, line));
         continue;
       }
       Matcher from = FROM_LINE.matcher(line);
@@ -234,6 +238,10 @@ final class DockerfileSbom {
   /**
    * {@code $NAME}, {@code ${NAME}} and {@code ${NAME:-default}} against {@code --build-arg} first and
    * the file's own {@code ARG} defaults second — which is the precedence a real build has.
+   *
+   * <p>With no {@code dockerfile} this is the lenient expansion of an {@code ARG} default: an unknown
+   * variable becomes empty and an unterminated brace stays literal, as docker leaves them. Only a
+   * {@code FROM} refuses, because only there does the result become a component.
    */
   private static String expand(
       String reference,
@@ -259,6 +267,10 @@ final class DockerfileSbom {
       if (reference.charAt(i + 1) == '{') {
         int close = reference.indexOf('}', i + 2);
         if (close < 0) {
+          if (dockerfile == null) {
+            out.append(reference, i, reference.length());
+            break;
+          }
           throw CliException.policy(
               dockerfile + ": unterminated ${…} in FROM: " + line.trim());
         }
@@ -288,6 +300,9 @@ final class DockerfileSbom {
       }
       if (value == null || value.isEmpty()) {
         value = fallback;
+      }
+      if (value == null && dockerfile == null) {
+        value = "";
       }
       if (value == null) {
         throw CliException.policy(
