@@ -98,7 +98,7 @@
         <qits.idp-golden-masters.version>2026.1018.142635</qits.idp-golden-masters.version>
         <qits.events-golden-masters.version>2026.1010.121628</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1011.122834</qits.maintenance-golden-masters.version>
-        <qits.observability-golden-masters.version>2026.1010.134226</qits.observability-golden-masters.version>
+        <qits.observability-golden-masters.version>2026.1018.144631</qits.observability-golden-masters.version>
         <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:
              it reads every provider's recordings off the classpath and binds only what a command
              reads. -->
