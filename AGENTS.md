@@ -167,7 +167,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                IstanbulJsonParser; diff coverage from GitChangedLines), the contracts kind in contracts/
                (ContractsReportKind over PactFileParser, PactJvmVerificationReportParser and
                GoldenMasterIndexParser; ContractChanges, the identity rules the ui-components view
-               shares through the fixtures under report/contracts/diff/), the entity-changes kind
+               shares through the fixtures under report/contracts/diff/. A pact made on a service's
+               behalf by a library carries a `via` (PactEntry.Via: repository, artifact, version),
+               read off the pact's `qits-via` comment reference; it is part of a pact's identity
+               (ContractChanges.Pair's `via`), so a direct pact and a library's pact for the same
+               consumer and provider are two pacts, never merged, and a highlight that names such a
+               pair shows the library and its version), the entity-changes kind
                (EntityChangesReportKind, fed by no parser: step 0's generated docs/database/*.md
                against the same files at the baseline's tag, parsed back with the database/
                package's MermaidEntityDiagramFormat), the screenshots kind in screenshots/

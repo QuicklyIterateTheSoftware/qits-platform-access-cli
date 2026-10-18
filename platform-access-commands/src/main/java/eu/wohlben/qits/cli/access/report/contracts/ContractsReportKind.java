@@ -158,22 +158,24 @@ public final class ContractsReportKind implements ReportKind<ContractsReport> {
             String version = step.baseline().map(Baseline::version).orElse("the baseline");
             return List.of(new Highlight(Highlight.GOOD, "contracts unchanged since " + version, null, null, null));
         }
+        Map<ContractChanges.Pair, String> viaVersions = viaVersions(report, baseline.get());
         List<Highlight> lines = new ArrayList<>();
         for (ContractChanges.Pair pair : changes.newPairs()) {
-            lines.add(warn(pair(PactEntry.PROVIDER.equals(pair.role()) ? "now verifies pact: " : "new pact: ", pair, "")));
+            lines.add(warn(pair(PactEntry.PROVIDER.equals(pair.role()) ? "now verifies pact: " : "new pact: ", pair,
+                    "", viaVersions)));
         }
         states(lines, changes.removedStates(), Highlight.WARN, "provider state removed: ", " provider states removed");
         states(lines, changes.newStates(), Highlight.INFO, "new provider state: ", " new provider states");
         List<ContractChanges.Pair> newPairs = changes.newPairs();
         List<ContractChanges.Pair> removedPairs = changes.removedPairs();
         perPair(changes.newInteractions(), newPairs).forEach((pair, n) ->
-                lines.add(info(pair("+" + count(n, "interaction") + " ", pair, ""))));
+                lines.add(info(pair("+" + count(n, "interaction") + " ", pair, "", viaVersions))));
         perPair(changes.removedInteractions(), removedPairs).forEach((pair, n) ->
-                lines.add(info(pair(MINUS + count(n, "interaction") + " ", pair, ""))));
+                lines.add(info(pair(MINUS + count(n, "interaction") + " ", pair, "", viaVersions))));
         perPair(changes.changedInteractions(), List.of()).forEach((pair, n) ->
-                lines.add(info(pair(count(n, "interaction") + " changed ", pair, ""))));
+                lines.add(info(pair(count(n, "interaction") + " changed ", pair, "", viaVersions))));
         for (ContractChanges.Pair pair : removedPairs) {
-            lines.add(info(pair("pact removed: ", pair, "")));
+            lines.add(info(pair("pact removed: ", pair, "", viaVersions)));
         }
         if (lines.size() > Highlight.MAX_PER_REPORT) {
             int more = lines.size() - (Highlight.MAX_PER_REPORT - 1);
@@ -215,8 +217,41 @@ public final class ContractsReportKind implements ReportKind<ContractsReport> {
         return counts;
     }
 
-    private static String pair(String prefix, ContractChanges.Pair pair, String suffix) {
-        return fit(prefix + "%s" + ARROW + "%s" + suffix, pair.consumer(), pair.provider());
+    /**
+     * {@code prefix<consumer> → <provider><suffix>}, or, when the pair went through a library,
+     * {@code prefix<consumer> → <library repository> (<version>) → <provider><suffix>}. The version
+     * comes from {@code viaVersions}, keyed the same way {@link #viaVersions} builds it; without one
+     * (the library's version is not in either report) only the repository is named.
+     */
+    private static String pair(String prefix, ContractChanges.Pair pair, String suffix,
+                               Map<ContractChanges.Pair, String> viaVersions) {
+        if (pair.via() == null) {
+            return fit(prefix + "%s" + ARROW + "%s" + suffix, pair.consumer(), pair.provider());
+        }
+        String version = viaVersions.get(pair);
+        String library = version == null ? pair.via() : pair.via() + " (" + version + ")";
+        return fit(prefix + "%s" + ARROW + "%s" + ARROW + "%s" + suffix, pair.consumer(), library, pair.provider());
+    }
+
+    /**
+     * Every pair that went through a library, with the version its pact names: read off both reports
+     * (a removed pair's pact is only in the baseline), keyed as {@link ContractChanges.Pair} keys the
+     * same identity ({@code role}, {@code consumer}, the library's repository, {@code provider}).
+     */
+    private static Map<ContractChanges.Pair, String> viaVersions(ContractsReport report, ContractsReport baseline) {
+        Map<ContractChanges.Pair, String> versions = new LinkedHashMap<>();
+        viaVersions(report, versions);
+        viaVersions(baseline, versions);
+        return versions;
+    }
+
+    private static void viaVersions(ContractsReport source, Map<ContractChanges.Pair, String> versions) {
+        for (PactEntry pact : source.pacts()) {
+            if (pact.via() != null) {
+                versions.putIfAbsent(new ContractChanges.Pair(pact.role(), pact.consumer(), pact.via().repository(),
+                        pact.provider()), pact.via().version());
+            }
+        }
     }
 
     /**

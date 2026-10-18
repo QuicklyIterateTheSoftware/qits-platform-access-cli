@@ -65,6 +65,28 @@ class ContractChangesTest {
     }
 
     @Test
+    void aDirectAndAViaPactForTheSamePairStayTwoEntriesAndTwoPairs() {
+        InteractionEntry interaction = new InteractionEntry("op", List.of(), InteractionEntry.HTTP, "GET", "/", 200,
+                "sha256:0", null);
+        PactEntry direct = new PactEntry(PactEntry.CONSUMER, "qits-fx-app", "qits-events-service", "4.0",
+                "pacts/qits-fx-app_qits-events-service.json", List.of(interaction), null);
+        PactEntry viaLibrary = new PactEntry(PactEntry.CONSUMER, "qits-fx-app", "qits-events-service", "4.0",
+                "pacts/qits-fx-app_qits-eventstream-javalib_qits-events-service.json", List.of(interaction),
+                new PactEntry.Via("qits-eventstream-javalib", "eu.wohlben.qits:qits-eventstream",
+                        "2026.1014.223716"));
+        ContractsReport report = new ContractsReport(List.of(), new ContractSides(true, false, false), null,
+                List.of(direct, viaLibrary), List.of(), false);
+        ContractsReport empty = new ContractsReport(List.of(), new ContractSides(true, false, false), null,
+                List.of(), List.of(), false);
+
+        assertThat(report.pacts()).hasSize(2);
+        ContractChanges changes = ContractChanges.between(report, empty);
+
+        assertThat(changes.newPairs()).hasSize(2).extracting(ContractChanges.Pair::via)
+                .containsExactlyInAnyOrder(null, "qits-eventstream-javalib");
+    }
+
+    @Test
     void aSideNotReportedInTheReportRemovesNothing() {
         ContractsReport baseline = ContractFixtures.payload("diff/baseline.json");
         ContractsReport report = ContractFixtures.payload("diff/report.json");

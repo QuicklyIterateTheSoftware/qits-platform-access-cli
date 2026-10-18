@@ -83,7 +83,7 @@ public final class PactJvmVerificationReportParser implements ReportParser<Contr
         }
         List<PactEntry> pacts = new ArrayList<>();
         byConsumer.forEach((consumer, interactions) -> pacts.add(new PactEntry(PactEntry.PROVIDER, consumer, provider,
-                null, source, List.copyOf(interactions.values()))));
+                null, source, List.copyOf(interactions.values()), null)));
         return new ContractFile(new ContractSource(language(), tool(), source, "pact-jvm-json-report"),
                 ContractFile.PROVIDER, pacts, null);
     }

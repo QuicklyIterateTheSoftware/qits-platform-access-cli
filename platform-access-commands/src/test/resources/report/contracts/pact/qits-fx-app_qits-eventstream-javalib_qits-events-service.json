@@ -1,0 +1,48 @@
+{
+  "consumer": {
+    "name": "qits-fx-app"
+  },
+  "provider": {
+    "name": "qits-events-service"
+  },
+  "interactions": [
+    {
+      "description": "closeLedger: publish",
+      "providerStates": [
+        {
+          "name": "a stream exists"
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "path": "/events/api/streams/ledgers"
+      },
+      "response": {
+        "status": 202
+      },
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-events-service",
+            "operationId": "publish"
+          },
+          "qits-trigger": {
+            "app": "qits-fx-app",
+            "kind": "operation",
+            "operationId": "closeLedger"
+          },
+          "qits-via": {
+            "repository": "qits-eventstream-javalib",
+            "artifact": "eu.wohlben.qits:qits-eventstream",
+            "version": "2026.1014.223716"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

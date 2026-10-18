@@ -100,6 +100,44 @@ final class Pacts {
                 status, ContentHash.of(interaction, message), verified);
     }
 
+    /**
+     * The {@code qits-via} reference the pact's interactions carry: the first one found, scanning
+     * {@code interactions[]} then {@code messages[]} in document order. Interactions are free to
+     * disagree (a pact can mix calls a library made with calls the service made itself); this takes
+     * the first and does not fail on the rest.
+     */
+    static PactEntry.Via via(JsonNode pact) {
+        for (JsonNode interaction : pact.path("interactions")) {
+            PactEntry.Via via = viaOf(interaction);
+            if (via != null) {
+                return via;
+            }
+        }
+        for (JsonNode message : pact.path("messages")) {
+            PactEntry.Via via = viaOf(message);
+            if (via != null) {
+                return via;
+            }
+        }
+        return null;
+    }
+
+    private static PactEntry.Via viaOf(JsonNode interaction) {
+        JsonNode reference = interaction.path("comments").path("references").path("qits-via");
+        if (!reference.isObject()) {
+            return null;
+        }
+        String repository = textOrNull(reference.path("repository"));
+        String artifact = textOrNull(reference.path("artifact"));
+        String version = textOrNull(reference.path("version"));
+        return repository == null && artifact == null && version == null ? null
+                : new PactEntry.Via(repository, artifact, version);
+    }
+
+    private static String textOrNull(JsonNode node) {
+        return node.isTextual() && !node.asText().isBlank() ? node.asText() : null;
+    }
+
     /** The names of the interaction's provider states: {@code providerStates[].name}, or v2's {@code providerState}. */
     static List<String> states(JsonNode interaction) {
         List<String> names = new ArrayList<>();
