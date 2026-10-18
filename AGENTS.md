@@ -478,11 +478,6 @@ answer (`consumes`), and sends exactly the recorded request, body and query incl
 state the provider has not recorded yet stays in the table, skipped with the state it needs and
 its door, and out of the file until a newer pin records it. Every interaction carries `qits-call`
 and a `qits-trigger` of kind `command` naming the command (`qits work details`).
-`qits release-request approve` / `decline` (qits-1287) find the request in the project by its
-logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
-send the decision (`approveReleaseRequest` in `a release request awaiting approval while its build
-runs`, `declineReleaseRequest` in `a release request awaiting approval`); they name no repository,
-so they have the project lookup's row and not the repository lookup's.
 
 `contracts/ClientCallsGuardTest` holds the table to the code: every class whose bytecode calls a
 request method of `PlatformClient`, the publish `Http` or the JDK's `HttpClient` is a client of
@@ -492,6 +487,21 @@ class, or the named methods of a command class) is reached by a row or named as 
 its contract with the reason (`openApi`, the served OpenAPI document; a WebSocket address); and
 every contract with a recorded row has its committed file and its line in `release.yml`'s
 `contracts.pacts`, which publishes each file; each provider verifies its own.
+
+The qits-projects table (`projects/ProjectsContract`) is the `/work` doors by qualified id (epic
+qits-965), the project and repository lookups of every command that names one, and the doors
+outside `/work`: the release request's commits for `qits artifacts publish changelog`
+(`listReleaseRequestCommits`, state `a released release request`); the repository's requests of
+every state, where a command finds a request by its logical id (`listRepositoryReleaseRequests` with
+`state=all`, state `a repository with a release not merged to main`; qits-1158); the git reads of
+`qits repositories` (branches, commits, commit changes and diff, commit subjects); a refinement's
+designs for `qits work design` (state `a ticket with a design`; qits-1174); and `qits
+release-request approve` / `decline` (qits-1287): the project's door that finds a request by its
+logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
+the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build
+runs`, `declineReleaseRequest` in `a release request awaiting approval`). A path the recorder froze
+under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole UUID in some
+elements only, so no row consumes it: qits-pact-consumer would match it as a UUID.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.

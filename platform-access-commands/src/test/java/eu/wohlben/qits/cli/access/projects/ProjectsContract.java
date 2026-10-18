@@ -107,14 +107,6 @@ public final class ProjectsContract {
             "detail", "createdAt", "updatedAt", "gates[].kind", "gates[].state", "gates[].detail", "sources[].kind",
             "sources[].name", "sources[].ref", "sources[].implicit", "sources[].priority", "sources[].addedBy");
 
-    /**
-     * {@code qits release-request approve} and {@code decline} find the request in the project by its
-     * logical id or uuid (qits-1287): the decision door takes its repository and uuid, and the fold
-     * judged when no --sha is given is its merged sha.
-     */
-    static final List<String> FIND_IN_PROJECT = List.of("request.id", "request.qualifiedId", "request.repoId",
-            "request.mergedSha");
-
     /** Every command that takes a release request finds it by its logical id or its uuid's start. */
     static final List<String> FIND_REQUEST = List.of("requests[].id", "requests[].qualifiedId", "requests[].state");
 
@@ -630,19 +622,12 @@ public final class ProjectsContract {
         });
     };
 
-    /** {@code qits release-request regenerate}: the kind is the recording's path segment; it prints the run's id. */
-    private static final Call REGENERATE = (api, params, recorded) -> {
-        JsonNode run = api.rerunReleaseRequestAutomation(params.get("repositoryId"), params.get("requestId"),
-                segmentAfter(recorded, "/automations/"));
-        assertThat(ProjectsApi.text(run, "id")).isNotBlank();
-    };
-
     /**
-     * {@code qits release-request approve} and {@code decline} (qits-1287): the request found in the
-     * project by its logical id, with no repository named. The answer carries the repository and the
-     * uuid the decision door takes, and the fold judged when no --sha is given.
+     * {@code qits release-request approve} and {@code decline} find the request in the project by its
+     * logical id, with no repository named: the answer carries the repository and the uuid the
+     * decision door takes, and the fold judged when no --sha is given (qits-1287).
      */
-    private static final Call PROJECT_REQUEST = (api, params, recorded) -> {
+    private static final Call FIND_IN_PROJECT = (api, params, recorded) -> {
         JsonNode request = api.projectReleaseRequest(params.get("projectId"), params.get("requestQualifiedId"))
                 .path("request");
         assertThat(ProjectsApi.text(request, "qualifiedId")).isEqualTo(params.get("requestQualifiedId"));
@@ -669,10 +654,14 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(request, "mergedSha")).isEqualTo(body(recorded).path("mergedSha").asText());
     };
 
-    // --- the table ------------------------------------------------------------------------------
+    /** {@code qits release-request regenerate}: the kind is the recording's path segment; it prints the run's id. */
+    private static final Call REGENERATE = (api, params, recorded) -> {
+        JsonNode run = api.rerunReleaseRequestAutomation(params.get("repositoryId"), params.get("requestId"),
+                segmentAfter(recorded, "/automations/"));
+        assertThat(ProjectsApi.text(run, "id")).isNotBlank();
+    };
 
-    /** The decisions on a fold, which find the request in the project and name no repository (qits-1287). */
-    static final List<String> DECISIONS = List.of("qits release-request approve", "qits release-request decline");
+    // --- the table ------------------------------------------------------------------------------
 
     /** Every command that looks a project up by its id, slug or name before it calls anything else. */
     static final List<String> PROJECT_SCOPED = List.of("qits repositories list", "qits repositories create",
@@ -686,8 +675,8 @@ public final class ProjectsContract {
 
     /** Of those, every command that then looks a repository up by its id or name. */
     static final List<String> REPOSITORY_SCOPED = PROJECT_SCOPED.stream()
-            .filter(c -> !c.equals("qits repositories list") && !c.equals("qits repositories create"))
-            .filter(c -> !DECISIONS.contains(c))
+            .filter(c -> !c.equals("qits repositories list") && !c.equals("qits repositories create")
+                    && !c.equals("qits release-request approve") && !c.equals("qits release-request decline"))
             .toList();
 
     /** Every command that takes a release request and finds it among the repository's requests of every state. */
@@ -773,20 +762,21 @@ public final class ProjectsContract {
         rows.add(row("qits release-request withdraw", AWAITING_REQUEST, "withdrawReleaseRequest",
                 "withdrawReleaseRequest", WITHDRAW)
                 .consumes(held(AWAITING_REQUEST, "withdrawReleaseRequest", prefixed("request.", REQUEST))));
+        for (String command : List.of("qits release-request approve", "qits release-request decline")) {
+            rows.add(row(command, PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest", "projectReleaseRequest",
+                    FIND_IN_PROJECT).consumes("request.id", "request.qualifiedId", "request.repoId", "request.mergedSha"));
+        }
+        rows.add(row("qits release-request approve", AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
+                "approveReleaseRequest", APPROVE).consumes(held(AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
+                prefixed("request.", REQUEST))));
+        rows.add(row("qits release-request decline", AWAITING_REQUEST, "declineReleaseRequest",
+                "declineReleaseRequest", DECLINE).consumes(held(AWAITING_REQUEST, "declineReleaseRequest",
+                prefixed("request.", REQUEST))));
         rows.add(row("qits release-request regenerate", HELD_BY_A_FAILED_AUTOMATION, "rerunReleaseRequestAutomation",
                 "rerunReleaseRequestAutomation", REGENERATE).consumes("id"));
         rows.add(row("qits release-request regenerate", AWAITING_REQUEST, "listRepositoryReleaseRequests",
                 "releaseRequests", OPEN_REQUESTS).consumes(held(AWAITING_REQUEST, "listRepositoryReleaseRequests",
                 List.of("requests[].id", "requests[].qualifiedId", "requests[].state"))));
-        DECISIONS.forEach(c -> rows.add(row(c, PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest",
-                "projectReleaseRequest", PROJECT_REQUEST)
-                .consumes(held(PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest", FIND_IN_PROJECT))));
-        rows.add(row("qits release-request approve", AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
-                "approveReleaseRequest", APPROVE)
-                .consumes(held(AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest", prefixed("request.", REQUEST))));
-        rows.add(row("qits release-request decline", AWAITING_REQUEST, "declineReleaseRequest",
-                "declineReleaseRequest", DECLINE)
-                .consumes(held(AWAITING_REQUEST, "declineReleaseRequest", prefixed("request.", REQUEST))));
 
         // qits tui: the dropdowns
         rows.add(row("qits tui", REPOSITORIES_IN_COMPONENTS, "listProjectRepositories", "repositories",
