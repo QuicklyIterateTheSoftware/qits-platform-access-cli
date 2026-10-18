@@ -1326,7 +1326,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits release-request
 
-Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, and regenerate runs one release output again.
+Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, and regenerate runs one release output again.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
@@ -1335,7 +1335,10 @@ A request folds main and its branches into one commit, and the builds of that co
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.
 - When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request, and do not withdraw this one.
 - `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any more. WITHDRAWN is final.
-- --project and --repository may come before or after the command. Only list works without --repository.
+- approve and decline judge one fold: the request's merged sha. A push that folds the request again leaves the decision behind, and the new fold waits for a decision of its own.
+- decline is not withdraw. A declined request goes REJECTED and comes back with the next push to one of its branches; WITHDRAWN is final.
+- Only a person may approve or decline: their own `qits` CLI sign-in, holding qits:admin. The platform refuses agents, CI and service clients (HTTP 403).
+- --project and --repository may come before or after the command. list, approve and decline work without --repository; approve and decline find the request in the project.
 
 ## qits release-request list
 
@@ -1483,6 +1486,80 @@ qits release-request --project qits --repository qits-ci-service withdraw --requ
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
+
+## qits release-request approve
+
+Approve the fold a release request is on, so it may release once its gates are green.
+
+The approval is for one fold, the request's merged sha. A push that folds the request again leaves it behind, and the new fold needs an approval of its own. It prints the request that came back.
+
+```
+qits release-request approve --request <id> [--note <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--sha <merged sha>]
+```
+
+| Name | What it does |
+|---|---|
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-221), in any case, or its whole uuid. It is found in the project, so --repository is not needed. |
+| `--note <text>` | Why, in a sentence, for the record. A decline's note becomes the request's detail, the first thing whoever answers the decline reads. Default: none. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository: its id or name. |
+| `--sha <merged sha>` | The fold you judged: the request's merged sha, as the landing app or -o json shows it. This is the strict form: the platform refuses the decision (HTTP 409) if the request is on another fold by then. Without it the command judges whatever fold the request is on at the moment it is read. |
+
+### Examples
+
+```
+qits release-request --project qits approve --request qits-ci-service-rr-221 --sha 3f9c2e1a7b8d4c6e5f0a1b2c3d4e5f6a7b8c9d0e
+qits release-request --project qits approve --request qits-ci-service-rr-221 --note "Read the diff: the pin moves to the export release."
+```
+
+- Give --sha to approve exactly the fold you read. Without it the command approves whatever fold the request is on when it reads it.
+- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and service clients are refused (HTTP 403).
+- HTTP 409 means the request is on another fold than the one sent (the message names the one it is on now), has no fold, has concluded or is being released, or its repository needs no approval. Read it again and judge the fold it is on.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status and says why), cannot be reached, or the request has no fold yet, so there is nothing to approve.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits release-request decline
+
+Decline the fold a release request is on, so it does not release.
+
+The request goes REJECTED and comes back by itself when one of its branches gets a new push, which makes a new fold to judge. It is not withdraw: WITHDRAWN is final. It prints the request that came back.
+
+```
+qits release-request decline --request <id> [--note <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--sha <merged sha>]
+```
+
+| Name | What it does |
+|---|---|
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-221), in any case, or its whole uuid. It is found in the project, so --repository is not needed. |
+| `--note <text>` | Why, in a sentence, for the record. A decline's note becomes the request's detail, the first thing whoever answers the decline reads. Default: none. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository: its id or name. |
+| `--sha <merged sha>` | The fold you judged: the request's merged sha, as the landing app or -o json shows it. This is the strict form: the platform refuses the decision (HTTP 409) if the request is on another fold by then. Without it the command judges whatever fold the request is on at the moment it is read. |
+
+### Examples
+
+```
+qits release-request --project qits decline --request qits-ci-service-rr-221 --sha 3f9c2e1a7b8d4c6e5f0a1b2c3d4e5f6a7b8c9d0e --note "The README promises an approval policy nobody has signed off yet."
+```
+
+- Give --sha to decline exactly the fold you read. Without it the command declines whatever fold the request is on when it reads it.
+- To stop a request for good, use `withdraw` instead.
+- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and service clients are refused (HTTP 403).
+- HTTP 409 means the request is on another fold than the one sent (the message names the one it is on now), has no fold, has concluded or is being released, or its repository needs no approval. Read it again and judge the fold it is on.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status and says why), cannot be reached, or the request has no fold yet, so there is nothing to decline.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits release-request regenerate
 

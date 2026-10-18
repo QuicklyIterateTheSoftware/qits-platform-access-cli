@@ -9,7 +9,7 @@ Commands:
 - `qits session-daemon` keeps that session fresh for as long as it runs.
 - `qits projects list`, `qits repositories … list`,
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
-  and `qits release-request … list|create|join|withdraw|regenerate` read from and ask the projects service;
+  and `qits release-request … list|create|join|withdraw|approve|decline|regenerate` read from and ask the projects service;
   `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in.
 - `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
   and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
@@ -551,6 +551,8 @@ Installing it is not part of this version.
         --request <id> --branch <branch> [--priority <priority>]
     qits release-request --project <project> --repository <repository> withdraw \
         --request <id> [--reason <text>]
+    qits release-request --project <project> approve|decline \
+        --request <id> [--sha <merged sha>] [--note <text>]
     qits release-request --project <project> --repository <repository> regenerate \
         --kind <kind> [--request <id>]
     qits ci runs --project <project> --repository <repository> [--branch <branch>] \
@@ -830,8 +832,8 @@ form takes terminal control characters out of every value, and `-o json` writes 
 
 ### qits release-request
 
-`--project` as above. `--repository` is the repository's id or name within that project. Only
-`list` works without it.
+`--project` as above. `--repository` is the repository's id or name within that project. `list`,
+`approve` and `decline` work without it.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate.
 States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining
@@ -890,6 +892,23 @@ for one of its branches opens a new request. The command prints the request that
 - A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request cannot be withdrawn (HTTP 409, exit code 1).
 - HTTP 404 means the platform has no such request (exit code 1).
 
+`approve` and `decline` are a person's decision on the fold a request is on: its merged sha. Both
+find the request in the project (`--request` is its id, in any case, or its whole uuid; no
+`--repository`), and both post the fold they judge: `--sha` when given, which is the strict form,
+else the merged sha the command has just read, so without `--sha` the command judges whatever fold
+the request is on at that moment. A request with no fold yet is refused before anything is sent
+(exit code 1). `--note` goes on the record; a decline's note becomes the request's detail. The table
+form prints `Approved <id> at <sha>.` (or `Declined …`) and then the request, like `create`; `-o
+json` is the service's answer as it came.
+
+- A decision names one fold. A push that folds the request again leaves it behind, and the new fold
+  waits for a decision of its own.
+- `decline` is not `withdraw`: a declined request goes REJECTED and comes back with the next push to
+  one of its branches; WITHDRAWN is final.
+- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and service
+  clients are refused by the platform (HTTP 403). Every refusal (400, 403, 404, 409: a stale fold
+  names the one the request is on now) is printed in the service's own words, exit code 1.
+
 `regenerate` runs one release output again on an open request: `--kind` is `entity-diagram`,
 `screenshot-baselines`, `dependency-bump` or `estate-pins` (qits-1182). QA checks the entity diagram
 and the screenshot baselines and fails when they are stale, but does not regenerate them; this is
@@ -912,6 +931,10 @@ it, and QA runs again. It prints the run's id; `qits maintenance bump <run id>` 
         --request qits-ci-service-rr-12 --branch feature/log-search
     qits release-request --project qits --repository qits-ci-service withdraw \
         --request qits-ci-service-rr-12 --reason "The log view moves to qits-observability"
+    qits release-request --project qits approve --request qits-ci-service-rr-221 \
+        --sha 3f9c2e1a7b8d4c6e5f0a1b2c3d4e5f6a7b8c9d0e
+    qits release-request --project qits decline --request qits-ci-service-rr-221 \
+        --note "The README promises an approval policy nobody has signed off yet."
     qits release-request --project qits --repository qits-landing-app regenerate \
         --kind screenshot-baselines
 

@@ -488,6 +488,21 @@ its contract with the reason (`openApi`, the served OpenAPI document; a WebSocke
 every contract with a recorded row has its committed file and its line in `release.yml`'s
 `contracts.pacts`, which publishes each file; each provider verifies its own.
 
+The qits-projects table (`projects/ProjectsContract`) is the `/work` doors by qualified id (epic
+qits-965), the project and repository lookups of every command that names one, and the doors
+outside `/work`: the release request's commits for `qits artifacts publish changelog`
+(`listReleaseRequestCommits`, state `a released release request`); the repository's requests of
+every state, where a command finds a request by its logical id (`listRepositoryReleaseRequests` with
+`state=all`, state `a repository with a release not merged to main`; qits-1158); the git reads of
+`qits repositories` (branches, commits, commit changes and diff, commit subjects); a refinement's
+designs for `qits work design` (state `a ticket with a design`; qits-1174); and `qits
+release-request approve` / `decline` (qits-1287): the project's door that finds a request by its
+logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
+the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build
+runs`, `declineReleaseRequest` in `a release request awaiting approval`). A path the recorder froze
+under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole UUID in some
+elements only, so no row consumes it: qits-pact-consumer would match it as a UUID.
+
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.
 
