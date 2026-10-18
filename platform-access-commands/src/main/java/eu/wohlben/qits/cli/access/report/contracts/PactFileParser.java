@@ -79,7 +79,7 @@ public final class PactFileParser implements ReportParser<ContractFile> {
         String specification = Pacts.specification(pact);
         String source = step.relative(file);
         PactEntry entry = new PactEntry(PactEntry.CONSUMER, consumer, provider, specification, source,
-                Pacts.interactions(pact, null));
+                Pacts.interactions(pact, null), Pacts.via(pact));
         return new ContractFile(new ContractSource(language(), tool(), source,
                 "pact-v" + Pacts.major(pact, specification)), ContractFile.CONSUMER, List.of(entry), null);
     }

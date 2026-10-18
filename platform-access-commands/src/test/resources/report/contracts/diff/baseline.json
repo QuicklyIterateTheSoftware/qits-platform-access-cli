@@ -68,7 +68,8 @@
           "contentHash": "sha256:0300e6741e6bace5f76b68da9862ec2ffe57105916757a61d39fe660a5d15392",
           "verified": null
         }
-      ]
+      ],
+      "via": null
     },
     {
       "role": "CONSUMER",
@@ -111,7 +112,8 @@
           "contentHash": "sha256:aa23d66dabeedec09eeddaf5609cc5e9b3345ba347a7e3768ebbf27acf43b800",
           "verified": null
         }
-      ]
+      ],
+      "via": null
     },
     {
       "role": "PROVIDER",
@@ -144,7 +146,8 @@
           "contentHash": "sha256:523c70ee0a27c2f9daf3fa5d2fdf7f1630fa5cb30297af10975c6fa0820b732c",
           "verified": "OK"
         }
-      ]
+      ],
+      "via": null
     }
   ],
   "skipped": [],

@@ -3,11 +3,13 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-events-service"
     },
     {
       "role": "PROVIDER",
       "consumer": "qits-workspaces-service",
+      "via": null,
       "provider": "qits-fx-service"
     }
   ],
@@ -15,6 +17,7 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-githost-service"
     }
   ],
@@ -22,6 +25,7 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-events-service",
       "description": "closeLedger: publish",
       "providerStates": [
@@ -31,6 +35,7 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-projects-service",
       "description": "openLedger: getProject",
       "providerStates": [
@@ -41,6 +46,7 @@
     {
       "role": "PROVIDER",
       "consumer": "qits-landing-app",
+      "via": null,
       "provider": "qits-fx-service",
       "description": "show-ledgers: getLedger",
       "providerStates": [
@@ -50,6 +56,7 @@
     {
       "role": "PROVIDER",
       "consumer": "qits-workspaces-service",
+      "via": null,
       "provider": "qits-fx-service",
       "description": "captureWorkspace: listLedgers",
       "providerStates": [
@@ -62,6 +69,7 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-githost-service",
       "description": "countLines: listLoc",
       "providerStates": [
@@ -71,6 +79,7 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-projects-service",
       "description": "openLedger: createRepository",
       "providerStates": [
@@ -80,6 +89,7 @@
     {
       "role": "PROVIDER",
       "consumer": "qits-landing-app",
+      "via": null,
       "provider": "qits-fx-service",
       "description": "show-ledgers: deleteLedger",
       "providerStates": [
@@ -91,6 +101,7 @@
     {
       "role": "CONSUMER",
       "consumer": "qits-fx-service",
+      "via": null,
       "provider": "qits-projects-service",
       "description": "closeLedger: listProjects",
       "providerStates": []

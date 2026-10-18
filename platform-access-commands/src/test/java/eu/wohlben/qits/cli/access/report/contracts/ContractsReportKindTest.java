@@ -113,7 +113,7 @@ class ContractsReportKindTest {
         assertThat(json.path("providerStates").path("states").get(0).fieldNames()).toIterable()
                 .containsExactly("name", "operations");
         assertThat(json.path("pacts").get(0).fieldNames()).toIterable()
-                .containsExactly("role", "consumer", "provider", "specification", "source", "interactions");
+                .containsExactly("role", "consumer", "provider", "specification", "source", "interactions", "via");
         assertThat(json.path("pacts").get(0).path("interactions").get(0).fieldNames()).toIterable()
                 .containsExactly("description", "providerStates", "type", "method", "path", "status", "contentHash",
                         "verified");
@@ -267,6 +267,49 @@ class ContractsReportKindTest {
     }
 
     @Test
+    void aNewPactThroughALibraryNamesTheLibraryAndItsVersionInTheHighlight() {
+        ContractsReport baseline = report(List.of(), List.of());
+        ContractsReport report = report(List.of(pactVia("qits-fx-app", "qits-eventstream", "1.0", "qits-events")),
+                List.of());
+
+        List<Highlight> highlights = kind.highlight(report, Optional.of(baseline), withBaseline());
+
+        assertThat(highlights).extracting(Highlight::text)
+                .containsExactly("new pact: qits-fx-app → qits-eventstream (1.0) → qits-events");
+    }
+
+    @Test
+    void aDirectPactsHighlightStaysPlainWithoutAVia() {
+        ContractsReport baseline = report(List.of(), List.of());
+        ContractsReport report = report(List.of(pact("qits-fx-app", "qits-events-service")), List.of());
+
+        List<Highlight> highlights = kind.highlight(report, Optional.of(baseline), withBaseline());
+
+        assertThat(highlights).extracting(Highlight::text).containsExactly("new pact: qits-fx-app → qits-events-service");
+    }
+
+    @Test
+    void anInteractionCountLineAlsoNamesTheLibraryWhenThePactWentThroughOne() {
+        PactEntry.Via via = new PactEntry.Via("qits-eventstream", "eu.wohlben.qits:qits-eventstream", "1.0");
+        InteractionEntry kept = new InteractionEntry("op", List.of(), "Synchronous/HTTP", "GET", "/", 200,
+                "sha256:0", null);
+        InteractionEntry added = new InteractionEntry("op2", List.of(), "Synchronous/HTTP", "GET", "/2", 200,
+                "sha256:1", null);
+        String source = "pacts/qits-fx-app_qits-eventstream_qits-events.json";
+        PactEntry baselinePact = new PactEntry("CONSUMER", "qits-fx-app", "qits-events", "4.0", source,
+                List.of(kept), via);
+        PactEntry reportPact = new PactEntry("CONSUMER", "qits-fx-app", "qits-events", "4.0", source,
+                List.of(kept, added), via);
+        ContractsReport baseline = report(List.of(baselinePact), List.of());
+        ContractsReport report = report(List.of(reportPact), List.of());
+
+        List<Highlight> highlights = kind.highlight(report, Optional.of(baseline), withBaseline());
+
+        assertThat(highlights).extracting(Highlight::text)
+                .containsExactly("+1 interaction qits-fx-app → qits-eventstream (1.0) → qits-events");
+    }
+
+    @Test
     void longNamesAreCutWithAnEllipsisSoBothEndsStayReadable() {
         String consumer = "qits-a-consumer-with-a-very-long-repository-name-indeed-service";
         String provider = "qits-a-provider-with-an-even-longer-repository-name-than-that-service";
@@ -303,7 +346,15 @@ class ContractsReportKindTest {
 
     private static PactEntry pact(String consumer, String provider) {
         return new PactEntry("CONSUMER", consumer, provider, "4.0", "pacts/" + consumer + "_" + provider + ".json",
-                List.of(new InteractionEntry("op", List.of(), "Synchronous/HTTP", "GET", "/", 200, "sha256:0", null)));
+                List.of(new InteractionEntry("op", List.of(), "Synchronous/HTTP", "GET", "/", 200, "sha256:0", null)),
+                null);
+    }
+
+    private static PactEntry pactVia(String consumer, String viaRepository, String viaVersion, String provider) {
+        return new PactEntry("CONSUMER", consumer, provider, "4.0",
+                "pacts/" + consumer + "_" + viaRepository + "_" + provider + ".json",
+                List.of(new InteractionEntry("op", List.of(), "Synchronous/HTTP", "GET", "/", 200, "sha256:0", null)),
+                new PactEntry.Via(viaRepository, "eu.wohlben.qits:qits-eventstream", viaVersion));
     }
 
     private static ContractsReport report(List<PactEntry> pacts, List<String> states) {

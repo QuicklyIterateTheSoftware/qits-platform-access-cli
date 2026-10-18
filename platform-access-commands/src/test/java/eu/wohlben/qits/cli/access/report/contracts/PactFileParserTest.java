@@ -51,6 +51,7 @@ class PactFileParserTest {
         assertThat(pact.provider()).isEqualTo("qits-githost-service");
         assertThat(pact.specification()).isEqualTo("4.0");
         assertThat(pact.source()).isEqualTo("pacts/qits-landing-app_qits-githost-service.json");
+        assertThat(pact.via()).isNull();
         assertThat(pact.interactions()).hasSize(5);
         InteractionEntry first = pact.interactions().stream()
                 .filter(i -> i.description().equals("show-project-loc: listLoc")).findFirst().orElseThrow();
@@ -111,6 +112,20 @@ class PactFileParserTest {
         assertThat(message.path()).isNull();
         assertThat(message.status()).isNull();
         assertThat(message.contentHash()).matches("sha256:[0-9a-f]{64}");
+    }
+
+    @Test
+    void readsAThreePartNamedPactWithQitsViaIntoAnEntryWithVia() throws IOException {
+        Path file = ContractFixtures.copy(
+                "contracts/pact/qits-fx-app_qits-eventstream-javalib_qits-events-service.json", root,
+                "pacts/qits-fx-app_qits-eventstream-javalib_qits-events-service.json");
+
+        PactEntry pact = parser.parse(file, ContractFixtures.step(root)).pacts().getFirst();
+
+        assertThat(pact.consumer()).isEqualTo("qits-fx-app");
+        assertThat(pact.provider()).isEqualTo("qits-events-service");
+        assertThat(pact.via()).isEqualTo(new PactEntry.Via("qits-eventstream-javalib",
+                "eu.wohlben.qits:qits-eventstream", "2026.1014.223716"));
     }
 
     @Test
