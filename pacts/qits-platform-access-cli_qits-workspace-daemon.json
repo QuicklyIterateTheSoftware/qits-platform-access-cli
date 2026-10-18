@@ -1,0 +1,1923 @@
+{
+  "consumer": {
+    "name": "qits-platform-access-cli"
+  },
+  "interactions": [
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "getAgentWorktree"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents chat",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents chat: getAgentWorktree",
+      "key": "5a364d66",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent running",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "commandId": "00000000-0000-4000-8000-000000000100"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.commandId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "getCommandLog"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents chat",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents chat: getCommandLog",
+      "key": "efccbddc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent that has taken turns",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/commands/${commandId}/log",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/commands/00000000-0000-4000-8000-000000000100/log",
+        "query": {
+          "channel": [
+            "TRANSCRIPT"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "lines": [
+              {
+                "content": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the login\"}]}}",
+                "sequence": 1099511627776
+              },
+              {
+                "content": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the login\"}]}}",
+                "sequence": 1099511627776
+              },
+              {
+                "content": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the login\"}]}}",
+                "sequence": 1099511627776
+              },
+              {
+                "content": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the login\"}]}}",
+                "sequence": 1099511627776
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.lines": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.lines[*].content": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.lines[*].sequence": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "detect"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents files detect",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents files detect: detect",
+      "key": "38ce2b82",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent whose worktree holds files",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}/detection",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1/detection"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "frameworks": [
+              {
+                "frameworkId": "java-quarkus",
+                "label": "Java / Quarkus",
+                "memberPaths": [
+                  "pom.xml",
+                  "pom.xml",
+                  "pom.xml"
+                ],
+                "root": ""
+              }
+            ],
+            "links": [
+              {
+                "path": "src/main/java/app/Login.java",
+                "tests": [
+                  {
+                    "path": "src/test/java/app/LoginTest.java"
+                  }
+                ]
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.frameworks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.frameworks[*].frameworkId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.frameworks[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.frameworks[*].memberPaths": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.frameworks[*].memberPaths[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.frameworks[*].root": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.links": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.links[*].path": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.links[*].tests": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.links[*].tests[*].path": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "listFiles"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents files list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents files list: listFiles",
+      "key": "c0c31efc",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent whose worktree has an ignored directory",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}/files",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1/files",
+        "query": {
+          "path": [
+            "node_modules"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "lazyDirs": [
+              {
+                "childCount": 1,
+                "path": "node_modules/left-pad"
+              }
+            ],
+            "paths": [
+              "node_modules/.package-lock.json"
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.lazyDirs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.lazyDirs[*].childCount": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.lazyDirs[*].path": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.paths": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.paths[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "listFiles"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents files list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents files list: listFiles",
+      "key": "426221f9",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent whose worktree holds files",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}/files",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1/files"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "lazyDirs": [
+              {
+                "childCount": 2,
+                "path": "node_modules"
+              }
+            ],
+            "paths": [
+              ".gitignore",
+              ".gitignore",
+              ".gitignore",
+              ".gitignore",
+              ".gitignore",
+              ".gitignore",
+              ".gitignore"
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.lazyDirs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.lazyDirs[*].childCount": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.lazyDirs[*].path": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.paths": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 7,
+                  "min": 7
+                }
+              ]
+            },
+            "$.paths[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "readFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents files read",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents files read: readFile",
+      "key": "f6f9341b",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent whose worktree has an ignored directory",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}/files/content",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1/files/content",
+        "query": {
+          "path": [
+            "node_modules/missing.js"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "message": "File not found: node_modules/missing.js"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "readFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents files read",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents files read: readFile",
+      "key": "78983718",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent whose worktree holds files",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}/files/content",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1/files/content",
+        "query": {
+          "path": [
+            "src/main/java/app/Login.java"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "binary": false,
+            "content": "package app;\n\nclass Login {\n  String user(String name) {\n    return name.strip();\n  }\n}\n"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.binary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.content": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "getAgentWorktree"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents harness",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents harness: getAgentWorktree",
+      "key": "7d7c549f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with a signed-in harness",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "getAgentWorktree"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents harness",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents harness: getAgentWorktree",
+      "key": "a3356768",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent running",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "commandId": "00000000-0000-4000-8000-000000000100"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.commandId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "listCommands"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents harness",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents harness: listCommands",
+      "key": "701bf2ad",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent chatting",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/commands",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/commands"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "command": {
+                  "id": "00000000-0000-4000-8000-000000000100",
+                  "kind": "CHAT",
+                  "status": "RUNNING"
+                }
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.entries[*].command.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entries[*].command.kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entries[*].command.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "listCommands"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents harness",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents harness: listCommands",
+      "key": "b6535e20",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent running",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/commands",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/commands"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "command": {
+                  "id": "00000000-0000-4000-8000-000000000100",
+                  "kind": "TERMINAL",
+                  "status": "RUNNING"
+                }
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.entries[*].command.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entries[*].command.kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entries[*].command.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "installPlugin"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents plugins install",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents plugins install: installPlugin",
+      "key": "35089b65",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with plugins installed",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {},
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-plugins/pyright-lsp/install",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/workspaces/container/1/agent-plugins/pyright-lsp/install"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "installed": [
+              {
+                "enabled": true,
+                "pluginId": "jdtls-lsp@claude-plugins-official"
+              },
+              {
+                "enabled": true,
+                "pluginId": "jdtls-lsp@claude-plugins-official"
+              },
+              {
+                "enabled": true,
+                "pluginId": "jdtls-lsp@claude-plugins-official"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.installed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.installed[*].enabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.installed[*].pluginId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "listPlugins"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents plugins list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents plugins list: listPlugins",
+      "key": "41348a1a",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with plugins installed",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-plugins",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-plugins"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "installed": [
+              {
+                "enabled": true,
+                "pluginId": "jdtls-lsp@claude-plugins-official"
+              },
+              {
+                "enabled": true,
+                "pluginId": "jdtls-lsp@claude-plugins-official"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.installed": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.installed[*].enabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.installed[*].pluginId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "refinePrompt"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents refine",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents refine: refinePrompt",
+      "key": "6c6d1755",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with a signed-in harness",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "preamble": "Fix the login",
+            "transcript": "uh so the login um it fails when the name has spaces"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/prompt-refinements",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/workspaces/container/1/prompt-refinements"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "prompt": "Fix the login form so a user name with surrounding spaces still signs in."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.prompt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "openSignInTerminal"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents sign-in open",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents sign-in open: openSignInTerminal",
+      "key": "32ff0c86",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with a harness nobody signed in",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "agentType": "CLAUDE"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agents/sign-in",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/workspaces/container/1/agents/sign-in"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "command": {
+              "id": "00000000-0000-4000-8000-000000000100"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.command.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "availableAgents"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents sign-in status",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents sign-in status: availableAgents",
+      "key": "75d083db",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with a harness nobody signed in",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agents/available",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agents/available"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "capabilities": [
+              {
+                "authDetail": "Nobody is signed in on the shared credential volume. Open the sign-in terminal to sign in once for every container.",
+                "authenticated": false,
+                "harness": "CLAUDE"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.capabilities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.capabilities[*].authDetail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.capabilities[*].authenticated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.capabilities[*].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "availableAgents"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents sign-in status",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents sign-in status: availableAgents",
+      "key": "f9b2485f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with a signed-in harness",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agents/available",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agents/available"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "capabilities": [
+              {
+                "authDetail": "Signed in on the shared credential volume.",
+                "authenticated": true,
+                "harness": "CLAUDE"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.capabilities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.capabilities[*].authDetail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.capabilities[*].authenticated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.capabilities[*].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "getAgentWorktree"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents terminate",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents terminate: getAgentWorktree",
+      "key": "fce3a8c3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent running",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/agent-worktrees/${agentId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/container/1/agent-worktrees/00000000-0000-4000-8000-0000000000a1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "commandId": "00000000-0000-4000-8000-000000000100"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.commandId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspace-daemon",
+            "operationId": "terminateCommand"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents terminate",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents terminate: terminateCommand",
+      "key": "496ca8d4",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace daemon with an agent chatting",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "commandId": "00000000-0000-4000-8000-000000000100",
+            "workspaceRowId": "1"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {},
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/workspaces/container/${workspaceRowId}/commands/${commandId}/terminate",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/workspaces/container/1/commands/00000000-0000-4000-8000-000000000100/terminate"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    },
+    "plugins": []
+  },
+  "provider": {
+    "name": "qits-workspace-daemon"
+  }
+}
