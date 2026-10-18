@@ -2519,7 +2519,7 @@ A slot is a workspace row, named by its number (`qits workspaces list` shows it)
 ### Notes
 
 - Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin or qits:admin-agent, which a person's token carries; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
-- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks no role, only that the slot is ACTIVE.
+- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's.
 - `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads the chat's transcript and sends prompts.
 - --workspaces-url, --projects-url and --output may come before or after the command.
 
@@ -2749,7 +2749,7 @@ Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to
 
 With stdin not a terminal (a pipe, a script, `qits tui`) it only streams what the command prints: nothing is typed and the size is left alone. It still ends when the command does.
 
-WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces attach --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <command>
@@ -3076,7 +3076,7 @@ qits workspaces agents draft discard 00000000-0000-4000-8000-0000000000a1
 
 Read the agent's conversation: its harness command's transcript, in order. The agent's Chat tab, without the live socket.
 
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents chat --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3108,7 +3108,7 @@ qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1 -
 
 End the agent's running harness command: Terminate on a live chat.
 
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents terminate --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3139,7 +3139,7 @@ qits workspaces agents terminate 00000000-0000-4000-8000-0000000000a1 --workspac
 
 Rewrite rough notes into a prompt, in the slot's container: Refine in the prompt box. Prints the rewrite; nothing is sent to an agent.
 
-POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents refine --workspace <n> [--output table|json] [--preamble <text>] [--projects-url <url>] [--workspaces-url <url>] <notes>
@@ -3172,7 +3172,7 @@ The agent's harness on its slot's daemon: its last command, whether it still run
 
 With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since `qits workspaces agents chat` reads it.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents harness --workspace <n> [--attach] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3210,7 +3210,7 @@ The agent's worktree, as its Files tab shows it: the tree, one file, and the fra
 
 The agent's worktree: without --path the whole tree, every gitignored directory a stub with its entry count; with --path that directory, one level deep.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents files list --workspace <n> [--output table|json] [--path <dir>] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3242,7 +3242,7 @@ qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspa
 
 One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB cap, is not shown.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents files read --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <path>
@@ -3273,7 +3273,7 @@ qits workspaces agents files read 00000000-0000-4000-8000-0000000000a1 src/main/
 
 The frameworks the agent's worktree holds (each with its member paths) and which tests reach each source file: the Files tab's footer and its test links.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents files detect --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3307,7 +3307,7 @@ Whether anybody signed the slot's harnesses in, on the credential volume every c
 
 Each harness of the slot's daemon, whether it is signed in, and the daemon's hint when it is not.
 
-GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents sign-in status --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3336,7 +3336,7 @@ qits workspaces agents sign-in status --workspace 1
 
 Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an interactive terminal: --attach attaches this one to it at once, or `qits workspaces attach <command> --workspace <n>` later, with the command id this prints. The agent's Terminal tab in the landing app shows the same terminal.
 
-POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents sign-in open --workspace <n> [--attach] [--harness CLAUDE|KIMI] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3374,7 +3374,7 @@ The plugins on the agent home every container of the slot's daemon shares: the p
 
 The plugins installed, each marketplace-qualified, and whether it is switched on.
 
-GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents plugins list --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3403,7 +3403,7 @@ qits workspaces agents plugins list --workspace 1
 
 Install a plugin on the shared agent home: Install on a plugin not installed yet. Prints the installed set as it now is.
 
-POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. The proxy checks no role, only that the slot is ACTIVE, so qits:agent may call it too.
+POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
 
 ```
 qits workspaces agents plugins install --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <plugin>

@@ -1428,7 +1428,8 @@ stop, recreate, agents create/discard/prompt, draft save/discard) need `qits:adm
 `qits:admin-agent`, which a person's token carries; `qits:agent` is refused with 403 by design. The
 runners' update, greenlight and delete need `qits:admin`, `qits:admin-agent` or `qits:system`,
 login-check `qits:admin` or `qits:admin-agent`; healthcheck is open to `qits:agent`. The container
-proxy checks no role, only that the slot is ACTIVE, so everything through it is open to `qits:agent`.
+proxy checks the caller instead: a person, `qits:system`, `qits:admin` or `qits:admin-agent` may reach
+any slot; `qits:agent` only its own workspace's.
 Each command's help says which applies.
 
 Not here, on purpose: registering a runner and rotating its registration token, whose answer is a

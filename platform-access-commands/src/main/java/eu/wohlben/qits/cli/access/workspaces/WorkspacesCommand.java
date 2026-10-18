@@ -60,8 +60,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "or qits:admin-agent, which a person's token carries; qits:agent is refused (HTTP 403) by "
                         + "design. Each command's help names its door.",
                 "- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the "
-                        + "slot's daemon, through qits-workspaces' container proxy, which checks no role, only that "
-                        + "the slot is ACTIVE.",
+                        + "slot's daemon, through qits-workspaces' container proxy, which checks the caller: a "
+                        + "person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only "
+                        + "its own workspace's.",
                 "- `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's "
                         + "terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads "
                         + "the chat's transcript and sends prompts.",
