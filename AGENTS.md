@@ -462,26 +462,31 @@ RFC 6455 handshake; text, ping, pong and close frames), one script per connectio
 JDK, so a native proof can run it from `target/test-classes`. `PlatformCommandsTest` runs picocli in the test's process with its own
 `CliContext` (environment, stdout, stderr, clock), so a command test needs no second process.
 
-**The consumer pact with qits-projects** (epic qits-965). `pacts/qits-platform-access-cli_qits-projects-service.json`
-at the repository root is what the `qits work` commands ask qits-projects' `/work` doors, and it is
-written, never hand-edited: `projects/ProjectsContract` (test) is the one table of (command, state,
-operation) rows, `ProjectsConsumerPactTest` runs each row's `ProjectsApi` call against a pact-jvm
-mock server, and `ProjectsPactFileTest` compares the committed file byte for byte (rewrite it with
-`-Dgolden.update=true` and review the diff). Every answer comes from qits-projects' golden masters
-(`contracts/GoldenMasters`, reading the jar `eu.wohlben.qits:qits-projects-golden-masters`, pinned by
-`qits.projects-golden-masters.version` in the root pom and bumped by qits-maintenance), so a row
-names a provider state the provider records; every interaction carries `qits-call` and a
-`qits-trigger` of kind `command` naming the command (`qits work details`). A new `/work` call on
-`ProjectsApi` needs its row, which `theContractCoversEveryWorkCallOfTheCommandsAndNothingElse`
-enforces. Two rows are not `/work` doors, and that test names their paths: `qits artifacts publish
-changelog` reads the release request's commits (`listReleaseRequestCommits`, state `a released
-release request`), and every command that takes a release request finds it among the repository's
-requests of every state by its logical id (`listRepositoryReleaseRequests` with `state=all`, state
-`a repository with a release not merged to main`; qits-1158). The other doors outside `/work` are
-the git reads of `qits repositories` (branches, commits, commit changes and diff, commit subjects)
-and a refinement's designs for `qits work design` (state `a ticket with a design`; qits-1174). A
-recorded query is part of the
-interaction (`GoldenMasters.query`). `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
+**The consumer pacts** (epics qits-546 and qits-965, ticket qits-1149). Every REST call the
+commands make to a qits service is a row of its provider's contract, and `pacts/qits-platform-access-cli_<provider>.json`
+at the repository root is what those rows write: written, never hand-edited. Each provider has one
+`CliPact` (test), the table of (command, state, operation) rows beside the client it calls
+(`projects/ProjectsContract`, ...), listed in `contracts/Contracts`, and one `*ConsumerPactTest`
+extending `contracts/CliPactTest`, which runs each row's real client against a pact-jvm mock server
+answering that row alone, checks the client method the call went through (`Reached`, a credential
+that reads the stack) and compares the committed file byte for byte (rewrite it with
+`-Dgolden.update=true` and review the diff). Every answer comes from the provider's golden masters,
+read through qits-integrations' `qits-pact-consumer` from the jar `eu.wohlben.qits:<app>-golden-masters`
+pinned by `qits.<app>-golden-masters.version` in the root pom and bumped by qits-maintenance, so a
+row names a provider state the provider records. A row binds only what the command reads of the
+answer (`consumes`), and sends exactly the recorded request, body and query included. A row whose
+state the provider has not recorded yet stays in the table, skipped with the state it needs and
+its door, and out of the file until a newer pin records it. Every interaction carries `qits-call`
+and a `qits-trigger` of kind `command` naming the command (`qits work details`).
+
+`contracts/ClientCallsGuardTest` holds the table to the code: every class whose bytecode calls a
+request method of `PlatformClient`, the publish `Http` or the JDK's `HttpClient` is a client of
+some contract or named in its `NOT_A_CLIENT` with the reason (the transports, the SSE and
+WebSocket streams); every door of every client (each non-private instance method of an `*Api`
+class, or the named methods of a command class) is reached by a row or named as an exclusion of
+its contract with the reason (`openApi`, the served OpenAPI document; a WebSocket address); and
+every contract with a recorded row has its committed file and its line in `release.yml`'s
+`contracts.pacts`, which publishes each file; each provider verifies its own.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.
