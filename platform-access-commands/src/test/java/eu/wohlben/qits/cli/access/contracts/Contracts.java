@@ -1,6 +1,8 @@
 package eu.wohlben.qits.cli.access.contracts;
 
 import eu.wohlben.qits.cli.access.projects.ProjectsContract;
+import eu.wohlben.qits.cli.access.workspaces.WorkspaceDaemonContract;
+import eu.wohlben.qits.cli.access.workspaces.WorkspacesContract;
 
 import java.util.List;
 
@@ -12,7 +14,9 @@ import java.util.List;
 public final class Contracts {
 
     public static final List<CliPact> ALL = List.of(
-            ProjectsContract.CONTRACT);
+            ProjectsContract.CONTRACT,
+            WorkspacesContract.CONTRACT,
+            WorkspaceDaemonContract.CONTRACT);
 
     private Contracts() {
     }
