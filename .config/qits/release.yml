@@ -27,17 +27,26 @@ artifacts:
   # qits-ci submits this `sbom:` from whichever release step holds the file — the maven step below,
   # where `makeBom` writes it — and checks on the last step that it reached the store.
   - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary, sbom: platform-access-cli-binary/target/sbom.json }
-# THE CONSUMER PACT (epic qits-965): what the `qits work` commands ask qits-projects' /work doors
-# (plus the changelog's commits read and `qits release-request list`'s project-wide read), written by ProjectsPactFileTest from qits-projects' golden masters and committed at
-# pacts/qits-platform-access-cli_qits-projects-service.json. The platform packs it as
-# `eu.wohlben.qits:qits-platform-access-cli-pacts-qits-projects-service` (the coordinate is named by
-# this repository and the provider's), only when it changed, from the release slot's LAST step — the
-# pin jar's step below — exactly as for an archetype recipe: qits-ci reads `contracts:` from this file
-# whichever recipe the slots come from. qits-projects pins that jar and verifies it.
+# THE CONSUMER PACTS (epics qits-546 and qits-965, ticket qits-1149): what the commands ask each qits
+# service, one file per provider, written by that provider's *ConsumerPactTest from its golden masters
+# and committed at pacts/qits-platform-access-cli_<provider>.json. The platform packs each as
+# `eu.wohlben.qits:qits-platform-access-cli-pacts-<provider>` (the coordinate is named by this
+# repository and the provider's), only when it changed, from the release slot's LAST step — the pin
+# jar's step below — exactly as for an archetype recipe: qits-ci reads `contracts:` from this file
+# whichever recipe the slots come from. Each provider pins its jar and verifies it.
+# ClientCallsGuardTest fails when a contract with a recorded row is missing here.
 contracts:
   application: qits-platform-access-cli
   pacts:
     qits-projects-service: { packages: [maven] }
+    qits-workspaces-service: { packages: [maven] }
+    qits-workspace-daemon: { packages: [maven] }
+    qits-artifacts-service: { packages: [maven] }
+    qits-ci-service: { packages: [maven] }
+    qits-maintenance-service: { packages: [maven] }
+    qits-observability-service: { packages: [maven] }
+    qits-events-service: { packages: [maven] }
+    qits-idp-service: { packages: [maven] }
 
 # THE daemon ARCHETYPE'S OWN HEADER NAMES THIS REPOSITORY AS THE ONE THAT RIDES ITS OWN RECIPES, and
 # the reason is the build: there is no `docker/Dockerfile.musl-builder` here, so the archetype's
