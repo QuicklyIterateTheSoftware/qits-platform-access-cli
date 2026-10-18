@@ -94,6 +94,16 @@ public final class ProjectsApi {
         return client.get(uri("/projects/api/projects/" + segment(projectId) + "/release-requests" + stateQuery(state)));
     }
 
+    /**
+     * {@code {"request":{…}}}: one release request of the project, named by {@code ref}, its logical
+     * id ({@code <repository>-rr-<n>}, any case) or its whole uuid. The service resolves either
+     * within the project and answers 404 for a request of another project, so the caller needs no
+     * repository to find one. A uuid's start is not a ref here.
+     */
+    public JsonNode projectReleaseRequest(String projectId, String ref) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/projects/" + segment(projectId) + "/release-requests/" + segment(ref)));
+    }
+
     private static String stateQuery(String state) {
         return state == null || state.isBlank() ? "" : "?state=" + URLEncoder.encode(state.strip(), StandardCharsets.UTF_8);
     }
@@ -144,6 +154,38 @@ public final class ProjectsApi {
         }
         return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
                 + segment(requestId) + "/withdraw"), body);
+    }
+
+    /**
+     * {@code {"request":{…}}}: the request, approved at {@code mergedSha}. The sha is the fold the
+     * caller judged, and the service refuses it (409) when the request has moved to another one
+     * since, so an approval never lands on a fold nobody looked at. A note only when one is given.
+     */
+    public JsonNode approveReleaseRequest(String repoId, String requestId, String mergedSha, String note)
+            throws CliFailure, InterruptedException {
+        return decideReleaseRequest(repoId, requestId, "approve", mergedSha, note);
+    }
+
+    /**
+     * {@code {"request":{…}}}: the request, declined at {@code mergedSha}, which sends it to
+     * REJECTED until a new push folds it again. The same body, the same stale-fold refusal, as
+     * {@link #approveReleaseRequest}.
+     */
+    public JsonNode declineReleaseRequest(String repoId, String requestId, String mergedSha, String note)
+            throws CliFailure, InterruptedException {
+        return decideReleaseRequest(repoId, requestId, "decline", mergedSha, note);
+    }
+
+    /** Both decisions are one body, {@code {mergedSha, note?}}, at the door named by {@code verb}. */
+    private JsonNode decideReleaseRequest(String repoId, String requestId, String verb, String mergedSha, String note)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("mergedSha", mergedSha);
+        if (note != null && !note.isBlank()) {
+            body.put("note", note.strip());
+        }
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/" + verb), body);
     }
 
     /**

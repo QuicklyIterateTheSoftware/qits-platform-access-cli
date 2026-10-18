@@ -1253,6 +1253,3155 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "approveReleaseRequest"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request approve",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request approve: approveReleaseRequest",
+      "key": "8128ab95",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request awaiting approval while its build runs",
+          "params": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "note": "Read the diff: the pin moves to the export release."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.mergedSha": {
+              "dataType": "STRING",
+              "expression": "${mergedSha}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/approve",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests/00000000-0000-4000-8000-000000000003/approve"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalNote": "Read the diff: the pin moves to the export release.",
+              "approvalRequired": true,
+              "approvalState": "APPROVED",
+              "approvedAt": "2026-01-01T00:00:00Z",
+              "approvedBy": "dev",
+              "automations": [
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": null,
+                  "failure": null,
+                  "foldSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": null,
+                  "failure": null,
+                  "foldSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                }
+              ],
+              "backingBranch": "release/contract-suite-app-rr-1",
+              "conflict": null,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": "Waiting for a CI verdict for bd6360a2c6",
+              "gateTicketId": null,
+              "gates": [
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PASSED"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PASSED"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PASSED"
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+              "mergedToMainAt": null,
+              "pipeline": {
+                "gates": [
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PASSED"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PASSED"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PASSED"
+                  }
+                ],
+                "phases": [
+                  {
+                    "detail": null,
+                    "finishedAt": null,
+                    "phase": "QA",
+                    "runId": "00000000-0000-4000-8000-000000000006",
+                    "startedAt": "2026-01-01T00:00:00Z",
+                    "state": "RUNNING"
+                  }
+                ]
+              },
+              "preRun": {
+                "state": "PASSED"
+              },
+              "priority": "HIGH",
+              "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for a CI verdict for bd6360a2c6",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": null,
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for a CI verdict for bd6360a2c6",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": null,
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for a CI verdict for bd6360a2c6",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": null,
+                  "state": "PASSED"
+                }
+              ],
+              "releasedSha": null,
+              "repoId": "00000000-0000-4000-8000-000000000002",
+              "repoName": "contract-suite-app",
+              "requester": "contract-seeder",
+              "retryable": false,
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "PENDING",
+              "summary": "Release the export across the suite",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "unattended": false,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": null
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalNote": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvalRequired": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.approvedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.request.automations[*].branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].foldSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.backingBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].between": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].startedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.preRun.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.retryable": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.unattended": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getProjectReleaseRequest"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request approve",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request approve: getProjectReleaseRequest",
+      "key": "ca96aea3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with release requests in every state",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003",
+            "requestQualifiedId": "contract-suite-app-rr-1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/release-requests/${requestQualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/release-requests/contract-suite-app-rr-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalNote": null,
+              "approvalRequired": true,
+              "approvalState": "WAITING",
+              "approvedAt": null,
+              "approvedBy": null,
+              "automations": [
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": "Run in flight",
+                  "failure": null,
+                  "foldSha": "0000000000000000000000000000000000000007",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": "Run in flight",
+                  "failure": null,
+                  "foldSha": "0000000000000000000000000000000000000007",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": "Run in flight",
+                  "failure": null,
+                  "foldSha": "0000000000000000000000000000000000000007",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                }
+              ],
+              "backingBranch": "release/contract-suite-app-rr-1",
+              "conflict": null,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": "Waiting for a person to approve 0000000000",
+              "gateTicketId": null,
+              "gates": [
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PENDING"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PENDING"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PENDING"
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "0000000000000000000000000000000000000007",
+              "mergedToMainAt": null,
+              "pipeline": {
+                "gates": [
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "phases": [
+                  {
+                    "detail": "QA starts once every automation is fresh or waived at this fold",
+                    "finishedAt": null,
+                    "phase": "QA",
+                    "runId": null,
+                    "startedAt": null,
+                    "state": "WAITING_FOR_PRE_RUN"
+                  }
+                ]
+              },
+              "preRun": {
+                "state": "PENDING"
+              },
+              "priority": "BLOCKING",
+              "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for: Entity diagram",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PENDING"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for: Entity diagram",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PENDING"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for: Entity diagram",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PENDING"
+                }
+              ],
+              "releasedSha": null,
+              "repoId": "00000000-0000-4000-8000-000000000002",
+              "repoName": "contract-suite-app",
+              "requester": "contract-seeder",
+              "retryable": false,
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "PENDING",
+              "summary": "Release the export across the suite",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "unattended": false,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": null
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalRequired": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.automations[*].branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.automations[*].foldSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.backingBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].between": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.preRun.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].runId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.retryable": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.unattended": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "declineReleaseRequest"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request decline",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request decline: declineReleaseRequest",
+      "key": "b6fa9a5a",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request awaiting approval",
+          "params": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+            "note": "The README promises an approval policy nobody has signed off yet."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.mergedSha": {
+              "dataType": "STRING",
+              "expression": "${mergedSha}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/decline",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests/00000000-0000-4000-8000-000000000003/decline"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalNote": "The README promises an approval policy nobody has signed off yet.",
+              "approvalRequired": true,
+              "approvalState": "DECLINED",
+              "approvedAt": "2026-01-01T00:00:00Z",
+              "approvedBy": "dev",
+              "automations": [
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": null,
+                  "failure": null,
+                  "foldSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": null,
+                  "failure": null,
+                  "foldSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                }
+              ],
+              "backingBranch": "release/contract-suite-app-rr-1",
+              "conflict": null,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": "Declined by dev: The README promises an approval policy nobody has signed off yet.",
+              "gateTicketId": null,
+              "gates": [
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PASSED"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PASSED"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PASSED"
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+              "mergedToMainAt": null,
+              "pipeline": {
+                "gates": [
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PASSED"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PASSED"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PASSED"
+                  }
+                ],
+                "phases": [
+                  {
+                    "detail": null,
+                    "finishedAt": "2026-01-01T00:00:00Z",
+                    "phase": "QA",
+                    "runId": "00000000-0000-4000-8000-000000000006",
+                    "startedAt": "2026-01-01T00:00:00Z",
+                    "state": "SUCCESS"
+                  }
+                ]
+              },
+              "preRun": {
+                "state": "PASSED"
+              },
+              "priority": "HIGH",
+              "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PASSED"
+                }
+              ],
+              "releasedSha": null,
+              "repoId": "00000000-0000-4000-8000-000000000002",
+              "repoName": "contract-suite-app",
+              "requester": "contract-seeder",
+              "retryable": false,
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "REJECTED",
+              "summary": "Release the export across the suite",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "unattended": false,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": null
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalNote": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvalRequired": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.approvedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.request.automations[*].branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].foldSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.backingBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].between": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].finishedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].startedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.preRun.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].runId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.retryable": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.unattended": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getProjectReleaseRequest"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request decline",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request decline: getProjectReleaseRequest",
+      "key": "5b982d26",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with release requests in every state",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003",
+            "requestQualifiedId": "contract-suite-app-rr-1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/release-requests/${requestQualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/release-requests/contract-suite-app-rr-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalNote": null,
+              "approvalRequired": true,
+              "approvalState": "WAITING",
+              "approvedAt": null,
+              "approvedBy": null,
+              "automations": [
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": "Run in flight",
+                  "failure": null,
+                  "foldSha": "0000000000000000000000000000000000000007",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": "Run in flight",
+                  "failure": null,
+                  "foldSha": "0000000000000000000000000000000000000007",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                },
+                {
+                  "branch": "maintenance/estate-pins",
+                  "detail": "Run in flight",
+                  "failure": null,
+                  "foldSha": "0000000000000000000000000000000000000007",
+                  "kind": "estate-pins",
+                  "label": "Estate pins",
+                  "runId": "bump-00000000-0000-4000-8000-000000000004",
+                  "state": "FRESH",
+                  "updatedAt": "2026-01-01T00:00:00Z"
+                }
+              ],
+              "backingBranch": "release/contract-suite-app-rr-1",
+              "conflict": null,
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": "Waiting for a person to approve 0000000000",
+              "gateTicketId": null,
+              "gates": [
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PENDING"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PENDING"
+                },
+                {
+                  "detail": "configured by manual-review",
+                  "kind": "AUTOMATIONS",
+                  "state": "PENDING"
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "0000000000000000000000000000000000000007",
+              "mergedToMainAt": null,
+              "pipeline": {
+                "gates": [
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  },
+                  {
+                    "between": "PRE_RUN_QA",
+                    "detail": "configured by manual-review",
+                    "kind": "AUTOMATIONS",
+                    "state": "PENDING"
+                  }
+                ],
+                "phases": [
+                  {
+                    "detail": "QA starts once every automation is fresh or waived at this fold",
+                    "finishedAt": null,
+                    "phase": "QA",
+                    "runId": null,
+                    "startedAt": null,
+                    "state": "WAITING_FOR_PRE_RUN"
+                  }
+                ]
+              },
+              "preRun": {
+                "state": "PENDING"
+              },
+              "priority": "BLOCKING",
+              "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for: Entity diagram",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PENDING"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for: Entity diagram",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PENDING"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "runId": "bump-00000000-0000-4000-8000-000000000004",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for: Entity diagram",
+                  "kind": "automations",
+                  "label": "Automations",
+                  "link": null,
+                  "position": "pre-run-qa",
+                  "runId": "00000000-0000-4000-8000-000000000007",
+                  "state": "PENDING"
+                }
+              ],
+              "releasedSha": null,
+              "repoId": "00000000-0000-4000-8000-000000000002",
+              "repoName": "contract-suite-app",
+              "requester": "contract-seeder",
+              "retryable": false,
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "PENDING",
+              "summary": "Release the export across the suite",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "unattended": false,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": null
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalRequired": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.automations[*].branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.automations[*].foldSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.automations[*].updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.backingBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].between": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.gates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].phase": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.pipeline.phases[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.preRun.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].runId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].runId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.retryable": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.unattended": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "listRepositoryReleaseRequests"
           },
           "qits-trigger": {

@@ -784,6 +784,154 @@ class PlatformCommandsTest {
                 + " answered HTTP 404: Release request not found: " + PENDING_ID);
     }
 
+    // --- approving and declining a fold ---
+
+    private static final String DECIDED_ID = "66666666-2222-3333-4444-555555555555";
+    private static final String DECIDED = "qits-ci-service-rr-221";
+    private static final String FOLD = "aaa1111111111111111111111111111111111111";
+
+    private static String decisionOf(String verb) {
+        return REQUESTS + "/" + DECIDED_ID + "/" + verb;
+    }
+
+    /** The project's door answers the request with its repository and the fold it is on (or none). */
+    private void answerProjectRequest(String ref, String mergedSha) {
+        platform.answer("GET", PROJECT_REQUESTS + "/" + ref, """
+                {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","approvalState":"WAITING","mergedSha":%s,"summary":"Bump the estate"}}
+                """.formatted(DECIDED_ID, DECIDED, CI, mergedSha == null ? "null" : "\"" + mergedSha + "\""));
+    }
+
+    /** The decision door's answer: the request as the decision left it. */
+    private static String decided(String state, String approval, String sha) {
+        return """
+                {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"%s","priority":"MEDIUM","summary":"Bump the estate","requester":"maintenance",
+                  "approvalState":"%s","mergedSha":"%s","version":null,"detail":null,
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","sources":[]}}
+                """.formatted(DECIDED_ID, DECIDED, CI, state, approval, sha);
+    }
+
+    @Test
+    void approveWithoutAShaFindsTheRequestInTheProjectAndApprovesTheFoldItRead() throws Exception {
+        answerProjectRequest(DECIDED, FOLD);
+        platform.answer("POST", decisionOf("approve"), decided("PENDING", "APPROVED", FOLD));
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", PROJECT_REQUESTS + "/" + DECIDED)).hasSize(1);
+        assertThat(platform.requests("GET", REPOSITORIES)).as("no repository is looked up").isEmpty();
+        assertThat(JSON.readTree(platform.requests("POST", decisionOf("approve")).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"mergedSha\":\"" + FOLD + "\"}"));
+        assertThat(r.out()).startsWith("Approved " + DECIDED + " at " + FOLD + ".\nRelease request " + DECIDED + "\n")
+                .contains("  approval       APPROVED")
+                .contains("  merged sha     " + FOLD);
+    }
+
+    @Test
+    void approveWithAShaSendsThatShaAsGiven() throws Exception {
+        answerProjectRequest(DECIDED, FOLD);
+        String judged = "bbb2222222222222222222222222222222222222";
+        platform.answer("POST", decisionOf("approve"), decided("PENDING", "APPROVED", judged));
+
+        Result r = run("release-request", "approve", "--project", "qits", "--request", DECIDED, "--sha", " " + judged + " ");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", decisionOf("approve")).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"mergedSha\":\"" + judged + "\"}"));
+        assertThat(r.out()).startsWith("Approved " + DECIDED + " at " + judged + ".\n");
+    }
+
+    @Test
+    void aStaleFoldReachesThePersonInTheServicesWords() {
+        answerProjectRequest(DECIDED, FOLD);
+        String stale = "Release request x-rr-1 is on bbb now, not aaa; re-read it and approve the fold you are looking at.";
+        platform.answer("POST", decisionOf("approve"), 409, "{\"message\":\"" + stale + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED, "--sha", "aaa");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("POST " + platform.url() + decisionOf("approve") + " answered HTTP 409: " + stale);
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void aRefusalOfWhoMayDecideReachesThePersonInTheServicesWords() {
+        answerProjectRequest(DECIDED, FOLD);
+        String personOnly = "Only a person may make this decision, verified here: a browser session or a person's "
+                + "qits CLI, holding qits:admin. Asserted identity headers, service clients, agents, CI and "
+                + "workstation tokens do not count.";
+        platform.answer("POST", decisionOf("decline"), 403, "{\"message\":\"" + personOnly + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "decline", "--request", DECIDED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(personOnly);
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void declineSendsItsNoteAndABlankOrMissingNoteIsLeftOut() throws Exception {
+        answerProjectRequest(DECIDED, FOLD);
+        platform.answer("POST", decisionOf("decline"), decided("REJECTED", "DECLINED", FOLD));
+
+        Result noted = run("release-request", "--project", "qits", "decline", "--request", DECIDED,
+                "--note", "  The README promises an approval policy nobody has signed off yet. ");
+        Result blank = run("release-request", "--project", "qits", "decline", "--request", DECIDED, "--note", "  ");
+        Result none = run("release-request", "--project", "qits", "decline", "--request", DECIDED);
+
+        assertThat(List.of(noted, blank, none)).allSatisfy(r -> assertThat(r.exit()).as(r.err()).isZero());
+        List<FakePlatform.Request> sent = platform.requests("POST", decisionOf("decline"));
+        assertThat(sent).hasSize(3);
+        assertThat(JSON.readTree(sent.get(0).body())).isEqualTo(JSON.readTree("{\"mergedSha\":\"" + FOLD
+                + "\",\"note\":\"The README promises an approval policy nobody has signed off yet.\"}"));
+        assertThat(JSON.readTree(sent.get(1).body())).isEqualTo(JSON.readTree("{\"mergedSha\":\"" + FOLD + "\"}"));
+        assertThat(JSON.readTree(sent.get(2).body())).isEqualTo(JSON.readTree("{\"mergedSha\":\"" + FOLD + "\"}"));
+        assertThat(none.out()).startsWith("Declined " + DECIDED + " at " + FOLD + ".\n")
+                .contains("  state          REJECTED");
+    }
+
+    @Test
+    void aRequestWithNoFoldIsRefusedHereAndNothingIsSent() {
+        answerProjectRequest(DECIDED, null);
+
+        Result approve = run("release-request", "--project", "qits", "approve", "--request", DECIDED);
+        Result decline = run("release-request", "--project", "qits", "decline", "--request", DECIDED);
+
+        assertThat(approve.exit()).isNotZero();
+        assertThat(approve.err()).contains("Release request " + DECIDED
+                + " has not been folded yet, so there is no fold to approve.");
+        assertThat(decline.exit()).isNotZero();
+        assertThat(decline.err()).contains("there is no fold to decline.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
+    @Test
+    void jsonPrintsTheServicesAnswerUnchanged() throws Exception {
+        answerProjectRequest(DECIDED, FOLD);
+        String answer = decided("PENDING", "APPROVED", FOLD);
+        platform.answer("POST", decisionOf("approve"), answer);
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(r.out())).isEqualTo(JSON.readTree(answer));
+        assertThat(r.out()).doesNotContain("Approved ");
+    }
+
+    @Test
+    void aRequestTheProjectDoesNotHoldIsTheServices404() {
+        platform.answer("GET", PROJECT_REQUESTS + "/qits-ci-service-rr-9", 404,
+                "{\"message\":\"Project " + QITS + " has no release request qits-ci-service-rr-9\"}");
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", "qits-ci-service-rr-9");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("answered HTTP 404: Project " + QITS + " has no release request qits-ci-service-rr-9");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
     // --- regenerating a release output ---
 
     private static final String REJECTED_ID = "33333333-2222-3333-4444-555555555555";

@@ -478,8 +478,13 @@ changelog` reads the release request's commits (`listReleaseRequestCommits`, sta
 release request`), and every command that takes a release request finds it among the repository's
 requests of every state by its logical id (`listRepositoryReleaseRequests` with `state=all`, state
 `a repository with a release not merged to main`; qits-1158). The other doors outside `/work` are
-the git reads of `qits repositories` (branches, commits, commit changes and diff, commit subjects)
-and a refinement's designs for `qits work design` (state `a ticket with a design`; qits-1174). A
+the git reads of `qits repositories` (branches, commits, commit changes and diff, commit subjects),
+a refinement's designs for `qits work design` (state `a ticket with a design`; qits-1174), and
+`qits release-request approve` / `decline` (qits-1287): the project's door that finds a request by
+its logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`)
+and the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its
+build runs`, `declineReleaseRequest` in `a release request awaiting approval`). A path the
+recorder froze under both `ids` and `strings` is matched as a string (`GoldenMasters`). A
 recorded query is part of the
 interaction (`GoldenMasters.query`). `release.yml`'s `contracts:` block publishes the file; qits-projects verifies it.
 

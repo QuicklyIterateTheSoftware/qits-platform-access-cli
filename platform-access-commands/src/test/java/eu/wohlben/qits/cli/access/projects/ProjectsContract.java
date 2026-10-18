@@ -31,8 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * release-request list} reads when no
  * repository is named, the repository's requests of every state, where every command that takes
  * a request finds it by its logical id (qits-1158), an automation run, which {@code qits
- * release-request regenerate} asks for (qits-1182), and a refinement's designs, which {@code qits
- * work design} reads and writes (qits-1174). {@code qits projects}, the other {@code
+ * release-request regenerate} asks for (qits-1182), a refinement's designs, which {@code qits
+ * work design} reads and writes (qits-1174), and the decisions on a fold: {@code qits
+ * release-request approve} and {@code decline} find the request in the project by its logical id
+ * and post the fold they judge (qits-1287). {@code qits projects}, the other {@code
  * repositories} reads and the other {@code release-request} calls are not part of this pact yet,
  * and neither is the OpenAPI document the payload commands read their schema from. Neither is
  * {@code list --state}: the provider records the project list without a query only.
@@ -78,6 +80,8 @@ final class ProjectsContract {
     static final String PENDING_REQUESTS = "a project with pending release requests";
     static final String HELD_BY_A_FAILED_AUTOMATION = "a release request held by a failed automation";
     static final String TICKET_WITH_A_DESIGN = "a ticket with a design";
+    static final String PROJECT_REQUESTS_OF_EVERY_STATE = "a project with release requests in every state";
+    static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
 
     // --- the calls ------------------------------------------------------------------------------
 
@@ -463,6 +467,38 @@ final class ProjectsContract {
         assertThat(ProjectsApi.text(run, "id")).isNotBlank();
     };
 
+    /**
+     * {@code qits release-request approve} and {@code decline} find the request in the project by its
+     * logical id, with no repository named: the answer carries the repository and the uuid the
+     * decision door takes, and the fold judged when no --sha is given.
+     */
+    private static final Call FIND_IN_PROJECT = (api, params, recorded) -> {
+        JsonNode request = api.projectReleaseRequest(params.get("projectId"), params.get("requestQualifiedId"))
+                .path("request");
+        assertThat(ProjectsApi.text(request, "qualifiedId")).isEqualTo(params.get("requestQualifiedId"));
+        assertThat(ProjectsApi.text(request, "id")).isNotBlank();
+        assertThat(ProjectsApi.text(request, "repoId")).isNotBlank();
+        assertThat(request.path("mergedSha").isTextual() || request.path("mergedSha").isNull()).isTrue();
+    };
+
+    /** The decision as sent: the recorded fold and note. The table prints the request that comes back. */
+    private static final Call APPROVE = (api, params, recorded) -> {
+        JsonNode body = recorded.exampleBody();
+        JsonNode request = api.approveReleaseRequest(params.get("repositoryId"), params.get("requestId"),
+                body.path("mergedSha").asText(), body.path("note").asText()).path("request");
+        assertThat(ProjectsApi.text(request, "approvalState")).isEqualTo("APPROVED");
+        assertThat(ProjectsApi.text(request, "mergedSha")).isEqualTo(body.path("mergedSha").asText());
+    };
+
+    private static final Call DECLINE = (api, params, recorded) -> {
+        JsonNode body = recorded.exampleBody();
+        JsonNode request = api.declineReleaseRequest(params.get("repositoryId"), params.get("requestId"),
+                body.path("mergedSha").asText(), body.path("note").asText()).path("request");
+        assertThat(ProjectsApi.text(request, "approvalState")).isEqualTo("DECLINED");
+        assertThat(ProjectsApi.text(request, "state")).isEqualTo("REJECTED");
+        assertThat(ProjectsApi.text(request, "mergedSha")).isEqualTo(body.path("mergedSha").asText());
+    };
+
     static final List<Case> CASES = List.of(
             row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", LIST),
             row("qits work details", EPIC_IN_DETAIL, "getWork", GET),
@@ -517,7 +553,13 @@ final class ProjectsContract {
                     PROJECT_RELEASE_REQUESTS),
             row("qits release-request join", REQUESTS_OF_EVERY_STATE, "listRepositoryReleaseRequests", FIND_REQUEST),
             row("qits release-request regenerate", HELD_BY_A_FAILED_AUTOMATION, "rerunReleaseRequestAutomation",
-                    REGENERATE));
+                    REGENERATE),
+            row("qits release-request approve", PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest",
+                    FIND_IN_PROJECT),
+            row("qits release-request approve", AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest", APPROVE),
+            row("qits release-request decline", PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest",
+                    FIND_IN_PROJECT),
+            row("qits release-request decline", AWAITING_REQUEST, "declineReleaseRequest", DECLINE));
 
     private static Case row(String command, String state, String operationId, Call call) {
         return new Case(Trigger.command(command), state, operationId, JSON_BODY, call);

@@ -30,11 +30,13 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
                 ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class,
+                ReleaseRequestCommand.ApproveCommand.class, ReleaseRequestCommand.DeclineCommand.class,
                 ReleaseRequestCommand.RegenerateCommand.class},
         description = {"Release requests: the one way to release a repository. list shows them (of the whole project, "
                         + "or of one repository), create "
                         + "asks for a branch to be released, join adds a branch to an open request, withdraw "
-                        + "ends a request that must not ship, and regenerate runs one release output again.",
+                        + "ends a request that must not ship, approve lets the fold a request is on go ahead, "
+                        + "decline sends it back, and regenerate runs one release output again.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
                         + "States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its "
                         + "remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build "
@@ -51,8 +53,14 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "request, and do not withdraw this one.",
                 "- `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any "
                         + "more. WITHDRAWN is final.",
-                "- --project and --repository may come before or after the command. Only list works without "
-                        + "--repository."})
+                "- approve and decline judge one fold: the request's merged sha. A push that folds the request "
+                        + "again leaves the decision behind, and the new fold waits for a decision of its own.",
+                "- decline is not withdraw. A declined request goes REJECTED and comes back with the next push to "
+                        + "one of its branches; WITHDRAWN is final.",
+                "- Only a person may approve or decline: their own `qits` CLI sign-in, holding qits:admin. The "
+                        + "platform refuses agents, CI and service clients (HTTP 403).",
+                "- --project and --repository may come before or after the command. list, approve and decline work "
+                        + "without --repository; approve and decline find the request in the project."})
 public class ReleaseRequestCommand implements Runnable {
 
     /** The tag is cut but the request is still open; version and merged sha are already stamped. */
@@ -93,15 +101,28 @@ public class ReleaseRequestCommand implements Runnable {
 
     /** Checks the names, then finds the repository. */
     private Target target(CliContext context) throws CliFailure, InterruptedException {
-        String wantedProject = RepositoriesCommand.required(project, RepositoriesCommand.NAME_THE_PROJECT);
         String wantedRepository = RepositoriesCommand.required(repository, "Name the repository: --repository <id or name>.");
-        ProjectsApi api = ProjectsApi.connect(context, options.projectsUrl);
-        JsonNode found = api.project(wantedProject);
-        JsonNode repo = api.repository(found, wantedRepository);
-        return new Target(api, ProjectsApi.projectLabel(found), text(repo, "id"), text(repo, "name"));
+        InProject in = inProject(context);
+        JsonNode repo = in.api().repository(in.project(), wantedRepository);
+        return new Target(in.api(), in.label(), text(repo, "id"), text(repo, "name"));
     }
 
     private record Target(ProjectsApi api, String projectLabel, String repoId, String repoName) {
+    }
+
+    /**
+     * Checks --project, then finds the project. What every command needs before it knows a
+     * repository, and all that list, approve and decline need: the project's doors take no
+     * repository.
+     */
+    private InProject inProject(CliContext context) throws CliFailure, InterruptedException {
+        String wantedProject = RepositoriesCommand.required(project, RepositoriesCommand.NAME_THE_PROJECT);
+        ProjectsApi api = ProjectsApi.connect(context, options.projectsUrl);
+        JsonNode found = api.project(wantedProject);
+        return new InProject(api, found, ProjectsApi.projectLabel(found));
+    }
+
+    private record InProject(ProjectsApi api, JsonNode project, String label) {
     }
 
     /**
@@ -166,11 +187,9 @@ public class ReleaseRequestCommand implements Runnable {
             String scope;
             JsonNode answer;
             if (wholeProject) {
-                String wantedProject = RepositoriesCommand.required(parent.project, RepositoriesCommand.NAME_THE_PROJECT);
-                ProjectsApi api = ProjectsApi.connect(context, parent.options.projectsUrl);
-                JsonNode found = api.project(wantedProject);
-                scope = "project " + ProjectsApi.projectLabel(found);
-                answer = api.projectReleaseRequests(text(found, "id"), state);
+                InProject in = parent.inProject(context);
+                scope = "project " + in.label();
+                answer = in.api().projectReleaseRequests(text(in.project(), "id"), state);
             } else {
                 Target target = parent.target(context);
                 scope = target.repoName();
@@ -436,6 +455,166 @@ public class ReleaseRequestCommand implements Runnable {
                 return new CliFailure("No such request. " + refused.getMessage(), CliFailure.FAILED);
             }
             return refused;
+        }
+    }
+
+    /**
+     * What approve and decline share: the request found in the project by its logical id or uuid,
+     * the fold being judged, the note, and the one door call. Neither needs --repository: the
+     * project's door answers the request with its repository, which is all the decision door needs.
+     * <p>
+     * <b>The fold is the decision's subject.</b> The service records a decision against a merged
+     * sha and refuses one whose sha is not the request's current fold (409), so a decision can never
+     * land on a fold its maker did not look at. --sha is that check in full. Without it, the command
+     * sends the sha it has just read, which only narrows the race to the moment between the read and
+     * the write; the help says so. A request with no fold has nothing to judge, and is refused here
+     * before anything is sent.
+     * <p>
+     * <b>The refusals are the service's.</b> Who may decide (a person, by their own sign-in) and when
+     * (a fold that is current, a request that waits for one) are the door's rules, and its sentences
+     * say which one refused; they reach the person as {@link eu.wohlben.qits.cli.access.platform.PlatformClient}
+     * worded them, with no second sentence on top.
+     */
+    abstract static class DecisionCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
+                description = "The request: its id as list shows it (qits-ci-service-rr-221), in any case, or its "
+                        + "whole uuid. It is found in the project, so --repository is not needed.")
+        String request;
+
+        @CommandLine.Option(names = "--sha", paramLabel = "<merged sha>",
+                description = "The fold you judged: the request's merged sha, as the landing app or -o json shows "
+                        + "it. This is the strict form: the platform refuses the decision (HTTP 409) if the request "
+                        + "is on another fold by then. Without it the command judges whatever fold the request is "
+                        + "on at the moment it is read.")
+        String sha;
+
+        @CommandLine.Option(names = "--note", paramLabel = "<text>",
+                description = "Why, in a sentence, for the record. A decline's note becomes the request's detail, "
+                        + "the first thing whoever answers the decline reads. Default: none.")
+        String note;
+
+        /** The door's verb, as a sentence says it: approve, decline. */
+        abstract String verb();
+
+        /** What the first line of the table form says was done: Approved, Declined. */
+        abstract String done();
+
+        abstract JsonNode decide(ProjectsApi api, String repoId, String requestId, String mergedSha, String note)
+                throws CliFailure, InterruptedException;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (request.isBlank() || (sha != null && sha.isBlank())) {
+                throw new CliFailure("--request and --sha must not be empty.", CliFailure.USAGE);
+            }
+            InProject in = parent.inProject(context);
+            JsonNode found = in.api().projectReleaseRequest(text(in.project(), "id"), request.strip())
+                    .path("request");
+            String name = ReleaseRequestRefs.name(found);
+            String fold = sha != null ? sha.strip() : text(found, "mergedSha");
+            if (fold.isBlank()) {
+                throw new CliFailure("Release request " + name + " has not been folded yet, so there is no fold to "
+                        + verb() + ".", CliFailure.FAILED);
+            }
+            JsonNode answer = decide(in.api(), text(found, "repoId"), text(found, "id"), fold, note);
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            context.out().println(done() + " " + name + " at " + fold + ".");
+            printRequest(context.out(), answer.path("request"));
+            return 0;
+        }
+    }
+
+    @CommandLine.Command(name = "approve", mixinStandardHelpOptions = true,
+            description = {"Approve the fold a release request is on, so it may release once its gates are green.",
+                    "The approval is for one fold, the request's merged sha. A push that folds the request again "
+                            + "leaves it behind, and the new fold needs an approval of its own. It prints the "
+                            + "request that came back."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits approve --request qits-ci-service-rr-221 "
+                            + "--sha 3f9c2e1a7b8d4c6e5f0a1b2c3d4e5f6a7b8c9d0e",
+                    "  qits release-request --project qits approve --request qits-ci-service-rr-221 "
+                            + "--note \"Read the diff: the pin moves to the export release.\"",
+                    "",
+                    "- Give --sha to approve exactly the fold you read. Without it the command approves whatever "
+                            + "fold the request is on when it reads it.",
+                    "- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and "
+                            + "service clients are refused (HTTP 403).",
+                    "- HTTP 409 means the request is on another fold than the one sent (the message names the "
+                            + "one it is on now), has no fold, has concluded or is being released, or its repository "
+                            + "needs no approval. Read it again and judge the fold it is on."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE,
+                    "1:The platform refused (the message names the status and says why), cannot be reached, or "
+                            + "the request has no fold yet, so there is nothing to approve.",
+                    HelpText.USAGE})
+    public static class ApproveCommand extends DecisionCommand {
+
+        @Override
+        String verb() {
+            return "approve";
+        }
+
+        @Override
+        String done() {
+            return "Approved";
+        }
+
+        @Override
+        JsonNode decide(ProjectsApi api, String repoId, String requestId, String mergedSha, String note)
+                throws CliFailure, InterruptedException {
+            return api.approveReleaseRequest(repoId, requestId, mergedSha, note);
+        }
+    }
+
+    @CommandLine.Command(name = "decline", mixinStandardHelpOptions = true,
+            description = {"Decline the fold a release request is on, so it does not release.",
+                    "The request goes REJECTED and comes back by itself when one of its branches gets a new push, "
+                            + "which makes a new fold to judge. It is not withdraw: WITHDRAWN is final. It prints "
+                            + "the request that came back."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits decline --request qits-ci-service-rr-221 "
+                            + "--sha 3f9c2e1a7b8d4c6e5f0a1b2c3d4e5f6a7b8c9d0e "
+                            + "--note \"The README promises an approval policy nobody has signed off yet.\"",
+                    "",
+                    "- Give --sha to decline exactly the fold you read. Without it the command declines whatever "
+                            + "fold the request is on when it reads it.",
+                    "- To stop a request for good, use `withdraw` instead.",
+                    "- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and "
+                            + "service clients are refused (HTTP 403).",
+                    "- HTTP 409 means the request is on another fold than the one sent (the message names the "
+                            + "one it is on now), has no fold, has concluded or is being released, or its repository "
+                            + "needs no approval. Read it again and judge the fold it is on."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE,
+                    "1:The platform refused (the message names the status and says why), cannot be reached, or "
+                            + "the request has no fold yet, so there is nothing to decline.",
+                    HelpText.USAGE})
+    public static class DeclineCommand extends DecisionCommand {
+
+        @Override
+        String verb() {
+            return "decline";
+        }
+
+        @Override
+        String done() {
+            return "Declined";
+        }
+
+        @Override
+        JsonNode decide(ProjectsApi api, String repoId, String requestId, String mergedSha, String note)
+                throws CliFailure, InterruptedException {
+            return api.declineReleaseRequest(repoId, requestId, mergedSha, note);
         }
     }
 

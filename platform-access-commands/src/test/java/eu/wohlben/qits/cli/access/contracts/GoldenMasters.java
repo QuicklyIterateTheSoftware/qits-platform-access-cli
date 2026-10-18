@@ -48,7 +48,12 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>{@code frozen.ids} — the whole value is a UUID: {@code uuid} matcher;
  *   <li>{@code frozen.instants} — an ISO-8601 timestamp: a regex matcher ({@link #ISO_INSTANT});
- *   <li>{@code frozen.strings} — a string carrying a frozen value: type match;
+ *   <li>{@code frozen.strings} — a string carrying a frozen value: type match. <b>A path listed
+ *       under both {@code ids} and {@code strings} is a string</b>: the recorder lists a path by
+ *       what each value at it was, so one array whose elements hold a whole UUID in some places and
+ *       a UUID inside a longer string in others ({@code qualityGates[*].checks[*].runId}: a CI
+ *       run's id, or a maintenance run's {@code bump-<uuid>}) lands in both, and only the type
+ *       matcher holds every element (qits-1287);
  *   <li>{@code frozen.keys} — an object keyed by a frozen value ({@code transitionWork}'s answer,
  *       keyed by qualified id): a {@code values} matcher, so any key is accepted and every value is
  *       matched against one template; the paths beneath it name the key {@code *};
@@ -198,7 +203,7 @@ public final class GoldenMasters {
                         body == null || body.isNull() ? null : body,
                         op.path("status").asInt(),
                         op.path("file").asText(),
-                        strings(frozen.path("ids")),
+                        idsOnly(frozen),
                         strings(frozen.path("instants")),
                         strings(frozen.path("strings")),
                         strings(frozen.path("keys")),
@@ -885,6 +890,13 @@ public final class GoldenMasters {
             }
         }
         throw new IllegalArgumentException("qits-projects' golden masters record no state '" + state + "'");
+    }
+
+    /** {@code frozen.ids} without the paths {@code frozen.strings} lists too: those are strings. */
+    private static Set<String> idsOnly(JsonNode frozen) {
+        Set<String> ids = new LinkedHashSet<>(strings(frozen.path("ids")));
+        ids.removeAll(strings(frozen.path("strings")));
+        return Set.copyOf(ids);
     }
 
     private static Set<String> strings(JsonNode array) {

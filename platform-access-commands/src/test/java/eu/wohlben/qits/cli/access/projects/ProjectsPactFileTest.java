@@ -107,8 +107,9 @@ public class ProjectsPactFileTest {
    * reads and writes (qits-1174), the project's
    * release requests, {@code qits release-request list} without a repository, the repository's
    * release requests, where a command finds a request by its logical id (qits-1158), or an
-   * automation run, {@code qits release-request regenerate} (qits-1182); each named
-   * here by its path. A new call on the client without its row here would ship
+   * automation run, {@code qits release-request regenerate} (qits-1182), or a decision on a fold,
+   * {@code qits release-request approve} and {@code decline}, with the one project request they find
+   * it by (qits-1287); each named here by its path. A new call on the client without its row here would ship
    * unverified; a row on another family would put a door into this pact that epic qits-965 is
    * retiring.
    */
@@ -127,7 +128,8 @@ public class ProjectsPactFileTest {
             "setWorkMemberCondition", "getWorkRefinement", "listCommitChanges", "getCommitFileDiff",
             "listProjectReleaseRequests", "listRepositoryReleaseRequests", "rerunReleaseRequestAutomation",
             "listRepositoryBranches", "listBranchCommits", "measureCommitSubjects", "listRefinementDesigns",
-            "getRefinementDesign", "addRefinementDesign", "updateRefinementDesign")),
+            "getRefinementDesign", "addRefinementDesign", "updateRefinementDesign",
+            "getProjectReleaseRequest", "approveReleaseRequest", "declineReleaseRequest")),
         covered);
     for (JsonNode interaction : MAPPER.readTree(normalise(written())).path("interactions")) {
       String path = interaction.path("request").path("path").asText();
@@ -137,7 +139,8 @@ public class ProjectsPactFileTest {
               || path.matches("/projects/api/repositories/[^/]+/commits/[^/]+/(changes|diff)")
               || path.matches("/projects/api/repositories/[^/]+/(branches|commits|commit-subjects)")
               || path.matches("/projects/api/refinements/[^/]+/designs(/[^/]+)?")
-              || path.matches("/projects/api/projects/[^/]+/release-requests")
+              || path.matches("/projects/api/projects/[^/]+/release-requests(/[^/]+)?")
+              || path.matches("/projects/api/repositories/[^/]+/release-requests/[^/]+/(approve|decline)")
               || path.matches("/projects/api/repositories/[^/]+/release-requests")
               || path.matches("/projects/api/repositories/[^/]+/release-requests/[^/]+/automations/[^/]+/runs"),
           interaction.path("description").asText() + ": " + path + " is not a /work door");
