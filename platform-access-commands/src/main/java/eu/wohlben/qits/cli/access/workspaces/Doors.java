@@ -14,9 +14,9 @@ final class Doors {
     static final String WRITE = "It needs qits:admin or qits:admin-agent, which a person's token carries. "
             + "qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.";
 
-    /** The container proxy: qits-workspaces checks no role there, only that the slot is ACTIVE. */
-    static final String PROXY = "It goes through qits-workspaces' container proxy to the slot's daemon. The proxy "
-            + "checks no role, only that the slot is ACTIVE, so qits:agent may call it too.";
+    /** The container proxy: qits-workspaces checks the caller against the slot there (qits-1386). */
+    static final String PROXY = "It goes through qits-workspaces' container proxy to the slot's daemon. A person, "
+            + "qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.";
 
     private Doors() {
     }
