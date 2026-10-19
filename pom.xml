@@ -88,6 +88,21 @@
              gated here, where a changed answer the CLI cannot read goes red before it ships. Do not
              hand-edit it to chase a release. -->
         <qits.projects-golden-masters.version>2026.1016.112931</qits.projects-golden-masters.version>
+        <!-- The other providers' golden masters, one per service the commands call (ticket
+             qits-1149): each pact under pacts/ is written from its provider's recordings. Bumped by
+             qits-maintenance like the one above. -->
+        <qits.workspaces-golden-masters.version>2026.1016.90656</qits.workspaces-golden-masters.version>
+        <qits.workspace-daemon-golden-masters.version>2026.1014.182127</qits.workspace-daemon-golden-masters.version>
+        <qits.artifacts-golden-masters.version>2026.1018.73956</qits.artifacts-golden-masters.version>
+        <qits.ci-golden-masters.version>2026.1010.174604</qits.ci-golden-masters.version>
+        <qits.idp-golden-masters.version>2026.1018.142635</qits.idp-golden-masters.version>
+        <qits.events-golden-masters.version>2026.1010.121628</qits.events-golden-masters.version>
+        <qits.maintenance-golden-masters.version>2026.1011.122834</qits.maintenance-golden-masters.version>
+        <qits.observability-golden-masters.version>2026.1010.134226</qits.observability-golden-masters.version>
+        <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:
+             it reads every provider's recordings off the classpath and binds only what a command
+             reads. -->
+        <qits.pact-consumer.version>2026.1018.142240</qits.pact-consumer.version>
         <!-- pact-jvm, test scope only: the consumer half of the qits-projects contract. An external
              library, so it moves by hand, not by a maintenance bump; the same version as the
              provider's verifier and every other consumer on the estate. -->
@@ -121,6 +136,51 @@
                 <groupId>au.com.dius.pact.consumer</groupId>
                 <artifactId>junit5</artifactId>
                 <version>${pact-jvm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-workspaces-golden-masters</artifactId>
+                <version>${qits.workspaces-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-workspace-daemon-golden-masters</artifactId>
+                <version>${qits.workspace-daemon-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-artifacts-golden-masters</artifactId>
+                <version>${qits.artifacts-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-ci-golden-masters</artifactId>
+                <version>${qits.ci-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-idp-golden-masters</artifactId>
+                <version>${qits.idp-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-events-golden-masters</artifactId>
+                <version>${qits.events-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-maintenance-golden-masters</artifactId>
+                <version>${qits.maintenance-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-observability-golden-masters</artifactId>
+                <version>${qits.observability-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-pact-consumer</artifactId>
+                <version>${qits.pact-consumer.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
