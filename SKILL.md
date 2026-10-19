@@ -777,7 +777,7 @@ Both read a JSON document on stdin and send it as it is. With nothing on stdin t
 
 ### Notes
 
-- The author is the signed-in caller, and an edit leaves it as it is. Anybody who may comment may edit a comment's text.
+- The author is the signed-in caller (an agent's comment is its agent's), and an edit leaves it as it is. Only a comment's author may edit it (HTTP 403 otherwise).
 - Deleting a comment takes qits:admin, and qits has no command for it.
 
 ## qits work comment create
@@ -819,7 +819,7 @@ qits work --entity qits-100 comment create </dev/null
 
 Edit a comment on a work entity's thread.
 
-Reads a JSON merge patch, such as {"body":"..."}, on stdin and sends it unchanged to PATCH /projects/api/work/{entity}/comments/{commentId} as application/merge-patch+json. The path names the entity and the comment together, so the service answers a comment that is not on the entity's thread with HTTP 404. The author stays who it was.
+Reads a JSON merge patch, such as {"body":"..."}, on stdin and sends it unchanged to PATCH /projects/api/work/{entity}/comments/{commentId} as application/merge-patch+json. The path names the entity and the comment together, so the service answers a comment that is not on the entity's thread with HTTP 404. The author stays who it was. Only the comment's author may edit it; anybody else gets HTTP 403.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints the patch's JSON schema from the service's OpenAPI document (/projects/q/openapi) with the required fields named, and exits with 0.
 

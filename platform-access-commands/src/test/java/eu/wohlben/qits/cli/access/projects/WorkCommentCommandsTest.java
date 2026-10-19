@@ -268,6 +268,19 @@ class WorkCommentCommandsTest {
     }
 
     @Test
+    void anAgentsCommentIsShownByItsWorkItemInTheTable() throws Exception {
+        platform.answer("POST", THREAD, """
+                {"comment":{"id":"c5","entityId":"%s","author":"agent-7","authorAgentOf":"qits-1402",
+                  "body":"hi","createdAt":"2026-09-29T10:00:00Z","updatedAt":"2026-09-29T10:00:00Z"}}
+                """.formatted(TASK));
+
+        Result r = runWithInput("{\"body\":\"hi\"}", "work", "--entity", EPIC, "comment", "create");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("qits-1402's agent").doesNotContain("agent-7");
+    }
+
+    @Test
     void aRefusalIsReported() {
         platform.answer("POST", THREAD, 403, "");
 
@@ -292,6 +305,20 @@ class WorkCommentCommandsTest {
         assertThat(platform.requests("GET", THREAD)).isEmpty();
         assertThat(r.out().lines().toList().getFirst()).contains("UPDATED");
         assertThat(r.out()).contains(C1).contains("alice");
+    }
+
+    @Test
+    void anAgentsEditedCommentIsShownByItsWorkItemInTheTable() throws Exception {
+        platform.answer("PATCH", PATCH_C1, """
+                {"comment":{"id":"%s","entityId":"%s","author":"agent-7","authorAgentOf":"qits-1402",
+                  "body":"edited","createdAt":"2026-09-29T09:00:00Z","updatedAt":"2026-09-29T10:00:00Z"}}
+                """.formatted(C1, TASK));
+
+        Result r = runWithInput("{\"body\":\"edited\"}", "work", "--entity", EPIC, "comment", "update",
+                "--comment", C1);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("qits-1402's agent").doesNotContain("agent-7");
     }
 
     @Test
