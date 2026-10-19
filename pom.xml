@@ -91,12 +91,12 @@
         <!-- The other providers' golden masters, one per service the commands call (ticket
              qits-1149): each pact under pacts/ is written from its provider's recordings. Bumped by
              qits-maintenance like the one above. -->
-        <qits.workspaces-golden-masters.version>2026.1019.70413</qits.workspaces-golden-masters.version>
+        <qits.workspaces-golden-masters.version>2026.1019.95426</qits.workspaces-golden-masters.version>
         <qits.workspace-daemon-golden-masters.version>2026.1018.152111</qits.workspace-daemon-golden-masters.version>
         <qits.artifacts-golden-masters.version>2026.1019.62657</qits.artifacts-golden-masters.version>
         <qits.ci-golden-masters.version>2026.1018.180637</qits.ci-golden-masters.version>
-        <qits.idp-golden-masters.version>2026.1018.175524</qits.idp-golden-masters.version>
-        <qits.events-golden-masters.version>2026.1010.121628</qits.events-golden-masters.version>
+        <qits.idp-golden-masters.version>2026.1019.100619</qits.idp-golden-masters.version>
+        <qits.events-golden-masters.version>2026.1019.104024</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1018.165353</qits.maintenance-golden-masters.version>
         <qits.observability-golden-masters.version>2026.1018.155850</qits.observability-golden-masters.version>
         <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:
