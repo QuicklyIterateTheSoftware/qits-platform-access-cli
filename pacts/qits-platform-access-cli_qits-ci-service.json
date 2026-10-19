@@ -796,6 +796,100 @@
         "references": {
           "qits-call": {
             "app": "qits-ci-service",
+            "operationId": "listRuns"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci report show",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci report show: listRuns",
+      "key": "b9959cf8",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with runs to find by the start of an id",
+          "params": {
+            "failedRunId": "00000000-0000-4000-8000-000000000001",
+            "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "succeededRunId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ci/api/runs",
+        "query": {
+          "repositoryId": [
+            "00000000-0000-4000-8000-000000000003"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "runs": [
+              {
+                "id": "00000000-0000-4000-8000-000000000004"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000004"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.runs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.runs[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
             "operationId": "getRunBaseline"
           },
           "qits-trigger": {
@@ -1346,6 +1440,7 @@
       "request": {
         "body": {
           "content": {
+            "baseline": null,
             "highlights": [
               {
                 "delta": null,
@@ -1387,6 +1482,100 @@
       },
       "response": {
         "status": 204
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
+            "operationId": "listRuns"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci retry",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci retry: listRuns",
+      "key": "be51ed2d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with runs to find by the start of an id",
+          "params": {
+            "failedRunId": "00000000-0000-4000-8000-000000000001",
+            "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "succeededRunId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ci/api/runs",
+        "query": {
+          "repositoryId": [
+            "00000000-0000-4000-8000-000000000003"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "runs": [
+              {
+                "id": "00000000-0000-4000-8000-000000000004"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000004"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.runs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.runs[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
       },
       "type": "Synchronous/HTTP"
     },
@@ -1466,6 +1655,49 @@
           }
         },
         "status": 202
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
+            "operationId": "retryRun"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci retry",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci retry: retryRun",
+      "key": "c7347b23",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a running run",
+          "params": {
+            "authorization": "Bearer qits_tok_contract-ci-run",
+            "repositoryId": "00000000-0000-4000-8000-000000000001",
+            "runId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/ci/api/runs/${runId}/retry",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/ci/api/runs/00000000-0000-4000-8000-000000000002/retry"
+      },
+      "response": {
+        "status": 409
       },
       "type": "Synchronous/HTTP"
     },
@@ -1759,6 +1991,141 @@
         "references": {
           "qits-call": {
             "app": "qits-ci-service",
+            "operationId": "getRun"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci run",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci run: getRun",
+      "key": "4dc96c27",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no run with the given id",
+          "params": {
+            "runId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/ci/api/runs/${runId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/ci/api/runs/00000000-0000-4000-8000-000000000001"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
+            "operationId": "listRuns"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci run",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci run: listRuns",
+      "key": "f86523ee",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with runs to find by the start of an id",
+          "params": {
+            "failedRunId": "00000000-0000-4000-8000-000000000001",
+            "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "succeededRunId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ci/api/runs",
+        "query": {
+          "repositoryId": [
+            "00000000-0000-4000-8000-000000000003"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "runs": [
+              {
+                "id": "00000000-0000-4000-8000-000000000004"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000004"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.runs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.runs[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
             "operationId": "listRuns"
           },
           "qits-trigger": {
@@ -1878,6 +2245,312 @@
                 {
                   "match": "regex",
                   "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.runs[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
+            "operationId": "listRuns"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci runs",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci runs: listRuns",
+      "key": "2c7781e3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with runs to find by the start of an id",
+          "params": {
+            "failedRunId": "00000000-0000-4000-8000-000000000001",
+            "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "succeededRunId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ci/api/runs",
+        "query": {
+          "repositoryId": [
+            "00000000-0000-4000-8000-000000000003"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "runs": [
+              {
+                "branch": "release/00000000-0000-4000-8000-000000000002",
+                "commitSha": "0000000000000000000000000000000000000002",
+                "createdAt": "2026-01-01T00:00:00Z",
+                "finishedAt": "2026-01-01T00:00:00Z",
+                "id": "00000000-0000-4000-8000-000000000004",
+                "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+                "releaseRequestQualifiedId": "qits-ci-service-rr-5",
+                "startedAt": "2026-01-01T00:00:00Z",
+                "status": "SUCCESS"
+              },
+              {
+                "branch": "release/00000000-0000-4000-8000-000000000002",
+                "commitSha": "0000000000000000000000000000000000000002",
+                "createdAt": "2026-01-01T00:00:00Z",
+                "finishedAt": "2026-01-01T00:00:00Z",
+                "id": "00000000-0000-4000-8000-000000000004",
+                "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+                "releaseRequestQualifiedId": "qits-ci-service-rr-5",
+                "startedAt": "2026-01-01T00:00:00Z",
+                "status": "SUCCESS"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.runs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.runs[*].branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.runs[*].commitSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.runs[*].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.runs[*].finishedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.runs[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.runs[*].releaseRequestId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.runs[*].releaseRequestQualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.runs[*].startedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.runs[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
+            "operationId": "listRuns"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits tui",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits tui: listRuns",
+      "key": "b6d6b1",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with its 30 most recent runs",
+          "params": {
+            "failedRunId": "00000000-0000-4000-8000-000000000001",
+            "releaseRequestId": "00000000-0000-4000-8000-000000000002",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "succeededRunId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/ci/api/runs",
+        "query": {
+          "limit": [
+            "30"
+          ],
+          "repositoryId": [
+            "00000000-0000-4000-8000-000000000003"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "runs": [
+              {
+                "branch": "release/00000000-0000-4000-8000-000000000002",
+                "createdAt": "2026-01-01T00:00:00Z",
+                "id": "00000000-0000-4000-8000-000000000004",
+                "status": "SUCCESS"
+              },
+              {
+                "branch": "release/00000000-0000-4000-8000-000000000002",
+                "createdAt": "2026-01-01T00:00:00Z",
+                "id": "00000000-0000-4000-8000-000000000004",
+                "status": "SUCCESS"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.runs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.runs[*].branch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.runs[*].createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.runs[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
                 }
               ]
             },

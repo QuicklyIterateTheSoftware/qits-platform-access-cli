@@ -248,6 +248,60 @@
         }
       },
       "description": "qits artifacts publish changelog: putDocs",
+      "key": "7eeb5c6f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a published docs site",
+          "params": {
+            "path": "index.html",
+            "site": "contract-docs-site",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "H4sIAAAAAAAA/wEACP/3aW5kZXguaHRtbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMDU0IDAwMDAwMDAwMDAwIDAxMTU0MQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8IWRvY3R5cGUgaHRtbD48dGl0bGU+Y29udHJhY3QgZG9jczwvdGl0bGU+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8TqLQAAgAAA==",
+          "contentType": "application/gzip",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/docs/docs/${site}/-/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/gzip"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
+      },
+      "response": {
+        "status": 409
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putDocs"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish changelog",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish changelog: putDocs",
       "key": "22faeb02",
       "pending": false,
       "providerStates": [
@@ -261,12 +315,23 @@
         }
       ],
       "request": {
+        "body": {
+          "content": "H4sIAAAAAAAA/wEACP/3aW5kZXguaHRtbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMDU0IDAwMDAwMDAwMDAwIDAxMTU0MQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8IWRvY3R5cGUgaHRtbD48dGl0bGU+Y29udHJhY3QgZG9jczwvdGl0bGU+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8TqLQAAgAAA==",
+          "contentType": "application/gzip",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
         "generators": {
           "path": {
             "dataType": "RAW",
             "expression": "/artifacts/docs/docs/${site}/-/${version}",
             "type": "ProviderState"
           }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/gzip"
+          ]
         },
         "method": "PUT",
         "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
@@ -519,6 +584,60 @@
         }
       },
       "description": "qits artifacts publish contract-docs: putDocs",
+      "key": "e297da19",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a published docs site",
+          "params": {
+            "path": "index.html",
+            "site": "contract-docs-site",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "H4sIAAAAAAAA/wEACP/3aW5kZXguaHRtbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMDU0IDAwMDAwMDAwMDAwIDAxMTU0MQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8IWRvY3R5cGUgaHRtbD48dGl0bGU+Y29udHJhY3QgZG9jczwvdGl0bGU+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8TqLQAAgAAA==",
+          "contentType": "application/gzip",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/docs/docs/${site}/-/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/gzip"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
+      },
+      "response": {
+        "status": 409
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putDocs"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract-docs",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract-docs: putDocs",
       "key": "86a768ac",
       "pending": false,
       "providerStates": [
@@ -532,12 +651,23 @@
         }
       ],
       "request": {
+        "body": {
+          "content": "H4sIAAAAAAAA/wEACP/3aW5kZXguaHRtbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMDU0IDAwMDAwMDAwMDAwIDAxMTU0MQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8IWRvY3R5cGUgaHRtbD48dGl0bGU+Y29udHJhY3QgZG9jczwvdGl0bGU+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8TqLQAAgAAA==",
+          "contentType": "application/gzip",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
         "generators": {
           "path": {
             "dataType": "RAW",
             "expression": "/artifacts/docs/docs/${site}/-/${version}",
             "type": "ProviderState"
           }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/gzip"
+          ]
         },
         "method": "PUT",
         "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
@@ -683,6 +813,51 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "getContentHash"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: getContentHash",
+      "key": "316cf7c8",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/content-hashes/${type}/${name}/-/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/content-hashes/maven/eu.wohlben.qits:contract-absent/-/2100.1.0"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
@@ -762,6 +937,323 @@
           }
         },
         "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNewestContentHash"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: getNewestContentHash",
+      "key": "5df9f86",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/content-hashes/${type}/${name}/-/newest",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/content-hashes/maven/eu.wohlben.qits:contract-absent/-/newest"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNpmPackument"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: getNpmPackument",
+      "key": "4ef08473",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/npm/npm/contract-package"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "dist-tags": {
+              "latest": "2100.1.0"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.dist-tags.latest": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: putMavenFile",
+      "key": "4da4cbf5",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project>\n  <modelVersion>4.0.0</modelVersion>\n  <groupId>eu.wohlben.qits</groupId>\n  <artifactId>contract-absent</artifactId>\n  <version>2100.1.0</version>\n</project>\n",
+          "contentType": "application/xml",
+          "contentTypeHint": "DEFAULT",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.pom",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/xml"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-absent/2100.1.0/contract-absent-2100.1.0.pom"
+      },
+      "response": {
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putNpmDistTag"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: putNpmDistTag",
+      "key": "913940a4",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "2100.1.0",
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/-/package/${package}/dist-tags/${tag}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/npm/npm/-/package/contract-package/dist-tags/main"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putNpmPackage"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: putNpmPackage",
+      "key": "1771b7bd",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no npm package with the given name",
+          "params": {
+            "package": "contract-absent-package",
+            "tag": "main",
+            "tarball": "contract-absent-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "_attachments": {
+              "contract-absent-package-2100.1.0.tgz": {
+                "content_type": "application/octet-stream",
+                "data": "H4sIAAAAAAAA/wEACP/3cGFja2FnZS9wYWNrYWdlLmpzb24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMTUzIDAwMDAwMDAwMDAwIDAxMzQyNQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB7Im5hbWUiOiJjb250cmFjdC1hYnNlbnQtcGFja2FnZSIsInZlcnNpb24iOiIyMTAwLjEuMCIsImRlc2NyaXB0aW9uIjoiYSBjb250cmFjdCBwYWNrYWdlIiwibGljZW5zZSI6Ik1JVCJ9CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoW4tyAAgAAA==",
+                "length": 2071
+              }
+            },
+            "_id": "contract-absent-package",
+            "access": "public",
+            "dist-tags": {
+              "latest": "2100.1.0"
+            },
+            "name": "contract-absent-package",
+            "versions": {
+              "2100.1.0": {
+                "_id": "contract-absent-package@2100.1.0",
+                "description": "a contract package",
+                "dist": {
+                  "integrity": "sha512-XhRx4Ne033r5JxXNn3m9byelXyZnzjc4nzjGCIExFRkVRKaFwiyNkzGSK5aS+oHsvzExfHEaf38dl1laVkwB+g==",
+                  "shasum": "a841ef4daa82da6ecbd16864a10adce71dcf6340"
+                },
+                "license": "MIT",
+                "name": "contract-absent-package",
+                "version": "2100.1.0"
+              }
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/npm/npm/contract-absent-package"
+      },
+      "response": {
+        "status": 201
       },
       "type": "Synchronous/HTTP"
     },
@@ -941,6 +1433,60 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "putDaemon"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish daemon submit",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish daemon submit: putDaemon",
+      "key": "cb812cda",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a daemon with two versions",
+          "params": {
+            "daemon": "contract-daemon",
+            "repository": "daemons",
+            "version": "2026.2.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "Y29udHJhY3QtZGFlbW9uIDIwMjYuMy4wCg==",
+          "contentType": "application/octet-stream",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/daemons/${daemon}/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/octet-stream"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/daemons/contract-daemon/2026.2.0"
+      },
+      "response": {
+        "status": 409
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {
@@ -1048,6 +1594,60 @@
         }
       },
       "description": "qits artifacts publish docs submit: putDocs",
+      "key": "c50ce6ac",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a published docs site",
+          "params": {
+            "path": "index.html",
+            "site": "contract-docs-site",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "H4sIAAAAAAAA/wEACP/3aW5kZXguaHRtbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMDU0IDAwMDAwMDAwMDAwIDAxMTU0MQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8IWRvY3R5cGUgaHRtbD48dGl0bGU+Y29udHJhY3QgZG9jczwvdGl0bGU+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8TqLQAAgAAA==",
+          "contentType": "application/gzip",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/docs/docs/${site}/-/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/gzip"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
+      },
+      "response": {
+        "status": 409
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putDocs"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish docs submit",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish docs submit: putDocs",
       "key": "691c753f",
       "pending": false,
       "providerStates": [
@@ -1061,12 +1661,23 @@
         }
       ],
       "request": {
+        "body": {
+          "content": "H4sIAAAAAAAA/wEACP/3aW5kZXguaHRtbAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMDU0IDAwMDAwMDAwMDAwIDAxMTU0MQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8IWRvY3R5cGUgaHRtbD48dGl0bGU+Y29udHJhY3QgZG9jczwvdGl0bGU+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8TqLQAAgAAA==",
+          "contentType": "application/gzip",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
         "generators": {
           "path": {
             "dataType": "RAW",
             "expression": "/artifacts/docs/docs/${site}/-/${version}",
             "type": "ProviderState"
           }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/gzip"
+          ]
         },
         "method": "PUT",
         "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
@@ -1200,6 +1811,198 @@
         },
         "method": "GET",
         "path": "/artifacts/docs/docs/contract-docs-site/-/2100.1.0"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNpmPackument"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish exists",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish exists: getNpmPackument",
+      "key": "3d61c945",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/npm/npm/contract-package"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "versions": {
+              "2100.1.0": {
+                "_id": "contract-package@2100.1.0",
+                "description": "a contract package",
+                "dist": {
+                  "integrity": "sha512-nLg9gmADv09Ex/pGJNEuVqAD4kxOnnPbJQ5SaoXj6W9OwVvux9HxNxEV/FiTC3QFdMFmrZ8OdUyDEbP1V23mMA==",
+                  "shasum": "0be49e285beabad5e2e218d1b358c2736fbe229b",
+                  "tarball": ""
+                },
+                "license": "MIT",
+                "name": "contract-package",
+                "version": "2100.1.0"
+              }
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.versions['2100.1.0']._id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].dist.integrity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].dist.shasum": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].dist.tarball": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].license": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNpmPackument"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish exists",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish exists: getNpmPackument",
+      "key": "1ce93238",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no npm package with the given name",
+          "params": {
+            "package": "contract-absent-package",
+            "tag": "main",
+            "tarball": "contract-absent-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/npm/npm/contract-absent-package"
       },
       "response": {
         "status": 404
@@ -1472,6 +2275,141 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "getContentHash"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish maven",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish maven: getContentHash",
+      "key": "5cb27d75",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/content-hashes/${type}/${name}/-/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/content-hashes/maven/eu.wohlben.qits:contract-absent/-/2100.1.0"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish maven",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish maven: getMavenFile",
+      "key": "bda851f9",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a maven artifact published at a version",
+          "params": {
+            "artifact": "contract-maven",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-maven",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.pom",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-maven/2100.1.0/contract-maven-2100.1.0.pom"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish maven",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish maven: getMavenFile",
+      "key": "e30c0075",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.pom",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-absent/2100.1.0/contract-absent-2100.1.0.pom"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
@@ -1551,6 +2489,580 @@
           }
         },
         "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNewestContentHash"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish maven",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish maven: getNewestContentHash",
+      "key": "45c36f73",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/content-hashes/${type}/${name}/-/newest",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/content-hashes/maven/eu.wohlben.qits:contract-absent/-/newest"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish maven",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish maven: putMavenFile",
+      "key": "39f9d8e2",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven artifact published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project>\n  <modelVersion>4.0.0</modelVersion>\n  <groupId>eu.wohlben.qits</groupId>\n  <artifactId>contract-absent</artifactId>\n  <version>2100.1.0</version>\n</project>\n",
+          "contentType": "application/xml",
+          "contentTypeHint": "DEFAULT",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.pom",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/xml"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-absent/2100.1.0/contract-absent-2100.1.0.pom"
+      },
+      "response": {
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putNpmDistTag"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm dist-tag",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm dist-tag: putNpmDistTag",
+      "key": "5bb68dd2",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "2100.1.0",
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/-/package/${package}/dist-tags/${tag}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/npm/npm/-/package/contract-package/dist-tags/main"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNpmPackument"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm plan",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm plan: getNpmPackument",
+      "key": "ef1f690f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/npm/npm/contract-package"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "dist-tags": {
+              "latest": "2100.1.0"
+            },
+            "versions": {
+              "2100.1.0": {
+                "_id": "contract-package@2100.1.0",
+                "description": "a contract package",
+                "dist": {
+                  "integrity": "sha512-nLg9gmADv09Ex/pGJNEuVqAD4kxOnnPbJQ5SaoXj6W9OwVvux9HxNxEV/FiTC3QFdMFmrZ8OdUyDEbP1V23mMA==",
+                  "shasum": "0be49e285beabad5e2e218d1b358c2736fbe229b",
+                  "tarball": ""
+                },
+                "license": "MIT",
+                "name": "contract-package",
+                "version": "2100.1.0"
+              }
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.dist-tags.latest": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0']._id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].dist.integrity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].dist.shasum": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].dist.tarball": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].license": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.versions['2100.1.0'].version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNpmPackument"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm plan",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm plan: getNpmPackument",
+      "key": "cea6d202",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no npm package with the given name",
+          "params": {
+            "package": "contract-absent-package",
+            "tag": "main",
+            "tarball": "contract-absent-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/npm/npm/contract-absent-package"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNpmPackument"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm: getNpmPackument",
+      "key": "20689206",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/npm/npm/contract-package"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "dist-tags": {
+              "latest": "2100.1.0"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.dist-tags.latest": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putNpmDistTag"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm: putNpmDistTag",
+      "key": "de6d96f7",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an npm package published at a version",
+          "params": {
+            "package": "contract-package",
+            "tag": "main",
+            "tarball": "contract-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "2100.1.0",
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/-/package/${package}/dist-tags/${tag}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/npm/npm/-/package/contract-package/dist-tags/main"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "putNpmPackage"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm: putNpmPackage",
+      "key": "64a60e10",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no npm package with the given name",
+          "params": {
+            "package": "contract-absent-package",
+            "tag": "main",
+            "tarball": "contract-absent-package-2100.1.0.tgz",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "_attachments": {
+              "contract-absent-package-2100.1.0.tgz": {
+                "content_type": "application/octet-stream",
+                "data": "H4sIAAAAAAAA/wEACP/3cGFja2FnZS9wYWNrYWdlLmpzb24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAwMDA2NDQgMDAwMDAwMCAwMDAwMDAwIDAwMDAwMDAwMTUzIDAwMDAwMDAwMDAwIDAxMzQyNQAgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1c3RhcgAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDAwMDAwIDAwMDAwMDAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB7Im5hbWUiOiJjb250cmFjdC1hYnNlbnQtcGFja2FnZSIsInZlcnNpb24iOiIyMTAwLjEuMCIsImRlc2NyaXB0aW9uIjoiYSBjb250cmFjdCBwYWNrYWdlIiwibGljZW5zZSI6Ik1JVCJ9CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoW4tyAAgAAA==",
+                "length": 2071
+              }
+            },
+            "_id": "contract-absent-package",
+            "access": "public",
+            "dist-tags": {
+              "latest": "2100.1.0"
+            },
+            "name": "contract-absent-package",
+            "versions": {
+              "2100.1.0": {
+                "_id": "contract-absent-package@2100.1.0",
+                "description": "a contract package",
+                "dist": {
+                  "integrity": "sha512-XhRx4Ne033r5JxXNn3m9byelXyZnzjc4nzjGCIExFRkVRKaFwiyNkzGSK5aS+oHsvzExfHEaf38dl1laVkwB+g==",
+                  "shasum": "a841ef4daa82da6ecbd16864a10adce71dcf6340"
+                },
+                "license": "MIT",
+                "name": "contract-absent-package",
+                "version": "2100.1.0"
+              }
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/npm/npm/${package}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/npm/npm/contract-absent-package"
+      },
+      "response": {
+        "status": 201
       },
       "type": "Synchronous/HTTP"
     },
@@ -1645,12 +3157,12 @@
             "specVersion": "1.6",
             "version": 1
           },
-          "contentType": "application/json",
+          "contentType": "application/vnd.cyclonedx+json; version=1.6",
           "encoded": false
         },
         "headers": {
           "Content-Type": [
-            "application/json"
+            "application/vnd.cyclonedx+json; version=1.6"
           ]
         },
         "matchingRules": {
@@ -1812,7 +3324,7 @@
               "matchers": [
                 {
                   "match": "regex",
-                  "regex": "application/json.*"
+                  "regex": "application/vnd\\.cyclonedx\\+json.*"
                 }
               ]
             }
@@ -2100,6 +3612,48 @@
           }
         },
         "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getDocsFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits changelog bump-message",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits changelog bump-message: getDocsFile",
+      "key": "2eebbe79",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with no changelog",
+          "params": {
+            "repository": "contract-repository",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/docs/docs/@changelog/${repository}/-/${version}/CHANGELOG.md",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/docs/docs/@changelog/contract-repository/-/2100.1.0/CHANGELOG.md"
+      },
+      "response": {
+        "status": 404
       },
       "type": "Synchronous/HTTP"
     },

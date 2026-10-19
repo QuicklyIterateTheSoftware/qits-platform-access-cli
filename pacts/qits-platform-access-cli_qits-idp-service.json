@@ -325,6 +325,129 @@
           },
           "qits-trigger": {
             "app": "qits-platform-access-cli",
+            "command": "qits login",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits login: issueToken",
+      "key": "2ac1e674",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an authorization code issued to the CLI for the connect page",
+          "params": {
+            "clientId": "qits-cli",
+            "code": "0000000000000000000000000000000000000000001",
+            "codeVerifier": "contract-verifier-0123456789-abcdefghijklmnopqrstuvwxyz",
+            "redirectUri": "http://dev-qits-idp:8080/idp/connect/cli"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "grant_type=authorization_code&client_id=qits-cli&code=0000000000000000000000000000000000000000001&redirect_uri=http://dev-qits-idp:8080/idp/connect/cli&code_verifier=contract-verifier-0123456789-abcdefghijklmnopqrstuvwxyz",
+          "contentType": "application/x-www-form-urlencoded",
+          "contentTypeHint": "DEFAULT",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/x-www-form-urlencoded"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.redirect_uri": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "https?://[^/?#]+/idp/connect/cli"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/idp/token"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "access_token": "opaque",
+            "expires_in": 900,
+            "refresh_expires_in": 2592000,
+            "refresh_token": "opaque"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.access_token": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.expires_in": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refresh_expires_in": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refresh_token": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-idp-service",
+            "operationId": "issueToken"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
             "command": "qits session-daemon",
             "kind": "command"
           }

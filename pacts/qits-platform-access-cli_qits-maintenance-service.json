@@ -102,6 +102,122 @@
         "references": {
           "qits-call": {
             "app": "qits-maintenance-service",
+            "operationId": "runReleaseRequestAutomation"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits maintenance automation run",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits maintenance automation run: runReleaseRequestAutomation",
+      "key": "a488d5a3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request with an automation to re-run for a work item",
+          "params": {
+            "backingBranch": "release/contract-service-rr-1",
+            "branch": "feature/export",
+            "foldSha": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+            "kind": "screenshot-baselines",
+            "qualifiedId": "contract-service-rr-1",
+            "repoName": "contract-service",
+            "repositoryId": "00000000-0000-4000-8000-000000000001",
+            "requestId": "00000000-0000-4000-8000-000000000002",
+            "workItem": "qits-112"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "workItem": "qits-112"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.workItem": {
+              "dataType": "STRING",
+              "expression": "${workItem}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/maintenance/api/release-requests/${requestId}/automations/${kind}/runs",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.workItem": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/maintenance/api/release-requests/00000000-0000-4000-8000-000000000002/automations/screenshot-baselines/runs"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "id": "00000000-0000-4000-8000-000000000003"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 202
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-maintenance-service",
             "operationId": "listReleaseRequestAutomations"
           },
           "qits-trigger": {
@@ -151,6 +267,175 @@
             "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
           ]
         }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "automations": [
+              {
+                "detail": "fresh: nothing to regenerate at this fold",
+                "kind": "dependency-bump",
+                "runIds": [
+                  "run-contract-3"
+                ],
+                "state": "FRESH"
+              },
+              {
+                "detail": "fresh: nothing to regenerate at this fold",
+                "kind": "dependency-bump",
+                "runIds": [
+                  "run-contract-3"
+                ],
+                "state": "FRESH"
+              },
+              {
+                "detail": "fresh: nothing to regenerate at this fold",
+                "kind": "dependency-bump",
+                "runIds": [
+                  "run-contract-3"
+                ],
+                "state": "FRESH"
+              },
+              {
+                "detail": "fresh: nothing to regenerate at this fold",
+                "kind": "dependency-bump",
+                "runIds": [
+                  "run-contract-3"
+                ],
+                "state": "FRESH"
+              }
+            ],
+            "foldSha": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.automations": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.automations[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.automations[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.automations[*].runIds": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 0
+                }
+              ]
+            },
+            "$.automations[*].runIds[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.automations[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.foldSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-maintenance-service",
+            "operationId": "listReleaseRequestAutomations"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits maintenance automations",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits maintenance automations: listReleaseRequestAutomations",
+      "key": "4a72a665",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request with automations at its newest fold",
+          "params": {
+            "backingBranch": "release/contract-service-rr-1",
+            "branch": "feature/export",
+            "foldSha": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+            "kind": "screenshot-baselines",
+            "qualifiedId": "contract-service-rr-1",
+            "repoName": "contract-service",
+            "repositoryId": "00000000-0000-4000-8000-000000000001",
+            "requestId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/maintenance/api/release-requests/${requestId}/automations",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/maintenance/api/release-requests/00000000-0000-4000-8000-000000000002/automations"
       },
       "response": {
         "body": {
