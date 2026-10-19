@@ -179,7 +179,7 @@ public final class ArtifactsContract {
     private static final CliRow.Call DOCS_TAKEN = (url, recorded) -> {
         Map<String, String> p = recorded.params();
         assertThat(http().putFile(store(url).docsBundle(p.get("site"), p.get("version")),
-                file(bundle(recorded)), null, Map.of()).status()).isEqualTo(409);
+                file(bundle(recorded)), Publisher.DOCS_BUNDLE_TYPE, Map.of()).status()).isEqualTo(409);
     };
 
     /** After a 409, the stored version's shape: file count, bytes and when it was published. */

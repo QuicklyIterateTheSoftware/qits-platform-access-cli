@@ -1,7 +1,6 @@
 package eu.wohlben.qits.cli.access.publish;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -60,9 +59,8 @@ class DocsSubmitTest {
     StubStore.Request request = store.lastRequest();
     assertEquals("deadbeef", request.header("X-Artifacts-Meta-git.commit.hash"));
     assertEquals("qits-ci", request.header("X-Artifacts-Meta-git.repository.name"));
-    // The route inspects no Content-Type and the fleet's curl sends none; sending a wrong one would
-    // be worse than sending nothing.
-    assertNull(request.header("Content-Type"));
+    // A gzipped tar, said as such: the media type qits-artifacts records for putDocs.
+    assertEquals("application/gzip", request.header("Content-Type"));
   }
 
   @Test

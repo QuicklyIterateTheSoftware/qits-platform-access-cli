@@ -194,14 +194,18 @@ final class Publisher {
    * for a bundle that is usually one OpenAPI document, and doing it half-way — comparing file counts
    * and calling that verification — would be worse than saying plainly that nothing was compared.
    */
+  /** A docs bundle's media type: a gzipped tar, as qits-artifacts records putDocs. */
+  static final String DOCS_BUNDLE_TYPE = "application/gzip";
+
   int docsSubmit(String site, String version, Path archive, List<String> meta) {
     String url = store.docsBundle(site, version);
     String coordinate = site + "@" + version;
     Map<String, String> headers = metadataHeaders(meta);
 
-    // No Content-Type: the docs route does not inspect one, and the fleet's curl invocations send
-    // none. Sending a wrong one would be worse than sending nothing.
-    Http.Response response = http.putFile(url, archive, null, headers);
+    // application/gzip: a docs bundle is a gzipped tar, so this is its true media type, and it is
+    // what qits-artifacts records for putDocs (the consumer pact holds the CLI to it). The route
+    // does not inspect the header, so it costs nothing there; it is a wrong type that would hurt.
+    Http.Response response = http.putFile(url, archive, DOCS_BUNDLE_TYPE, headers);
     switch (response.status()) {
       case 201 -> {
         Map<String, Object> body = Json.parseObject(response.body(), "the docs publish receipt");
