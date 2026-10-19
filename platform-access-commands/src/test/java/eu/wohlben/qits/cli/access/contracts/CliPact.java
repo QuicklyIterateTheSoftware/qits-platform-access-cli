@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -126,16 +127,29 @@ public record CliPact(
     // --- the pact, with the request media type a recording leaves unnamed ----------------------
 
     /**
-     * The V4 pact of {@code selected}: qits-pact-consumer's, with one correction. A recording that
-     * names no request media type is sent as {@code application/json} there; a row whose command
-     * sends another ({@code application/merge-patch+json} on a PATCH door) names it as its {@code
-     * Content-Type} header, and that is the header and the body's type here.
+     * The V4 pact of {@code selected}: qits-pact-consumer's, with three corrections.
+     * <ul>
+     *   <li>A recording that names no request media type is sent as {@code application/json} there;
+     *       a row whose command sends another ({@code application/merge-patch+json} on a PATCH door)
+     *       names it as its {@code Content-Type} header, and that is the header and the body's type
+     *       here.</li>
+     *   <li>A JSON request body that is a bare string ({@code "2100.1.0"}, the npm dist-tag PUT) is a
+     *       text node in the golden-master index, which qits-pact-consumer (2026.1018.164604) takes
+     *       for a form-like text body and sends unquoted under the recorded {@code application/json}:
+     *       not JSON, so pact-jvm can neither match nor write it. Under a JSON media type a text node
+     *       is the JSON string it was recorded as, and that is the body here.</li>
+     *   <li>A form field the row holds to a regex ({@link CliRow#fieldMatches}) gets that matcher;
+     *       the recorded value stays the example.</li>
+     * </ul>
      */
     public V4Pact pact(List<CliRow> selected) {
         V4Pact pact = pact().pact(selected.stream().map(CliRow::interaction).toList());
         for (CliRow row : selected) {
             String type = row.interaction().requestHeaders().get("Content-Type");
-            if (type == null) {
+            var op = masters.operation(row.state(), row.operationId());
+            boolean jsonString = op.binaryBody() == null && op.body() != null && op.body().isTextual()
+                    && op.contentType() != null && isJson(op.contentType());
+            if (type == null && !jsonString && row.fieldsMatching().isEmpty()) {
                 continue;
             }
             for (var interaction : pact.getInteractions()) {
@@ -143,15 +157,55 @@ public record CliPact(
                         && http.getDescription().equals(row.description())
                         && http.getProviderStates().getFirst().getName().equals(row.state())) {
                     var request = http.getRequest();
-                    request.getHeaders().put("Content-Type", List.of(type));
-                    OptionalBody body = request.getBody();
-                    if (body.isPresent()) {
-                        request.setBody(OptionalBody.body(body.unwrap(), new ContentType(type)));
+                    if (jsonString) {
+                        request.setBody(OptionalBody.body(
+                                quoted(op.example(op.body().asText())).getBytes(StandardCharsets.UTF_8),
+                                new ContentType(op.contentType())));
+                    }
+                    row.fieldsMatching().forEach((field, regex) -> request.getMatchingRules()
+                            .addCategory("body").addRule("$." + field,
+                                    new au.com.dius.pact.core.model.matchingrules.RegexMatcher(regex)));
+                    if (type != null) {
+                        request.getHeaders().put("Content-Type", List.of(type));
+                        OptionalBody body = request.getBody();
+                        if (body.isPresent()) {
+                            request.setBody(OptionalBody.body(body.unwrap(), new ContentType(type)));
+                        }
                     }
                 }
             }
         }
         return pact;
+    }
+
+    private static boolean isJson(String mediaType) {
+        String media = mediaType.split(";", 2)[0].trim().toLowerCase(java.util.Locale.ROOT);
+        return media.equals("application/json") || media.endsWith("+json");
+    }
+
+    private static String quoted(String text) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(text);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * {@link #pact(List)} of the live rows as the committed file holds it, normalised: what {@code
+     * everyInteractionCarriesBothReferences} reads, rather than qits-pact-consumer's own pact, which
+     * pact-jvm cannot write while it holds a JSON string body uncorrected.
+     */
+    public com.fasterxml.jackson.databind.JsonNode normalisedPact() {
+        StringWriter out = new StringWriter();
+        try (PrintWriter writer = new PrintWriter(out)) {
+            DefaultPactWriter.INSTANCE.writePact(pact(live()), writer, PactSpecVersion.V4);
+        }
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().readTree(ConsumerPact.normalise(out.toString()));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /** {@link ConsumerPact#run}, over {@link #pact(List)}: the call against a mock answering {@code row} alone. */

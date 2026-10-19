@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.contracts;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -55,12 +56,35 @@ public abstract class CliPactTest {
     void everyInteractionCarriesBothReferences() {
         CliPact contract = contract();
         Assumptions.assumeFalse(contract.live().isEmpty(), "no row of " + contract.provider() + " is recorded yet");
-        contract.pact().assertEveryInteractionCarriesBothReferences();
-        contract.pact().normalisedPact().path("interactions").forEach(interaction -> {
-            var trigger = interaction.path("comments").path("references").path("qits-trigger");
+        // qits-pact-consumer's assertEveryInteractionCarriesBothReferences, over the pact the file
+        // holds (CliPact#pact(List), corrected) rather than qits-pact-consumer's own, which pact-jvm
+        // cannot write while a JSON string request body is in it uncorrected.
+        JsonNode pact = contract.normalisedPact();
+        assertThat(pact.path("consumer").path("name").asText()).isEqualTo(CliPact.CONSUMER);
+        assertThat(pact.path("provider").path("name").asText()).isEqualTo(contract.provider());
+        assertThat(pact.path("metadata").path("pactSpecification").path("version").asText()).isEqualTo("4.0");
+        assertThat(pact.path("interactions")).as("one interaction per recorded row").hasSize(contract.live().size());
+        pact.path("interactions").forEach(interaction -> {
+            String description = interaction.path("description").asText();
+            var references = interaction.path("comments").path("references");
+            var call = references.path("qits-call");
+            assertStrings(description, call, 2);
+            assertThat(call.path("app").asText()).as(description).isEqualTo(contract.provider());
+            assertThat(call.path("operationId").asText()).as(description).isNotBlank();
+            var trigger = references.path("qits-trigger");
+            assertStrings(description, trigger, 3);
             assertThat(trigger.path("kind").asText()).isEqualTo("command");
             assertThat(trigger.path("app").asText()).isEqualTo(CliPact.CONSUMER);
             assertThat(trigger.path("command").asText()).startsWith("qits ");
+            assertThat(references.has("qits-via")).as("%s: the CLI calls the provider itself, no qits-via",
+                    description).isFalse();
         });
+    }
+
+    private static void assertStrings(String description, JsonNode group, int size) {
+        assertThat(group.isObject()).as("%s: reference group missing", description).isTrue();
+        assertThat(group.size()).as("%s: %s holds other keys", description, group).isEqualTo(size);
+        group.properties().forEach(e -> assertThat(e.getValue().isTextual() && !e.getValue().asText().isBlank())
+                .as("%s: %s must be a non-blank string, got %s", description, e.getKey(), e.getValue()).isTrue());
     }
 }

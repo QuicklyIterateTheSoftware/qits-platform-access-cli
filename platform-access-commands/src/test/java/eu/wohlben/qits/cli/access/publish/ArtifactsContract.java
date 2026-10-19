@@ -113,6 +113,18 @@ public final class ArtifactsContract {
         return JSON.writeValueAsBytes(CliRow.exampleBody(recorded));
     }
 
+    /**
+     * The recorded docs bundle, byte for byte: the gzipped tar the provider recorded as {@code
+     * bodyBase64}, which qits-pact-consumer sends as the request body and pact matches exactly.
+     */
+    private static byte[] bundle(Operation recorded) {
+        if (recorded.binaryBody() == null) {
+            throw new IllegalStateException(recorded.state() + "/" + recorded.operationId()
+                    + ": no recorded bundle (bodyBase64) to send");
+        }
+        return recorded.binaryBody();
+    }
+
     private static String[] coordinate(Map<String, String> params) {
         return params.get("name").split(":", 2);
     }
@@ -159,7 +171,7 @@ public final class ArtifactsContract {
         return (url, recorded) -> {
             Map<String, String> p = recorded.params();
             assertThat(publisher(url).docsSubmit(site == null ? p.get("site") : site, p.get("version"),
-                    file("bundle".getBytes(StandardCharsets.UTF_8)), List.of())).isEqualTo(ExitCode.OK);
+                    file(bundle(recorded)), List.of())).isEqualTo(ExitCode.OK);
         };
     }
 
@@ -167,7 +179,7 @@ public final class ArtifactsContract {
     private static final CliRow.Call DOCS_TAKEN = (url, recorded) -> {
         Map<String, String> p = recorded.params();
         assertThat(http().putFile(store(url).docsBundle(p.get("site"), p.get("version")),
-                file("bundle".getBytes(StandardCharsets.UTF_8)), null, Map.of()).status()).isEqualTo(409);
+                file(bundle(recorded)), null, Map.of()).status()).isEqualTo(409);
     };
 
     /** After a 409, the stored version's shape: file count, bytes and when it was published. */

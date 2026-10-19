@@ -6,6 +6,7 @@ import eu.wohlben.qits.pact.consumer.GoldenInteraction;
 import eu.wohlben.qits.pact.consumer.GoldenMasters.Operation;
 import eu.wohlben.qits.pact.consumer.Trigger;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -26,8 +27,11 @@ import java.util.Objects;
  * @param reaches the client method the call goes through: {@code ProjectsApi#work}
  * @param request {@code METHOD /path/{param}}: the door, for a row the provider has not recorded;
  *     null otherwise, where the recording says it
+ * @param fieldsMatching form fields of the request body held to a regex rather than to the recorded
+ *     value, each with the regex: see {@link #fieldMatches}
  */
-public record CliRow(GoldenInteraction interaction, String reaches, String request, Call call) {
+public record CliRow(GoldenInteraction interaction, String reaches, String request, Call call,
+        Map<String, String> fieldsMatching) {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -37,7 +41,12 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
         void run(String baseUrl, Operation recorded) throws Exception;
     }
 
+    public CliRow(GoldenInteraction interaction, String reaches, String request, Call call) {
+        this(interaction, reaches, request, call, Map.of());
+    }
+
     public CliRow {
+        fieldsMatching = Map.copyOf(fieldsMatching);
         Objects.requireNonNull(interaction, "interaction");
         Objects.requireNonNull(reaches, "reaches");
         Objects.requireNonNull(call, "call");
@@ -56,37 +65,49 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
 
     /** The same row, reading {@code paths} of the answer: see {@link GoldenInteraction#consumes}. */
     public CliRow consumes(String... paths) {
-        return new CliRow(interaction.consumes(paths), reaches, request, call);
+        return new CliRow(interaction.consumes(paths), reaches, request, call, fieldsMatching);
     }
 
     /** {@link #consumes(String...)} over a list. */
     public CliRow consumes(java.util.List<String> paths) {
-        return new CliRow(interaction.consumes(paths), reaches, request, call);
+        return new CliRow(interaction.consumes(paths), reaches, request, call, fieldsMatching);
     }
 
     /** The same row, not pinning the length of the arrays at {@code patterns}. */
     public CliRow anyLength(String... patterns) {
-        return new CliRow(interaction.anyLength(patterns), reaches, request, call);
+        return new CliRow(interaction.anyLength(patterns), reaches, request, call, fieldsMatching);
     }
 
     /** The same row, binding the recorded values at {@code paths} exactly. */
     public CliRow exact(String... paths) {
-        return new CliRow(interaction.exact(paths), reaches, request, call);
+        return new CliRow(interaction.exact(paths), reaches, request, call, fieldsMatching);
     }
 
     /** The same row, sending {@code name: value}; a {@code {param}} in the value comes from the state. */
     public CliRow header(String name, String value) {
-        return new CliRow(interaction.header(name, value), reaches, request, call);
+        return new CliRow(interaction.header(name, value), reaches, request, call, fieldsMatching);
     }
 
     /** The same row, reading the response headers {@code names}. */
     public CliRow readsHeader(String... names) {
-        return new CliRow(interaction.readsHeader(names), reaches, request, call);
+        return new CliRow(interaction.readsHeader(names), reaches, request, call, fieldsMatching);
     }
 
     /** The same row, naming its door: {@code GET /ci/api/runs/{runId}}. Required while it is not recorded. */
     public CliRow request(String door) {
-        return new CliRow(interaction, reaches, door, call);
+        return new CliRow(interaction, reaches, door, call, fieldsMatching);
+    }
+
+    /**
+     * The same row, holding the form field {@code name} of the request to {@code regex} instead of
+     * the recorded value, which stays the example the provider is sent. For a value the command
+     * derives from the address it reaches the provider at ({@code qits login}'s {@code redirect_uri},
+     * {@code <idp>/connect/cli}): the provider records its own address, the mock serves another.
+     */
+    public CliRow fieldMatches(String name, String regex) {
+        java.util.LinkedHashMap<String, String> all = new java.util.LinkedHashMap<>(fieldsMatching);
+        all.put(name, regex);
+        return new CliRow(interaction, reaches, request, call, all);
     }
 
     public String state() {
