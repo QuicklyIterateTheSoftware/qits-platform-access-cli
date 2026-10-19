@@ -278,7 +278,8 @@ final class WorkEntities {
         } else {
             out.println("Comments (" + comments.size() + "):");
             for (JsonNode comment : comments) {
-                out.println("  " + Table.time(text(comment, "createdAt")) + "  " + cell(text(comment, "author"), 80));
+                out.println("  " + Table.time(text(comment, "createdAt")) + "  "
+                        + cell(WorkCommentCommand.author(comment), 80));
                 lines(out, "    ", text(comment, "body"));
             }
         }

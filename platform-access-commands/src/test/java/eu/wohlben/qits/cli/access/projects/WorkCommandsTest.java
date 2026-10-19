@@ -800,6 +800,22 @@ class WorkCommandsTest {
     }
 
     @Test
+    void detailsNamesAnAgentCommentByItsWorkItemAndTheRawAuthorOtherwise() {
+        platform.answer("GET", WORK + "/qits-548/comments", """
+                {"entries":[
+                  {"comment":{"id":"c1","entityId":"%s","author":"carol","body":"Seen it",
+                    "createdAt":"2026-09-29T09:30:00Z","updatedAt":"2026-09-29T09:30:00Z"}},
+                  {"comment":{"id":"c2","entityId":"%s","author":"agent-7","authorAgentOf":"qits-1402",
+                    "body":"Filed.","createdAt":"2026-09-29T09:31:00Z","updatedAt":"2026-09-29T09:31:00Z"}}]}
+                """.formatted(TICKET, TICKET));
+
+        Result r = run("work", "--entity", "qits-548", "details");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("carol").contains("qits-1402's agent").doesNotContain("agent-7");
+    }
+
+    @Test
     void detailsListsWhatTheItemClosesFilteringTheProjectAgain() throws Exception {
         // As the deployed service answers: it ignores ?supersededBy= and sends the whole project.
         platform.answer("GET", PROJECT_LIST, "{\"entities\":[" + TICKET_ROW + "," + DUPLICATE_ROW + ","

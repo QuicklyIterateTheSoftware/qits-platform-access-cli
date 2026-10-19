@@ -19,7 +19,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 /**
  * {@code qits work comment}: the comment thread of any work entity. A comment's author and body are
- * written by people and agents, so every value goes through {@link SafeText} before a person sees it.
+ * written by people and agents (an agent's comment is its agent's), so every value goes through
+ * {@link SafeText} before a person sees it; only its author may edit it.
  */
 @CommandLine.Command(name = "comment", mixinStandardHelpOptions = true,
         subcommands = {WorkCommentCommand.CreateCommand.class, WorkCommentCommand.UpdateCommand.class},
@@ -28,8 +29,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "and print the payload's JSON schema, with its required fields named."},
         footerHeading = "%nNotes:%n",
         footer = {
-                "- The author is the signed-in caller, and an edit leaves it as it is. Anybody who may comment "
-                        + "may edit a comment's text.",
+                "- The author is the signed-in caller (an agent's comment is its agent's), and an edit leaves it "
+                        + "as it is. Only a comment's author may edit it (HTTP 403 otherwise).",
                 "- Deleting a comment takes qits:admin, and qits has no command for it."})
 public class WorkCommentCommand implements Runnable {
 
@@ -99,7 +100,8 @@ public class WorkCommentCommand implements Runnable {
                     "Reads a JSON merge patch, such as {\"body\":\"...\"}, on stdin and sends it unchanged to PATCH "
                             + "/projects/api/work/{entity}/comments/{commentId} as application/merge-patch+json. The "
                             + "path names the entity and the comment together, so the service answers a comment "
-                            + "that is not on the entity's thread with HTTP 404. The author stays who it was.",
+                            + "that is not on the entity's thread with HTTP 404. The author stays who it was. "
+                            + "Only the comment's author may edit it; anybody else gets HTTP 403.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints the patch's JSON schema "
                             + "from the service's OpenAPI document (/projects/q/openapi) with the required fields "
                             + "named, and exits with 0."},
@@ -156,10 +158,19 @@ public class WorkCommentCommand implements Runnable {
         }
         JsonNode c = answer.path("comment");
         Table.print(out, "", List.of("ID", "AUTHOR", timeHeader),
-                List.of(List.of(cell(text(c, "id")), cell(text(c, "author")), Table.time(text(c, timeField)))));
+                List.of(List.of(cell(text(c, "id")), cell(author(c)), Table.time(text(c, timeField)))));
     }
 
     private static String cell(String value) {
         return Table.cell(SafeText.line(value), 80);
+    }
+
+    /**
+     * A comment's author, as it is shown: an agent's comment names the work item whose agent wrote it
+     * ({@code <authorAgentOf>'s agent}), and every other comment names its author as the service sent it.
+     */
+    static String author(JsonNode comment) {
+        String agentOf = text(comment, "authorAgentOf");
+        return agentOf.isBlank() ? text(comment, "author") : agentOf + "'s agent";
     }
 }
