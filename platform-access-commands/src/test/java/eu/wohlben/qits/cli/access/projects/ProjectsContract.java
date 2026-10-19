@@ -1,7 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import eu.wohlben.qits.cli.access.contracts.CliPact;
 import eu.wohlben.qits.cli.access.contracts.CliRow;
 import eu.wohlben.qits.cli.access.contracts.Reached;
@@ -38,8 +37,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * first one's shape, so a lookup by name would find the one name twice.
  * <p>
  * <b>Each state is one the provider records</b>, picked for the call. A command that reads an item
- * before it writes it appears once per call. The one call qits-projects has not recorded, {@code qits
- * work details}' read of the items an item closes ({@code ?supersededBy=}), is pending on its state.
+ * before it writes it appears once per call. {@code qits work details}' read of the items an item
+ * closes ({@code ?supersededBy=}) binds only what its recording holds: none of those items is blocked.
  * {@code openApi}, the served OpenAPI document the comment and transition payload commands read
  * their schema from, is no operation of the provider: it is named as an exclusion.
  */
@@ -77,7 +76,7 @@ public final class ProjectsContract {
     static final String OPEN_TO_ANOTHER_BRANCH = "a release request open to another branch";
     static final String PROJECT_REQUESTS_OF_EVERY_STATE = "a project with release requests in every state";
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
-    /** Not recorded yet: the provider records the project list without {@code ?supersededBy=}. */
+    /** The project list filtered by {@code ?supersededBy=}; its items are not blocked, so no blockSource. */
     static final String SUPERSEDED_ITEMS = "an item that other items name as their supersededBy";
 
     private static final CliPact BASE = CliPact.of("qits-projects-service", "qits-projects");
@@ -239,13 +238,19 @@ public final class ProjectsContract {
         });
     };
 
-    /** {@code qits work details}: the items naming this one as their supersededBy, from its project's list. */
+    /**
+     * {@code qits work details}: the items naming this one as their supersededBy, from its project's list.
+     * The state names the item by its qualified id ({@code entityId} param) while each recorded item names
+     * it by its UUID, so the row asserts the service's filtered list, not {@code WorkEntities.superseding}'s
+     * second filter (kept for services older than qits-248), which compares against the UUID details read.
+     */
     private static final Call CLOSES = (api, params, recorded) -> {
-        JsonNode entity = JsonNodeFactory.instance.objectNode().put("id", params.get("entityId"))
-                .put("qualifiedId", params.get("qualifiedId"));
-        List<JsonNode> closes = WorkEntities.superseding(WorkEntities.list(api.projectWork(params.get("projectId"),
-                null, null, null, null, params.get("entityId"))), entity);
-        assertThat(closes).isNotEmpty().allSatisfy(e -> assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank());
+        List<JsonNode> closes = WorkEntities.list(api.projectWork(params.get("projectId"),
+                null, null, null, null, params.get("entityId")));
+        assertThat(closes).isNotEmpty().allSatisfy(e -> {
+            assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank();
+            assertThat(ProjectsApi.text(e, "supersededBy")).isNotBlank();
+        });
     };
 
     /** The item read by its qualified id: what details prints, update and status take its archetype from. */
@@ -839,7 +844,8 @@ public final class ProjectsContract {
         rows.add(row("qits work details", EPIC_IN_DETAIL, "listWorkChildren", "workChildren", CHILDREN)
                 .consumes(held(EPIC_IN_DETAIL, "listWorkChildren", prefixed("children[].", ROW))));
         rows.add(row("qits work details", SUPERSEDED_ITEMS, "listProjectWork", "projectWork", CLOSES)
-                .consumes(prefixed("entities[].", Stream.concat(ROW.stream(), Stream.of("supersededBy")).toList()))
+                .consumes(held(SUPERSEDED_ITEMS, "listProjectWork",
+                        prefixed("entities[].", Stream.concat(ROW.stream(), Stream.of("supersededBy")).toList())))
                 .request("GET /projects/api/projects/{projectId}/work?supersededBy={entityId}"));
         rows.add(row("qits work create", NO_WORK, "createWork", "createWork", CREATE)
                 .consumes(held(NO_WORK, "createWork", ROW)));
