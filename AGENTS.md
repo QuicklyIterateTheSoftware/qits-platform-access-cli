@@ -500,7 +500,11 @@ outside `/work`: the release request's commits for `qits artifacts publish chang
 every state, where a command finds a request by its logical id (`listRepositoryReleaseRequests` with
 `state=all`, state `a repository with a release not merged to main`; qits-1158); the git reads of
 `qits repositories` (branches, commits, commit changes and diff, commit subjects); a refinement's
-designs for `qits work design` (state `a ticket with a design`; qits-1174); and `qits
+designs for `qits work design` (state `a ticket with a design`; qits-1174); the room itself for `qits
+work refinement` (qits-1383): `open`'s `startWorkRefinement` then `ensureRefinementContainer`, both in
+`a ticket with a design`, and its 409 in `a refined ticket`; `show`'s `getWorkRefinement` in `a
+reported ticket` (null) and `a ticket with a design`; `discard`'s `getWorkRefinement` and
+`discardRefinement` in `a ticket with a design`; and `qits
 release-request approve` / `decline` (qits-1287): the project's door that finds a request by its
 logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
 the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build

@@ -395,11 +395,33 @@ public final class ProjectsApi {
         return workPath(entity) + "/members/" + segment(membershipId);
     }
 
-    // --- refinement designs ---
+    // --- the refinement room, and its designs ---
 
     /** {@code {"refinement":{id, …}}}, or {@code {"refinement":null}} when the item has no room. */
     public JsonNode workRefinement(String entity) throws CliFailure, InterruptedException {
         return client.get(uri(workPath(entity) + "/refinement"));
+    }
+
+    /**
+     * {@code {"refinement":{id, …}}}: the item's room, opened, or the one it already has (find-or-create).
+     * Opening starts nothing; {@link #ensureRefinement} brings the room's container up.
+     */
+    public JsonNode openWorkRefinement(String entity) throws CliFailure, InterruptedException {
+        return client.post(uri(workPath(entity) + "/refinement"));
+    }
+
+    /** {@code {"refinement":{id, …}, "technicalProcessId"}}: the room, with the process bringing its container up. */
+    public JsonNode ensureRefinement(String refinementId) throws CliFailure, InterruptedException {
+        return client.post(uri(refinementPath(refinementId) + "/ensure-container"));
+    }
+
+    /** {@code {"success":true}}: the room is gone, with its container, its branch and its designs. */
+    public JsonNode discardRefinement(String refinementId) throws CliFailure, InterruptedException {
+        return client.post(uri(refinementPath(refinementId) + "/discard"));
+    }
+
+    private static String refinementPath(String refinementId) {
+        return "/projects/api/refinements/" + segment(refinementId);
     }
 
     /** {@code {"designs":[…]}}, oldest first, without their documents. */
@@ -424,7 +446,7 @@ public final class ProjectsApi {
     }
 
     private static String designsPath(String refinementId) {
-        return "/projects/api/refinements/" + segment(refinementId) + "/designs";
+        return refinementPath(refinementId) + "/designs";
     }
 
     // --- repository reads ---

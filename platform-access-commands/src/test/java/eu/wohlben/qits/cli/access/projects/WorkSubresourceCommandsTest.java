@@ -402,6 +402,103 @@ class WorkSubresourceCommandsTest {
         Result r = run("work", "--entity", ITEM, "design", "list");
 
         assertThat(r.exit()).isEqualTo(1);
-        assertThat(r.err()).contains("No refinement is open for qits-100");
+        assertThat(r.err()).contains("No refinement is open for qits-100, so it has no designs.");
+    }
+
+    // --- refinement ---
+
+    private static final String ROOM = """
+            {"id":7,"entityId":"t1","label":"refining-export-invoices-as-csv","runtimeStatus":"STOPPED",
+             "branch":"refining/export-invoices-as-csv"}
+            """;
+
+    @Test
+    void refinementOpenOpensTheRoomThenBringsItsContainerUp() {
+        platform.answer("POST", WORK + "/refinement", "{\"refinement\":" + ROOM + "}");
+        platform.answer("POST", "/projects/api/refinements/7/ensure-container", "{\"refinement\":"
+                + ROOM.replace("STOPPED", "PROVISIONING") + ",\"technicalProcessId\":\"proc-1\"}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "open");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests.stream().map(q -> q.method() + " " + q.path()).toList())
+                .containsSubsequence("POST " + WORK + "/refinement", "POST /projects/api/refinements/7/ensure-container");
+        assertThat(r.out()).contains("ID").contains("ENTITY").contains("LABEL").contains("STATUS")
+                .contains("7").contains("t1").contains("refining-export-invoices-as-csv").contains("PROVISIONING")
+                .contains("proc-1");
+    }
+
+    @Test
+    void refinementOpenAsJsonPrintsTheBringUpsAnswer() throws Exception {
+        platform.answer("POST", WORK + "/refinement", "{\"refinement\":" + ROOM + "}");
+        platform.answer("POST", "/projects/api/refinements/7/ensure-container",
+                "{\"refinement\":" + ROOM + ",\"technicalProcessId\":\"proc-1\"}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "open", "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        JsonNode printed = JSON.readTree(r.out());
+        assertThat(printed.path("technicalProcessId").asText()).isEqualTo("proc-1");
+        assertThat(printed.path("refinement").path("id").asInt()).isEqualTo(7);
+    }
+
+    @Test
+    void aRefusedOpenPrintsTheServicesMessageAndBringsNothingUp() {
+        platform.answer("POST", WORK + "/refinement", 409,
+                "{\"message\":\"Ticket qits-100 is REFINED - only a REPORTED ticket can be refined.\"}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "open");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("409").contains("only a REPORTED ticket can be refined");
+        assertThat(platform.requests.stream().filter(q -> q.path().endsWith("/ensure-container"))).isEmpty();
+    }
+
+    @Test
+    void refinementShowPrintsTheRoom() {
+        platform.answer("GET", WORK + "/refinement", "{\"refinement\":" + ROOM + "}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "show");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("7").contains("t1").contains("refining-export-invoices-as-csv")
+                .contains("STOPPED");
+        assertThat(platform.requests.stream().filter(q -> q.method().equals("POST"))).isEmpty();
+    }
+
+    @Test
+    void refinementShowOfAnItemWithNoRoomSaysSoAndSucceeds() throws Exception {
+        platform.answer("GET", WORK + "/refinement", "{\"refinement\":null}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "show");
+        Result json = run("work", "--entity", ITEM, "refinement", "show", "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out().strip()).isEqualTo("No refinement is open for qits-100.");
+        assertThat(json.exit()).as(json.err()).isZero();
+        assertThat(JSON.readTree(json.out()).path("refinement").isNull()).isTrue();
+    }
+
+    @Test
+    void refinementDiscardDiscardsTheItemsRoom() {
+        platform.answer("GET", WORK + "/refinement", "{\"refinement\":" + ROOM + "}");
+        platform.answer("POST", "/projects/api/refinements/7/discard", "{\"success\":true}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "discard");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("POST", "/projects/api/refinements/7/discard")).hasSize(1);
+        assertThat(r.out()).contains("qits-100");
+    }
+
+    @Test
+    void refinementDiscardOfAnItemWithNoRoomFailsAndDiscardsNothing() {
+        platform.answer("GET", WORK + "/refinement", "{\"refinement\":null}");
+
+        Result r = run("work", "--entity", ITEM, "refinement", "discard");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("No refinement is open for qits-100.").doesNotContain("designs");
+        assertThat(platform.requests.stream().filter(q -> q.path().endsWith("/discard"))).isEmpty();
     }
 }

@@ -426,7 +426,7 @@ qits repositories remote-login --project qits --repository qits-ci-service
 
 Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, and comment writes to its thread.
 
-An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, progress), and the HTML designs of a refinement (design) are here too.
+An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, progress), its refinement room itself (refinement: open, show, discard) and the HTML designs of a refinement (design) are here too.
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
@@ -1218,6 +1218,104 @@ echo '{"groups":[]}' | qits work --entity qits-130 members condition --member 5f
 - `0` The condition is replaced, or nothing was put in and the schema is printed.
 - `1` The platform refused (for example a criterion it cannot read, HTTP 400, another project, HTTP 403, no such campaign or membership, HTTP 404, or a claimed member, HTTP 409), or cannot be reached.
 - `2` Used wrongly (for example no --entity or no --member, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits work refinement
+
+An epic's or a ticket's refinement room: the workspace with its own container and its own refining/<slug> branch where the item's scope is worked out, and where its designs live. open opens the room and brings its container up, show shows it, discard tears it down.
+
+An item has at most one room, opened only while the item is at REPORTED and never for a feature or a task. The move from REPORTED to REFINED is the gate on the plan; the room stays until it is discarded or the item reaches a final status.
+
+### Notes
+
+- --entity is the epic or the ticket, not the room. The room's own id is in show's ID column.
+- show takes qits:admin, qits:admin-agent or qits:agent. open and discard take qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+
+## qits work refinement open
+
+Open an epic's or a ticket's refinement room and bring its container up, as the Refine button does. An item that already has a room gets that room back, and its container is brought up again: a stopped one is woken, a running one is left running.
+
+Sends POST /projects/api/work/{entity}/refinement, then POST /projects/api/refinements/{id}/ensure-container with the room's id. The container comes up in the background; the technical process it prints narrates that. Shows the room's id, its item, its label and its status, which is PROVISIONING while the container comes up.
+
+```
+qits work refinement open [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 refinement open
+qits work --entity qits-100 refinement open -o json
+```
+
+### Exit codes
+
+- `0` The room is open and its container is coming up.
+- `1` The platform refused (for example your roles, HTTP 403, an item it does not know, HTTP 404, an item that cannot be refined now, such as one not at REPORTED, a feature or a task, HTTP 409, or a branch the git host would not cut, HTTP 502), or the platform cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work refinement show
+
+Show an epic's or a ticket's refinement room: its id, its item, its label and its status, such as PROVISIONING, RUNNING or STOPPED. An item with no room says so and exits with 0.
+
+Reads GET /projects/api/work/{entity}/refinement; it never opens a room.
+
+```
+qits work refinement show [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 refinement show
+qits work --entity qits-100 refinement show -o json
+```
+
+### Exit codes
+
+- `0` Done, also when the item has no room.
+- `1` The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work refinement discard
+
+Discard an epic's or a ticket's refinement room. This deletes the room's container, its refining/<slug> branch, and its designs, prompt draft and prompt images with it; none of it can be brought back. The work item itself is untouched, and a later open starts a fresh room.
+
+Reads GET /projects/api/work/{entity}/refinement for the room, then sends POST /projects/api/refinements/{id}/discard.
+
+```
+qits work refinement discard [--entity <entity>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits work --entity qits-100 refinement discard
+qits work --entity qits-100 refinement discard -o json
+```
+
+### Exit codes
+
+- `0` The room is discarded.
+- `1` The platform refused (for example your roles, HTTP 403, or an item or room it does not know, HTTP 404), the item has no room, or the platform cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
 
 ## qits work design
 
