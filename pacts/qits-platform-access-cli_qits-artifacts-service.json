@@ -1000,12 +1000,13 @@
         }
       },
       "description": "qits artifacts publish contract: getNpmPackument",
-      "key": "4ef08473",
+      "key": "32df1073",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -1127,6 +1128,62 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "putMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish contract",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish contract: putMavenFile",
+      "key": "54d57216",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven jar published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "Y29udHJhY3QgamFyIDIxMDAuMS4wCg==",
+          "contentType": "application/java-archive",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.jar",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/java-archive"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-absent/2100.1.0/contract-absent-2100.1.0.jar"
+      },
+      "response": {
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "putNpmDistTag"
           },
           "qits-trigger": {
@@ -1137,12 +1194,13 @@
         }
       },
       "description": "qits artifacts publish contract: putNpmDistTag",
-      "key": "913940a4",
+      "key": "7527cca4",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -1191,12 +1249,13 @@
         }
       },
       "description": "qits artifacts publish contract: putNpmPackage",
-      "key": "1771b7bd",
+      "key": "f3f7503",
       "pending": false,
       "providerStates": [
         {
           "name": "no npm package with the given name",
           "params": {
+            "name": "contract-absent-package",
             "package": "contract-absent-package",
             "tag": "main",
             "tarball": "contract-absent-package-2100.1.0.tgz",
@@ -1832,12 +1891,13 @@
         }
       },
       "description": "qits artifacts publish exists: getNpmPackument",
-      "key": "3d61c945",
+      "key": "21505545",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -1980,12 +2040,13 @@
         }
       },
       "description": "qits artifacts publish exists: getNpmPackument",
-      "key": "1ce93238",
+      "key": "14b6ef7e",
       "pending": false,
       "providerStates": [
         {
           "name": "no npm package with the given name",
           "params": {
+            "name": "contract-absent-package",
             "package": "contract-absent-package",
             "tag": "main",
             "tarball": "contract-absent-package-2100.1.0.tgz",
@@ -2598,6 +2659,62 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "putMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish maven",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish maven: putMavenFile",
+      "key": "412a7f03",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no maven jar published at the version",
+          "params": {
+            "artifact": "contract-absent",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-absent",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": "Y29udHJhY3QgamFyIDIxMDAuMS4wCg==",
+          "contentType": "application/java-archive",
+          "contentTypeHint": "DEFAULT",
+          "encoded": "base64"
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.jar",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/java-archive"
+          ]
+        },
+        "method": "PUT",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-absent/2100.1.0/contract-absent-2100.1.0.jar"
+      },
+      "response": {
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "putNpmDistTag"
           },
           "qits-trigger": {
@@ -2608,12 +2725,13 @@
         }
       },
       "description": "qits artifacts publish npm dist-tag: putNpmDistTag",
-      "key": "5bb68dd2",
+      "key": "3fa519d2",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -2662,12 +2780,13 @@
         }
       },
       "description": "qits artifacts publish npm plan: getNpmPackument",
-      "key": "ef1f690f",
+      "key": "d30df50f",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -2821,12 +2940,13 @@
         }
       },
       "description": "qits artifacts publish npm plan: getNpmPackument",
-      "key": "cea6d202",
+      "key": "c6748f48",
       "pending": false,
       "providerStates": [
         {
           "name": "no npm package with the given name",
           "params": {
+            "name": "contract-absent-package",
             "package": "contract-absent-package",
             "tag": "main",
             "tarball": "contract-absent-package-2100.1.0.tgz",
@@ -2855,6 +2975,180 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "getContentHash"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm: getContentHash",
+      "key": "7dc262c7",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a content hash recorded for an npm package",
+          "params": {
+            "name": "contract-package",
+            "type": "npm",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/content-hashes/${type}/${name}/-/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/content-hashes/npm/contract-package/-/2100.1.0"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "contentHash": "v1:sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "version": "2100.1.0"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.contentHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getNewestContentHash"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts publish npm",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts publish npm: getNewestContentHash",
+      "key": "7c3f0cc5",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a content hash recorded for an npm package",
+          "params": {
+            "name": "contract-package",
+            "type": "npm",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/content-hashes/${type}/${name}/-/newest",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/content-hashes/npm/contract-package/-/newest"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "contentHash": "v1:sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "version": "2100.1.0"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.contentHash": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
@@ -2865,12 +3159,13 @@
         }
       },
       "description": "qits artifacts publish npm: getNpmPackument",
-      "key": "20689206",
+      "key": "4571e06",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -2946,12 +3241,13 @@
         }
       },
       "description": "qits artifacts publish npm: putNpmDistTag",
-      "key": "de6d96f7",
+      "key": "c25c22f7",
       "pending": false,
       "providerStates": [
         {
           "name": "an npm package published at a version",
           "params": {
+            "name": "contract-package",
             "package": "contract-package",
             "tag": "main",
             "tarball": "contract-package-2100.1.0.tgz",
@@ -3000,12 +3296,13 @@
         }
       },
       "description": "qits artifacts publish npm: putNpmPackage",
-      "key": "64a60e10",
+      "key": "5c73cb56",
       "pending": false,
       "providerStates": [
         {
           "name": "no npm package with the given name",
           "params": {
+            "name": "contract-absent-package",
             "package": "contract-absent-package",
             "tag": "main",
             "tarball": "contract-absent-package-2100.1.0.tgz",
@@ -3695,6 +3992,222 @@
         "path": "/artifacts/docs/docs/@changelog/contract-repository/-/2100.1.0/CHANGELOG.md"
       },
       "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "getDaemon"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits update",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits update: getDaemon",
+      "key": "80e5b301",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the qits CLI published as a daemon",
+          "params": {
+            "daemon": "qits-platform-access-cli",
+            "repository": "daemons",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/daemons/${daemon}/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/daemons/qits-platform-access-cli/2100.1.0"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "headDaemon"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits update",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits update: headDaemon",
+      "key": "a681157f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the qits CLI published as a daemon",
+          "params": {
+            "daemon": "qits-platform-access-cli",
+            "repository": "daemons",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/daemons/${daemon}/${version}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "HEAD",
+        "path": "/artifacts/daemons/qits-platform-access-cli/2100.1.0"
+      },
+      "response": {
+        "headers": {
+          "Content-Length": [
+            "34"
+          ],
+          "Docker-Content-Digest": [
+            "sha256:a5d7dd70867a55a0ff5a50214d5688e5598b07268b2597a651dc7b1de1ba371e"
+          ]
+        },
+        "matchingRules": {
+          "header": {
+            "Content-Length": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": ".+"
+                }
+              ]
+            },
+            "Docker-Content-Digest": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": ".+"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
+            "operationId": "listDaemons"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits update",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits update: listDaemons",
+      "key": "9607781e",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "the qits CLI published as a daemon",
+          "params": {
+            "daemon": "qits-platform-access-cli",
+            "repository": "daemons",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/api/repositories/${repository}/daemons",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/api/repositories/daemons/daemons"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "daemons": [
+              {
+                "latestVersion": "2100.1.0",
+                "name": "qits-platform-access-cli"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.daemons": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.daemons[*].latestVersion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.daemons[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
         "status": 200
       },
       "type": "Synchronous/HTTP"

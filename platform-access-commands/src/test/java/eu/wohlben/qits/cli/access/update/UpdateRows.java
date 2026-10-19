@@ -14,12 +14,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <b>What {@code qits update} asks qits-artifacts</b> (ticket qits-1149), rows of {@code
  * publish/ArtifactsContract}: the daemons list that names the newest release, the HEAD that says
  * the binary's length and digest, and the binary itself. The binary is published under one fixed
- * name, {@code qits-platform-access-cli}, which the recorded daemon states do not carry, so every
- * row waits for a state that publishes that name at a release version.
+ * name, {@code qits-platform-access-cli}, which qits-artifacts records in a state of its own, at a
+ * release version.
  */
 public final class UpdateRows {
 
-    /** Not recorded: the CLI's own daemon, under its name, at a release version. */
+    /** The CLI's own daemon, under its name, at a release version. */
     static final String THE_CLI = "the qits CLI published as a daemon";
 
     public static final Class<?> CLIENT = ArtifactsReleases.class;

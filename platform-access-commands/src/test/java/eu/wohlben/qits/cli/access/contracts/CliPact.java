@@ -134,10 +134,12 @@ public record CliPact(
      *       names it as its {@code Content-Type} header, and that is the header and the body's type
      *       here.</li>
      *   <li>A JSON request body that is a bare string ({@code "2100.1.0"}, the npm dist-tag PUT) is a
-     *       text node in the golden-master index, which qits-pact-consumer (2026.1018.164604) takes
-     *       for a form-like text body and sends unquoted under the recorded {@code application/json}:
-     *       not JSON, so pact-jvm can neither match nor write it. Under a JSON media type a text node
-     *       is the JSON string it was recorded as, and that is the body here.</li>
+     *       text node in the golden-master index, which qits-pact-consumer takes for a form-like text
+     *       body and sends as it stands under the recorded {@code application/json}. A recording
+     *       that holds it unquoted ({@code 2100.1.0}, qits-artifacts before 2026.1019.62657) is not
+     *       JSON, so pact-jvm can neither match nor write it: under a JSON media type such a text
+     *       node is the JSON string it was recorded as, and that is the body here. A recording that
+     *       holds it quoted is JSON already and goes as it is.</li>
      *   <li>A form field the row holds to a regex ({@link CliRow#fieldMatches}) gets that matcher;
      *       the recorded value stays the example.</li>
      * </ul>
@@ -148,7 +150,7 @@ public record CliPact(
             String type = row.interaction().requestHeaders().get("Content-Type");
             var op = masters.operation(row.state(), row.operationId());
             boolean jsonString = op.binaryBody() == null && op.body() != null && op.body().isTextual()
-                    && op.contentType() != null && isJson(op.contentType());
+                    && op.contentType() != null && isJson(op.contentType()) && !parses(op.body().asText());
             if (type == null && !jsonString && row.fieldsMatching().isEmpty()) {
                 continue;
             }
@@ -181,6 +183,16 @@ public record CliPact(
     private static boolean isJson(String mediaType) {
         String media = mediaType.split(";", 2)[0].trim().toLowerCase(java.util.Locale.ROOT);
         return media.equals("application/json") || media.endsWith("+json");
+    }
+
+    /** Whether {@code text} is a JSON document already: a recording that holds the string quoted, {@code "\"2100.1.0\""}. */
+    private static boolean parses(String text) {
+        try {
+            new com.fasterxml.jackson.databind.ObjectMapper().readTree(text);
+            return true;
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            return false;
+        }
     }
 
     private static String quoted(String text) {

@@ -17,15 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * pacts/qits-platform-access-cli_qits-observability-service.json}. The live stream is a WebSocket
  * ({@code ObserveStream}) and no part of this pact.
  * <p>
- * {@code observe slow-spans} always sends its {@code --threshold-ms} (500 by default), and
- * qits-observability records the read without one: that row is pending on its state.
+ * {@code observe slow-spans} always sends its {@code --threshold-ms} (500 by default), which
+ * qits-observability records with the one service's telemetry ({@code thresholdMs=500}).
  */
 public final class ObservabilityContract {
 
     static final String ONE_SERVICE = "telemetry from one platform service";
     static final String EVERY_KIND = "telemetry records of every kind";
-    /** Not recorded: listSlowSpans with thresholdMs. */
-    static final String SLOW_SPANS = "telemetry with spans slower than the threshold";
 
     private static final CliPact BASE = CliPact.of("qits-observability-service", "qits-observability");
 
@@ -57,11 +55,11 @@ public final class ObservabilityContract {
                     .consumes(BASE.held(ONE_SERVICE, "listTelemetryErrors", List.of("groups[].traceId",
                             "groups[].serviceName", "groups[].errorSpans[].name", "groups[].errorSpans[].statusMessage",
                             "groups[].errorLogs[].body", "truncated", "total"))),
-            read("qits observe slow-spans", SLOW_SPANS, "listSlowSpans",
+            read("qits observe slow-spans", ONE_SERVICE, "listSlowSpans",
                     command("observe", "slow-spans", "--source", "{source}"))
-                    .consumes("spans[].durationMs", "spans[].serviceName", "spans[].name", "spans[].status",
-                            "spans[].traceId", "truncated", "total")
-                    .request("GET /observability/api/telemetry/slow-spans?source={source}&thresholdMs=500"),
+                    .consumes(BASE.held(ONE_SERVICE, "listSlowSpans", List.of("spans[].durationMs",
+                            "spans[].serviceName", "spans[].name", "spans[].status", "spans[].traceId", "truncated",
+                            "total"))),
             read("qits observe metrics", ONE_SERVICE, "listTelemetryMetrics",
                     command("observe", "metrics", "--source", "{source}"))
                     .consumes(BASE.held(ONE_SERVICE, "listTelemetryMetrics", List.of("metrics[].name",

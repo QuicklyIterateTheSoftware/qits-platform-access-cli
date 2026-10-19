@@ -41,9 +41,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * The publish client sends no {@code PlatformClient} bearer, so these rows are held to the request
  * the pact names rather than to the stack ({@code Reached}).
  * <p>
- * <b>Pending rows</b> wait for qits-artifacts' next golden masters: the hosted Maven repository and
- * npm registry doors, the 409s, the 404s of a coordinate nothing published, and {@code qits
- * update}'s reads, under the state names the provider records them by. Not in this pact: {@code
+ * Every row is recorded: the hosted Maven repository and npm registry doors, the 409s, the 404s of a
+ * coordinate nothing published, and {@code qits update}'s reads, under the state names the provider
+ * records them by. Not in this pact: {@code
  * MavenReactor}'s fall-through to Maven Central, which is qits-mirror's ({@code
  * /mirror/maven/central}); the rows here give the resolver the hosted root only.
  */
@@ -62,14 +62,13 @@ public final class ArtifactsContract {
     static final String A_HASH = "a content hash recorded for the coordinate";
     static final String CHANGELOGS = "a repository with published changelogs";
     static final String NO_CHANGELOG = "a repository with no changelog";
-    /** qits-artifacts-service-rr-66: recorded, not published yet. */
     static final String A_MAVEN_ARTIFACT = "a maven artifact published at a version";
     static final String NO_MAVEN_ARTIFACT = "no maven artifact published at the version";
     static final String AN_NPM_PACKAGE = "an npm package published at a version";
     static final String NO_NPM_PACKAGE = "no npm package with the given name";
-    /** Not recorded: the jar the maven publish PUTs before its pom. */
+    /** The jar the maven publish PUTs before its pom. */
     static final String NO_MAVEN_JAR = "no maven jar published at the version";
-    /** Not recorded: the content hashes of an npm package (the recorded ones are a maven artifact's). */
+    /** The content hashes of an npm package (the other recorded ones are a maven artifact's). */
     static final String AN_NPM_HASH = "a content hash recorded for an npm package";
 
     private static final CliPact BASE = CliPact.of("qits-artifacts-service", "qits-artifacts");

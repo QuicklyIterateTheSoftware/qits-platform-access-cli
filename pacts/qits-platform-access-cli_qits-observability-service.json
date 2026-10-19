@@ -289,7 +289,7 @@
               "combine": "AND",
               "matchers": [
                 {
-                  "match": "number"
+                  "match": "type"
                 }
               ]
             },
@@ -329,7 +329,7 @@
               "combine": "AND",
               "matchers": [
                 {
-                  "match": "number"
+                  "match": "type"
                 }
               ]
             }
@@ -1459,7 +1459,7 @@
               "combine": "AND",
               "matchers": [
                 {
-                  "match": "number"
+                  "match": "type"
                 }
               ]
             },
@@ -1563,7 +1563,7 @@
               "combine": "AND",
               "matchers": [
                 {
-                  "match": "number"
+                  "match": "type"
                 }
               ]
             },
@@ -1572,6 +1572,169 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.truncated": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-observability-service",
+            "operationId": "listSlowSpans"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits observe slow-spans",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits observe slow-spans: listSlowSpans",
+      "key": "6c889dab",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "telemetry from one platform service",
+          "params": {
+            "service": "qits-example",
+            "source": "_service/qits-example",
+            "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a01"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "query": {
+            "source": {
+              "dataType": "RAW",
+              "expression": "${source}",
+              "type": "ProviderState"
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/observability/api/telemetry/slow-spans",
+        "query": {
+          "source": [
+            "_service/qits-example"
+          ],
+          "thresholdMs": [
+            "500"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "spans": [
+              {
+                "durationMs": 750,
+                "name": "GET /invoices",
+                "serviceName": "qits-example",
+                "status": "ERROR",
+                "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a01"
+              },
+              {
+                "durationMs": 750,
+                "name": "GET /invoices",
+                "serviceName": "qits-example",
+                "status": "ERROR",
+                "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a01"
+              }
+            ],
+            "total": 2,
+            "truncated": false
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.spans": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.spans[*].durationMs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.spans[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.spans[*].serviceName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.spans[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.spans[*].traceId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.total": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },

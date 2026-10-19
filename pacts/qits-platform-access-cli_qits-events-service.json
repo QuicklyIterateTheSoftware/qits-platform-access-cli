@@ -32,6 +32,20 @@
         }
       ],
       "request": {
+        "generators": {
+          "query": {
+            "attr[0]": {
+              "dataType": "RAW",
+              "expression": "repositoryname=${repositoryName}",
+              "type": "ProviderState"
+            },
+            "attr[1]": {
+              "dataType": "RAW",
+              "expression": "projectid=${projectId}",
+              "type": "ProviderState"
+            }
+          }
+        },
         "method": "GET",
         "path": "/events/api/events",
         "query": {

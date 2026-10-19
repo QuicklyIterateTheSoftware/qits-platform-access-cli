@@ -23,17 +23,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * qits-maintenance records the automations of a request at a named fold, and a re-run with no body
  * but {@code {}}: those are what {@code --fold} and a run without {@code --work-item} send. The list
  * at the request's newest fold (no {@code ?foldSha=}) and a run naming a work item ({@code
- * {"workItem": …}}, where the recording sends {@code {"workItem": null, "repository": …}}) are
- * pending on their states.
+ * {"workItem": …}}, where the first re-run's recording sends {@code {"workItem": null, "repository":
+ * …}}) each have a state of their own.
  */
 public final class MaintenanceContract {
 
     static final String WITH_AUTOMATIONS = "a release request with automations";
     static final String TO_RE_RUN = "a release request with an automation to re-run";
     static final String PENDING_BUMPS = "pending bumps";
-    /** Not recorded: listReleaseRequestAutomations without foldSha. */
+    /** listReleaseRequestAutomations without foldSha. */
     static final String AT_NEWEST_FOLD = "a release request with automations at its newest fold";
-    /** Not recorded: runReleaseRequestAutomation with {"workItem": "<id>"}. */
+    /** runReleaseRequestAutomation with {"workItem": "<id>"}. */
     static final String FOR_A_WORK_ITEM = "a release request with an automation to re-run for a work item";
 
     private static final CliPact BASE = CliPact.of("qits-maintenance-service", "qits-maintenance");

@@ -2913,12 +2913,13 @@
         }
       },
       "description": "qits workspaces runners delete: deleteRunner",
-      "key": "f8accb15",
+      "key": "61e633da",
       "pending": false,
       "providerStates": [
         {
           "name": "an unregistered runner",
           "params": {
+            "authorization": "Bearer qits_tok_contract-registration",
             "runnerId": "00000000-0000-4000-8000-000000000020",
             "runnerName": "localhost"
           }
@@ -3154,12 +3155,13 @@
         }
       },
       "description": "qits workspaces runners health: getRunnerHealth",
-      "key": "622091cd",
+      "key": "cb59fa92",
       "pending": false,
       "providerStates": [
         {
           "name": "an unregistered runner",
           "params": {
+            "authorization": "Bearer qits_tok_contract-registration",
             "runnerId": "00000000-0000-4000-8000-000000000020",
             "runnerName": "localhost"
           }
