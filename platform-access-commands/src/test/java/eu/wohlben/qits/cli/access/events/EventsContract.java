@@ -6,6 +6,9 @@ import eu.wohlben.qits.cli.access.contracts.CliPact;
 import eu.wohlben.qits.cli.access.contracts.CliRow;
 import eu.wohlben.qits.cli.access.contracts.InPlatformCli;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -18,17 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The live streams ({@code qits events}, the checkout's watch) are Server-Sent Events, no part of it.
  * <p>
  * {@code events query} pages back from {@code --until} with {@code since}, {@code order=desc}, a
- * {@code limit} and a {@code cursor}; qits-events records the log paged forwards only, so that row
- * is pending on its state.
+ * {@code limit} and a {@code cursor}: the first page's cursor is {@code --until} plus a microsecond.
+ * The recorded window lies in 2100, and a command takes an {@code --until} after now as now, so the
+ * row runs the command with its clock a minute past the window's end.
  */
 public final class EventsContract {
 
-    /** Not recorded: listEvents with since, order=desc, limit and a cursor. */
+    /** listEvents with since, order=desc, limit and a cursor. */
     static final String A_WINDOW = "events in a window to page back through";
 
     /** One line per event, the frame the live stream sends, and the page's cursor to the next. */
     private static final CliRow.Call QUERY = (url, recorded) -> {
-        InPlatformCli.Result result = InPlatformCli.run(Map.of("QITS_EVENTS_URL", url), "events", "query",
+        Clock clock = Clock.fixed(Instant.parse(recorded.params().get("until")).plusSeconds(60), ZoneOffset.UTC);
+        InPlatformCli.Result result = InPlatformCli.run(clock, Map.of("QITS_EVENTS_URL", url), "events", "query",
                 "--since", recorded.params().get("since"), "--until", recorded.params().get("until"),
                 "--limit", recorded.params().get("limit"));
         assertThat(result.exit()).as(result.err()).isZero();

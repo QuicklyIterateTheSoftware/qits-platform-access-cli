@@ -6,6 +6,7 @@ import eu.wohlben.qits.cli.access.contracts.CliPact;
 import eu.wohlben.qits.cli.access.contracts.CliRow;
 import eu.wohlben.qits.cli.access.contracts.Reached;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
+import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.pact.consumer.GoldenMasters.Operation;
 
 import java.util.ArrayList;
@@ -36,8 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * first one's shape, so a lookup by name would find the one name twice.
  * <p>
  * <b>Each state is one the provider records</b>, picked for the call. A command that reads an item
- * before it writes it appears once per call. The one call qits-projects has not recorded, {@code qits
- * work details}' read of the items an item closes ({@code ?supersededBy=}), is pending on its state.
+ * before it writes it appears once per call.
  * {@code openApi}, the served OpenAPI document the comment and transition payload commands read
  * their schema from, is no operation of the provider: it is named as an exclusion.
  */
@@ -74,7 +74,7 @@ public final class ProjectsContract {
     static final String OPEN_TO_ANOTHER_BRANCH = "a release request open to another branch";
     static final String PROJECT_REQUESTS_OF_EVERY_STATE = "a project with release requests in every state";
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
-    /** Not recorded yet: the provider records the project list without {@code ?supersededBy=}. */
+    /** The project list filtered by {@code ?supersededBy=}, the item named by its qualified id. */
     static final String SUPERSEDED_ITEMS = "an item that other items name as their supersededBy";
 
     private static final CliPact BASE = CliPact.of("qits-projects-service", "qits-projects");
@@ -121,6 +121,22 @@ public final class ProjectsContract {
     private static CliRow.Call api(Call call) {
         return (url, recorded) -> call.run(new ProjectsApi(new PlatformClient(Reached.CREDENTIAL), url),
                 recorded.params(), recorded);
+    }
+
+    /**
+     * The same call as the person the state names: approve and decline are a person's decisions,
+     * and the provider records them with that person's CLI bearer ({@code authorization}), which
+     * the row sends as its {@code Authorization} header.
+     */
+    private static CliRow.Call asThePerson(Call call) {
+        return (url, recorded) -> {
+            String bearer = recorded.params().get("authorization").substring("Bearer ".length());
+            Credential credential = () -> {
+                Reached.CREDENTIAL.bearer();
+                return bearer;
+            };
+            call.run(new ProjectsApi(new PlatformClient(credential), url), recorded.params(), recorded);
+        };
     }
 
     private static JsonNode body(Operation recorded) {
@@ -236,10 +252,17 @@ public final class ProjectsContract {
         });
     };
 
-    /** {@code qits work details}: the items naming this one as their supersededBy, from its project's list. */
+    /**
+     * {@code qits work details}: the items naming this one as their supersededBy, from its project's
+     * list filtered by the item's qualified id (the state's {@code entityId}). The CLI filters the
+     * answer again by the item's id or qualified id; the state names the item by its qualified id
+     * alone, and the answer names it by its id, so the item's id is the one the answer's rows carry.
+     */
     private static final Call CLOSES = (api, params, recorded) -> {
-        JsonNode entity = JsonNodeFactory.instance.objectNode().put("id", params.get("entityId"))
-                .put("qualifiedId", params.get("qualifiedId"));
+        String id = BASE.masters().json(recorded.state(), recorded.operationId()).path("entities").path(0)
+                .path("supersededBy").asText();
+        JsonNode entity = JsonNodeFactory.instance.objectNode().put("id", id)
+                .put("qualifiedId", params.get("entityId")).put("projectId", params.get("projectId"));
         List<JsonNode> closes = WorkEntities.superseding(WorkEntities.list(api.projectWork(params.get("projectId"),
                 null, null, null, null, params.get("entityId"))), entity);
         assertThat(closes).isNotEmpty().allSatisfy(e -> assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank());
@@ -766,12 +789,14 @@ public final class ProjectsContract {
             rows.add(row(command, PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest", "projectReleaseRequest",
                     FIND_IN_PROJECT).consumes("request.id", "request.qualifiedId", "request.repoId", "request.mergedSha"));
         }
-        rows.add(row("qits release-request approve", AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
-                "approveReleaseRequest", APPROVE).consumes(held(AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
-                prefixed("request.", REQUEST))));
-        rows.add(row("qits release-request decline", AWAITING_REQUEST, "declineReleaseRequest",
-                "declineReleaseRequest", DECLINE).consumes(held(AWAITING_REQUEST, "declineReleaseRequest",
-                prefixed("request.", REQUEST))));
+        rows.add(CliRow.of("qits release-request approve", AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
+                "ProjectsApi#approveReleaseRequest", asThePerson(APPROVE))
+                .consumes(held(AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest", prefixed("request.", REQUEST)))
+                .header("Authorization", "{authorization}"));
+        rows.add(CliRow.of("qits release-request decline", AWAITING_REQUEST, "declineReleaseRequest",
+                "ProjectsApi#declineReleaseRequest", asThePerson(DECLINE))
+                .consumes(held(AWAITING_REQUEST, "declineReleaseRequest", prefixed("request.", REQUEST)))
+                .header("Authorization", "{authorization}"));
         rows.add(row("qits release-request regenerate", HELD_BY_A_FAILED_AUTOMATION, "rerunReleaseRequestAutomation",
                 "rerunReleaseRequestAutomation", REGENERATE).consumes("id"));
         rows.add(row("qits release-request regenerate", AWAITING_REQUEST, "listRepositoryReleaseRequests",
@@ -797,7 +822,8 @@ public final class ProjectsContract {
         rows.add(row("qits work details", EPIC_IN_DETAIL, "listWorkChildren", "workChildren", CHILDREN)
                 .consumes(held(EPIC_IN_DETAIL, "listWorkChildren", prefixed("children[].", ROW))));
         rows.add(row("qits work details", SUPERSEDED_ITEMS, "listProjectWork", "projectWork", CLOSES)
-                .consumes(prefixed("entities[].", Stream.concat(ROW.stream(), Stream.of("supersededBy")).toList()))
+                .consumes(held(SUPERSEDED_ITEMS, "listProjectWork",
+                        prefixed("entities[].", Stream.concat(ROW.stream(), Stream.of("supersededBy")).toList())))
                 .request("GET /projects/api/projects/{projectId}/work?supersededBy={entityId}"));
         rows.add(row("qits work create", NO_WORK, "createWork", "createWork", CREATE)
                 .consumes(held(NO_WORK, "createWork", ROW)));

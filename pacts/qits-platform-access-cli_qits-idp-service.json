@@ -351,6 +351,15 @@
           "contentTypeHint": "DEFAULT",
           "encoded": false
         },
+        "generators": {
+          "body": {
+            "$.redirect_uri": {
+              "dataType": "STRING",
+              "expression": "${redirectUri}",
+              "type": "ProviderState"
+            }
+          }
+        },
         "headers": {
           "Content-Type": [
             "application/x-www-form-urlencoded"

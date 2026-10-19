@@ -34,7 +34,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Every request goes as a form, compared field by field with the recording, so each row's call
  * sends the state's own values. The one exception is {@code qits login}'s exchange: its {@code
  * redirect_uri} is the idp's own page, {@code <idp>/connect/cli}, whose host is wherever the CLI
- * reaches the idp, so that field is held to {@link #CONNECT_PAGE}. {@code GET /idp/authorize}, which
+ * reaches the idp, so that field is held to {@link #CONNECT_PAGE}, and is generated from the state's
+ * {@code redirectUri} when the provider verifies it. {@code GET /idp/authorize}, which
  * the provider records too, is the browser's request, never the CLI's: it has no row.
  */
 public final class IdpContract {

@@ -29,9 +29,9 @@ public final class WaitsContract {
     public static final Class<?> CLIENT = WaitsApi.class;
 
     static final String OPEN_WAIT = "an agent with an open wait";
-    /** Not recorded yet: the release-request preset's declaration. */
+    /** The release-request preset's declaration. */
     static final String RELEASE_REQUEST_WAIT = "an agent declaring a wait on a release request";
-    /** Not recorded yet: the CI-run preset's declaration. */
+    /** The CI-run preset's declaration. */
     static final String CI_RUN_WAIT = "an agent declaring a wait on a CI run";
 
     private static final CliPact MASTERS = CliPact.of("qits-workspaces-service", "qits-workspaces");

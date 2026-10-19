@@ -116,6 +116,202 @@
         "status": 200
       },
       "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-events-service",
+            "operationId": "listEvents"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits events query",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits events query: listEvents",
+      "key": "26540b2d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "events in a window to page back through",
+          "params": {
+            "cursor": "2100-01-01T00:00:10.000001Z,0",
+            "firstEventId": "00000000-0000-4000-8000-000000000001",
+            "limit": "2",
+            "secondEventId": "00000000-0000-4000-8000-000000000002",
+            "since": "2100-01-01T00:00:00Z",
+            "thirdEventId": "00000000-0000-4000-8000-000000000003",
+            "until": "2100-01-01T00:00:10Z"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "query": {
+            "cursor": {
+              "dataType": "RAW",
+              "expression": "${cursor}",
+              "type": "ProviderState"
+            },
+            "limit": {
+              "dataType": "RAW",
+              "expression": "${limit}",
+              "type": "ProviderState"
+            },
+            "since": {
+              "dataType": "RAW",
+              "expression": "${since}",
+              "type": "ProviderState"
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/events/api/events",
+        "query": {
+          "cursor": [
+            "2100-01-01T00:00:10.000001Z,0"
+          ],
+          "limit": [
+            "2"
+          ],
+          "order": [
+            "desc"
+          ],
+          "since": [
+            "2100-01-01T00:00:00Z"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "events": [
+              {
+                "description": "qits-ci is deployed",
+                "environment": "dev",
+                "id": "00000000-0000-4000-8000-000000000003",
+                "name": "DeploymentActive",
+                "occurredAt": "2026-01-01T00:00:00Z",
+                "parentId": "00000000-0000-4000-8000-000000000002",
+                "payload": "{\"applicationName\":\"qits-ci\",\"browserHost\":\"ci.qits.example\",\"endpoints\":[{\"path\":\"/ci\",\"upstreamHost\":\"dev-qits-ci\",\"upstreamPort\":8080}],\"environmentName\":\"dev\",\"navigation\":[{\"label\":\"CI\",\"position\":10,\"slot\":\"main\",\"subpath\":\"/\"}],\"version\":\"2026.101.100000\"}"
+              },
+              {
+                "description": "qits-ci is deployed",
+                "environment": "dev",
+                "id": "00000000-0000-4000-8000-000000000003",
+                "name": "DeploymentActive",
+                "occurredAt": "2026-01-01T00:00:00Z",
+                "parentId": "00000000-0000-4000-8000-000000000002",
+                "payload": "{\"applicationName\":\"qits-ci\",\"browserHost\":\"ci.qits.example\",\"endpoints\":[{\"path\":\"/ci\",\"upstreamHost\":\"dev-qits-ci\",\"upstreamPort\":8080}],\"environmentName\":\"dev\",\"navigation\":[{\"label\":\"CI\",\"position\":10,\"slot\":\"main\",\"subpath\":\"/\"}],\"version\":\"2026.101.100000\"}"
+              }
+            ],
+            "nextCursor": "2100-01-01T00:00:02Z,00000000-0000-4000-8000-000000000002"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.events": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$.events[*].description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.events[*].environment": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.events[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.events[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.events[*].occurredAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.events[*].parentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.events[*].payload": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.nextCursor": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
     }
   ],
   "metadata": {

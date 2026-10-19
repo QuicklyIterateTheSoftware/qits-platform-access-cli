@@ -29,6 +29,11 @@ public final class InPlatformCli {
 
     /** {@code args} with {@code env} on top of an in-platform environment. */
     public static Result run(Map<String, String> env, String... args) {
+        return run(Clock.systemUTC(), env, args);
+    }
+
+    /** The same, with the command's now read from {@code clock}: a window the recording holds in its future. */
+    public static Result run(Clock clock, Map<String, String> env, String... args) {
         Map<String, String> all = new HashMap<>(env);
         all.put(Mode.CLIENT_ID, "pact-consumer-test");
         all.put(Mode.CLIENT_SECRET, "pact-consumer-test");
@@ -36,7 +41,7 @@ public final class InPlatformCli {
         ByteArrayOutputStream err = new ByteArrayOutputStream();
         CliContext context = new CliContext(Map.copyOf(all), InputStream.nullInputStream(),
                 new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
-                Clock.systemUTC(), Sleeper.real(), name -> null, stop -> { }).withCredential(Reached.CREDENTIAL);
+                clock, Sleeper.real(), name -> null, stop -> { }).withCredential(Reached.CREDENTIAL);
         int exit = TestCli.execute(context, args);
         return new Result(exit, out.toString(StandardCharsets.UTF_8), err.toString(StandardCharsets.UTF_8));
     }

@@ -141,7 +141,9 @@ public record CliPact(
      *       node is the JSON string it was recorded as, and that is the body here. A recording that
      *       holds it quoted is JSON already and goes as it is.</li>
      *   <li>A form field the row holds to a regex ({@link CliRow#fieldMatches}) gets that matcher;
-     *       the recorded value stays the example.</li>
+     *       the recorded value stays the example. Where the recording names that value as a state
+     *       param ({@code redirect_uri={redirectUri}}), the field is also generated from it, so the
+     *       provider is sent its own value rather than the example.</li>
      * </ul>
      */
     public V4Pact pact(List<CliRow> selected) {
@@ -164,9 +166,18 @@ public record CliPact(
                                 quoted(op.example(op.body().asText())).getBytes(StandardCharsets.UTF_8),
                                 new ContentType(op.contentType())));
                     }
-                    row.fieldsMatching().forEach((field, regex) -> request.getMatchingRules()
-                            .addCategory("body").addRule("$." + field,
-                                    new au.com.dius.pact.core.model.matchingrules.RegexMatcher(regex)));
+                    row.fieldsMatching().forEach((field, regex) -> {
+                        request.getMatchingRules().addCategory("body").addRule("$." + field,
+                                new au.com.dius.pact.core.model.matchingrules.RegexMatcher(regex));
+                        String recorded = formField(op, field);
+                        if (recorded != null && op.hasParam(recorded)) {
+                            request.getGenerators().addGenerator(
+                                    au.com.dius.pact.core.model.generators.Category.BODY, "$." + field,
+                                    new au.com.dius.pact.core.model.generators.ProviderStateGenerator(
+                                            op.expression(recorded),
+                                            au.com.dius.pact.core.support.expressions.DataType.STRING));
+                        }
+                    });
                     if (type != null) {
                         request.getHeaders().put("Content-Type", List.of(type));
                         OptionalBody body = request.getBody();
@@ -178,6 +189,20 @@ public record CliPact(
             }
         }
         return pact;
+    }
+
+    /** The recorded value of form field {@code name}, a {@code {param}} as recorded; null without one. */
+    private static String formField(eu.wohlben.qits.pact.consumer.GoldenMasters.Operation op, String name) {
+        if (op.body() == null || !op.body().isTextual()) {
+            return null;
+        }
+        for (String pair : op.body().asText().split("&")) {
+            int eq = pair.indexOf('=');
+            if (eq > 0 && pair.substring(0, eq).equals(name)) {
+                return pair.substring(eq + 1);
+            }
+        }
+        return null;
     }
 
     private static boolean isJson(String mediaType) {

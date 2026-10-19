@@ -2173,12 +2173,13 @@
         }
       },
       "description": "qits release-request approve: approveReleaseRequest",
-      "key": "8128ab95",
+      "key": "82cdeea7",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval while its build runs",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -2203,6 +2204,13 @@
               "type": "ProviderState"
             }
           },
+          "header": {
+            "Authorization": {
+              "dataType": "RAW",
+              "expression": "${authorization}",
+              "type": "ProviderState"
+            }
+          },
           "path": {
             "dataType": "RAW",
             "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/approve",
@@ -2210,6 +2218,9 @@
           }
         },
         "headers": {
+          "Authorization": [
+            "Bearer qits_tok_contract-person-cli"
+          ],
           "Content-Type": [
             "application/json"
           ]
@@ -3268,12 +3279,13 @@
         }
       },
       "description": "qits release-request decline: declineReleaseRequest",
-      "key": "b6fa9a5a",
+      "key": "b89fdd6c",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -3298,6 +3310,13 @@
               "type": "ProviderState"
             }
           },
+          "header": {
+            "Authorization": {
+              "dataType": "RAW",
+              "expression": "${authorization}",
+              "type": "ProviderState"
+            }
+          },
           "path": {
             "dataType": "RAW",
             "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/decline",
@@ -3305,6 +3324,9 @@
           }
         },
         "headers": {
+          "Authorization": [
+            "Bearer qits_tok_contract-person-cli"
+          ],
           "Content-Type": [
             "application/json"
           ]
@@ -4929,12 +4951,13 @@
         }
       },
       "description": "qits release-request list: listRepositoryReleaseRequests",
-      "key": "c034f79",
+      "key": "da8928b",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -5281,12 +5304,13 @@
         }
       },
       "description": "qits release-request regenerate: listRepositoryReleaseRequests",
-      "key": "a9ef494b",
+      "key": "ab948c5d",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -5933,12 +5957,13 @@
         }
       },
       "description": "qits release-request withdraw: withdrawReleaseRequest",
-      "key": "476eccfa",
+      "key": "4914100c",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -6480,12 +6505,13 @@
         }
       },
       "description": "qits repositories branches: listRepositoryBranches",
-      "key": "52313223",
+      "key": "53d67535",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -6606,12 +6632,13 @@
         }
       },
       "description": "qits repositories commit-changes: listCommitChanges",
-      "key": "4acce68",
+      "key": "652117a",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -6920,12 +6947,13 @@
         }
       },
       "description": "qits repositories commit-diff: getCommitFileDiff",
-      "key": "8ad750f8",
+      "key": "8c7c940a",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -7444,12 +7472,13 @@
         }
       },
       "description": "qits repositories commit-subjects: measureCommitSubjects",
-      "key": "29626a5c",
+      "key": "2b07ad6e",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -7629,12 +7658,13 @@
         }
       },
       "description": "qits repositories commits: listBranchCommits",
-      "key": "5aa6bcc7",
+      "key": "5c4bffd9",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -9426,12 +9456,13 @@
         }
       },
       "description": "qits tui: listRepositoryReleaseRequests",
-      "key": "4ff9b78e",
+      "key": "519efaa0",
       "pending": false,
       "providerStates": [
         {
           "name": "a release request awaiting approval",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
             "projectId": "00000000-0000-4000-8000-000000000001",
             "repositoryId": "00000000-0000-4000-8000-000000000002",
@@ -10014,7 +10045,7 @@
         "body": {
           "content": {
             "comment": {
-              "author": "dana.weber",
+              "author": "dev",
               "id": "00000000-0000-4000-8000-000000000001",
               "updatedAt": "2026-01-01T00:00:00Z"
             }
@@ -11674,6 +11705,195 @@
               ]
             },
             "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listProjectWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work details: listProjectWork",
+      "key": "7d2d3892",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an item that other items name as their supersededBy",
+          "params": {
+            "entityId": "contract-00000001-1",
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/work",
+            "type": "ProviderState"
+          },
+          "query": {
+            "supersededBy": {
+              "dataType": "RAW",
+              "expression": "${entityId}",
+              "type": "ProviderState"
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/work",
+        "query": {
+          "supersededBy": [
+            "contract-00000001-1"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entities": [
+              {
+                "archetype": "TICKET",
+                "blocked": false,
+                "id": "00000000-0000-4000-8000-000000000002",
+                "outcome": "SUPERSEDED",
+                "qualifiedId": "contract-00000001-2",
+                "status": "DROPPED",
+                "supersededBy": "00000000-0000-4000-8000-000000000003",
+                "title": "Deploys fail on a refused connection",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              },
+              {
+                "archetype": "TICKET",
+                "blocked": false,
+                "id": "00000000-0000-4000-8000-000000000002",
+                "outcome": "SUPERSEDED",
+                "qualifiedId": "contract-00000001-2",
+                "status": "DROPPED",
+                "supersededBy": "00000000-0000-4000-8000-000000000003",
+                "title": "Deploys fail on a refused connection",
+                "updatedAt": "2026-01-01T00:00:00Z"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.entities[*].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].blocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[*].outcome": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].supersededBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entities[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].updatedAt": {
               "combine": "AND",
               "matchers": [
                 {

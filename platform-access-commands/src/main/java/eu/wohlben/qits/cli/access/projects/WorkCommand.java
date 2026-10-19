@@ -275,8 +275,11 @@ public class WorkCommand implements Runnable {
         /**
          * The items naming this one as their supersededBy, from its project's list filtered by
          * {@code ?supersededBy=} and filtered again here, because a service older than qits-248
-         * ignores the parameter and answers the whole project. A secondary read: when it is refused,
-         * stderr says so and the rest of the item is still printed; null then.
+         * ignores the parameter and answers the whole project. The filter names the item by its
+         * qualified id where it has one, as every other door the CLI calls does (epic qits-965), and
+         * by its id otherwise: the service takes either, and the qualified id is the form its
+         * recording pins. A secondary read: when it is refused, stderr says so and the rest of the
+         * item is still printed; null then.
          */
         private static List<JsonNode> closes(CliContext context, ProjectsApi api, JsonNode entity)
                 throws CliFailure, InterruptedException {
@@ -285,9 +288,10 @@ public class WorkCommand implements Runnable {
             if (project.isEmpty() || id.isEmpty()) {
                 return null;
             }
+            String qualified = text(entity, "qualifiedId");
             try {
-                return WorkEntities.superseding(
-                        WorkEntities.list(api.projectWork(project, null, null, null, null, id)), entity);
+                return WorkEntities.superseding(WorkEntities.list(api.projectWork(project, null, null, null, null,
+                        qualified.isEmpty() ? id : qualified)), entity);
             } catch (CliFailure refused) {
                 if (refused.exitCode() == CliFailure.USAGE) {
                     throw refused;

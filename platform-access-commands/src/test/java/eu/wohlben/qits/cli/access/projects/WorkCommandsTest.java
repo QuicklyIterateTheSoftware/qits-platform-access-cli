@@ -824,7 +824,7 @@ class WorkCommandsTest {
         Result r = run("work", "--entity", "qits-548", "details");
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(platform.requests("GET", PROJECT_LIST).getFirst().query()).isEqualTo("supersededBy=" + TICKET);
+        assertThat(platform.requests("GET", PROJECT_LIST).getFirst().query()).isEqualTo("supersededBy=qits-548");
         String closes = r.out().substring(r.out().indexOf("Closes (2)"));
         assertThat(closes).contains("qits-710").contains("DROPPED (DUPLICATE)").contains("qits-712")
                 .doesNotContain("qits-711").doesNotContain("qits-548");
