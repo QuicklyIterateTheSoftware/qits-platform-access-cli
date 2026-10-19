@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import eu.wohlben.qits.cli.access.contracts.CliPact;
 import eu.wohlben.qits.cli.access.contracts.CliRow;
 import eu.wohlben.qits.cli.access.contracts.Reached;
+import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.pact.consumer.GoldenMasters.Operation;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * <b>What the commands ask qits-projects, and why</b> (epic qits-965, ticket qits-1149): the one
@@ -37,7 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * first one's shape, so a lookup by name would find the one name twice.
  * <p>
  * <b>Each state is one the provider records</b>, picked for the call. A command that reads an item
- * before it writes it appears once per call.
+ * before it writes it appears once per call. {@code qits work details}' read of the items an item
+ * closes ({@code ?supersededBy=}) binds only what its recording holds: none of those items is blocked.
  * {@code openApi}, the served OpenAPI document the comment and transition payload commands read
  * their schema from, is no operation of the provider: it is named as an exclusion.
  */
@@ -65,6 +68,7 @@ public final class ProjectsContract {
     static final String PENDING_REQUESTS = "a project with pending release requests";
     static final String HELD_BY_A_FAILED_AUTOMATION = "a release request held by a failed automation";
     static final String TICKET_WITH_A_DESIGN = "a ticket with a design";
+    static final String REFINED_TICKET = "a refined ticket";
     static final String A_PROJECT = "a project exists";
     static final String ONE_REPOSITORY = "a project with one repository";
     static final String REPOSITORIES_IN_COMPONENTS = "a project with repositories in components";
@@ -74,7 +78,10 @@ public final class ProjectsContract {
     static final String OPEN_TO_ANOTHER_BRANCH = "a release request open to another branch";
     static final String PROJECT_REQUESTS_OF_EVERY_STATE = "a project with release requests in every state";
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
-    /** The project list filtered by {@code ?supersededBy=}, the item named by its qualified id. */
+    /**
+     * The project list filtered by {@code ?supersededBy=}, the item named by its qualified id; its
+     * items are not blocked, so no blockSource.
+     */
     static final String SUPERSEDED_ITEMS = "an item that other items name as their supersededBy";
 
     private static final CliPact BASE = CliPact.of("qits-projects-service", "qits-projects");
@@ -254,9 +261,10 @@ public final class ProjectsContract {
 
     /**
      * {@code qits work details}: the items naming this one as their supersededBy, from its project's
-     * list filtered by the item's qualified id (the state's {@code entityId}). The CLI filters the
-     * answer again by the item's id or qualified id; the state names the item by its qualified id
-     * alone, and the answer names it by its id, so the item's id is the one the answer's rows carry.
+     * list filtered by the item's qualified id (the state's {@code entityId}), as the command sends it.
+     * The command filters the answer again by the item's id or qualified id (for services older than
+     * qits-248); the state names the item by its qualified id alone, and the answer names it by its
+     * UUID, so the item's id is the one the answer's rows carry.
      */
     private static final Call CLOSES = (api, params, recorded) -> {
         String id = BASE.masters().json(recorded.state(), recorded.operationId()).path("entities").path(0)
@@ -265,7 +273,10 @@ public final class ProjectsContract {
                 .put("qualifiedId", params.get("entityId")).put("projectId", params.get("projectId"));
         List<JsonNode> closes = WorkEntities.superseding(WorkEntities.list(api.projectWork(params.get("projectId"),
                 null, null, null, null, params.get("entityId"))), entity);
-        assertThat(closes).isNotEmpty().allSatisfy(e -> assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank());
+        assertThat(closes).isNotEmpty().allSatisfy(e -> {
+            assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank();
+            assertThat(ProjectsApi.text(e, "supersededBy")).isNotBlank();
+        });
     };
 
     /** The item read by its qualified id: what details prints, update and status take its archetype from. */
@@ -572,6 +583,45 @@ public final class ProjectsContract {
         design(d);
         assertThat(ProjectsApi.text(d, "title")).isEqualTo(body(recorded).path("title").asText());
     };
+
+    /** A refinement room as `refinement open` and `show` print it: its id, its item, its label and its status. */
+    private static void room(JsonNode room) {
+        assertThat(ProjectsApi.text(room, "id")).isNotBlank();
+        assertThat(ProjectsApi.text(room, "entityId")).isNotBlank();
+        assertThat(ProjectsApi.text(room, "label")).isNotBlank();
+        assertThat(ProjectsApi.text(room, "runtimeStatus")).isNotBlank();
+    }
+
+    /** `refinement open` opens the room first, and brings up the room whose id that answers. */
+    private static final Call OPEN_ROOM = (api, params, recorded) -> {
+        JsonNode room = api.openWorkRefinement(params.get("qualifiedId")).path("refinement");
+        assertThat(ProjectsApi.text(room, "id")).isNotBlank();
+    };
+
+    /** An item that cannot be refined now: the client fails with the status, and nothing is brought up. */
+    private static final Call OPEN_REFUSED = (api, params, recorded) ->
+            assertThatThrownBy(() -> api.openWorkRefinement(params.get("qualifiedId")))
+                    .isInstanceOfSatisfying(CliFailure.class, f -> {
+                        assertThat(f.status()).isEqualTo(409);
+                        assertThat(f.getMessage()).contains(ProjectsApi.text(
+                                BASE.masters().json(recorded.state(), recorded.operationId()), "message"));
+                    });
+
+    private static final Call ENSURE_ROOM = (api, params, recorded) -> {
+        JsonNode answer = api.ensureRefinement(params.get("refinementId"));
+        room(answer.path("refinement"));
+        assertThat(ProjectsApi.text(answer, "technicalProcessId")).isNotBlank();
+    };
+
+    private static final Call SHOW_ROOM = (api, params, recorded) ->
+            room(api.workRefinement(params.get("qualifiedId")).path("refinement"));
+
+    /** `refinement discard` finds the room as `design` does, with its own sentence for an item with none. */
+    private static final Call DISCARD_FINDS_THE_ROOM = (api, params, recorded) ->
+            assertThat(WorkDesignCommand.refinement(api, params.get("qualifiedId"), "")).isNotBlank();
+
+    /** The table prints a confirmation and reads nothing of the answer: the status is all, so the pact binds no body. */
+    private static final Call DISCARD_ROOM = (api, params, recorded) -> api.discardRefinement(params.get("refinementId"));
 
     /** {@code qits repositories branches}: the table reads each branch's name, parent, ahead, behind and cleanup. */
     private static final Call BRANCHES = (api, params, recorded) -> {
@@ -899,6 +949,24 @@ public final class ProjectsContract {
                 DESIGN_ADD).consumes(design));
         rows.add(row("qits work design put", TICKET_WITH_A_DESIGN, "updateRefinementDesign", "updateRefinementDesign",
                 DESIGN_UPDATE).consumes(design));
+
+        List<String> room = List.of("refinement.id", "refinement.entityId", "refinement.label",
+                "refinement.runtimeStatus");
+        rows.add(row("qits work refinement open", TICKET_WITH_A_DESIGN, "startWorkRefinement", "openWorkRefinement",
+                OPEN_ROOM).consumes("refinement.id"));
+        rows.add(row("qits work refinement open", REFINED_TICKET, "startWorkRefinement", "openWorkRefinement",
+                OPEN_REFUSED).consumes("message"));
+        rows.add(row("qits work refinement open", TICKET_WITH_A_DESIGN, "ensureRefinementContainer",
+                "ensureRefinement", ENSURE_ROOM).consumes(Stream.concat(room.stream(),
+                Stream.of("technicalProcessId")).toList()));
+        rows.add(row("qits work refinement show", REPORTED_TICKET, "getWorkRefinement", "workRefinement",
+                NO_REFINEMENT).consumes("refinement"));
+        rows.add(row("qits work refinement show", TICKET_WITH_A_DESIGN, "getWorkRefinement", "workRefinement",
+                SHOW_ROOM).consumes(room));
+        rows.add(row("qits work refinement discard", TICKET_WITH_A_DESIGN, "getWorkRefinement", "workRefinement",
+                DISCARD_FINDS_THE_ROOM).consumes("refinement.id"));
+        rows.add(row("qits work refinement discard", TICKET_WITH_A_DESIGN, "discardRefinement", "discardRefinement",
+                DISCARD_ROOM));
 
         // a work item named by its qualified id outside qits work
         WORK_ITEM_SCOPED.forEach(c -> rows.add(row(c, TICKET_WITH_A_COMMENT, "getWork", "work", WORK_ID)

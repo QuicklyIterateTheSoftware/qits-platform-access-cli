@@ -41,14 +41,15 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 WorkCommand.UpdateCommand.class, WorkCommand.TransitionCommand.class, WorkCommand.StatusCommand.class,
                 WorkCommand.BlockCommand.class, WorkCommand.UnblockCommand.class, WorkCommand.DeleteCommand.class,
                 WorkCommand.ProgressCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
-                WorkMembersCommand.class, WorkDesignCommand.class},
+                WorkMembersCommand.class, WorkRefinementCommand.class, WorkDesignCommand.class},
         description = {"Work items of every archetype - epics, tickets, features, tasks and campaigns - and their "
                         + "comment threads. list shows a project's items, details shows one with its comments and "
                         + "children, create files one, update edits its fields, transition reshapes it into "
                         + "another archetype, status moves it along its lifecycle, block and unblock flag that its "
                         + "phase cannot go on, delete removes it, and comment writes to its thread.",
                 "An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, "
-                        + "progress), and the HTML designs of a refinement (design) are here too.",
+                        + "progress), its refinement room itself (refinement: open, show, discard) and the HTML "
+                        + "designs of a refinement (design) are here too.",
                 "A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or "
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
                         + "served by the service for that archetype.",

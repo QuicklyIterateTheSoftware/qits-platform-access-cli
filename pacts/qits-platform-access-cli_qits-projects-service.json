@@ -16367,6 +16367,591 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "discardRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement discard",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement discard: discardRefinement",
+      "key": "291c6d46",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/refinements/${refinementId}/discard",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/refinements/1/discard"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement discard",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement discard: getWorkRefinement",
+      "key": "739d3189",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "id": 1
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "ensureRefinementContainer"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement open",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement open: ensureRefinementContainer",
+      "key": "96caf29d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/refinements/${refinementId}/ensure-container",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/refinements/1/ensure-container"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "entityId": "00000000-0000-4000-8000-000000000003",
+              "id": 1,
+              "label": "refining-export-invoices-as-csv",
+              "runtimeStatus": "PROVISIONING"
+            },
+            "technicalProcessId": "00000000-0000-4000-8000-000000000005"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refinement.label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.runtimeStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.technicalProcessId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "startWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement open",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement open: startWorkRefinement",
+      "key": "5d0967ba",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a refined ticket",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "message": "Ticket 00000000-0000-4000-8000-000000000002 is REFINED — only a REPORTED ticket can be refined. Move it back to REPORTED to reopen its scope."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 409
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "startWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement open",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement open: startWorkRefinement",
+      "key": "28648bbf",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "id": 1
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement show",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement show: getWorkRefinement",
+      "key": "9d03b7f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a reported ticket",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": null
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWorkRefinement"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits work refinement show",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work refinement show: getWorkRefinement",
+      "key": "4ab37eaa",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a design",
+          "params": {
+            "designId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "refinementId": "1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/refinement",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/refinement"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "refinement": {
+              "entityId": "00000000-0000-4000-8000-000000000003",
+              "id": 1,
+              "label": "refining-export-invoices-as-csv",
+              "runtimeStatus": "STOPPED"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.refinement.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.refinement.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.refinement.label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.refinement.runtimeStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "getWork"
           },
           "qits-trigger": {

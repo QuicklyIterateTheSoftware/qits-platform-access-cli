@@ -56,10 +56,18 @@ public class WorkDesignCommand implements Runnable {
 
     /** The id of the item's refinement; a failure when it has none open. */
     static String refinement(ProjectsApi api, String entity) throws CliFailure, InterruptedException {
+        return refinement(api, entity, ", so it has no designs");
+    }
+
+    /**
+     * The id of the item's refinement; a failure when it has none open, saying {@code No refinement is
+     * open for <entity>} and then {@code tail} (empty, or what that means to the caller) and a full stop.
+     */
+    static String refinement(ProjectsApi api, String entity, String tail) throws CliFailure, InterruptedException {
         JsonNode room = api.workRefinement(entity).path("refinement");
         String id = room.isObject() ? text(room, "id") : "";
         if (id.isEmpty()) {
-            throw new CliFailure("No refinement is open for " + SafeText.line(entity) + ", so it has no designs.",
+            throw new CliFailure("No refinement is open for " + SafeText.line(entity) + tail + ".",
                     CliFailure.FAILED);
         }
         return id;
