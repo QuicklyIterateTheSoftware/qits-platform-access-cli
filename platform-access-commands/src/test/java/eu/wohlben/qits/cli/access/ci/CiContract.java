@@ -6,6 +6,7 @@ import eu.wohlben.qits.cli.access.contracts.CliRow;
 import eu.wohlben.qits.cli.access.contracts.Reached;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
+import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.pact.consumer.GoldenMasters.Operation;
 
 import java.io.ByteArrayOutputStream;
@@ -26,10 +27,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * pacts/qits-platform-access-cli_qits-ci-service.json}.
  * <p>
  * Each row binds what the table form reads ({@code RunView}, the report summaries); {@code -o json}
- * prints the answer as it came. The calls qits-ci has not recorded are pending on their state: the
- * run list without a count (the lookup of a run by the start of its id, and a filtered {@code
- * runs}), the tui's {@code limit=30}, a retry of an unfinished run (409) and a run that does not
- * exist (404).
+ * prints the answer as it came. Besides the default {@code runs}, qits-ci records the run list
+ * without a count (the lookup of a run by the start of its id, and a filtered {@code runs}), the
+ * tui's {@code limit=30}, a retry of an unfinished run (409) and a run that does not exist (404).
+ * {@code report submit}'s PUT carries the run's own {@code ci-run} token ({@link #asTheRun}).
  */
 public final class CiContract {
 
@@ -38,11 +39,10 @@ public final class CiContract {
     static final String RUNNING = "a running run";
     static final String WITH_REPORTS = "a run with reports: failing tests and coverage";
     static final String GATE_REPORTS = "a release run whose gate run has reports";
-    /** Not recorded at the pin; recorded by qits-ci's rr-221. */
     static final String NO_RUN = "no run with the given id";
-    /** Not recorded: listRuns without a limit. */
+    /** listRuns without a limit. */
     static final String RUNS_BY_ID_START = "a repository with runs to find by the start of an id";
-    /** Not recorded: listRuns with limit=30. */
+    /** listRuns with limit=30. */
     static final String RECENT_RUNS = "a repository with its 30 most recent runs";
 
     private static final CliPact BASE = CliPact.of("qits-ci-service", "qits-ci");
@@ -66,6 +66,23 @@ public final class CiContract {
     private static CliRow.Call api(Call call) {
         return (url, recorded) -> call.run(new CiApi(new PlatformClient(Reached.CREDENTIAL), url), recorded.params(),
                 recorded);
+    }
+
+    /**
+     * The call as {@code qits ci report submit} makes it from a CI step: with the run's own {@code
+     * ci-run} token, which qits-ci's door checks. The state hands that token out as its {@code
+     * authorization} param, so the row sends that header and the call's credential answers the
+     * state's frozen token, which the verifier replaces with the one it seeds.
+     */
+    private static CliRow.Call asTheRun(Call call) {
+        return (url, recorded) -> {
+            String bearer = recorded.params().get("authorization").substring("Bearer ".length());
+            Credential credential = () -> {
+                Reached.CREDENTIAL.bearer();
+                return bearer;
+            };
+            call.run(new CiApi(new PlatformClient(credential), url), recorded.params(), recorded);
+        };
     }
 
     private static String printed(java.util.function.Consumer<PrintStream> print) {
@@ -198,7 +215,8 @@ public final class CiContract {
                             "baseline.releaseRequestQualifiedId", "baseline.tagSha"),
             row("qits ci report submit", WITH_REPORTS, "listRunBaselineReports", "baselineReports", BASELINE_REPORTS)
                     .consumes("[].kindVersion", "[].stepIndex", "[].payload"),
-            row("qits ci report submit", RUNNING, "putRunStepReport", "putReport", PUT_REPORT),
+            CliRow.of("qits ci report submit", RUNNING, "putRunStepReport", "CiApi#putReport", asTheRun(PUT_REPORT))
+                    .header("Authorization", "{authorization}"),
             row("qits artifacts publish changelog", GATE_REPORTS, "listRunGateReports", "gateReports", GATE)
                     .consumes("reports[].stepIndex", "reports[].kind", "reports[].highlights[].severity",
                             "reports[].highlights[].text"));
