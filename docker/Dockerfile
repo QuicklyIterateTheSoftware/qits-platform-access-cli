@@ -26,9 +26,9 @@
 # them identical: the platform builder then shares their cache with qits-ci-daemon's builds. A
 # toolchain bump there is a bump here.
 #
-# THE TARBALL URLS ARE THE RECIPES'. The defaults name registry.dev.localhost, an edge vhost that
-# the platform builder cannot reach for an ADD, so both recipes pass the in-network Maven root, as
-# qits-ci-daemon's do. The bootstrap seeds both tarballs into the store on every boot.
+# THE TARBALL URLS ARE THE RECIPES'. The defaults name registry.qits.$QITS_DOMAIN, the public edge
+# host; the recipes keep only the path after /artifacts/maven/maven and pass their own Maven root,
+# as qits-ci-daemon's do. The bootstrap seeds both tarballs into the store on every boot.
 #
 # ON A REMOTE RUNNER (the EDGE plane, epic qits-441) THAT ROOT IS THE PUBLIC ONE, and the edge
 # answers an anonymous read of it with 401. The ADD still works because BuildKit's HTTP source
@@ -50,10 +50,13 @@
 #
 # The host build (`./mvnw package -Dnative`) stays glibc-linked: it needs no musl toolchain, because
 # the static flags are added here only.
-ARG MUSL_URL=http://registry.dev.localhost:8080/artifacts/maven/maven/eu/wohlben/qits/toolchain/x86_64-linux-musl-native/11.2.1/x86_64-linux-musl-native-11.2.1.tgz
-ARG ZLIB_URL=http://registry.dev.localhost:8080/artifacts/maven/maven/eu/wohlben/qits/toolchain/zlib/1.3.1/zlib-1.3.1.tar.gz
-# The platform builder maps mirror.dev.localhost:8080 to qits-platform-mirror (qits-containers).
-ARG TOOLCHAIN_BASE=mirror.dev.localhost:8080/quay/quarkus/ubi10-quarkus-graalvmce-builder-image:jdk-25
+# The platform's public domain; the release recipes pass `--opt build-arg:QITS_DOMAIN`. Global, so
+# the FROM lines and the ARG defaults below can read it.
+ARG QITS_DOMAIN=wohlben.eu
+ARG MUSL_URL=https://registry.qits.${QITS_DOMAIN}/artifacts/maven/maven/eu/wohlben/qits/toolchain/x86_64-linux-musl-native/11.2.1/x86_64-linux-musl-native-11.2.1.tgz
+ARG ZLIB_URL=https://registry.qits.${QITS_DOMAIN}/artifacts/maven/maven/eu/wohlben/qits/toolchain/zlib/1.3.1/zlib-1.3.1.tar.gz
+# mirror.qits.$QITS_DOMAIN is qits-mirror's pull-through cache, on the edge.
+ARG TOOLCHAIN_BASE=mirror.qits.${QITS_DOMAIN}/quay/quarkus/ubi10-quarkus-graalvmce-builder-image:jdk-25
 # A stage name by default. An image name instead skips the two toolchain stages.
 ARG BUILDER_IMAGE=toolchain
 
@@ -237,11 +240,11 @@ COPY --from=service-build /qits-build/platform-access-mcp-service/target/sbom.js
 
 # THE IMAGE: qits/qits-platform-access-mcp-service, deployed as the application of the same name
 # (`.config/qits/deployments.yml`). The runtime base and its shape are qits-ci-service's final
-# stage: `mirror.dev.localhost:8080/redhat/…` is qits-platform-mirror pointed at
+# stage: `mirror.qits.${QITS_DOMAIN}/redhat/…` is qits-mirror's pull-through cache pointed at
 # registry.access.redhat.com, /work, user 1001, nothing installed. The runner keeps its
 # `quarkus.package.output-name`, so `ps` shows what the edge routes to. It comes from `service-it`,
 # not `service-build`: the same bytes, and the reason the tests run at all (see that stage).
-FROM mirror.dev.localhost:8080/redhat/ubi9/ubi-minimal:9.6 AS service
+FROM mirror.qits.${QITS_DOMAIN}/redhat/ubi9/ubi-minimal:9.6 AS service
 WORKDIR /work
 COPY --from=service-it --chown=1001:root \
      /qits-build/platform-access-mcp-service/target/qits-platform-access-mcp-service \
