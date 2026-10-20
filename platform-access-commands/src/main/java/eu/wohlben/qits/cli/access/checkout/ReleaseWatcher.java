@@ -23,7 +23,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Follows one repository's {@code SCMRelease} events and hands each one to the checkout.
+ * Follows one repository's finalized release requests and hands each one to the checkout.
+ * <p>
+ * <b>Finalized, not released.</b> The event is {@code ReleaseRequestStateChanged} with the state
+ * {@code FINALIZED}, never {@code SCMRelease}: the tag is cut before the release request is done,
+ * and a checkout that moved on the tag ran ahead of the fold that ships. The stream carries every
+ * release request's every state change, estate-wide, so a frame that is not this repository's
+ * finalization is dropped without a word.
  * <p>
  * <b>A sibling of {@code EventStream}, not a reuse of it.</b> The reconnect mechanics are the same
  * ones — 1, 2, 4 … up to 30 seconds, reset on connect; a stream that is silent for
@@ -42,8 +48,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class ReleaseWatcher {
 
-    /** What qits-events calls a release of a repository. */
-    public static final String EVENT = "SCMRelease";
+    /** What qits-events calls a release request moving from one state to the next. */
+    public static final String EVENT = "ReleaseRequestStateChanged";
+
+    /** The state a release request is in once it is done, and the only one this follows. */
+    public static final String FINALIZED = "FINALIZED";
 
     /** Three keepalives missed. */
     public static final Duration IDLE_LIMIT = Duration.ofSeconds(60);
@@ -243,7 +252,7 @@ public final class ReleaseWatcher {
         }
         Release release = match(payload(events.get(0)));
         if (release == null) {
-            log("the newest " + EVENT + " does not name " + SafeText.line(repoName)
+            log("the newest " + FINALIZED + " release does not name " + SafeText.line(repoName)
                     + "; the checkout was not touched");
         }
         return release;
@@ -266,9 +275,18 @@ public final class ReleaseWatcher {
      * Holds the checkout at this release, unless it is the one last held: a reconcile after a
      * reconnect and the frame that follows it name the same release, and Git is not run twice for
      * it. A release that was refused is not remembered, so the next frame tries it again.
+     * <p>
+     * Nor is it held when it is older than the one last held. Release requests finalize in the order
+     * they finish, not the order they were cut, and a late one must not move the checkout back. A
+     * version that is not calver cannot be ordered, and is held as before.
      */
     private void apply(Release release) throws CliFailure, InterruptedException {
         if (release.version().equals(lastVersion)) {
+            return;
+        }
+        if (older(release.version(), lastVersion)) {
+            log(SafeText.line(release.version()) + " is older than " + SafeText.line(lastVersion)
+                    + "; the checkout was not touched");
             return;
         }
         if (hold.hold(release)) {
@@ -279,17 +297,53 @@ public final class ReleaseWatcher {
     }
 
     /**
-     * The release an event names, or null when it names another repository. The payload says
-     * {@code repositoryName}; some producers say {@code repository} instead, and {@code commitSha}
-     * may be missing altogether, which the tag makes up for.
+     * Whether calver {@code version} ({@code YYYY.MMDD.HHMMSS}) is strictly older than {@code than},
+     * segment by segment as numbers: {@code 2026.1020.72749} is older than {@code 2026.1020.103656},
+     * which a comparison as text gets backwards. False when either is not calver.
+     */
+    static boolean older(String version, String than) {
+        long[] a = calver(version);
+        long[] b = calver(than);
+        if (a == null || b == null) {
+            return false;
+        }
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] != b[i]) {
+                return a[i] < b[i];
+            }
+        }
+        return false;
+    }
+
+    private static long[] calver(String version) {
+        if (version == null || !version.matches("\\d{1,9}\\.\\d{1,9}\\.\\d{1,9}")) {
+            return null;
+        }
+        String[] parts = version.split("\\.");
+        return new long[] {Long.parseLong(parts[0]), Long.parseLong(parts[1]), Long.parseLong(parts[2])};
+    }
+
+    /**
+     * The release a finalized release request names, or null when the request is in any other state
+     * or of another repository. The payload says {@code repoName}; {@code repositoryName} and
+     * {@code repository} are read when it does not. Its {@code mergedSha} is not the commit: it is
+     * the fold's tip, and a release that adds a version-bump commit tags another one, so the tag
+     * says which commit it is.
      */
     Release match(JsonNode payload) {
         if (payload == null || !payload.isObject()) {
             return null;
         }
-        JsonNode named = payload.get("repositoryName");
-        String name = named != null && named.isTextual() ? named.asText()
-                : named == null || named.isNull() ? text(payload, "repository") : null;
+        if (!FINALIZED.equals(text(payload, "state"))) {
+            return null;
+        }
+        String name = text(payload, "repoName");
+        if (name == null) {
+            name = text(payload, "repositoryName");
+        }
+        if (name == null) {
+            name = text(payload, "repository");
+        }
         if (!repoName.equals(name)) {
             return null;
         }
@@ -300,7 +354,7 @@ public final class ReleaseWatcher {
         if (version == null || version.isBlank()) {
             return null;
         }
-        return new Release(version.strip(), text(payload, "commitSha"));
+        return new Release(version.strip(), null);
     }
 
     /** An event's payload, which travels as a JSON string and has to be read a second time. */

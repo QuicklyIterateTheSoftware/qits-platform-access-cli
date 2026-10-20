@@ -1221,11 +1221,18 @@ component pushed since.
     qits checkout-daemon --path /workspace --once
     qits checkout-daemon --path /srv/qits --repository qits-qits --no-submodules
 
-At the start, and again after every connect, it reads the newest `SCMRelease` of the repository
-from the events service and brings the checkout to it; in between it waits for `SCMRelease` on the
-live stream. The stream has no replay, so the reconcile after a connect is what closes the gap a
-reconnect leaves — and the version last acted on is remembered, so the frame that follows a
-reconcile does not run Git twice.
+**It moves when a release request is finalized, not when the tag is cut.** At the start, and again
+after every connect, it reads the newest `ReleaseRequestStateChanged` of the repository whose
+`state` is `FINALIZED` from the events service (`attr=reponame=<repository>&attr=state=finalized`)
+and brings the checkout to that release's `version`; in between it waits for
+`ReleaseRequestStateChanged` on the live stream. That stream carries every release request's every
+state change, estate-wide, and anything but this repository's finalization is ignored without a
+note. The commit is always the tag's (`refs/tags/<version>^{commit}`), never the event's
+`mergedSha`: that is the fold's tip, which is not the tagged commit when a release adds a
+version-bump commit. The stream has no replay, so the reconcile after a connect is what closes the
+gap a reconnect leaves — and the version last acted on is remembered, so the frame that follows a
+reconcile does not run Git twice, and a finalization older than it (calver compared segment by
+segment as numbers) never moves the checkout back.
 
 Which repository it follows comes from the checkout's `origin`. An origin of the form
 `https://<git host>/git/<project id>/<repository>` names it, and the project id narrows the events

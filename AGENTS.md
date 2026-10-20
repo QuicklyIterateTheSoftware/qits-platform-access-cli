@@ -201,8 +201,8 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
     events/    qits events: the SSE parser and the reconnecting stream; `query` under it pages the
                events log over a window (EventsQueryCommand)
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-
-               watch loop over SCMRelease (ReleaseWatcher), a sibling of events/EventStream that
-               shares its SSE parser
+               watch loop over ReleaseRequestStateChanged to FINALIZED (ReleaseWatcher; never
+               SCMRelease, qits-1470), a sibling of events/EventStream that shares its SSE parser
     observe/   qits observe: the --filter grammar, the reconnecting WebSocket stream, the line form,
                and SafeText (terminal control characters out of every streamed value); `query`
                under it asks the records search with the same filters (ObserveQueryCommand)

@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.access.checkout;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.FakeIdp;
 import eu.wohlben.qits.cli.access.FakePlatform;
 import eu.wohlben.qits.cli.access.FakeTime;
@@ -143,20 +144,32 @@ class CheckoutDaemonTest {
         return sha;
     }
 
-    /** What the query API answers: the newest SCMRelease, its payload a JSON string. */
+    /** What the query API answers: the newest finalized release request, its payload a JSON string. */
     private void announced(String payload) {
-        String envelope = JSON.createObjectNode().put("id", "e-1").put("name", "SCMRelease")
+        String envelope = JSON.createObjectNode().put("id", "e-1").put("name", ReleaseWatcher.EVENT)
                 .put("occurredAt", "2026-09-18T10:00:01Z").put("payload", payload)
                 .putNull("description").put("environment", "dev").toString();
         platform.answer("GET", "/events/api/events", "{\"events\":[" + envelope + "],\"nextCursor\":null}");
     }
 
-    private String payload(String repositoryField, String name, String sha) {
-        var node = JSON.createObjectNode().put(repositoryField, name).put("projectId", PROJECT).put("version", VERSION);
-        if (sha != null) {
-            node.put("commitSha", sha);
-        }
-        return node.toString();
+    /** A ReleaseRequestStateChanged to FINALIZED of {@code name}'s release {@link #VERSION}. */
+    private String payload(String repositoryField, String name) {
+        return stateChanged(repositoryField, name, "FINALIZED", VERSION);
+    }
+
+    /** A ReleaseRequestStateChanged payload as qits-projects writes it: nulls are absent keys. */
+    private String stateChanged(String repositoryField, String name, String state, String version) {
+        return JSON.createObjectNode().put("eventId", "ev-1").put("releaseRequestId", "rr-1")
+                .put("releaseRequestQualifiedId", "qits-rr-1").put("projectId", PROJECT).put("repoId", "repo-1")
+                .put(repositoryField, name).put("backingBranch", "release/rr-1").put("state", state)
+                .put("previousState", "RELEASED").put("changedAt", "2026-09-18T10:00:01Z").put("version", version)
+                .toString();
+    }
+
+    /** One frame of the live stream: a ReleaseRequestStateChanged envelope around {@code payload}. */
+    private static String frame(String id, String payload) {
+        return JSON.createObjectNode().put("id", id).put("name", ReleaseWatcher.EVENT).put("payload", payload)
+                .toString();
     }
 
     private CliContext context() {
@@ -190,7 +203,7 @@ class CheckoutDaemonTest {
     @Test
     void itHoldsTheCheckoutDetachedAtTheReleaseTheEventNames() throws Exception {
         String released = release(VERSION);
-        announced(payload("repositoryName", REPO, released));
+        announced(payload("repoName", REPO));
 
         assertThat(run("--once")).isZero();
 
@@ -200,34 +213,88 @@ class CheckoutDaemonTest {
         assertThat(err().lines()).allMatch(l -> l.matches("^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d.*"
                 + " qits checkout-daemon: .*"));
         String query = platform.requests("GET", "/events/api/events").get(0).query();
-        assertThat(query).contains("name=SCMRelease").contains("attr=repositoryname=" + REPO)
-                .contains("attr=projectid=" + PROJECT).contains("order=desc").contains("limit=1");
+        assertThat(query).contains("name=" + ReleaseWatcher.EVENT).contains("attr=reponame=" + REPO)
+                .contains("attr=state=finalized").contains("attr=projectid=" + PROJECT)
+                .contains("order=desc").contains("limit=1").doesNotContain("SCMRelease");
     }
 
     @Test
-    void itTakesTheRepositoryFromRepositoryWhenThePayloadHasNoRepositoryName() throws Exception {
+    void itTakesTheRepositoryFromRepositoryNameWhenThePayloadHasNoRepoName() throws Exception {
         String released = release(VERSION);
-        announced(payload("repository", REPO, released));
+        announced(payload("repositoryName", REPO));
 
         assertThat(run("--once")).isZero();
 
         assertThat(head(work)).isEqualTo(released);
     }
 
+    /**
+     * A finalized release request names no commit, and its {@code mergedSha} is the fold's tip: for a
+     * repository whose release adds a version-bump commit that is not the tagged one. The tag says.
+     */
     @Test
-    void aPayloadWithNoCommitShaIsFollowedByItsTag() throws Exception {
+    void aFinalizedReleaseIsFollowedByItsTagAndNeverByItsMergedSha() throws Exception {
+        String foldTip = commit(upstream, "fold.txt", "the fold");
         String released = release(VERSION);
-        announced(payload("repositoryName", REPO, null));
+        ObjectNode payload = (ObjectNode) JSON.readTree(payload("repoName", REPO));
+        announced(payload.put("mergedSha", foldTip).toString());
 
         assertThat(run("--once")).isZero();
 
-        assertThat(head(work)).isEqualTo(released);
+        assertThat(head(work)).isEqualTo(released).isNotEqualTo(foldTip);
+    }
+
+    @Test
+    void aReleasedReleaseRequestDoesNotMoveTheCheckout() throws Exception {
+        String before = head(work);
+        release(VERSION);
+        announced(stateChanged("repoName", REPO, "RELEASED", VERSION));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(out()).isEmpty();
+    }
+
+    @Test
+    void anObsoleteReleaseRequestDoesNotMoveTheCheckout() throws Exception {
+        String before = head(work);
+        release(VERSION);
+        announced(stateChanged("repoName", REPO, "OBSOLETE", VERSION));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(out()).isEmpty();
+    }
+
+    @Test
+    void anotherRepositorysFinalizedReleaseDoesNotMoveTheCheckout() throws Exception {
+        String before = head(work);
+        release(VERSION);
+        announced(payload("repoName", "qits-other-service"));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(out()).isEmpty();
+        assertThat(err()).contains("does not name " + REPO);
+    }
+
+    @Test
+    void calverIsOrderedSegmentBySegmentAsNumbers() {
+        assertThat(ReleaseWatcher.older("2026.1020.72749", "2026.1020.103656")).isTrue();
+        assertThat(ReleaseWatcher.older("2026.1020.103656", "2026.1020.72749")).isFalse();
+        assertThat(ReleaseWatcher.older("2026.919.235959", "2026.1020.1")).isTrue();
+        assertThat(ReleaseWatcher.older("2026.1020.1", "2026.1020.1")).isFalse();
+        assertThat(ReleaseWatcher.older("2026.1020.1", null)).isFalse();
+        assertThat(ReleaseWatcher.older("v1-beta", "2026.1020.1")).as("not calver: held as before").isFalse();
     }
 
     @Test
     void aCheckoutWithLocalChangesIsLeftAloneAndOnceExitsOne() throws Exception {
         release(VERSION);
-        announced(payload("repositoryName", REPO, null));
+        announced(payload("repoName", REPO));
         String before = head(work);
         Files.writeString(work.resolve("README.md"), "somebody is working here");
 
@@ -248,7 +315,7 @@ class CheckoutDaemonTest {
     @Test
     void anUntrackedFileOrDirectoryIsNotALocalChangeAndTheCheckoutStillMoves() throws Exception {
         String released = release(VERSION);
-        announced(payload("repositoryName", REPO, released));
+        announced(payload("repoName", REPO));
         Files.writeString(work.resolve("scratch.txt"), "nobody tracked this");
         Path stray = Files.createDirectories(work.resolve("components/qits-artifacts/qits-artifacts-cli"));
         Files.writeString(stray.resolve("pom.xml"), "left behind by a removed submodule");
@@ -266,7 +333,7 @@ class CheckoutDaemonTest {
     @Test
     void aStagedChangeIsStillALocalChange() throws Exception {
         release(VERSION);
-        announced(payload("repositoryName", REPO, null));
+        announced(payload("repoName", REPO));
         String before = head(work);
         Files.writeString(work.resolve("new.txt"), "staged, not committed");
         git(work, "add", "new.txt");
@@ -286,7 +353,7 @@ class CheckoutDaemonTest {
     void aDirtySubmoduleUnderACleanRootStillRefuses() throws Exception {
         Path checkedOut = addSubmodule();
         release(VERSION);
-        announced(payload("repositoryName", REPO, null));
+        announced(payload("repoName", REPO));
         String before = head(work);
         Files.writeString(checkedOut.resolve("lib.txt"), "somebody is working in the submodule");
 
@@ -309,7 +376,7 @@ class CheckoutDaemonTest {
         git(upstream, "rm", "-q", "-f", "components/demo/" + SUB);
         git(upstream, "commit", "-q", "-m", "remove the component");
         String withoutIt = release(VERSION);
-        announced(payloadFor(withoutIt, VERSION));
+        announced(payloadFor(VERSION));
 
         assertThat(run("--once")).isZero();
         assertThat(head(work)).isEqualTo(withoutIt);
@@ -322,7 +389,7 @@ class CheckoutDaemonTest {
         out.reset();
         err.reset();
         String next = release(NEXT_VERSION);
-        announced(payloadFor(next, NEXT_VERSION));
+        announced(payloadFor(NEXT_VERSION));
 
         assertThat(run("--once")).isZero();
 
@@ -347,9 +414,8 @@ class CheckoutDaemonTest {
         return work.resolve("components/demo/" + SUB);
     }
 
-    private String payloadFor(String sha, String version) {
-        return JSON.createObjectNode().put("repositoryName", REPO).put("projectId", PROJECT)
-                .put("version", version).put("commitSha", sha).toString();
+    private String payloadFor(String version) {
+        return stateChanged("repoName", REPO, "FINALIZED", version);
     }
 
     /**
@@ -389,7 +455,7 @@ class CheckoutDaemonTest {
         git(upstream, "add", "-A");
         git(upstream, "commit", "-q", "-m", "move the gitlink on");
         String released = release(VERSION);
-        announced(payload("repositoryName", REPO, released));
+        announced(payload("repoName", REPO));
 
         assertThat(run("--once")).isZero();
 
@@ -429,9 +495,8 @@ class CheckoutDaemonTest {
     @Test
     void aReleaseOnTheStreamIsHeldAndStopEndsTheWatchWithZero() throws Exception {
         String released = release(VERSION);
-        String envelope = JSON.createObjectNode().put("id", "e-1").put("name", "SCMRelease")
-                .put("payload", payload("repositoryName", REPO, released)).toString();
-        platform.streams.add(platform.stream(true, ": open", "id:e-1", "data:" + envelope, ""));
+        platform.streams.add(platform.stream(true, ": open", "id:e-1", "data:" + frame("e-1", payload("repoName", REPO)),
+                ""));
 
         CompletableFuture<Integer> run = watch();
         await(() -> fileEquals(released));
@@ -461,7 +526,7 @@ class CheckoutDaemonTest {
         CompletableFuture<Integer> run = watch();
         // The stream is open and has nothing to say, and the release happens now: no frame for it.
         await(() -> platform.requests("GET", "/events/api/events").size() >= 2);
-        announced(payload("repositoryName", REPO, released));
+        announced(payload("repoName", REPO));
         drop.countDown();
 
         await(() -> fileEquals(released));
@@ -471,6 +536,56 @@ class CheckoutDaemonTest {
         assertThat(run.get(20, TimeUnit.SECONDS)).isZero();
         assertThat(err()).contains("connected again to");
         assertThat(time.sleeps).as("it waited through the sleeper, never in real time").isNotEmpty();
+    }
+
+    /**
+     * The stream carries every release request's every state change, estate-wide. None but this
+     * repository's finalization moves the checkout, and none of the others is worth a line.
+     */
+    @Test
+    void onTheStreamOnlyThisRepositorysFinalizationIsHeldAndTheRestIsIgnoredSilently() throws Exception {
+        release(VERSION);
+        String next = release(NEXT_VERSION);
+        platform.streams.add(platform.stream(true, ": open",
+                "id:e-1", "data:" + frame("e-1", stateChanged("repoName", REPO, "RELEASED", VERSION)), "",
+                "id:e-2", "data:" + frame("e-2", stateChanged("repoName", REPO, "OBSOLETE", VERSION)), "",
+                "id:e-3", "data:" + frame("e-3", stateChanged("repoName", "qits-other-service", "FINALIZED", VERSION)),
+                "",
+                "id:e-4", "data:" + frame("e-4", stateChanged("repoName", REPO, "FINALIZED", NEXT_VERSION)), ""));
+
+        CompletableFuture<Integer> run = watch();
+        await(() -> fileEquals(next));
+        await(() -> stopper.get() != null);
+        stopper.get().run();
+
+        assertThat(run.get(20, TimeUnit.SECONDS)).isZero();
+        assertThat(out().lines()).as("only the finalization was held").containsExactly(NEXT_VERSION);
+        assertThat(err()).doesNotContain(VERSION + " ").doesNotContain("qits-other-service")
+                .doesNotContain("RELEASED").doesNotContain("OBSOLETE");
+    }
+
+    /**
+     * Release requests finalize in the order they finish. A late finalization of an older release
+     * must not move the checkout back; the versions are the ones that sort wrongly as text.
+     */
+    @Test
+    void anOlderFinalizedReleaseAfterANewerOneDoesNotMoveTheCheckoutBack() throws Exception {
+        String older = "2026.1020.72749";
+        String newer = "2026.1020.103656";
+        release(older);
+        String newest = release(newer);
+        platform.streams.add(platform.stream(true, ": open",
+                "id:e-1", "data:" + frame("e-1", stateChanged("repoName", REPO, "FINALIZED", newer)), "",
+                "id:e-2", "data:" + frame("e-2", stateChanged("repoName", REPO, "FINALIZED", older)), ""));
+
+        CompletableFuture<Integer> run = watch();
+        await(() -> err().contains("is older than"));
+        await(() -> stopper.get() != null);
+        stopper.get().run();
+
+        assertThat(run.get(20, TimeUnit.SECONDS)).isZero();
+        assertThat(head(work)).isEqualTo(newest);
+        assertThat(out().lines()).containsExactly(newer);
     }
 
     private boolean fileEquals(String sha) {

@@ -90,7 +90,7 @@ systemctl --user enable --now qits-session-daemon
 
 Hold a local checkout at what a repository released, and keep it there. It follows the releases, never the tips of the branches: the root ends detached at the release tag, and every submodule detached at the gitlink that release recorded. That tree is the estate somebody reviewed and released, which is not the same thing as `latest`.
 
-It brings the checkout to the newest release at the start, then waits for SCMRelease on the live event stream. After every connect it reads the newest release back, so a release cut while it was stopped or reconnecting is not missed. Notes go to stderr, and every release it moves the checkout to is one line on stdout. Stops on SIGINT or SIGTERM.
+It brings the checkout to the newest release at the start, then waits on the live event stream for a release request of the repository to be finalized (ReleaseRequestStateChanged to FINALIZED), never for the tag alone. After every connect it reads the newest one back, so a release finalized while it was stopped or reconnecting is not missed, and a release older than the one it holds never moves it back. Notes go to stderr, and every release it moves the checkout to is one line on stdout. Stops on SIGINT or SIGTERM.
 
 ```
 qits checkout-daemon [--events-url <url>] [--once] [--path <dir>] [--repository <name>] [--submodules]

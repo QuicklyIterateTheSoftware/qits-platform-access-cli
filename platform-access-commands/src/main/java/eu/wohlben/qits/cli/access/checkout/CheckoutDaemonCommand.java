@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Locale;
 
 @TuiCommand(interaction = Interaction.STREAMING)
 @CommandLine.Command(name = "checkout-daemon", mixinStandardHelpOptions = true,
@@ -23,9 +24,11 @@ import java.nio.file.Path;
                         + "never the tips of the branches: the root ends detached at the release tag, and every "
                         + "submodule detached at the gitlink that release recorded. That tree is the estate somebody "
                         + "reviewed and released, which is not the same thing as `latest`.",
-                "It brings the checkout to the newest release at the start, then waits for SCMRelease on the live "
-                        + "event stream. After every connect it reads the newest release back, so a release cut while "
-                        + "it was stopped or reconnecting is not missed. Notes go to stderr, and every release it "
+                "It brings the checkout to the newest release at the start, then waits on the live event stream "
+                        + "for a release request of the repository to be finalized (ReleaseRequestStateChanged to "
+                        + "FINALIZED), never for the tag alone. After every connect it reads the newest one back, so "
+                        + "a release finalized while it was stopped or reconnecting is not missed, and a release "
+                        + "older than the one it holds never moves it back. Notes go to stderr, and every release it "
                         + "moves the checkout to is one line on stdout. Stops on SIGINT or SIGTERM."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
@@ -105,13 +108,14 @@ public class CheckoutDaemonCommand extends PlatformCommand {
     }
 
     /**
-     * The newest release of this repository. An {@code attr} filter is a {@code key=value} the
-     * service lower-cases and matches as the literal fragment {@code "key":"value"} against the
-     * payload, so the keys are written lower-case here and only the values are encoded.
+     * The newest finalized release request of this repository. An {@code attr} filter is a {@code
+     * key=value} the service lower-cases and matches as the literal fragment {@code "key":"value"}
+     * against the payload, so the keys are written lower-case here and only the values are encoded.
      */
     private static String query(Checkout.Origin origin) {
         StringBuilder query = new StringBuilder("name=").append(ReleaseWatcher.EVENT)
-                .append("&attr=repositoryname=").append(encoded(origin.repoName()));
+                .append("&attr=reponame=").append(encoded(origin.repoName()))
+                .append("&attr=state=").append(ReleaseWatcher.FINALIZED.toLowerCase(Locale.ROOT));
         if (origin.projectId() != null) {
             query.append("&attr=projectid=").append(encoded(origin.projectId()));
         }

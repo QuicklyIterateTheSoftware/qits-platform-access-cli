@@ -18,22 +18,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * <b>{@code qits checkout-daemon}'s one REST call to qits-events</b> (ticket qits-1149): the newest
- * SCMRelease of the checkout's repository, read when the watch starts, on every reconnect and for
- * {@code --once}. A row of {@code events/EventsContract}; the live stream it follows between those
- * reads is Server-Sent Events, no part of the pact. The query is the one {@code
- * CheckoutDaemonCommand} builds: the name, the {@code attr} filters with lower-case keys, the newest
- * one.
+ * finalized release request of the checkout's repository (a {@code ReleaseRequestStateChanged} to
+ * {@code FINALIZED}), read when the watch starts, on every reconnect and for {@code --once}. A row
+ * of {@code events/EventsContract}; the live stream it follows between those reads is Server-Sent
+ * Events, no part of the pact. The query is the one {@code CheckoutDaemonCommand} builds: the name,
+ * the {@code attr} filters with lower-case keys, the newest one.
+ * <p>
+ * Pending since qits-1470: qits-events records {@code SCMRelease} under {@code a repository with a
+ * release}, and the watch no longer asks for that, so the row waits for the state below.
  */
 public final class ReleaseWatcherRows {
 
-    static final String A_RELEASE = "a repository with a release";
+    static final String A_RELEASE = "a repository with a finalized release request";
 
     /** The release the watch holds the checkout at, read from the newest event's payload. */
     private static final CliRow.Call NEWEST = (url, recorded) -> {
         String repository = recorded.params().get("repositoryName");
         String project = recorded.params().get("projectId");
-        URI latest = URI.create(url + "/events/api/events?name=" + ReleaseWatcher.EVENT + "&attr=repositoryname="
-                + URLEncoder.encode(repository, StandardCharsets.UTF_8) + "&attr=projectid="
+        URI latest = URI.create(url + "/events/api/events?name=" + ReleaseWatcher.EVENT + "&attr=reponame="
+                + URLEncoder.encode(repository, StandardCharsets.UTF_8) + "&attr=state=finalized&attr=projectid="
                 + URLEncoder.encode(project, StandardCharsets.UTF_8) + "&order=desc&limit=1");
         List<Release> held = new ArrayList<>();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -48,7 +51,10 @@ public final class ReleaseWatcherRows {
 
     public static final List<CliRow> ROWS = List.of(
             CliRow.of("qits checkout-daemon", A_RELEASE, "listEvents", "ReleaseWatcher#newest", NEWEST)
-                    .consumes("events[].payload"));
+                    .consumes("events[].payload")
+                    .request("GET /events/api/events?name=" + ReleaseWatcher.EVENT
+                            + "&attr=reponame={repositoryName}&attr=state=finalized&attr=projectid={projectId}"
+                            + "&order=desc&limit=1"));
 
     private ReleaseWatcherRows() {
     }
