@@ -289,9 +289,9 @@ public class WorkspaceAgentsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "prompt", mixinStandardHelpOptions = true,
-            description = {"Send a prompt to a work item's agent: said at its next turn, as its first turn, or to a "
-                    + "yielded agent that resumes to hear it. An item with no agent is told so, and nothing is "
-                    + "created. Send on an agent's Chat tab.",
+            description = {"Send a prompt to a work item's agent: said when its current turn ends (at once if it "
+                    + "is idle), as its first turn, or to a yielded agent that resumes to hear it. An item with no "
+                    + "agent is told so, and nothing is created. Send on an agent's Chat tab.",
                     "POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. "
                             + Doors.WRITE},
             footerHeading = HelpText.EXAMPLES,
@@ -323,8 +323,8 @@ public class WorkspaceAgentsCommand implements Runnable {
             }
             String agentId = text(answer, "agentId");
             String outcome = agentId.isEmpty() ? "No agent works on the item; nothing was said."
-                    : answer.path("delivered").asBoolean() ? "Delivered to agent " + SafeText.line(agentId)
-                    + ": said at its next turn."
+                    : answer.path("delivered").asBoolean() ? "Queued for agent " + SafeText.line(agentId)
+                    + ": said when its current turn ends."
                     : answer.path("launched").asBoolean() ? "Agent " + SafeText.line(agentId)
                     + " hears it as its first turn, once it starts."
                     : answer.path("resumed").asBoolean() ? "Agent " + SafeText.line(agentId) + " resumes to hear it."

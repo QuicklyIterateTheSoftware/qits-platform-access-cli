@@ -3127,7 +3127,7 @@ qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1 --force
 
 ## qits workspaces agents prompt
 
-Send a prompt to a work item's agent: said at its next turn, as its first turn, or to a yielded agent that resumes to hear it. An item with no agent is told so, and nothing is created. Send on an agent's Chat tab.
+Send a prompt to a work item's agent: said when its current turn ends (at once if it is idle), as its first turn, or to a yielded agent that resumes to hear it. An item with no agent is told so, and nothing is created. Send on an agent's Chat tab.
 
 POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
