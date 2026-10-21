@@ -124,7 +124,7 @@ qits checkout-daemon --path /srv/qits --repository qits-qits --no-submodules
 
 ## qits projects
 
-The platform's projects. Other commands take a project's id, slug or name as --project.
+The platform's projects: list shows them, delivery shows one's delivery desk. Other commands take a project's id, slug or name as --project.
 
 ## qits projects list
 
@@ -151,6 +151,37 @@ qits projects list -o json
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits projects delivery
+
+A project's delivery desk: whether its front desk runs the delivery loop, how many items it keeps running at once, whether it may move a REFINED item to READY_FOR_DEV itself, the approvals it may give, and how often the loop ticks.
+
+The project's wrapper declares it in .config/qits/project.yml under front_desk.delivery. A setting it does not declare prints as the default, marked (default).
+
+```
+qits projects delivery [--output table|json] [--project <project>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project (required): its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits projects delivery --project qits
+qits projects delivery --project qits -o json
+```
+
+- -o json prints the project's delivery object as the service sent it, null when it sent none.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example no --project, or one the platform does not know), not signed in, or the session ended.
 
 ## qits repositories
 
@@ -424,7 +455,7 @@ qits repositories remote-login --project qits --repository qits-ci-service
 
 ## qits work
 
-Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, and comment writes to its thread.
+Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its thread.
 
 An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, progress), its refinement room itself (refinement: open, show, discard) and the HTML designs of a refinement (design) are here too.
 
@@ -768,6 +799,43 @@ qits work --entity qits-130 progress -o json
 - `0` Done.
 - `1` The platform refused (for example an item that is not a campaign, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits work dispatch
+
+Put an agent on an epic or a ticket, or start a campaign: the Dispatch and Run the next phase buttons of the item's page.
+
+--mode FLOW runs the phase the item's status starts and every phase after it, until a status starts none. --mode PHASE runs that one phase, then stops. A machine at REFINED waits for a person to move it to READY_FOR_DEV, unless the project's delivery desk may start refined items (qits projects delivery shows whether it may).
+
+Sends {"mode":"FLOW"} or {"mode":"PHASE"}, with "rule" when --rule is given, to POST /projects/api/work/{entity}/dispatch, and prints the item, the mode, the phase started, the agent's branch and the assignee. A campaign answers its progress instead; qits work progress shows it.
+
+```
+qits work dispatch [--entity <entity>] [--mode <mode>] [--output table|json] [--projects-url <url>] [--rule <rule>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
+| `--mode <mode>` | FLOW (every phase from here on) or PHASE (the next one only); required. Case-insensitive. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--rule <rule>` | The delivery desk's rule the press is made under (backlog-newest-first, start-refined). Optional; the service ignores it for anyone but the desk. |
+
+### Examples
+
+```
+qits work --entity qits-100 dispatch --mode flow
+qits work dispatch --entity qits-100 --mode PHASE -o json
+qits work --entity qits-100 dispatch --mode FLOW --rule backlog-newest-first
+```
+
+- Pressing takes qits:admin, or the project's delivery desk, which names the rule it presses under; a plain agent is answered HTTP 403.
+- The service refuses a status that starts no phase, a feature or a task, a blocked item or a project with no wrapper (HTTP 409), and the command prints its sentence as it came.
+
+### Exit codes
+
+- `0` The agent is dispatched, or the campaign started.
+- `1` The platform refused (for example a mode it does not know, HTTP 400, your roles, HTTP 403, an item it does not know, HTTP 404, or an item no phase can start from, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or a --mode that is neither FLOW nor PHASE), not signed in, or the session ended.
 
 ## qits work comment
 

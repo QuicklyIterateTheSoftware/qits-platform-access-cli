@@ -314,6 +314,21 @@ public final class ProjectsApi {
         return client.delete(uri(workPath(entity)));
     }
 
+    /**
+     * {@code {"dispatch":{…}}}: the agent a press put on an epic or a ticket, or {@code
+     * {"progress":{…}}} for a campaign, which the press starts. The body is {@code {mode[, rule]}}:
+     * a rule only when one is given, because only the delivery desk names one and the service
+     * ignores it for anyone else.
+     */
+    public JsonNode dispatchWork(String entity, String mode, String rule) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("mode", mode);
+        if (rule != null && !rule.isBlank()) {
+            body.put("rule", rule.strip());
+        }
+        return client.post(uri(workPath(entity) + "/dispatch"), body);
+    }
+
     // --- dossier ---
 
     /** {@code {"pages":[…]}}, in reading order, bodies included. */

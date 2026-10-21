@@ -211,8 +211,8 @@ class McpToolCatalogTest {
         assertThat(catalog.tool("help_skill")).isEmpty();
         assertThat(catalog.tool("update")).as("it replaces a file on the caller's machine").isEmpty();
         assertThat(catalog.tools()).extracting(Tool::name)
-                .contains("projects_list", "work_update", "work_comment_create", "release-request_join", "ci_runs",
-                        "repositories_create");
+                .contains("projects_list", "projects_delivery", "work_update", "work_dispatch", "work_comment_create",
+                        "release-request_join", "ci_runs", "repositories_create");
     }
 
     @Test
@@ -360,7 +360,7 @@ class McpToolCatalogTest {
             }
         });
         assertThat(reads).containsExactlyInAnyOrder(
-                "projects_list", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
+                "projects_list", "projects_delivery", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
                 "repositories_commit-changes", "repositories_commit-diff", "repositories_commit-subjects",
                 "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
                 "work_members_list", "work_refinement_show", "work_design_list", "work_design_get",

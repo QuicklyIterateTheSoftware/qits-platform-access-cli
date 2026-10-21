@@ -40,13 +40,14 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {WorkCommand.ListCommand.class, WorkCommand.DetailsCommand.class, WorkCommand.CreateCommand.class,
                 WorkCommand.UpdateCommand.class, WorkCommand.TransitionCommand.class, WorkCommand.StatusCommand.class,
                 WorkCommand.BlockCommand.class, WorkCommand.UnblockCommand.class, WorkCommand.DeleteCommand.class,
-                WorkCommand.ProgressCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
+                WorkCommand.ProgressCommand.class, WorkCommand.DispatchCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
                 WorkMembersCommand.class, WorkRefinementCommand.class, WorkDesignCommand.class},
         description = {"Work items of every archetype - epics, tickets, features, tasks and campaigns - and their "
                         + "comment threads. list shows a project's items, details shows one with its comments and "
                         + "children, create files one, update edits its fields, transition reshapes it into "
                         + "another archetype, status moves it along its lifecycle, block and unblock flag that its "
-                        + "phase cannot go on, delete removes it, and comment writes to its thread.",
+                        + "phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its "
+                        + "thread.",
                 "An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, "
                         + "progress), its refinement room itself (refinement: open, show, discard) and the HTML "
                         + "designs of a refinement (design) are here too.",
@@ -821,6 +822,83 @@ public class WorkCommand implements Runnable {
                 return 0;
             }
             context.out().println("Deleted " + SafeText.line(wanted) + ".");
+            return 0;
+        }
+    }
+
+    // --- dispatch ---
+
+    @CommandLine.Command(name = "dispatch", mixinStandardHelpOptions = true,
+            description = {"Put an agent on an epic or a ticket, or start a campaign: the Dispatch and Run the next "
+                    + "phase buttons of the item's page.",
+                    "--mode FLOW runs the phase the item's status starts and every phase after it, until a status "
+                            + "starts none. --mode PHASE runs that one phase, then stops. A machine at REFINED waits "
+                            + "for a person to move it to READY_FOR_DEV, unless the project's delivery desk may "
+                            + "start refined items (qits projects delivery shows whether it may).",
+                    "Sends {\"mode\":\"FLOW\"} or {\"mode\":\"PHASE\"}, with \"rule\" when --rule is given, to "
+                            + "POST /projects/api/work/{entity}/dispatch, and prints the item, the mode, the phase "
+                            + "started, the agent's branch and the assignee. A campaign answers its progress instead; "
+                            + "qits work progress shows it."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits work --entity qits-100 dispatch --mode flow",
+                    "  qits work dispatch --entity qits-100 --mode PHASE -o json",
+                    "  qits work --entity qits-100 dispatch --mode FLOW --rule backlog-newest-first",
+                    "",
+                    "- Pressing takes qits:admin, or the project's delivery desk, which names the rule it presses "
+                            + "under; a plain agent is answered HTTP 403.",
+                    "- The service refuses a status that starts no phase, a feature or a task, a blocked item or a "
+                            + "project with no wrapper (HTTP 409), and the command prints its sentence as it came."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The agent is dispatched, or the campaign started.",
+                    "1:The platform refused (for example a mode it does not know, HTTP 400, your roles, HTTP 403, an "
+                            + "item it does not know, HTTP 404, or an item no phase can start from, HTTP 409), or "
+                            + "cannot be reached.",
+                    "2:Used wrongly (for example no --entity, or a --mode that is neither FLOW nor PHASE), not signed "
+                            + "in, or the session ended."})
+    public static class DispatchCommand extends PlatformCommand {
+
+        static final List<String> MODES = List.of("FLOW", "PHASE");
+
+        @CommandLine.ParentCommand
+        WorkCommand work;
+
+        @CommandLine.Option(names = "--mode", paramLabel = "<mode>",
+                description = "FLOW (every phase from here on) or PHASE (the next one only); required. "
+                        + "Case-insensitive.")
+        String mode;
+
+        @CommandLine.Option(names = "--rule", paramLabel = "<rule>",
+                description = "The delivery desk's rule the press is made under (backlog-newest-first, "
+                        + "start-refined). Optional; the service ignores it for anyone but the desk.")
+        String rule;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(work.options.output);
+            String wanted = work.entity();
+            String how = upper(RepositoriesCommand.required(mode, "Name the mode: --mode <FLOW or PHASE>."));
+            if (!MODES.contains(how)) {
+                throw new CliFailure("--mode is FLOW or PHASE, not " + SafeText.line(mode.strip()) + ".",
+                        CliFailure.USAGE);
+            }
+            JsonNode answer = work.api(context).dispatchWork(wanted, how, rule);
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            if (answer.has("progress")) {
+                JsonNode campaign = answer.path("progress").path("campaign");
+                context.out().println("Started campaign " + SafeText.line(text(campaign, "qualifiedId").isEmpty()
+                        ? wanted : text(campaign, "qualifiedId")) + ", now " + SafeText.line(text(campaign, "status"))
+                        + ". `qits work progress` shows its members.");
+                return 0;
+            }
+            JsonNode d = answer.path("dispatch");
+            Table.print(context.out(), "", List.of("ENTITY", "MODE", "PHASE", "BRANCH", "ASSIGNEE"),
+                    List.of(List.of(WorkEntities.cell(wanted, 40), WorkEntities.cell(text(d, "mode"), 5),
+                            WorkEntities.cell(text(d, "phase"), 12), WorkEntities.cell(text(d, "branch"), 60),
+                            WorkEntities.cell(text(d, "assignee"), 40))));
             return 0;
         }
     }

@@ -1036,6 +1036,126 @@ class PlatformCommandsTest {
         assertThat(busy.out() + unknown.out() + down.out()).isEmpty();
     }
 
+    // --- dispatching work, and the delivery desk ---
+
+    private static final String DISPATCH = "/projects/api/work/qits-100/dispatch";
+
+    private void answerDispatch() {
+        platform.answer("POST", DISPATCH, """
+                {"dispatch":{"entityId":"e1","archetype":"TICKET","phase":"implement","mode":"FLOW","agentId":"agent-41",
+                  "workspaceRowId":41,"repositoryId":"r1","branch":"ticket/qits-100","fresh":true,
+                  "agentLaunch":"SCHEDULED","assignee":"ws-agent-41"}}
+                """);
+    }
+
+    @Test
+    void dispatchSendsTheModeAndTheRuleAndPrintsWhatItStarted() throws Exception {
+        answerDispatch();
+
+        Result r = run("work", "--entity", "qits-100", "dispatch", "--mode", "flow", "--rule", "backlog-newest-first");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", DISPATCH).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"mode\":\"FLOW\",\"rule\":\"backlog-newest-first\"}"));
+        assertThat(r.out().lines().toList()).containsExactly(
+                "ENTITY    MODE  PHASE      BRANCH           ASSIGNEE",
+                "qits-100  FLOW  implement  ticket/qits-100  ws-agent-41");
+    }
+
+    @Test
+    void dispatchWithoutARuleLeavesItOutAndJsonIsTheAnswerUnchanged() throws Exception {
+        answerDispatch();
+
+        Result r = run("work", "dispatch", "--entity", "qits-100", "--mode", "PHASE", "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", DISPATCH).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"mode\":\"PHASE\"}"));
+        assertThat(JSON.readTree(r.out()).path("dispatch").path("assignee").asText()).isEqualTo("ws-agent-41");
+    }
+
+    @Test
+    void dispatchNeedsAModeItKnowsAndSendsNothingWithout() {
+        Result none = run("work", "--entity", "qits-100", "dispatch");
+        Result wrong = run("work", "--entity", "qits-100", "dispatch", "--mode", "all");
+
+        assertThat(none.exit()).isEqualTo(2);
+        assertThat(none.err()).contains("Name the mode: --mode <FLOW or PHASE>.");
+        assertThat(wrong.exit()).isEqualTo(2);
+        assertThat(wrong.err()).contains("--mode is FLOW or PHASE, not all.");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void aDispatchRefusalReachesStderrInTheServicesWords() {
+        String noPhase = "qits-100 is DONE, and DONE starts no phase.";
+        platform.answer("POST", DISPATCH, 409, "{\"message\":\"" + noPhase + "\"}");
+        Result conflict = run("work", "--entity", "qits-100", "dispatch", "--mode", "FLOW");
+        String otherProject = "The delivery desk of demo may not dispatch qits-100 of another project.";
+        platform.answer("POST", DISPATCH, 403, "{\"message\":\"" + otherProject + "\"}");
+        Result forbidden = run("work", "--entity", "qits-100", "dispatch", "--mode", "FLOW", "--rule", "start-refined");
+
+        assertThat(conflict.exit()).isEqualTo(1);
+        assertThat(conflict.err()).contains("POST " + platform.url() + DISPATCH + " answered HTTP 409: " + noPhase);
+        assertThat(forbidden.exit()).isEqualTo(1);
+        assertThat(forbidden.err()).contains(otherProject);
+        assertThat(conflict.out() + forbidden.out()).isEmpty();
+    }
+
+    @Test
+    void deliveryPrintsTheProjectsSettings() throws Exception {
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"%s","name":"qits platform","slug":"qits","delivery":{"enabled":true,
+                  "maxRunning":4,"startRefined":true,"approves":["estate-pins","screenshots"],"interval":"PT5M"}}}]}
+                """.formatted(QITS));
+
+        Result r = run("projects", "delivery", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out().lines().toList()).containsExactly(
+                "Project qits: delivery desk",
+                "SETTING        VALUE",
+                "enabled        true",
+                "max_running    4",
+                "start_refined  true",
+                "approves       estate-pins, screenshots",
+                "interval       PT5M");
+        assertThat(JSON.readTree(run("projects", "-o", "json", "delivery", "--project", QITS).out()))
+                .isEqualTo(JSON.readTree("{\"enabled\":true,\"maxRunning\":4,\"startRefined\":true,"
+                        + "\"approves\":[\"estate-pins\",\"screenshots\"],\"interval\":\"PT5M\"}"));
+    }
+
+    @Test
+    void deliveryPrintsTheDefaultsForWhatTheServiceDoesNotSend() {
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"%s","name":"qits platform","slug":"qits","delivery":{"enabled":true,
+                  "approves":[]}}},
+                  {"project":{"id":"%s","name":"Demo","slug":"demo"}}]}
+                """.formatted(QITS, DEMO));
+
+        Result partly = run("projects", "delivery", "--project", "qits");
+        Result older = run("projects", "delivery", "--project", "Demo");
+
+        assertThat(partly.out().lines().toList()).containsExactly(
+                "Project qits: delivery desk",
+                "SETTING        VALUE",
+                "enabled        true",
+                "max_running    2 (default)",
+                "start_refined  false (default)",
+                "approves       none",
+                "interval       PT10M (default)");
+        assertThat(older.exit()).isZero();
+        assertThat(older.out().lines().toList()).containsExactly(
+                "Project demo: delivery desk",
+                "SETTING        VALUE",
+                "enabled        false (default)",
+                "max_running    2 (default)",
+                "start_refined  false (default)",
+                "approves       none (default)",
+                "interval       PT10M (default)");
+        assertThat(run("projects", "delivery").err()).contains("Name the project: --project <id, slug or name>.");
+    }
+
     // --- refusals ---
 
     @Test

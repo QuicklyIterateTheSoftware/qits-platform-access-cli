@@ -69,6 +69,7 @@ public final class ProjectsContract {
     static final String HELD_BY_A_FAILED_AUTOMATION = "a release request held by a failed automation";
     static final String TICKET_WITH_A_DESIGN = "a ticket with a design";
     static final String REFINED_TICKET = "a refined ticket";
+    static final String READY_FOR_DEV_TICKET = "a ready for dev ticket";
     static final String A_PROJECT = "a project exists";
     static final String ONE_REPOSITORY = "a project with one repository";
     static final String REPOSITORIES_IN_COMPONENTS = "a project with repositories in components";
@@ -91,6 +92,18 @@ public final class ProjectsContract {
     /** Every lookup of a project by id, slug or name. */
     static final List<String> PROJECT = List.of("entries[].project.id", "entries[].project.slug",
             "entries[].project.name");
+
+    /**
+     * What {@code qits projects delivery} reads of the project it looked up (epic qits-1440). Pending
+     * on the provider: qits-projects records {@code delivery} on its project reads from qits-1490 on,
+     * and the golden masters pinned in the root pom (2026.1019.190811) predate it, so {@link #held}
+     * binds none of these paths yet and the row binds the lookup alone. Once qits-maintenance bumps
+     * the pin past qits-1490's release, the same row binds all five: write the pact again with
+     * {@code -Dgolden.update=true} on that bump.
+     */
+    static final List<String> DELIVERY = List.of("entries[].project.delivery.enabled",
+            "entries[].project.delivery.maxRunning", "entries[].project.delivery.startRefined",
+            "entries[].project.delivery.approves", "entries[].project.delivery.interval");
 
     /** Every lookup of a repository by id or name. */
     static final List<String> REPOSITORY = List.of("entries[].repository.id", "entries[].repository.name");
@@ -525,6 +538,35 @@ public final class ProjectsContract {
         assertThat(m.path("groups")).isNotEmpty();
     };
 
+    /**
+     * {@code qits projects delivery}: the project by id, and its delivery settings where the
+     * recording carries them. A recording without them is a service older than the loop, whose
+     * settings the command prints as the defaults; see {@link #DELIVERY}.
+     */
+    private static final Call DELIVERY_READ = (api, params, recorded) -> {
+        JsonNode project = api.project(params.get("projectId"));
+        assertThat(ProjectsApi.text(project, "id")).isEqualTo(params.get("projectId"));
+        JsonNode delivery = project.path("delivery");
+        if (BASE.held(recorded.state(), recorded.operationId(), DELIVERY).isEmpty()) {
+            return;
+        }
+        assertThat(delivery.path("enabled").isBoolean()).isTrue();
+        assertThat(delivery.path("maxRunning").isInt()).isTrue();
+        assertThat(delivery.path("startRefined").isBoolean()).isTrue();
+        assertThat(delivery.path("approves").isArray()).isTrue();
+        assertThat(ProjectsApi.text(delivery, "interval")).isNotBlank();
+    };
+
+    /** {@code qits work dispatch}: the recorded mode, no rule; the table prints the mode, phase, branch and assignee. */
+    private static final Call DISPATCH = (api, params, recorded) -> {
+        JsonNode dispatch = api.dispatchWork(params.get("qualifiedId"), body(recorded).path("mode").asText(),
+                null).path("dispatch");
+        assertThat(ProjectsApi.text(dispatch, "mode")).isEqualTo(body(recorded).path("mode").asText());
+        assertThat(ProjectsApi.text(dispatch, "phase")).isNotBlank();
+        assertThat(ProjectsApi.text(dispatch, "branch")).isNotBlank();
+        assertThat(ProjectsApi.text(dispatch, "assignee")).isNotBlank();
+    };
+
     private static final Call PROGRESS = (api, params, recorded) -> {
         JsonNode progress = api.workProgress(params.get("qualifiedId")).path("progress");
         assertThat(ProjectsApi.text(progress.path("campaign"), "qualifiedId")).isEqualTo(params.get("qualifiedId"));
@@ -778,6 +820,8 @@ public final class ProjectsContract {
         rows.add(row("qits projects list", A_PROJECT, "listProjects", "projects", PROJECTS).consumes(PROJECT));
         rows.add(row("qits agents claude hook work-links", A_PROJECT, "listProjects", "projects", PROJECTS)
                 .consumes("entries[].project.slug", "entries[].project.id", "entries[].project.name"));
+        rows.add(row("qits projects delivery", A_PROJECT, "listProjects", "project", DELIVERY_READ)
+                .consumes(Stream.concat(PROJECT.stream(), held(A_PROJECT, "listProjects", DELIVERY).stream()).toList()));
         PROJECT_SCOPED.forEach(c -> rows.add(row(c, A_PROJECT, "listProjects", "project", FIND_PROJECT)
                 .consumes(PROJECT)));
         REPOSITORY_SCOPED.forEach(c -> rows.add(row(c, ONE_REPOSITORY, "listProjectRepositories", "repositories",
@@ -909,6 +953,8 @@ public final class ProjectsContract {
         rows.add(row("qits work progress", CAMPAIGN_IN_DETAIL, "getWorkProgress", "workProgress", PROGRESS)
                 .consumes("progress.campaign.qualifiedId", "progress.evaluator.connected", "progress.members[].state",
                         "progress.members[].waitsFor", "progress.members[].entity.qualifiedId"));
+        rows.add(row("qits work dispatch", READY_FOR_DEV_TICKET, "dispatchWork", "dispatchWork", DISPATCH)
+                .consumes("dispatch.mode", "dispatch.phase", "dispatch.branch", "dispatch.assignee"));
         rows.add(row("qits work dossier list", BUG_TICKET_IN_DETAIL, "listWorkDossier", "workDossier", DOSSIER)
                 .consumes("pages[].slug", "pages[].title", "pages[].version", "pages[].position"));
         rows.add(row("qits work dossier get", EPIC_IN_DETAIL, "getWorkDossierPage", "workDossierPage", DOSSIER_PAGE)
