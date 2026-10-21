@@ -1435,7 +1435,7 @@ A request folds main and its branches into one commit, and the builds of that co
 - `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any more. WITHDRAWN is final.
 - approve and decline judge one fold: the request's merged sha. A push that folds the request again leaves the decision behind, and the new fold waits for a decision of its own.
 - decline is not withdraw. A declined request goes REJECTED and comes back with the next push to one of its branches; WITHDRAWN is final.
-- Only a person may approve or decline: their own `qits` CLI sign-in, holding qits:admin. The platform refuses agents, CI and service clients (HTTP 403).
+- A release request carries a list of approval requirements, each naming the roles that may satisfy it: person, agent (an agent of the request's own project) or agent@<project slug>. approve and decline print them, with whether each is satisfied and by whom, before reading the request and again after deciding. A person holding qits:admin may satisfy a requirement admitting person; an agent may satisfy one admitting agent or agent@<its project>, including a requirement on the very request it asked for, unless that requirement excludes the request's own authors. Asserted identity headers, service clients and qits:system are refused (HTTP 403) either way.
 - --project and --repository may come before or after the command. list, approve and decline work without --repository; approve and decline find the request in the project.
 
 ## qits release-request list
@@ -1589,7 +1589,7 @@ qits release-request --project qits --repository qits-ci-service withdraw --requ
 
 Approve the fold a release request is on, so it may release once its gates are green.
 
-The approval is for one fold, the request's merged sha. A push that folds the request again leaves it behind, and the new fold needs an approval of its own. It prints the request that came back.
+The approval is for one fold, the request's merged sha. A push that folds the request again leaves it behind, and the new fold needs an approval of its own. It prints the request's approval requirements, with their admitted roles and whether each is satisfied, before the decision and again after, then the request that came back.
 
 ```
 qits release-request approve --request <id> [--note <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--sha <merged sha>]
@@ -1613,8 +1613,8 @@ qits release-request --project qits approve --request qits-ci-service-rr-221 --n
 ```
 
 - Give --sha to approve exactly the fold you read. Without it the command approves whatever fold the request is on when it reads it.
-- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and service clients are refused (HTTP 403).
-- HTTP 409 means the request is on another fold than the one sent (the message names the one it is on now), has no fold, has concluded or is being released, or its repository needs no approval. Read it again and judge the fold it is on.
+- A person holding qits:admin may satisfy a requirement that admits person. An agent may satisfy a requirement that admits agent or agent@<its project>, including one on the very request it asked for, unless that requirement excludes the request's own authors. Asserted identity headers, service clients and qits:system are refused (HTTP 403) either way; the message names each open requirement and the roles it admits.
+- HTTP 409 means the request is on another fold than the one sent (the message names the one it is on now), has no fold, has concluded or is being released, or every requirement at the fold is already satisfied. Read it again and judge the fold it is on.
 
 ### Exit codes
 
@@ -1626,7 +1626,7 @@ qits release-request --project qits approve --request qits-ci-service-rr-221 --n
 
 Decline the fold a release request is on, so it does not release.
 
-The request goes REJECTED and comes back by itself when one of its branches gets a new push, which makes a new fold to judge. It is not withdraw: WITHDRAWN is final. It prints the request that came back.
+The request goes REJECTED and comes back by itself when one of its branches gets a new push, which makes a new fold to judge. It is not withdraw: WITHDRAWN is final. It prints the request's approval requirements, with their admitted roles and whether each is satisfied, before the decision and again after, then the request that came back.
 
 ```
 qits release-request decline --request <id> [--note <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--sha <merged sha>]
@@ -1650,8 +1650,8 @@ qits release-request --project qits decline --request qits-ci-service-rr-221 --s
 
 - Give --sha to decline exactly the fold you read. Without it the command declines whatever fold the request is on when it reads it.
 - To stop a request for good, use `withdraw` instead.
-- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and service clients are refused (HTTP 403).
-- HTTP 409 means the request is on another fold than the one sent (the message names the one it is on now), has no fold, has concluded or is being released, or its repository needs no approval. Read it again and judge the fold it is on.
+- A person holding qits:admin may satisfy a requirement that admits person. An agent may satisfy a requirement that admits agent or agent@<its project>, including one on the very request it asked for, unless that requirement excludes the request's own authors. Asserted identity headers, service clients and qits:system are refused (HTTP 403) either way; the message names each requirement it concerns and the roles it admits.
+- HTTP 409 means the request is on another fold than the one sent (the message names the one it is on now), has no fold, has concluded or is being released, or its fold has no approval requirement at all. Read it again and judge the fold it is on.
 
 ### Exit codes
 
