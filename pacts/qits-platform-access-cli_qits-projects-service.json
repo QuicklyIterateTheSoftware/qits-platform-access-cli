@@ -2090,6 +2090,13 @@
             "entries": [
               {
                 "project": {
+                  "delivery": {
+                    "approves": [],
+                    "enabled": false,
+                    "interval": "PT10M",
+                    "maxRunning": 2,
+                    "startRefined": false
+                  },
                   "id": "00000000-0000-4000-8000-000000000001",
                   "name": "Contract project",
                   "slug": "contract-00000001"
@@ -2113,6 +2120,38 @@
                 {
                   "match": "type",
                   "min": 1
+                }
+              ]
+            },
+            "$.entries[*].project.delivery.enabled": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entries[*].project.delivery.interval": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entries[*].project.delivery.maxRunning": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.entries[*].project.delivery.startRefined": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
                 }
               ]
             },
