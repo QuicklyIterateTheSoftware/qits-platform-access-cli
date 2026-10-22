@@ -641,7 +641,8 @@ public class ReleaseRequestCommand implements Runnable {
 
     @CommandLine.Command(name = "regenerate", mixinStandardHelpOptions = true,
             description = {"Generate one release output again on an open release request: the entity diagram, the "
-                    + "screenshot baselines, the dependency bump or the estate pins.",
+                    + "screenshot baselines, the dependency bump, the estate pins, or the golden recordings (maven "
+                    + "or npm).",
                     "QA checks the entity diagram and the screenshot baselines and fails when they are stale; it "
                             + "does not regenerate them. This command asks for the run. The automation commits the "
                             + "output to maintenance/automations/<kind>/<request id>, the request folds again with "
@@ -667,7 +668,8 @@ public class ReleaseRequestCommand implements Runnable {
     public static class RegenerateCommand extends PlatformCommand {
 
         /** The kinds the platform runs today; the service is the authority, this list is for the sentences. */
-        static final String KINDS = "entity-diagram, screenshot-baselines, dependency-bump and estate-pins";
+        static final String KINDS = "entity-diagram, screenshot-baselines, dependency-bump, estate-pins, "
+                + "golden-recordings-maven and golden-recordings-npm";
 
         @CommandLine.ParentCommand
         ReleaseRequestCommand parent;
@@ -679,8 +681,8 @@ public class ReleaseRequestCommand implements Runnable {
         String request;
 
         @CommandLine.Option(names = "--kind", paramLabel = "<kind>", required = true,
-                description = "What to generate: entity-diagram, screenshot-baselines, dependency-bump or "
-                        + "estate-pins.")
+                description = "What to generate: entity-diagram, screenshot-baselines, dependency-bump, "
+                        + "estate-pins, golden-recordings-maven or golden-recordings-npm.")
         String kind;
 
         @Override

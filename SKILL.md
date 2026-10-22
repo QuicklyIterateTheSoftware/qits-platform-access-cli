@@ -1729,7 +1729,7 @@ qits release-request --project qits decline --request qits-ci-service-rr-221 --s
 
 ## qits release-request regenerate
 
-Generate one release output again on an open release request: the entity diagram, the screenshot baselines, the dependency bump or the estate pins.
+Generate one release output again on an open release request: the entity diagram, the screenshot baselines, the dependency bump, the estate pins, or the golden recordings (maven or npm).
 
 QA checks the entity diagram and the screenshot baselines and fails when they are stale; it does not regenerate them. This command asks for the run. The automation commits the output to maintenance/automations/<kind>/<request id>, the request folds again with it, and QA then runs again. It prints the run's id.
 
@@ -1739,7 +1739,7 @@ qits release-request regenerate --kind <kind> [--output table|json] [--project <
 
 | Name | What it does |
 |---|---|
-| `--kind <kind>` | Required. What to generate: entity-diagram, screenshot-baselines, dependency-bump or estate-pins. |
+| `--kind <kind>` | Required. What to generate: entity-diagram, screenshot-baselines, dependency-bump, estate-pins, golden-recordings-maven or golden-recordings-npm. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |

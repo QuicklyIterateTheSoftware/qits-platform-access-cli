@@ -1158,7 +1158,7 @@ class PlatformCommandsTest {
         assertThat(unknown.exit()).isEqualTo(1);
         assertThat(unknown.err()).contains("The platform knows no kind 'nonsense' or no release request "
                         + REJECTED_ID + " (HTTP 404). The kinds are entity-diagram, screenshot-baselines, "
-                        + "dependency-bump and estate-pins.")
+                        + "dependency-bump, estate-pins, golden-recordings-maven and golden-recordings-npm.")
                 .contains("Unknown kind: nonsense");
         assertThat(down.exit()).isEqualTo(1);
         assertThat(down.err()).contains("qits-maintenance cannot be reached or is not set up, so nothing ran "
