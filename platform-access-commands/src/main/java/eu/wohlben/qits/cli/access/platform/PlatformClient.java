@@ -70,6 +70,17 @@ public final class PlatformClient {
     }
 
     public JsonNode post(URI uri, JsonNode body) throws CliFailure, InterruptedException {
+        return post(uri, body, true);
+    }
+
+    /**
+     * A POST whose 403, when {@code roleHintOn403} is false, is left exactly as the door worded it:
+     * no generic "this credential reads but does not write" line pasted above it. That line is
+     * right for most doors, which admit a person and nothing else, but wrong for one that decides
+     * eligibility itself and already named every admitted role in its own sentence — approve and
+     * decline (epic qits-1038), the only callers that pass false. Every other write keeps the hint.
+     */
+    public JsonNode post(URI uri, JsonNode body, boolean roleHintOn403) throws CliFailure, InterruptedException {
         String json;
         try {
             json = JSON.writeValueAsString(body);
@@ -78,7 +89,7 @@ public final class PlatformClient {
         }
         return send("POST", uri, HttpRequest.newBuilder(uri)
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)));
+                .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)), roleHintOn403);
     }
 
     /** A POST whose address says it all (a retry), with no body. */
@@ -124,6 +135,11 @@ public final class PlatformClient {
      * the output of its steps. A refusal's body is read only as far as its message needs.
      */
     private JsonNode send(String method, URI uri, HttpRequest.Builder builder) throws CliFailure, InterruptedException {
+        return send(method, uri, builder, true);
+    }
+
+    private JsonNode send(String method, URI uri, HttpRequest.Builder builder, boolean roleHintOn403)
+            throws CliFailure, InterruptedException {
         HttpRequest request = builder
                 .timeout(REQUEST_TIMEOUT)
                 .header("Accept", "application/json")
@@ -139,7 +155,8 @@ public final class PlatformClient {
                 }
                 if (status < 200 || status >= 300) {
                     String text = new String(body.readNBytes(REFUSAL_BODY_LIMIT), StandardCharsets.UTF_8);
-                    throw explained(status, refusal(method, uri, status, response.headers(), text));
+                    CliFailure refusal = refusal(method, uri, status, response.headers(), text);
+                    throw status == 403 && !roleHintOn403 ? refusal : explained(status, refusal);
                 }
                 int first = body.read();
                 if (first < 0) {

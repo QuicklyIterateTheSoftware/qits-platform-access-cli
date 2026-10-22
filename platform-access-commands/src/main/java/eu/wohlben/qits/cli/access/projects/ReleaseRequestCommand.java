@@ -57,8 +57,14 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "again leaves the decision behind, and the new fold waits for a decision of its own.",
                 "- decline is not withdraw. A declined request goes REJECTED and comes back with the next push to "
                         + "one of its branches; WITHDRAWN is final.",
-                "- Only a person may approve or decline: their own `qits` CLI sign-in, holding qits:admin. The "
-                        + "platform refuses agents, CI and service clients (HTTP 403).",
+                "- A release request carries a list of approval requirements, each naming the roles that may "
+                        + "satisfy it: person, agent (an agent of the request's own project) or agent@<project "
+                        + "slug>. approve and decline print them, with whether each is satisfied and by whom, "
+                        + "before reading the request and again after deciding. A person holding qits:admin may "
+                        + "satisfy a requirement admitting person; an agent may satisfy one admitting agent or "
+                        + "agent@<its project>, including a requirement on the very request it asked for, unless "
+                        + "that requirement excludes the request's own authors. Asserted identity headers, "
+                        + "service clients and qits:system are refused (HTTP 403) either way.",
                 "- --project and --repository may come before or after the command. list, approve and decline work "
                         + "without --repository; approve and decline find the request in the project."})
 public class ReleaseRequestCommand implements Runnable {
@@ -521,6 +527,9 @@ public class ReleaseRequestCommand implements Runnable {
                 throw new CliFailure("Release request " + name + " has not been folded yet, so there is no fold to "
                         + verb() + ".", CliFailure.FAILED);
             }
+            if (!json) {
+                printRequirements(context.out(), "Requirements before " + verb() + ":", found);
+            }
             JsonNode answer = decide(in.api(), text(found, "repoId"), text(found, "id"), fold, note);
             if (json) {
                 SafeJson.print(context.out(), answer);
@@ -528,6 +537,7 @@ public class ReleaseRequestCommand implements Runnable {
             }
             context.out().println(done() + " " + name + " at " + fold + ".");
             printRequest(context.out(), answer.path("request"));
+            printRequirements(context.out(), "Requirements after " + verb() + ":", answer.path("request"));
             return 0;
         }
     }
@@ -536,7 +546,8 @@ public class ReleaseRequestCommand implements Runnable {
             description = {"Approve the fold a release request is on, so it may release once its gates are green.",
                     "The approval is for one fold, the request's merged sha. A push that folds the request again "
                             + "leaves it behind, and the new fold needs an approval of its own. It prints the "
-                            + "request that came back."},
+                            + "request's approval requirements, with their admitted roles and whether each is "
+                            + "satisfied, before the decision and again after, then the request that came back."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits approve --request qits-ci-service-rr-221 "
@@ -546,11 +557,16 @@ public class ReleaseRequestCommand implements Runnable {
                     "",
                     "- Give --sha to approve exactly the fold you read. Without it the command approves whatever "
                             + "fold the request is on when it reads it.",
-                    "- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and "
-                            + "service clients are refused (HTTP 403).",
+                    "- A person holding qits:admin may satisfy a requirement that admits person. An agent may "
+                            + "satisfy a requirement that admits agent or agent@<its project>, including one on "
+                            + "the very request it asked for, unless that requirement excludes the request's own "
+                            + "authors. Asserted identity headers, service clients and qits:system are refused "
+                            + "(HTTP 403) either way; the message names each open requirement and the roles it "
+                            + "admits.",
                     "- HTTP 409 means the request is on another fold than the one sent (the message names the "
-                            + "one it is on now), has no fold, has concluded or is being released, or its repository "
-                            + "needs no approval. Read it again and judge the fold it is on."},
+                            + "one it is on now), has no fold, has concluded or is being released, or every "
+                            + "requirement at the fold is already satisfied. Read it again and judge the fold it "
+                            + "is on."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (the message names the status and says why), cannot be reached, or "
@@ -579,7 +595,8 @@ public class ReleaseRequestCommand implements Runnable {
             description = {"Decline the fold a release request is on, so it does not release.",
                     "The request goes REJECTED and comes back by itself when one of its branches gets a new push, "
                             + "which makes a new fold to judge. It is not withdraw: WITHDRAWN is final. It prints "
-                            + "the request that came back."},
+                            + "the request's approval requirements, with their admitted roles and whether each is "
+                            + "satisfied, before the decision and again after, then the request that came back."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits decline --request qits-ci-service-rr-221 "
@@ -589,11 +606,15 @@ public class ReleaseRequestCommand implements Runnable {
                     "- Give --sha to decline exactly the fold you read. Without it the command declines whatever "
                             + "fold the request is on when it reads it.",
                     "- To stop a request for good, use `withdraw` instead.",
-                    "- Only a person's own `qits` CLI sign-in holding qits:admin is accepted. Agents, CI and "
-                            + "service clients are refused (HTTP 403).",
+                    "- A person holding qits:admin may satisfy a requirement that admits person. An agent may "
+                            + "satisfy a requirement that admits agent or agent@<its project>, including one on "
+                            + "the very request it asked for, unless that requirement excludes the request's own "
+                            + "authors. Asserted identity headers, service clients and qits:system are refused "
+                            + "(HTTP 403) either way; the message names each requirement it concerns and the "
+                            + "roles it admits.",
                     "- HTTP 409 means the request is on another fold than the one sent (the message names the "
-                            + "one it is on now), has no fold, has concluded or is being released, or its repository "
-                            + "needs no approval. Read it again and judge the fold it is on."},
+                            + "one it is on now), has no fold, has concluded or is being released, or its fold has "
+                            + "no approval requirement at all. Read it again and judge the fold it is on."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (the message names the status and says why), cannot be reached, or "
@@ -775,5 +796,48 @@ public class ReleaseRequestCommand implements Runnable {
     /** The request that superseded this one, by its logical id, else its short uuid; blank when none. */
     private static String supersededBy(JsonNode request) {
         return ReleaseRequestRefs.label(text(request, "supersededByQualifiedId"), text(request, "supersededBy"));
+    }
+
+    /**
+     * The request's approval requirements (epic qits-1038): one row per requirement, with its
+     * admitted roles, whether the request's own authors are excluded, and whether it is satisfied
+     * and by whom. Prints nothing when {@code approvalRequirements} is absent or empty, which is
+     * both an older service (the field does not exist yet) and a request with no requirement at
+     * all; either way there is nothing to show.
+     */
+    static void printRequirements(PrintStream out, String heading, JsonNode request) {
+        JsonNode requirements = request.path("approvalRequirements");
+        if (!requirements.isArray() || requirements.isEmpty()) {
+            return;
+        }
+        out.println(heading);
+        List<List<String>> rows = new ArrayList<>();
+        requirements.forEach(requirement -> rows.add(List.of(
+                Table.cell(text(requirement, "id"), 40),
+                Table.cell(text(requirement, "reason"), 70),
+                Table.cell(admits(requirement), 30),
+                requirement.path("excludesAuthors").asBoolean() ? "yes" : "no",
+                requirement.path("satisfied").asBoolean() ? "yes" : "no",
+                Table.cell(satisfiedBy(requirement), 60))));
+        Table.print(out, "  ", List.of("ID", "REASON", "ADMITS", "EXCLUDES AUTHORS", "SATISFIED", "SATISFIED BY"),
+                rows);
+    }
+
+    /** {@code admits}, joined for one cell: "person", "person, agent", "person, agent@qits". */
+    private static String admits(JsonNode requirement) {
+        List<String> roles = new ArrayList<>();
+        requirement.path("admits").forEach(role -> roles.add(role.asText()));
+        return String.join(", ", roles);
+    }
+
+    /** Who satisfied the requirement, holding which roles, and when; a dash when nobody has. */
+    private static String satisfiedBy(JsonNode requirement) {
+        JsonNode by = requirement.path("satisfiedBy");
+        if (!by.isObject()) {
+            return "-";
+        }
+        List<String> roles = new ArrayList<>();
+        by.path("roles").forEach(role -> roles.add(role.asText()));
+        return text(by, "approver") + " (" + String.join(", ", roles) + ") at " + Table.time(text(by, "at"));
     }
 }

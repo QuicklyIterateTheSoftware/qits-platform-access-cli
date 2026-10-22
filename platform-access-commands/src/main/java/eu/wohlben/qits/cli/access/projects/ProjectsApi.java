@@ -176,7 +176,13 @@ public final class ProjectsApi {
         return decideReleaseRequest(repoId, requestId, "decline", mergedSha, note);
     }
 
-    /** Both decisions are one body, {@code {mergedSha, note?}}, at the door named by {@code verb}. */
+    /**
+     * Both decisions are one body, {@code {mergedSha, note?}}, at the door named by {@code verb}.
+     * The door decides who may act in the domain and words its own 403 in full, naming each open
+     * requirement and the roles it admits (epic qits-1038), so this call skips the client's generic
+     * "reads but does not write" hint: that hint is right for a door only a person may write to,
+     * and this one is not.
+     */
     private JsonNode decideReleaseRequest(String repoId, String requestId, String verb, String mergedSha, String note)
             throws CliFailure, InterruptedException {
         ObjectNode body = JSON.createObjectNode();
@@ -185,7 +191,7 @@ public final class ProjectsApi {
             body.put("note", note.strip());
         }
         return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
-                + segment(requestId) + "/" + verb), body);
+                + segment(requestId) + "/" + verb), body, false);
     }
 
     /**

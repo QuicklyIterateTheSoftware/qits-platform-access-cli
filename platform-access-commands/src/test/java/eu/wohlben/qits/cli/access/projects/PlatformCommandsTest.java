@@ -11,6 +11,8 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.session.Credential;
+import eu.wohlben.qits.cli.session.RequestCredential;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,11 +131,17 @@ class PlatformCommandsTest {
     }
 
     private Result run(String... args) {
+        return run(null, args);
+    }
+
+    /** As {@link #run}, but calling the platform with {@code credential} rather than the session. */
+    private Result run(Credential credential, String... args) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-        CliContext context = new CliContext(Map.copyOf(env), java.io.InputStream.nullInputStream(),
+        CliContext built = new CliContext(Map.copyOf(env), java.io.InputStream.nullInputStream(),
                 new PrintStream(out, true, StandardCharsets.UTF_8),
                 new PrintStream(err, true, StandardCharsets.UTF_8), time, time, TokenClient::new, stop -> { });
+        CliContext context = credential == null ? built : built.withCredential(credential);
         CommandLine cli = new CommandLine(new AccessCli(), new CommandLine.IFactory() {
             @Override
             public <K> K create(Class<K> type) throws Exception {
@@ -918,6 +927,127 @@ class PlatformCommandsTest {
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(JSON.readTree(r.out())).isEqualTo(JSON.readTree(answer));
         assertThat(r.out()).doesNotContain("Approved ");
+    }
+
+    // --- approval requirements (epic qits-1038) ---
+
+    /** The project's door, with one open {@code approvalRequirements} entry on the request it reads. */
+    private void answerProjectRequestAwaitingApproval() {
+        platform.answer("GET", PROJECT_REQUESTS + "/" + DECIDED, """
+                {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","approvalState":"WAITING","mergedSha":"%s","summary":"Bump the estate",
+                  "approvalRequirements":[
+                    {"id":"manual-review","reason":"configured by manual-review","admits":["person"],
+                     "excludesAuthors":false,"detail":null,"satisfied":false,"satisfiedBy":null}]}}
+                """.formatted(DECIDED_ID, DECIDED, CI, FOLD));
+    }
+
+    /** The decision door's answer, with that same requirement now satisfied. */
+    private static String approvedWithRequirement() {
+        return """
+                {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"MEDIUM","summary":"Bump the estate","requester":"maintenance",
+                  "approvalState":"APPROVED","mergedSha":"%s","version":null,"detail":null,
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","sources":[],
+                  "approvalRequirements":[
+                    {"id":"manual-review","reason":"configured by manual-review","admits":["person"],
+                     "excludesAuthors":false,"detail":null,"satisfied":true,
+                     "satisfiedBy":{"approver":"dev","roles":["person"],"at":"2026-09-12T10:00:00Z"}}]}}
+                """.formatted(DECIDED_ID, DECIDED, CI, FOLD);
+    }
+
+    @Test
+    void approveWithRequirementsPrintsThemBeforeAndAfterTheDecision() throws Exception {
+        answerProjectRequestAwaitingApproval();
+        platform.answer("POST", decisionOf("approve"), approvedWithRequirement());
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).containsSubsequence("Requirements before approve:",
+                "manual-review", "configured by manual-review", "Approved " + DECIDED,
+                "Requirements after approve:", "manual-review", "configured by manual-review");
+        // Before the decision nothing has satisfied it yet.
+        assertThat(r.out()).containsPattern(
+                "manual-review\\s+configured by manual-review\\s+person\\s+no\\s+no\\s+-");
+        // After the decision the answered request reports it satisfied, and by whom.
+        assertThat(r.out()).containsPattern(
+                "manual-review\\s+configured by manual-review\\s+person\\s+no\\s+yes\\s+dev \\(person\\) at");
+    }
+
+    @Test
+    void jsonWithRequirementsPrintsTheServicesAnswerUnchanged() throws Exception {
+        answerProjectRequestAwaitingApproval();
+        String answer = approvedWithRequirement();
+        platform.answer("POST", decisionOf("approve"), answer);
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(r.out())).isEqualTo(JSON.readTree(answer));
+        assertThat(r.out()).doesNotContain("Requirements before").doesNotContain("Requirements after");
+    }
+
+    @Test
+    void anOlderServiceWithNoApprovalRequirementsFieldPrintsNothingExtra() throws Exception {
+        // answerProjectRequest/decided (above) carry no approvalRequirements at all: an older
+        // provider's shape. Table output stays exactly what it was before this epic.
+        answerProjectRequest(DECIDED, FOLD);
+        platform.answer("POST", decisionOf("approve"), decided("PENDING", "APPROVED", FOLD));
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).doesNotContain("Requirements");
+    }
+
+    @Test
+    void a403NamingTheOpenRequirementsReachesThePersonVerbatim() {
+        answerProjectRequest(DECIDED, FOLD);
+        String refusal = "You may not approve release request " + DECIDED + " at " + FOLD.substring(0, 10)
+                + ": its open approval requirements are manual-review (configured by manual-review) admits person."
+                + " You hold no approval role.";
+        platform.answer("POST", decisionOf("approve"), 403, "{\"message\":\"" + refusal + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "approve", "--request", DECIDED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(refusal);
+        assertThat(r.out()).isEmpty();
+    }
+
+    /** An unsigned JWT naming {@code qits:agent}: enough for {@link RequestCredential} to read it. */
+    private static String agentToken() {
+        Base64.Encoder base64 = Base64.getUrlEncoder().withoutPadding();
+        String claims = "{\"sub\":\"workspace-7f3a\",\"aud\":\"qits-platform\",\"groups\":[\"qits:agent\"]}";
+        return base64.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8)) + "."
+                + base64.encodeToString(claims.getBytes(StandardCharsets.UTF_8)) + ".signature";
+    }
+
+    /**
+     * The defect this replaced (qits-1038, verified live on qits-1044): an agent approving a
+     * request whose open requirement admits only {@code person} used to see "this credential is
+     * qits:agent, which reads but does not write" above the door's own sentence — wrong, because
+     * qits-projects admits {@code qits:agent} at this door and decides eligibility itself; a 403
+     * here means "you hold no admitted role", not "agents only read". The door's sentence now
+     * reaches the agent exactly as it reached the person in the test above, with no hint pasted
+     * over it.
+     */
+    @Test
+    void a403ToAnAgentCredentialPrintsTheDoorsSentenceWithoutTheReadOnlyHint() {
+        answerProjectRequest(DECIDED, FOLD);
+        String refusal = "You may not approve release request " + DECIDED + " at " + FOLD.substring(0, 10)
+                + ": its open approval requirements are manual-review (configured by manual-review) admits person."
+                + " You hold agent.";
+        platform.answer("POST", decisionOf("approve"), 403, "{\"message\":\"" + refusal + "\"}");
+
+        Result r = run(new RequestCredential(agentToken()), "release-request", "--project", "qits", "approve",
+                "--request", DECIDED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(refusal)
+                .doesNotContain("reads but does not write");
+        assertThat(r.out()).isEmpty();
     }
 
     @Test
