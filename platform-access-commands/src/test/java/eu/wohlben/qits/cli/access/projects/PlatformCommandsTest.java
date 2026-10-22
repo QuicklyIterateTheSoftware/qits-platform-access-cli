@@ -11,6 +11,8 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.session.Credential;
+import eu.wohlben.qits.cli.session.RequestCredential;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,11 +131,17 @@ class PlatformCommandsTest {
     }
 
     private Result run(String... args) {
+        return run(null, args);
+    }
+
+    /** As {@link #run}, but calling the platform with {@code credential} rather than the session. */
+    private Result run(Credential credential, String... args) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-        CliContext context = new CliContext(Map.copyOf(env), java.io.InputStream.nullInputStream(),
+        CliContext built = new CliContext(Map.copyOf(env), java.io.InputStream.nullInputStream(),
                 new PrintStream(out, true, StandardCharsets.UTF_8),
                 new PrintStream(err, true, StandardCharsets.UTF_8), time, time, TokenClient::new, stop -> { });
+        CliContext context = credential == null ? built : built.withCredential(credential);
         CommandLine cli = new CommandLine(new AccessCli(), new CommandLine.IFactory() {
             @Override
             public <K> K create(Class<K> type) throws Exception {
@@ -1004,6 +1013,40 @@ class PlatformCommandsTest {
 
         assertThat(r.exit()).isEqualTo(1);
         assertThat(r.err()).contains(refusal);
+        assertThat(r.out()).isEmpty();
+    }
+
+    /** An unsigned JWT naming {@code qits:agent}: enough for {@link RequestCredential} to read it. */
+    private static String agentToken() {
+        Base64.Encoder base64 = Base64.getUrlEncoder().withoutPadding();
+        String claims = "{\"sub\":\"workspace-7f3a\",\"aud\":\"qits-platform\",\"groups\":[\"qits:agent\"]}";
+        return base64.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8)) + "."
+                + base64.encodeToString(claims.getBytes(StandardCharsets.UTF_8)) + ".signature";
+    }
+
+    /**
+     * The defect this replaced (qits-1038, verified live on qits-1044): an agent approving a
+     * request whose open requirement admits only {@code person} used to see "this credential is
+     * qits:agent, which reads but does not write" above the door's own sentence — wrong, because
+     * qits-projects admits {@code qits:agent} at this door and decides eligibility itself; a 403
+     * here means "you hold no admitted role", not "agents only read". The door's sentence now
+     * reaches the agent exactly as it reached the person in the test above, with no hint pasted
+     * over it.
+     */
+    @Test
+    void a403ToAnAgentCredentialPrintsTheDoorsSentenceWithoutTheReadOnlyHint() {
+        answerProjectRequest(DECIDED, FOLD);
+        String refusal = "You may not approve release request " + DECIDED + " at " + FOLD.substring(0, 10)
+                + ": its open approval requirements are manual-review (configured by manual-review) admits person."
+                + " You hold agent.";
+        platform.answer("POST", decisionOf("approve"), 403, "{\"message\":\"" + refusal + "\"}");
+
+        Result r = run(new RequestCredential(agentToken()), "release-request", "--project", "qits", "approve",
+                "--request", DECIDED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(refusal)
+                .doesNotContain("reads but does not write");
         assertThat(r.out()).isEmpty();
     }
 
