@@ -876,6 +876,126 @@ class PlatformCommandsTest {
                 + " answered HTTP 404: Release request not found: " + PENDING_ID);
     }
 
+    // --- overriding an upstream gate (epic qits-897, qits-916) ---
+
+    private static final String UPSTREAM_ID = "88888888-2222-3333-4444-555555555555";
+
+    private static String overrideOf(String id) {
+        return REQUESTS + "/" + id + "/upstream-overrides";
+    }
+
+    /** The pending request, answered with the upstream-in-flight gate overridden. */
+    private void answerOverride() {
+        platform.answer("POST", overrideOf(PENDING_ID), """
+                {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,
+                  "detail":"Overridden: qits-ci-service-rr-7 (wohlben)",
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
+                """.formatted(PENDING_ID, CI));
+    }
+
+    @Test
+    void overrideFindsTheRequestByTheStartOfItsIdAndSendsTheUpstreamAndNote() throws Exception {
+        answerOverride();
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "override",
+                "--request", "1111", "--upstream", "  qits-ci-service-rr-7  ", "--note", "  Safe to go ahead. ");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
+        assertThat(JSON.readTree(platform.requests("POST", overrideOf(PENDING_ID)).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"upstreamRequestId\":\"qits-ci-service-rr-7\",\"note\":\"Safe to go ahead.\"}"));
+        assertThat(r.out()).startsWith("Release request " + PENDING_ID + "\n")
+                .contains("  state          PENDING")
+                .contains("  detail         Overridden: qits-ci-service-rr-7 (wohlben)")
+                .contains("Sources:");
+    }
+
+    @Test
+    void overrideWithoutANoteSendsNoNoteAndTakesItsOptionsAfterTheSubcommand() throws Exception {
+        answerOverride();
+
+        Result r = run("release-request", "override", "--request", PENDING_ID, "--upstream", UPSTREAM_ID,
+                "--project", "qits", "--repository", CI, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", overrideOf(PENDING_ID)).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"upstreamRequestId\":\"" + UPSTREAM_ID + "\"}"));
+        assertThat(JSON.readTree(r.out()).path("request").path("state").asText()).isEqualTo("PENDING");
+        assertThat(run("release-request", "override", "--project", "qits", "--repository", CI,
+                "--upstream", UPSTREAM_ID).exit()).isEqualTo(2);
+        assertThat(run("release-request", "override", "--project", "qits", "--repository", CI,
+                "--request", PENDING_ID).exit()).isEqualTo(2);
+    }
+
+    @Test
+    void overrideOfAStartThatFitsNoneSendsNothing() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "override",
+                "--request", "9999", "--upstream", UPSTREAM_ID);
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Repository qits-ci-service has no release request '9999'.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
+    @Test
+    void aRequestThatIsNotPendingAVerdictCannotBeOverridden() {
+        String sentence = "Release request " + PENDING_ID + " is not pending a verdict of its own, so there is "
+                + "nothing to override.";
+        platform.answer("POST", overrideOf(PENDING_ID), 409, "{\"message\":\"" + sentence + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "override",
+                "--request", "1111", "--upstream", UPSTREAM_ID);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(sentence);
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void anOverrideThatIsMootIsTheServices409() {
+        String moot = "The override is moot: qits-ci-service-rr-7 is not building.";
+        platform.answer("POST", overrideOf(PENDING_ID), 409, "{\"message\":\"" + moot + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "override",
+                "--request", "1111", "--upstream", "qits-ci-service-rr-7");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(moot);
+    }
+
+    @Test
+    void a404OnOverrideReachesThePersonInTheServicesWords() {
+        platform.answer("POST", overrideOf(PENDING_ID), 404,
+                "{\"message\":\"No such upstream request: " + UPSTREAM_ID + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "override",
+                "--request", "11111111", "--upstream", UPSTREAM_ID);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("answered HTTP 404: No such upstream request: " + UPSTREAM_ID);
+    }
+
+    /**
+     * Only a person's own CLI sign-in counts for this decision (qits-897): an agent gets 403 in
+     * the door's own words, exactly as it reaches a person.
+     */
+    @Test
+    void a403ToAnAgentOrAServiceClientReachesThePersonInTheServicesWords() {
+        String personOnly = "Only a person's own CLI sign-in counts for this decision. Asserted identity headers, "
+                + "service clients, agents and workspace credentials are refused.";
+        platform.answer("POST", overrideOf(PENDING_ID), 403, "{\"message\":\"" + personOnly + "\"}");
+
+        Result r = run(new RequestCredential(agentToken()), "release-request", "--project", "qits",
+                "--repository", "qits-ci-service", "override", "--request", "1111", "--upstream", UPSTREAM_ID);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(personOnly);
+        assertThat(r.out()).isEmpty();
+    }
+
     // --- approving and declining a fold ---
 
     private static final String DECIDED_ID = "66666666-2222-3333-4444-555555555555";
