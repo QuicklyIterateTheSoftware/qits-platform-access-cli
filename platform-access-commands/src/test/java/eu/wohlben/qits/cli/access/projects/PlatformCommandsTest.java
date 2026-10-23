@@ -543,6 +543,36 @@ class PlatformCommandsTest {
                 .contains("pre-run-qa")
                 .contains("Waiting for upstream releases: qits-ci-frontend-rr-12")
                 .contains("qits-ci-frontend-rr-12")
+                .doesNotContain("Gates:")
+                .containsSubsequence("upstream-in-flight", "pre-run-qa",
+                        "Waiting for upstream releases: qits-ci-frontend-rr-12", "qits-ci-frontend-rr-12");
+    }
+
+    @Test
+    void printsEachGatesChecksDirectlyUnderThatGateRatherThanAfterEveryGate() throws Exception {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
+                  "supersededBy":null,
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "qualityGates":[{"kind":"automations","label":"Automations","position":"pre-run-qa",
+                    "state":"PENDING","detail":"Waiting for automations",
+                    "checks":[{"name":"Dependency bump","state":"PENDING","detail":"QUEUED","runId":null},
+                      {"name":"Golden recordings (maven)","state":"PENDING","detail":"QUEUED","runId":null}],
+                    "runId":null,"link":null},
+                   {"kind":"manual-review","label":"Deployment","position":"post-release",
+                    "state":"PASSED","detail":null,"checks":[],"runId":null,"link":null}],
+                  "sources":[]}}
+                """.formatted(CI));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out())
+                .containsSubsequence("automations", "Dependency bump", "Golden recordings (maven)",
+                        "manual-review")
                 .doesNotContain("Gates:");
     }
 

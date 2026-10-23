@@ -799,33 +799,33 @@ public class ReleaseRequestCommand implements Runnable {
 
     /**
      * The request's gates (epic qits-897, ticket qits-904). {@code qualityGates[]} is the current
-     * shape: one row per gate (kind, position, state, detail), and, under a gate whose {@code
-     * checks[]} is not empty, one indented line per check (name, state, detail) &mdash; what it is
-     * waiting for, such as the upstream request an {@code upstream-in-flight} gate names (qits-913).
-     * Falls back to the deprecated {@code gates[]} table (kind, state, reason) when the answer has
-     * no {@code qualityGates}, which is an older service that has not grown the field yet.
+     * shape: one row per gate (kind, position, state, detail), and, directly under a gate whose
+     * {@code checks[]} is not empty, one indented line per check (name, state, detail) &mdash; what
+     * it is waiting for, such as the upstream request an {@code upstream-in-flight} gate names
+     * (qits-913). The check rows are interleaved into the same list of rows the gate rows are, right
+     * after the gate they belong to, and printed with one {@link Table#print} call so every column
+     * lines up across gates and checks alike. Falls back to the deprecated {@code gates[]} table
+     * (kind, state, reason) when the answer has no {@code qualityGates}, which is an older service
+     * that has not grown the field yet.
      */
     private static void printGates(PrintStream out, JsonNode request) {
         JsonNode qualityGates = request.path("qualityGates");
         if (qualityGates.isArray() && !qualityGates.isEmpty()) {
             List<List<String>> rows = new ArrayList<>();
-            qualityGates.forEach(g -> rows.add(List.of(
-                    Table.cell(text(g, "kind"), 20),
-                    Table.cell(text(g, "position"), 20),
-                    Table.cell(text(g, "state"), 12),
-                    Table.cell(text(g, "detail"), 80))));
-            out.println("Quality gates:");
-            Table.print(out, "  ", List.of("KIND", "POSITION", "STATE", "DETAIL"), rows);
             qualityGates.forEach(g -> {
-                List<List<String>> checks = new ArrayList<>();
-                g.path("checks").forEach(c -> checks.add(List.of(
-                        Table.cell(text(c, "name"), 60),
+                rows.add(List.of(
+                        Table.cell(text(g, "kind"), 20),
+                        Table.cell(text(g, "position"), 20),
+                        Table.cell(text(g, "state"), 12),
+                        Table.cell(text(g, "detail"), 80)));
+                g.path("checks").forEach(c -> rows.add(List.of(
+                        Table.cell("  " + text(c, "name"), 60),
+                        "",
                         Table.cell(text(c, "state"), 12),
                         Table.cell(text(c, "detail"), 80))));
-                if (!checks.isEmpty()) {
-                    Table.print(out, "      ", null, checks);
-                }
             });
+            out.println("Quality gates:");
+            Table.print(out, "  ", List.of("KIND", "POSITION", "STATE", "DETAIL"), rows);
             return;
         }
         List<List<String>> gates = new ArrayList<>();
