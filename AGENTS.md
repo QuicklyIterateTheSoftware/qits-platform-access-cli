@@ -11,7 +11,8 @@ run's step logs, a retry, a run's release reports), `qits database diagram` (a r
 diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
 delete), `qits events` (the live event
 stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits workspaces` (every action
-of the landing app's workspace pages, on the same qits-workspaces doors), `qits checkout-daemon` (a local checkout held at what a repository released, root and
+of the landing app's workspace pages, on the same qits-workspaces doors), `qits targets` (execution
+targets and their leases, qits-system-service's doors; epic qits-1481), `qits checkout-daemon` (a local checkout held at what a repository released, root and
 submodules), `qits observe` (the live, server-filtered telemetry stream of qits-observability, over
 a WebSocket), and `qits git-login` / `qits git-credential` (Git pushes to
 `refs/heads/external/*`, sign-in stored in `$XDG_CONFIG_HOME/qits/git.json`), `qits agents claude …` (what
@@ -228,6 +229,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                LocalTerminal is the caller's terminal, SttyTerminal the real one (stty on /dev/tty,
                SIGWINCH through sun.misc.Signal plus a size poll; no JLine here), READ_ONLY the
                answer when stdin is no terminal
+    targets/   qits targets: execution targets and their leases, qits-system-service's /system/api
+               (epic qits-1481, ticket qits-1530). TargetsApi is every door; the command group is
+               modelled on workspaces/'s WorkspaceRunnersCommand. `create` and `registration-token`
+               are left out, as workspaces' `register runner` and `rotate token` are: they answer a
+               one-time token qits never prints. `sign-in` prints the target's login command for a
+               harness and polls `login-check` every 30 seconds until PRESENT or --timeout passes
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.

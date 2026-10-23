@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -3899,6 +3899,298 @@ qits workspaces runners delete 00000000-0000-4000-8000-000000000020
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets
+
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds; and sign a target in.
+
+A target is named by its name or its id (`qits targets list` shows both).
+
+### Notes
+
+- Reading, and asking for a health check, are open to qits:agent. Updating, deleting and asking for a login check need qits:admin, qits:admin-agent or (for update and delete) qits:system; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
+- Declaring a target and rotating its registration token are not offered here: their answer is a one-time token, and qits never prints a token.
+- --system-url and --output may come before or after the command.
+
+## qits targets list
+
+Every target, by name: connected or not, version, slots (ci, workspace and desk, used over their minimum, and the total used over the total), login and quarantine.
+
+GET /system/api/targets. Any credential may call it, qits:agent included.
+
+```
+qits targets list [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets list
+qits targets list -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets show
+
+One target in full: its slots and minimums, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, and its newest connection.
+
+GET /system/api/targets/{id}. Any credential may call it, qits:agent included.
+
+```
+qits targets show --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets show --target localhost
+qits targets show --target localhost -o json
+```
+
+- loginCommand and kimiLoginCommand are null until a login state has arrived on the target's current connection: `qits targets sign-in` names that.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets update
+
+Change a target's description or slot minimums. Only what is given is sent; a minimum left out keeps its value.
+
+PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+
+```
+qits targets update --target <name|id> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `--description <text>` | Free text. |
+| `--min-ci <n>` | Slots reserved for CI. |
+| `--min-desk <n>` | Slots reserved for the desk. |
+| `--min-workspace <n>` | Slots reserved for workspaces. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets update --target localhost --min-ci 2 --min-workspace 2 --min-desk 1
+qits targets update --target localhost --description 'The build machine under the desk'
+```
+
+- A blank --description clears it. HTTP 409 MINIMUMS_EXCEED_TOTAL: their sum is above the target's slots total.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets greenlight
+
+Lift a target's quarantine. The service quarantines a target itself, after a failed health check, or when it registers.
+
+POST /system/api/targets/{id}/greenlight, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+
+```
+qits targets greenlight --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets greenlight --target localhost
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets healthcheck
+
+Ask a connected target for a health check now. The result arrives with a later `qits targets show`.
+
+POST /system/api/targets/{id}/healthcheck, no body (HTTP 202 {requestId}). Any credential may call it, qits:agent included.
+
+```
+qits targets healthcheck --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets healthcheck --target localhost
+```
+
+- A disconnected target is refused: HTTP 409 TARGET_UNAVAILABLE.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets login-check
+
+Ask a connected target to probe its credential volume's sign-in again. The result shows in a later `qits targets show` or `qits targets list`.
+
+POST /system/api/targets/{id}/login-check, no body (HTTP 202). It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+
+```
+qits targets login-check --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets login-check --target localhost
+```
+
+- A disconnected target is refused: HTTP 409 TARGET_UNAVAILABLE.
+- `qits targets sign-in` sends this itself, every 30 seconds, until the target reports PRESENT.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets delete
+
+Decommission a target: retire its runner and give its credentials back.
+
+DELETE /system/api/targets/{id}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+
+```
+qits targets delete --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets delete --target localhost
+```
+
+- A target that still holds a lease that has not ended is refused: HTTP 409 TARGET_BUSY.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets leases
+
+Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state.
+
+GET /system/api/leases?targetId=&slotType=&state=. qits:admin, qits:admin-agent and qits:agent read every lease; qits:system reads only its own.
+
+```
+qits targets leases [--output table|json] [--state <state>] [--system-url <url>] [--target <name|id>] [--type ci|workspace|desk]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--state <state>` | Only this state: QUEUED, GRANTED, RUNNING, EXITED, FAILED, ENDING or ENDED. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+| `--target <name\|id>` | Only this target's leases. |
+| `--type ci\|workspace\|desk` | Only this slot type. |
+
+### Examples
+
+```
+qits targets leases
+qits targets leases --target localhost
+qits targets leases --type workspace --state RUNNING
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets sign-in
+
+Sign a target's credential volume in for a harness: prints the docker command an operator runs on the target's machine, then asks the target to check its sign-in every 30 seconds until it reports PRESENT, or the timeout passes.
+
+GET /system/api/targets/{id}, then POST .../login-check every 30s (HTTP 202). It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design. Already PRESENT: prints the command and exits at once, no login-check sent.
+
+```
+qits targets sign-in --target <name|id> [--harness claude|kimi] [--output table|json] [--system-url <url>] [--timeout <duration>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `--harness claude\|kimi` | The harness to sign in. Default: claude. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+| `--timeout <duration>` | How long to wait: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: 10m. |
+
+### Examples
+
+```
+qits targets sign-in --target localhost
+qits targets sign-in --target localhost --harness kimi --timeout 2h
+```
+
+- The command is null until a login state has arrived on the target's current connection: run `qits targets healthcheck` or wait for the runner to connect, then try again.
+- 1: the target is still ABSENT or UNKNOWN after --timeout; the message names the last state.
+- --output has no effect here: this command prints notices, never the service's answer.
+
+### Exit codes
+
+- `0` The target reports PRESENT (already, or within --timeout).
+- `1` The platform refused or cannot be reached, or --timeout passed with the target still not signed in (the message names the last state).
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits git-login

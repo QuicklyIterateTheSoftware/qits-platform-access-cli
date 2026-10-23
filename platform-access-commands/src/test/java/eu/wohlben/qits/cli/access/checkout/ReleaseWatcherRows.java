@@ -24,8 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Events, no part of the pact. The query is the one {@code CheckoutDaemonCommand} builds: the name,
  * the {@code attr} filters with lower-case keys, the newest one.
  * <p>
- * Pending since qits-1470: qits-events records {@code SCMRelease} under {@code a repository with a
- * release}, and the watch no longer asks for that, so the row waits for the state below.
+ * qits-1470 moved the watch off {@code SCMRelease}, which left the row pending until qits-events
+ * recorded the state below (ticket qits-1477): two finalized requests of the repository, a newer
+ * one that is only RELEASED and another repository's, so the answer holds the second alone.
  */
 public final class ReleaseWatcherRows {
 

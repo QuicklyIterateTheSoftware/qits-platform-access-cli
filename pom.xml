@@ -96,7 +96,7 @@
         <qits.artifacts-golden-masters.version>2026.1019.62657</qits.artifacts-golden-masters.version>
         <qits.ci-golden-masters.version>2026.1018.180637</qits.ci-golden-masters.version>
         <qits.idp-golden-masters.version>2026.1022.183304</qits.idp-golden-masters.version>
-        <qits.events-golden-masters.version>2026.1019.104024</qits.events-golden-masters.version>
+        <qits.events-golden-masters.version>2026.1023.82831</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1023.5649</qits.maintenance-golden-masters.version>
         <qits.observability-golden-masters.version>2026.1018.155850</qits.observability-golden-masters.version>
         <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:

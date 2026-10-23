@@ -42,6 +42,11 @@ public final class PlatformUrls {
         return resolve("workspaces", "--workspaces-url", "QITS_WORKSPACES_URL", flag, env, idpUrl);
     }
 
+    /** qits-system-service: the targets and leases doors under {@code /system/api}. */
+    public static String system(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        return resolve("system", "--system-url", "QITS_SYSTEM_URL", flag, env, idpUrl);
+    }
+
     /**
      * qits-artifacts, which answers on the host {@code registry}: {@code
      * https://registry.qits.wohlben.eu}. {@code QITS_ARTIFACTS_URL} is the variable install.sh reads
