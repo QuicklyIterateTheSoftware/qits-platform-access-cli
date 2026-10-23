@@ -55,8 +55,16 @@ class LandingPactTest {
     /** The agent the daemon interactions that name none (the commands list) are read for. */
     private static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
 
-    /** The landing app's calls the CLI leaves out on purpose: each answers a one-time registration token. */
-    static final Set<String> NOT_OFFERED = Set.of("createRunner", "rotateRunnerRegistrationToken");
+    /**
+     * The landing app's calls the CLI leaves out on purpose: {@code createRunner} and
+     * {@code rotateRunnerRegistrationToken} each answer a one-time registration token; the other
+     * runner calls are retired by qits-1534, ahead of the epic qits-1481 feature that drops the
+     * landing app's own Runners page and this fixture's copy of its pact (`qits targets` replaces
+     * the group).
+     */
+    static final Set<String> NOT_OFFERED = Set.of("createRunner", "rotateRunnerRegistrationToken", "listRunners",
+            "getRunnerHealth", "patchRunner", "greenlightRunner", "requestRunnerHealthcheck",
+            "requestRunnerLoginCheck", "deleteRunner");
 
     /** The command that makes each call, built from the request the landing app recorded. */
     static final Map<String, Function<JsonNode, List<String>>> ROWS = new HashMap<>();
@@ -141,30 +149,6 @@ class LandingPactTest {
         ROWS.put("listPlugins", r -> List.of("workspaces", "agents", "plugins", "list", "--workspace", segment(r, 2)));
         ROWS.put("installPlugin", r -> List.of("workspaces", "agents", "plugins", "install", segment(r, 4),
                 "--workspace", segment(r, 2)));
-        // --- runners ---
-        ROWS.put("listRunners", r -> List.of("workspaces", "runners", "list"));
-        ROWS.put("getRunnerHealth", r -> List.of("workspaces", "runners", "health", segment(r, 3)));
-        ROWS.put("patchRunner", r -> {
-            JsonNode body = body(r);
-            List<String> argv = new ArrayList<>(List.of("workspaces", "runners", "update", segment(r, 3)));
-            if (body.has("slots")) {
-                argv.addAll(List.of("--slots", body.path("slots").asText()));
-            }
-            if (body.has("description")) {
-                argv.addAll(List.of("--description", body.path("description").asText()));
-            }
-            if (body.has("workspaceMemoryLimit")) {
-                argv.addAll(List.of("--memory", body.path("workspaceMemoryLimit").asText()));
-            }
-            if (body.has("workspaceMemorySwapLimit")) {
-                argv.addAll(List.of("--memory-swap", body.path("workspaceMemorySwapLimit").asText()));
-            }
-            return argv;
-        });
-        ROWS.put("greenlightRunner", r -> List.of("workspaces", "runners", "greenlight", segment(r, 3)));
-        ROWS.put("requestRunnerHealthcheck", r -> List.of("workspaces", "runners", "healthcheck", segment(r, 3)));
-        ROWS.put("requestRunnerLoginCheck", r -> List.of("workspaces", "runners", "login-check", segment(r, 3)));
-        ROWS.put("deleteRunner", r -> List.of("workspaces", "runners", "delete", segment(r, 3)));
     }
 
     @TempDir
@@ -215,7 +199,7 @@ class LandingPactTest {
         }
         assertThat(skipped).isEqualTo(NOT_OFFERED);
         assertThat(covered).isEqualTo(ROWS.keySet());
-        assertThat(checked).isGreaterThan(50);
+        assertThat(checked).isGreaterThan(40);
     }
 
     private void check(JsonNode interaction, List<String> argv) throws Exception {

@@ -28,7 +28,8 @@ Commands:
 - `qits workspaces` is every action the landing app's workspace pages offer, one command each, on
   the same qits-workspaces door: the slots and their containers (start, stop, recreate, the start's
   log), the agents (create, discard, prompt, the prompt draft, the chat, the files, the harness,
-  sign-in, plugins), the runners, and a command's terminal (`qits workspaces attach`).
+  sign-in, plugins), and a command's terminal (`qits workspaces attach`). The nodes slots are placed
+  on are `qits targets`.
 - `qits targets` lists qits-system's execution targets (connection, slots, login, quarantine),
   reads one in full, updates its description or slot minimums, lifts a quarantine, asks for a
   health check or a login check, deletes one, lists leases, and `qits targets sign-in` prints a
@@ -602,10 +603,6 @@ Installing it is not part of this version.
     qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI] [--attach]
     qits workspaces agents plugins list --workspace <n>
     qits workspaces agents plugins install <plugin> --workspace <n>
-    qits workspaces runners list | health <runner>
-    qits workspaces runners update <runner> [--slots <n>] [--description <text>] [--memory <size>] \
-        [--memory-swap <size>]
-    qits workspaces runners greenlight|healthcheck|login-check|delete <runner>
     qits targets list | show --target <name|id>
     qits targets update --target <name|id> [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] \
         [--description <text>]
@@ -1453,11 +1450,6 @@ by one command, the same way.
                                                        files/content?path=, detection
     qits workspaces agents sign-in status|open    GET  …/agents/available, POST …/agents/sign-in
     qits workspaces agents plugins list|install   GET  …/agent-plugins, POST …/agent-plugins/{id}/install {}
-    qits workspaces runners list|health           GET  /workspaces/api/runners, …/runners/{id}/health
-    qits workspaces runners update                PATCH /workspaces/api/runners/{id}
-    qits workspaces runners greenlight|healthcheck|login-check
-                                                  POST /workspaces/api/runners/{id}/<verb> (no body)
-    qits workspaces runners delete                DELETE /workspaces/api/runners/{id}
 
 `…` is `/workspaces/container/{n}`: qits-workspaces' container proxy to the slot's daemon, so those
 commands take the slot with `--workspace <n>`, as the page's base URL does. A work item is its
@@ -1467,17 +1459,15 @@ is, since the service takes both.
 Who may: every read is open to every credential, `qits:agent` included. The JSON API's writes (start,
 stop, recreate, agents create/discard/prompt, draft save/discard) need `qits:admin` or
 `qits:admin-agent`, which a person's token carries; `qits:agent` is refused with 403 by design. The
-runners' update, greenlight and delete need `qits:admin`, `qits:admin-agent` or `qits:system`,
-login-check `qits:admin` or `qits:admin-agent`; healthcheck is open to `qits:agent`. The container
-proxy checks the caller instead: a person, `qits:system`, `qits:admin` or `qits:admin-agent` may reach
-any slot; `qits:agent` only its own workspace's.
+container proxy checks the caller instead: a person, `qits:system`, `qits:admin` or `qits:admin-agent`
+may reach any slot; `qits:agent` only its own workspace's.
 Each command's help says which applies.
 
-Not here, on purpose: registering a runner and rotating its registration token, whose answer is a
-one-time token (qits prints no token but the two the conventions name); the live chat socket
-(`WS …/chat/commands/{id}`), whose transcript `agents chat` reads and whose prompts `agents prompt`
-sends; and the slot's hint stream (`/workspaces/api/workspaces/{id}/events`), which only tells a page
-to read again. `qits workspaces log` is a stream and therefore not an MCP tool.
+Not here, on purpose: the live chat socket (`WS …/chat/commands/{id}`), whose transcript `agents chat`
+reads and whose prompts `agents prompt` sends; and the slot's hint stream
+(`/workspaces/api/workspaces/{id}/events`), which only tells a page to read again. `qits workspaces
+log` is a stream and therefore not an MCP tool. The nodes slots are placed on are no longer here
+either: `qits workspaces runners` is retired (qits-1534, epic qits-1481); see `qits targets` below.
 
 `qits workspaces attach <command id> --workspace <n>` is the agent's Terminal tab (qits-1265): this
 terminal attached to a command's terminal on the slot's daemon, `WS …/terminal/commands/{id}` through
@@ -1502,8 +1492,9 @@ the container proxy, with the caller's own bearer. The command ids come from `ag
 ### qits targets
 
 Execution targets and their leases, qits-system-service's `/system/api` (epic qits-1481): one
-command per door, on the pattern of `qits workspaces runners`. A target is named by its name or its
-id (`qits targets list` shows both); `--target` resolves a name by reading `listTargets`.
+command per door. This replaces the per-slot-type runner groups the old placement model had, such as
+`qits workspaces runners` (retired by qits-1534). A target is named by its name or its id (`qits
+targets list` shows both); `--target` resolves a name by reading `listTargets`.
 
     qits targets list                             GET  /system/api/targets
     qits targets show --target <name|id>          GET  /system/api/targets/{id}
@@ -1525,8 +1516,7 @@ and `qits:agent`, and only the caller's own for `qits:system`. Each command's he
 roles.
 
 Not here, on purpose: declaring a target and rotating its registration token, whose answer is a
-one-time token (qits prints no token but the two the conventions name, as `qits workspaces runners`
-leaves out register and rotate token).
+one-time token (qits prints no token but the two the conventions name).
 
 `qits targets sign-in` prints the target's login command for `--harness` (default `claude`) — the
 `docker run` that signs the target's credential volume in, run on the target's own machine — with

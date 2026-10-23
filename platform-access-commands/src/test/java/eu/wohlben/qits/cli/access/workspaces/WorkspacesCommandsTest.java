@@ -40,7 +40,6 @@ class WorkspacesCommandsTest {
     private static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
     private static final String COMMAND = "00000000-0000-4000-8000-000000000100";
     private static final String EPIC = "45a14f8e-f550-45bb-a117-6b34d8c472e3";
-    private static final String RUNNER = "00000000-0000-4000-8000-000000000020";
     private static final String PROCESS = "00000000-0000-4000-8000-000000000100";
     private static final String REPOSITORY = "0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a";
 
@@ -89,13 +88,13 @@ class WorkspacesCommandsTest {
     void theSlotsAreATableForAPersonAndTheServicesAnswerInJson() throws Exception {
         platform.answer("GET", "/workspaces/api/workspaces", """
                 {"entries":[{"workspace":{"id":1,"workspaceId":"ws-contract","runtimeStatus":"RUNNING",
-                 "placement":"RUNNER","runner":{"name":"localhost"},"admin":false,"queuedAt":null}}]}
+                 "placement":"TARGET","admin":false,"queuedAt":null}}]}
                 """);
 
         Result table = run("workspaces", "list", "--repository", REPOSITORY);
         assertThat(table.exit()).as(table.err()).isZero();
         assertThat(table.out()).contains("SLOT").contains("CONTAINER")
-                .containsPattern("1\\s+ws-contract\\s+RUNNING\\s+RUNNER\\s+localhost\\s+false");
+                .containsPattern("1\\s+ws-contract\\s+RUNNING\\s+TARGET\\s+false");
         assertThat(platform.requests("GET", "/workspaces/api/workspaces").getFirst().query())
                 .isEqualTo("repositoryId=" + REPOSITORY);
 
@@ -254,23 +253,8 @@ class WorkspacesCommandsTest {
     }
 
     @Test
-    void aRunnerCheckThatAnswersNothingIsDoneAndANeverCheckedRunnerSaysSo() {
-        platform.answer("POST", "/workspaces/api/runners/" + RUNNER + "/login-check", 202, "");
-        platform.answer("GET", "/workspaces/api/runners/" + RUNNER + "/health", 204, "");
-
-        Result check = run("workspaces", "runners", "login-check", RUNNER);
-        assertThat(check.exit()).as(check.err()).isZero();
-        assertThat(check.out()).contains("Asked runner " + RUNNER);
-
-        Result health = run("workspaces", "runners", "health", RUNNER);
-        assertThat(health.exit()).as(health.err()).isZero();
-        assertThat(health.out()).contains("has no health check yet");
-    }
-
-    @Test
     void whatCannotBeSentIsRefusedBeforeAnythingGoesOut() {
         assertThat(run("workspaces", "agents", "chat", AGENT).exit()).isEqualTo(2);
-        assertThat(run("workspaces", "runners", "update", RUNNER).exit()).isEqualTo(2);
         assertThat(run("workspaces", "agents", "create", "--repository", "r", "--work", EPIC, "--kind", "STORY")
                 .exit()).isEqualTo(2);
         assertThat(run("workspaces", "agents", "sign-in", "open", "--workspace", "1", "--harness", "GPT").exit())
@@ -284,6 +268,11 @@ class WorkspacesCommandsTest {
     void aGroupAloneAsksForACommand() {
         assertThat(run("workspaces").exit()).isEqualTo(2);
         assertThat(run("workspaces", "agents").exit()).isEqualTo(2);
-        assertThat(run("workspaces", "runners").exit()).isEqualTo(2);
+    }
+
+    @Test
+    void thereIsNoRunnersCommandAnymore() {
+        Result result = run("workspaces", "runners", "list");
+        assertThat(result.exit()).isEqualTo(2);
     }
 }

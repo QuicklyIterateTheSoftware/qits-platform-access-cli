@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.catchThrowableOfType;
  * container proxy are qits-workspace-daemon's, in {@link WorkspaceDaemonContract}.
  * <p>
  * One row per (command, call), each in a state qits-workspaces records, with the request it
- * recorded: the slot, agent and runner ids are the state's examples, the bodies the recorded ones.
+ * recorded: the slot and agent ids are the state's examples, the bodies the recorded ones.
  * {@code consumes} is what the table form prints; {@code -o json} prints the answer as it came. A
  * command whose options pick the query ({@code agents list}) has a row per query the provider
  * recorded. A refusal a command words itself (a draft that is not there, a 204 health) is a row too.
@@ -45,23 +45,16 @@ public final class WorkspacesContract {
     static final String WORKING_ON_A_TICKET = "an agent working on a ticket";
     static final String SAVED_DRAFT = "an agent with a saved prompt draft";
     static final String NO_DRAFT = "an agent with no prompt draft";
-    static final String RUNNER_IN_SERVICE = "a runner in service";
-    static final String UNREGISTERED_RUNNER = "an unregistered runner";
-    static final String QUARANTINED_RUNNER = "a quarantined runner";
 
     private static final CliPact BASE = CliPact.of("qits-workspaces-service", "qits-workspaces");
 
     /** A slot as the list's row and {@code printSlot} read it. */
     static final List<String> SLOT = List.of("id", "workspaceId", "runtimeStatus", "runtimeError", "placement",
-            "runner.name", "admin", "queuedAt", "daemonConnectedAt", "daemonVersion", "daemonOutdated");
+            "admin", "queuedAt", "daemonConnectedAt", "daemonVersion", "daemonOutdated");
 
     /** An agent as {@code agents list} prints it. */
     static final List<String> AGENT = List.of("agentId", "workspaceRowId", "entityId", "state", "runState", "harness",
             "waitingOn", "entityTitle");
-
-    /** A runner as {@code runners list} prints it. */
-    static final List<String> RUNNER = List.of("id", "name", "connected", "version", "running", "slots",
-            "quarantined", "health.ok", "lastHealthCheckOk", "lastSeenAt");
 
     @FunctionalInterface
     interface Call {
@@ -180,31 +173,6 @@ public final class WorkspacesContract {
     private static final Call DELETE_DRAFT = (api, params, recorded) ->
             assertThat(api.deleteDraft(params.get("agentId")).isNull()).isTrue();
 
-    private static final Call RUNNERS = (api, params, recorded) ->
-            assertThat(WorkspacesCommand.entries(api.runners(), "runners", null)).isNotEmpty()
-                    .allSatisfy(r -> assertThat(r.path("name").asText()).isNotBlank());
-
-    private static final Call HEALTH = (api, params, recorded) ->
-            assertThat(api.runnerHealth(params.get("runnerId")).path("checks")).isNotEmpty()
-                    .allSatisfy(c -> assertThat(c.path("name").asText()).isNotBlank());
-
-    /** A runner never checked answers 204: {@code health} says it has no check yet. */
-    private static final Call NO_HEALTH = (api, params, recorded) ->
-            assertThat(api.runnerHealth(params.get("runnerId")).isNull()).isTrue();
-
-    private static final Call PATCH_RUNNER = (api, params, recorded) ->
-            assertThat(api.patchRunner(params.get("runnerId"), body(recorded)).path("slots").isNumber()).isTrue();
-
-    private static Call runnerVerb(String verb) {
-        return (api, params, recorded) -> api.runnerVerb(params.get("runnerId"), verb);
-    }
-
-    private static final Call GREENLIGHT = (api, params, recorded) ->
-            assertThat(api.runnerVerb(params.get("runnerId"), "greenlight").path("quarantined").isBoolean()).isTrue();
-
-    private static final Call DELETE_RUNNER = (api, params, recorded) ->
-            assertThat(api.deleteRunner(params.get("runnerId")).isNull()).isTrue();
-
     // --- the table ------------------------------------------------------------------------------
 
     public static final CliPact CONTRACT = BASE
@@ -265,24 +233,6 @@ public final class WorkspacesContract {
                 SAVE_DRAFT).consumes("draft.updatedAt"));
         rows.add(row("qits workspaces agents draft discard", SAVED_DRAFT, "deleteAgentPromptDraft", "deleteDraft",
                 DELETE_DRAFT));
-
-        // qits workspaces runners
-        rows.add(row("qits workspaces runners list", RUNNER_IN_SERVICE, "listRunners", "runners", RUNNERS)
-                .consumes(held(RUNNER_IN_SERVICE, "listRunners", prefixed("[].", RUNNER))));
-        rows.add(row("qits workspaces runners health", RUNNER_IN_SERVICE, "getRunnerHealth", "runnerHealth", HEALTH)
-                .consumes("checks[].name", "checks[].ok", "checks[].data"));
-        rows.add(row("qits workspaces runners health", UNREGISTERED_RUNNER, "getRunnerHealth", "runnerHealth",
-                NO_HEALTH));
-        rows.add(row("qits workspaces runners update", RUNNER_IN_SERVICE, "patchRunner", "patchRunner", PATCH_RUNNER)
-                .consumes("slots", "workspaceMemoryLimit", "workspaceMemorySwapLimit"));
-        rows.add(row("qits workspaces runners greenlight", QUARANTINED_RUNNER, "greenlightRunner", "runnerVerb",
-                GREENLIGHT).consumes("quarantined"));
-        rows.add(row("qits workspaces runners healthcheck", RUNNER_IN_SERVICE, "requestRunnerHealthcheck",
-                "runnerVerb", runnerVerb("healthcheck")));
-        rows.add(row("qits workspaces runners login-check", RUNNER_IN_SERVICE, "requestRunnerLoginCheck",
-                "runnerVerb", runnerVerb("login-check")));
-        rows.add(row("qits workspaces runners delete", UNREGISTERED_RUNNER, "deleteRunner", "deleteRunner",
-                DELETE_RUNNER));
         return List.copyOf(rows);
     }
 
