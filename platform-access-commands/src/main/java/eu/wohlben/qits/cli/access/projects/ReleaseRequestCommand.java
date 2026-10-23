@@ -31,12 +31,13 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
                 ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class,
                 ReleaseRequestCommand.ApproveCommand.class, ReleaseRequestCommand.DeclineCommand.class,
-                ReleaseRequestCommand.RegenerateCommand.class},
+                ReleaseRequestCommand.RegenerateCommand.class, ReleaseRequestCommand.OverrideCommand.class},
         description = {"Release requests: the one way to release a repository. list shows them (of the whole project, "
                         + "or of one repository), create "
                         + "asks for a branch to be released, join adds a branch to an open request, withdraw "
                         + "ends a request that must not ship, approve lets the fold a request is on go ahead, "
-                        + "decline sends it back, and regenerate runs one release output again.",
+                        + "decline sends it back, regenerate runs one release output again, and override lifts the "
+                        + "upstream-in-flight gate for one upstream request that is itself still building.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
                         + "States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its "
                         + "remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build "
@@ -466,6 +467,73 @@ public class ReleaseRequestCommand implements Runnable {
                 return new CliFailure("No such request. " + refused.getMessage(), CliFailure.FAILED);
             }
             return refused;
+        }
+    }
+
+    @CommandLine.Command(name = "override", mixinStandardHelpOptions = true,
+            description = {"Lift the upstream-in-flight gate (epic qits-897) for one upstream request that is "
+                            + "still building, so this request's QA may start without waiting for it.",
+                    "The gate holds a fold while an open request upstream of this one, in another repository of "
+                            + "the same project, is still building its own QA, publishing or releasing. Override "
+                            + "tells the platform to stop waiting on exactly the named upstream request; any other "
+                            + "upstream request the gate still names keeps holding the fold. It prints the request "
+                            + "that came back.",
+                    "Only a person's own CLI sign-in counts for this decision. An agent, a workspace credential or "
+                            + "a service client is refused (HTTP 403), in the door's own words."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-frontend override "
+                            + "--request qits-ci-frontend-rr-12 --upstream qits-ci-service-rr-7",
+                    "  qits release-request --project qits --repository qits-ci-frontend override "
+                            + "--request qits-ci-frontend-rr-12 --upstream qits-ci-service-rr-7 "
+                            + "--note \"qits-ci-service-rr-7 is a doc-only change; safe to go ahead.\"",
+                    "",
+                    "- --upstream is the upstream request exactly as the gate's check names it: its id "
+                            + "(qits-ci-service-rr-7) or its whole uuid.",
+                    "- HTTP 409 means the held request is not pending a verdict of its own to override "
+                            + "(it has already got one, or it is not open), or the override is moot because the "
+                            + "named upstream request is not building any more. Read the request again.",
+                    "- HTTP 404 means no such held request or no such upstream request."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED,
+                    "2:Used wrongly (for example a --request that fits no request, or more than one), not signed in, "
+                            + "or the session ended."})
+    public static class OverrideCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @Completes(ReleaseRequestSource.class)
+        @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
+                description = "The held request: its id as list shows it (qits-ci-frontend-rr-12), its uuid, or the "
+                        + "start of the uuid.")
+        String request;
+
+        @CommandLine.Option(names = "--upstream", paramLabel = "<id>", required = true,
+                description = "The upstream request the gate is waiting for: its id (qits-ci-service-rr-7), in "
+                        + "any case, or its whole uuid.")
+        String upstream;
+
+        @CommandLine.Option(names = "--note", paramLabel = "<text>",
+                description = "Why, in a sentence, for the record. Default: none.")
+        String note;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (request.isBlank() || upstream.isBlank()) {
+                throw new CliFailure("--request and --upstream must not be empty.", CliFailure.USAGE);
+            }
+            Target target = parent.target(context);
+            JsonNode found = find(target, request.strip());
+            JsonNode answer = target.api().overrideReleaseRequestUpstream(target.repoId(), text(found, "id"),
+                    upstream.strip(), note);
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            printRequest(context.out(), answer.path("request"));
+            return 0;
         }
     }
 

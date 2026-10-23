@@ -1492,7 +1492,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits release-request
 
-Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, and regenerate runs one release output again.
+Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, regenerate runs one release output again, and override lifts the upstream-in-flight gate for one upstream request that is itself still building.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
@@ -1764,6 +1764,45 @@ qits release-request --project qits --repository qits-projects-service regenerat
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example no --request when the repository has no open request or more than one), not signed in, or the session ended.
+
+## qits release-request override
+
+Lift the upstream-in-flight gate (epic qits-897) for one upstream request that is still building, so this request's QA may start without waiting for it.
+
+The gate holds a fold while an open request upstream of this one, in another repository of the same project, is still building its own QA, publishing or releasing. Override tells the platform to stop waiting on exactly the named upstream request; any other upstream request the gate still names keeps holding the fold. It prints the request that came back.
+
+Only a person's own CLI sign-in counts for this decision. An agent, a workspace credential or a service client is refused (HTTP 403), in the door's own words.
+
+```
+qits release-request override --request <id> --upstream <id> [--note <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--request <id>` | Required. The held request: its id as list shows it (qits-ci-frontend-rr-12), its uuid, or the start of the uuid. |
+| `--upstream <id>` | Required. The upstream request the gate is waiting for: its id (qits-ci-service-rr-7), in any case, or its whole uuid. |
+| `--note <text>` | Why, in a sentence, for the record. Default: none. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits release-request --project qits --repository qits-ci-frontend override --request qits-ci-frontend-rr-12 --upstream qits-ci-service-rr-7
+qits release-request --project qits --repository qits-ci-frontend override --request qits-ci-frontend-rr-12 --upstream qits-ci-service-rr-7 --note "qits-ci-service-rr-7 is a doc-only change; safe to go ahead."
+```
+
+- --upstream is the upstream request exactly as the gate's check names it: its id (qits-ci-service-rr-7) or its whole uuid.
+- HTTP 409 means the held request is not pending a verdict of its own to override (it has already got one, or it is not open), or the override is moot because the named upstream request is not building any more. Read the request again.
+- HTTP 404 means no such held request or no such upstream request.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
 
 ## qits ci
 

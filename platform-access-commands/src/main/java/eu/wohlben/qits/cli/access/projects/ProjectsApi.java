@@ -157,6 +157,22 @@ public final class ProjectsApi {
     }
 
     /**
+     * {@code {"request":{…}}}: the request, with the upstream-in-flight gate lifted for one
+     * upstream request (epic qits-897, qits-916). {@code upstreamRequestId} is the upstream
+     * request's uuid or qualified id, sent as given; a note only when one is given.
+     */
+    public JsonNode overrideReleaseRequestUpstream(String repoId, String requestId, String upstreamRequestId, String note)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("upstreamRequestId", upstreamRequestId);
+        if (note != null && !note.isBlank()) {
+            body.put("note", note.strip());
+        }
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/upstream-overrides"), body);
+    }
+
+    /**
      * {@code {"request":{…}}}: the request, approved at {@code mergedSha}. The sha is the fold the
      * caller judged, and the service refuses it (409) when the request has moved to another one
      * since, so an approval never lands on a fold nobody looked at. A note only when one is given.

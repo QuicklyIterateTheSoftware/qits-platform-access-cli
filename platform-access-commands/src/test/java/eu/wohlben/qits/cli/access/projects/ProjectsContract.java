@@ -79,6 +79,7 @@ public final class ProjectsContract {
     static final String OPEN_TO_ANOTHER_BRANCH = "a release request open to another branch";
     static final String PROJECT_REQUESTS_OF_EVERY_STATE = "a project with release requests in every state";
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
+    static final String HELD_BY_AN_UPSTREAM_RELEASE = "a release request held by an upstream release";
     /**
      * The project list filtered by {@code ?supersededBy=}, the item named by its qualified id; its
      * items are not blocked, so no blockSource.
@@ -787,6 +788,12 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(request, "mergedSha")).isEqualTo(body(recorded).path("mergedSha").asText());
     };
 
+    /** The override as sent: the recorded upstream request and note. The table prints the request that comes back. */
+    private static final Call OVERRIDE_UPSTREAM = (api, params, recorded) -> request(api.overrideReleaseRequestUpstream(
+            params.get("repositoryId"), params.get("requestId"), body(recorded).path("upstreamRequestId").asText(),
+            body(recorded).hasNonNull("note") ? body(recorded).path("note").asText() : null)
+            .path("request"));
+
     /** {@code qits release-request regenerate}: the kind is the recording's path segment; it prints the run's id. */
     private static final Call REGENERATE = (api, params, recorded) -> {
         JsonNode run = api.rerunReleaseRequestAutomation(params.get("repositoryId"), params.get("requestId"),
@@ -801,8 +808,8 @@ public final class ProjectsContract {
             "qits repositories remote-login", "qits repositories branches", "qits repositories commits",
             "qits repositories commit-changes", "qits repositories commit-diff", "qits repositories commit-subjects",
             "qits release-request list", "qits release-request create", "qits release-request join",
-            "qits release-request withdraw", "qits release-request regenerate", "qits release-request approve",
-            "qits release-request decline", "qits ci runs", "qits ci run",
+            "qits release-request withdraw", "qits release-request regenerate", "qits release-request override",
+            "qits release-request approve", "qits release-request decline", "qits ci runs", "qits ci run",
             "qits ci retry", "qits ci report show", "qits maintenance automations", "qits maintenance automation run",
             "qits workspaces list", "qits tui");
 
@@ -814,7 +821,8 @@ public final class ProjectsContract {
 
     /** Every command that takes a release request and finds it among the repository's requests of every state. */
     static final List<String> REQUEST_SCOPED = List.of("qits release-request join", "qits release-request withdraw",
-            "qits release-request regenerate", "qits maintenance automations", "qits maintenance automation run");
+            "qits release-request regenerate", "qits release-request override", "qits maintenance automations",
+            "qits maintenance automation run");
 
     /** Every command outside {@code qits work} that names a work item by its qualified id and sends its id. */
     static final List<String> WORK_ITEM_SCOPED = List.of("qits workspaces agents list", "qits workspaces agents create",
@@ -919,6 +927,11 @@ public final class ProjectsContract {
         rows.add(row("qits release-request regenerate", AWAITING_REQUEST, "listRepositoryReleaseRequests",
                 "releaseRequests", OPEN_REQUESTS).consumes(held(AWAITING_REQUEST, "listRepositoryReleaseRequests",
                 List.of("requests[].id", "requests[].qualifiedId", "requests[].state"))));
+        rows.add(CliRow.of("qits release-request override", HELD_BY_AN_UPSTREAM_RELEASE, "overrideReleaseRequestUpstream",
+                "ProjectsApi#overrideReleaseRequestUpstream", asThePerson(OVERRIDE_UPSTREAM))
+                .consumes(held(HELD_BY_AN_UPSTREAM_RELEASE, "overrideReleaseRequestUpstream", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest())
+                .header("Authorization", "{authorization}"));
 
         // qits tui: the dropdowns
         rows.add(row("qits tui", REPOSITORIES_IN_COMPONENTS, "listProjectRepositories", "repositories",
