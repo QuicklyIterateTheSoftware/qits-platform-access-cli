@@ -2406,32 +2406,6 @@
                   "kind": "automations",
                   "position": "pre-run-qa",
                   "state": "PASSED"
-                },
-                {
-                  "checks": [
-                    {
-                      "detail": "FRESH",
-                      "name": "Estate pins",
-                      "state": "PASSED"
-                    }
-                  ],
-                  "detail": "Waiting for a CI verdict for bd6360a2c6",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PASSED"
-                },
-                {
-                  "checks": [
-                    {
-                      "detail": "FRESH",
-                      "name": "Estate pins",
-                      "state": "PASSED"
-                    }
-                  ],
-                  "detail": "Waiting for a CI verdict for bd6360a2c6",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PASSED"
                 }
               ],
               "repoName": "contract-suite-app",
@@ -2543,8 +2517,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -2553,7 +2526,6 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
                   "min": 0
                 }
               ]
@@ -3014,12 +2986,6 @@
                   "kind": "automations",
                   "position": "pre-run-qa",
                   "state": "PASSED"
-                },
-                {
-                  "detail": "Waiting for a CI verdict for 5eed5eed5e",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PASSED"
                 }
               ],
               "repoName": "contract-service",
@@ -3123,8 +3089,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -3599,32 +3564,6 @@
                   "kind": "automations",
                   "position": "pre-run-qa",
                   "state": "PASSED"
-                },
-                {
-                  "checks": [
-                    {
-                      "detail": "FRESH",
-                      "name": "Estate pins",
-                      "state": "PASSED"
-                    }
-                  ],
-                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PASSED"
-                },
-                {
-                  "checks": [
-                    {
-                      "detail": "FRESH",
-                      "name": "Estate pins",
-                      "state": "PASSED"
-                    }
-                  ],
-                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PASSED"
                 }
               ],
               "repoName": "contract-suite-app",
@@ -3736,8 +3675,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -3746,7 +3684,6 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
                   "min": 0
                 }
               ]
@@ -4207,12 +4144,6 @@
                   "kind": "automations",
                   "position": "pre-run-qa",
                   "state": "PASSED"
-                },
-                {
-                  "detail": "Waiting for a CI verdict for 5eed5eed5e",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PASSED"
                 }
               ],
               "repoName": "contract-service",
@@ -4324,8 +4255,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -6334,32 +6264,6 @@
                   "kind": "automations",
                   "position": "pre-run-qa",
                   "state": "PENDING"
-                },
-                {
-                  "checks": [
-                    {
-                      "detail": "SUCCESS on release/contract-suite-app-rr-1",
-                      "name": "Run 00000000-0000-4000-8000-000000000005",
-                      "state": "PASSED"
-                    }
-                  ],
-                  "detail": "Waiting for the automations to answer",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PENDING"
-                },
-                {
-                  "checks": [
-                    {
-                      "detail": "SUCCESS on release/contract-suite-app-rr-1",
-                      "name": "Run 00000000-0000-4000-8000-000000000005",
-                      "state": "PASSED"
-                    }
-                  ],
-                  "detail": "Waiting for the automations to answer",
-                  "kind": "automations",
-                  "position": "pre-run-qa",
-                  "state": "PENDING"
                 }
               ],
               "repoName": "contract-suite-app",
@@ -6471,8 +6375,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -6481,7 +6384,6 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
                   "min": 0
                 }
               ]

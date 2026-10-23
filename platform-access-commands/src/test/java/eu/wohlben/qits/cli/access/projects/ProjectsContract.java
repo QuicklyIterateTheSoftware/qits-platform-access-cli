@@ -134,6 +134,17 @@ public final class ProjectsContract {
             "qualityGates[].checks[].state", "qualityGates[].checks[].detail", "sources[].kind",
             "sources[].name", "sources[].ref", "sources[].implicit", "sources[].priority", "sources[].addedBy");
 
+    /**
+     * {@code qualityGates} itself, and each gate's {@code checks}, must not pin a length (ticket
+     * qits-904's follow-up): qits-projects-service is about to grow an {@code upstream-in-flight}
+     * gate (qits-913), which would change {@code qualityGates}' length on every state recorded here,
+     * and provider verification of a pact pinned at today's length would then fail and deadlock that
+     * service's release. {@link CliRow#anyLength} matches these by type with no length instead,
+     * templated from every element the recording holds (see {@code GoldenInteraction#anyLength}'s
+     * javadoc for the path spelling: the array's own path, with no trailing {@code []}).
+     */
+    static final List<String> REQUEST_OPEN_ENDED = List.of("qualityGates", "qualityGates[].checks");
+
     /** Every command that takes a release request finds it by its logical id or its uuid's start. */
     static final List<String> FIND_REQUEST = List.of("requests[].id", "requests[].qualifiedId", "requests[].state");
 
@@ -879,13 +890,16 @@ public final class ProjectsContract {
                 "releaseRequests", FIND).consumes(FIND_REQUEST)));
         rows.add(row("qits release-request create", A_BRANCH_TO_RELEASE, "createReleaseRequest",
                 "createReleaseRequest", CREATE_REQUEST)
-                .consumes(held(A_BRANCH_TO_RELEASE, "createReleaseRequest", prefixed("request.", REQUEST))));
+                .consumes(held(A_BRANCH_TO_RELEASE, "createReleaseRequest", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest()));
         rows.add(row("qits release-request join", OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource",
                 "joinReleaseRequest", JOIN_REQUEST)
-                .consumes(held(OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource", prefixed("request.", REQUEST))));
+                .consumes(held(OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest()));
         rows.add(row("qits release-request withdraw", AWAITING_REQUEST, "withdrawReleaseRequest",
                 "withdrawReleaseRequest", WITHDRAW)
-                .consumes(held(AWAITING_REQUEST, "withdrawReleaseRequest", prefixed("request.", REQUEST))));
+                .consumes(held(AWAITING_REQUEST, "withdrawReleaseRequest", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest()));
         for (String command : List.of("qits release-request approve", "qits release-request decline")) {
             rows.add(row(command, PROJECT_REQUESTS_OF_EVERY_STATE, "getProjectReleaseRequest", "projectReleaseRequest",
                     FIND_IN_PROJECT).consumes("request.id", "request.qualifiedId", "request.repoId", "request.mergedSha"));
@@ -893,10 +907,12 @@ public final class ProjectsContract {
         rows.add(CliRow.of("qits release-request approve", AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest",
                 "ProjectsApi#approveReleaseRequest", asThePerson(APPROVE))
                 .consumes(held(AWAITING_WHILE_ITS_BUILD_RUNS, "approveReleaseRequest", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest())
                 .header("Authorization", "{authorization}"));
         rows.add(CliRow.of("qits release-request decline", AWAITING_REQUEST, "declineReleaseRequest",
                 "ProjectsApi#declineReleaseRequest", asThePerson(DECLINE))
                 .consumes(held(AWAITING_REQUEST, "declineReleaseRequest", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest())
                 .header("Authorization", "{authorization}"));
         rows.add(row("qits release-request regenerate", HELD_BY_A_FAILED_AUTOMATION, "rerunReleaseRequestAutomation",
                 "rerunReleaseRequestAutomation", REGENERATE).consumes("id"));
@@ -1050,6 +1066,11 @@ public final class ProjectsContract {
     /** The paths the recording holds: the command reads the others only where the service sends them. */
     private static List<String> held(String state, String operationId, List<String> paths) {
         return BASE.held(state, operationId, paths);
+    }
+
+    /** {@link #REQUEST_OPEN_ENDED}, prefixed for a row's {@code request.*} body, as {@code anyLength} takes it. */
+    private static String[] openEndedRequest() {
+        return prefixed("request.", REQUEST_OPEN_ENDED).toArray(String[]::new);
     }
 
     private ProjectsContract() {
