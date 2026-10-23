@@ -61,7 +61,9 @@ class ClientCallsGuardTest {
             "EventStream", "qits events: the live stream GET /events/api/stream, Server-Sent Events",
             "ObserveStream", "qits observe: the live telemetry stream, a WebSocket",
             "TerminalAttach", "a terminal attached over a WebSocket (workspaces attach, repositories remote-login)",
-            "WorkspacesCommand$LogCommand", "qits workspaces log: a technical process's log, Server-Sent Events");
+            "WorkspacesCommand$LogCommand", "qits workspaces log: a technical process's log, Server-Sent Events",
+            "TargetsApi", "qits targets (qits-1530): qits-system-service has not published golden masters yet "
+                    + "(epic qits-1481's targets module is not released); add its CliPact once it has");
 
     @Test
     void everyClassThatSendsIsAClientOrNamed() throws Exception {

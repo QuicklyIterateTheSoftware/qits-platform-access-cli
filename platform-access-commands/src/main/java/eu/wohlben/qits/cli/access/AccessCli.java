@@ -20,6 +20,7 @@ import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
 import eu.wohlben.qits.cli.access.projects.WorkCommand;
+import eu.wohlben.qits.cli.access.targets.TargetsCommand;
 import eu.wohlben.qits.cli.access.update.QitsVersion;
 import eu.wohlben.qits.cli.access.update.UpdateCommand;
 import eu.wohlben.qits.cli.access.users.UsersCommand;
@@ -46,15 +47,16 @@ import picocli.CommandLine;
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
-                ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
+                ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
                 ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, UpdateCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
                         + "work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment "
                         + "threads, release requests, CI runs and their logs, "
-                        + "domain events, live telemetry, waiting on the platform, workspaces and their agents, Git "
-                        + "pushes to the platform's git host, and publishing release artifacts from a CI step.",
+                        + "domain events, live telemetry, waiting on the platform, workspaces and their agents, "
+                        + "execution targets and their leases, Git pushes to the platform's git host, and "
+                        + "publishing release artifacts from a CI step.",
                 "Each command calls the platform through its edge, with the session of `qits login`, except "
                         + "`qits artifacts publish`, which runs in a CI step container with no person and never touches that "
                         + "session. `qits <command> --help` shows a command's options, examples and exit codes.",

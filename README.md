@@ -29,6 +29,10 @@ Commands:
   the same qits-workspaces door: the slots and their containers (start, stop, recreate, the start's
   log), the agents (create, discard, prompt, the prompt draft, the chat, the files, the harness,
   sign-in, plugins), the runners, and a command's terminal (`qits workspaces attach`).
+- `qits targets` lists qits-system's execution targets (connection, slots, login, quarantine),
+  reads one in full, updates its description or slot minimums, lifts a quarantine, asks for a
+  health check or a login check, deletes one, lists leases, and `qits targets sign-in` prints a
+  target's login command and waits for it to report signed in.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -602,6 +606,12 @@ Installing it is not part of this version.
     qits workspaces runners update <runner> [--slots <n>] [--description <text>] [--memory <size>] \
         [--memory-swap <size>]
     qits workspaces runners greenlight|healthcheck|login-check|delete <runner>
+    qits targets list | show --target <name|id>
+    qits targets update --target <name|id> [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] \
+        [--description <text>]
+    qits targets greenlight|healthcheck|login-check|delete --target <name|id>
+    qits targets leases [--target <name|id>] [--type ci|workspace|desk] [--state <state>]
+    qits targets sign-in --target <name|id> [--harness claude|kimi] [--timeout <duration>]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories`, `work` and `release-request` may come before or
@@ -1488,6 +1498,42 @@ the container proxy, with the caller's own bearer. The command ids come from `ag
   and no size is sent, and it still ends when the command does.
 - It is `Interaction.TERMINAL`, so the MCP service does not serve it, and `--attach` on the other two
   is refused there (exit 2) before anything is opened.
+
+### qits targets
+
+Execution targets and their leases, qits-system-service's `/system/api` (epic qits-1481): one
+command per door, on the pattern of `qits workspaces runners`. A target is named by its name or its
+id (`qits targets list` shows both); `--target` resolves a name by reading `listTargets`.
+
+    qits targets list                             GET  /system/api/targets
+    qits targets show --target <name|id>          GET  /system/api/targets/{id}
+    qits targets update --target <name|id>        PATCH /system/api/targets/{id}
+      [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] [--description <text>]
+    qits targets greenlight|healthcheck|login-check
+                                                   POST /system/api/targets/{id}/<verb> (no body)
+    qits targets delete --target <name|id>        DELETE /system/api/targets/{id}
+    qits targets leases [--target <name|id>]      GET  /system/api/leases?targetId=&slotType=&state=
+      [--type ci|workspace|desk] [--state <state>]
+    qits targets sign-in --target <name|id>       GET  /system/api/targets/{id}, then
+      [--harness claude|kimi] [--timeout <duration>]  POST …/login-check every 30s until PRESENT
+
+Who may: reading, and asking for a health check, is open to every credential, `qits:agent` included.
+Updating and deleting need `qits:admin`, `qits:admin-agent` or `qits:system`; greenlight and
+login-check need `qits:admin` or `qits:admin-agent` only; `qits:agent` is refused with 403 by design
+wherever it is not named. `qits targets leases` reads every lease for `qits:admin`, `qits:admin-agent`
+and `qits:agent`, and only the caller's own for `qits:system`. Each command's help names its door and
+roles.
+
+Not here, on purpose: declaring a target and rotating its registration token, whose answer is a
+one-time token (qits prints no token but the two the conventions name, as `qits workspaces runners`
+leaves out register and rotate token).
+
+`qits targets sign-in` prints the target's login command for `--harness` (default `claude`) — the
+`docker run` that signs the target's credential volume in, run on the target's own machine — with
+"run this on `<name>`". A target already `PRESENT` for that harness exits 0 at once; otherwise the
+command asks the target to check its sign-in (`login-check`) every 30 seconds until it reports
+`PRESENT` (exit 0) or `--timeout` (default `10m`) passes (exit 1, naming the last state:
+`ABSENT` or `UNKNOWN`).
 
 ## Git pushes from this workstation
 
