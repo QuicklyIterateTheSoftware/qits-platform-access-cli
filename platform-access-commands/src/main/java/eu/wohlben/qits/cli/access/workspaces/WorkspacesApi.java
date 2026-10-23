@@ -222,37 +222,6 @@ final class WorkspacesApi {
         return CONTAINER + slot;
     }
 
-    // --- runners ---
-
-    /** {@code listRunners}. */
-    JsonNode runners() throws CliFailure, InterruptedException {
-        return client.get(uri(API + "/runners"));
-    }
-
-    /** {@code getRunnerHealth}: a {@code NullNode} for a 204, a runner never checked. */
-    JsonNode runnerHealth(String id) throws CliFailure, InterruptedException {
-        return client.get(uri(runner(id) + "/health"));
-    }
-
-    /** {@code patchRunner}: only the fields that change. */
-    JsonNode patchRunner(String id, JsonNode change) throws CliFailure, InterruptedException {
-        return client.patch(uri(runner(id)), change, "application/json");
-    }
-
-    /** {@code greenlightRunner}, {@code requestRunnerHealthcheck}, {@code requestRunnerLoginCheck}: no body. */
-    JsonNode runnerVerb(String id, String verb) throws CliFailure, InterruptedException {
-        return client.post(uri(runner(id) + "/" + verb));
-    }
-
-    /** {@code deleteRunner}: a 204. */
-    JsonNode deleteRunner(String id) throws CliFailure, InterruptedException {
-        return client.delete(uri(runner(id)));
-    }
-
-    private static String runner(String id) {
-        return API + "/runners/" + segment(id);
-    }
-
     // --- addresses ---
 
     URI uri(String path) throws CliFailure {

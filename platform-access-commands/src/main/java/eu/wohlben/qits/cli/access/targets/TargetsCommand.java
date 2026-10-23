@@ -29,10 +29,11 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 /**
  * {@code qits targets}: execution targets and their leases, qits-system-service's {@code
  * /system/api} (epic qits-1481, dossier "Targets in qits-system: data, doors, allocation"). One
- * command per door, on the pattern of {@code qits workspaces runners}.
+ * command per door; this replaces the old per-slot-type runner groups ({@code qits workspaces
+ * runners}, retired by qits-1534).
  * <p>
  * {@code create} and {@code registration-token} are not offered: the CLI never prints a
- * registration token (today's rule for runners, qits-1530).
+ * registration token (qits-1530).
  */
 @CommandLine.Command(name = "targets", mixinStandardHelpOptions = true,
         subcommands = {TargetsCommand.ListCommand.class, TargetsCommand.ShowCommand.class,

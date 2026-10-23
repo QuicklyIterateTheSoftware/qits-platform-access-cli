@@ -37,7 +37,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 /**
  * {@code qits workspaces}: every action the landing app's workspace pages offer, one command each,
  * on the same qits-workspaces door the page calls (qits-1261). The slots and their containers are
- * here; the agents are {@link WorkspaceAgentsCommand}, the runners {@link WorkspaceRunnersCommand}.
+ * here; the agents are {@link WorkspaceAgentsCommand}. The nodes slots are placed on are
+ * {@code qits targets} (epic qits-1481, qits-1534): {@code qits workspaces runners} is retired.
  * <p>
  * Not {@code qits agents}: that name is the local Claude Code harness group.
  */
@@ -47,10 +48,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 WorkspacesCommand.StopCommand.class, WorkspacesCommand.RecreateCommand.class,
                 WorkspacesCommand.LogCommand.class, WorkspacesCommand.AttachCommand.class,
                 WorkspacesCommand.ItemsCommand.class,
-                WorkspacesCommand.HistoryCommand.class, WorkspaceAgentsCommand.class, WorkspaceRunnersCommand.class},
+                WorkspacesCommand.HistoryCommand.class, WorkspaceAgentsCommand.class},
         description = {"The workspaces of qits-workspaces, with every action the landing app's workspace pages "
-                        + "offer, each on the same door the page calls: the slots and their containers, the agents "
-                        + "working in them (agents), and the runners the slots are placed on (runners).",
+                        + "offer, each on the same door the page calls: the slots and their containers, and the "
+                        + "agents working in them (agents). The nodes slots are placed on are `qits targets`.",
                 "A slot is a workspace row, named by its number (`qits workspaces list` shows it). It hosts agents; "
                         + "an agent works on one work item. Starting a container is a technical process, whose log "
                         + "`qits workspaces log` follows."},
@@ -227,7 +228,6 @@ public class WorkspacesCommand implements Runnable {
             rows.add(List.of("error", cell(slot, "runtimeError", 200)));
         }
         rows.add(List.of("placement", cell(slot, "placement", 40)));
-        rows.add(List.of("runner", cell(slot.path("runner"), "name", 80)));
         rows.add(List.of("admin", cell(slot, "admin", 10)));
         if (!text(slot, "queuedAt").isEmpty()) {
             rows.add(List.of("queued", Table.time(text(slot, "queuedAt"))));
@@ -254,7 +254,7 @@ public class WorkspacesCommand implements Runnable {
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
             description = {"The ACTIVE workspace slots of one repository, named by --repository: each with its "
-                    + "container, placement and runner. The project's Workspaces page.",
+                    + "container and placement. The project's Workspaces page.",
                     "GET /workspaces/api/workspaces?repositoryId=. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits workspaces list --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a",
@@ -296,17 +296,16 @@ public class WorkspacesCommand implements Runnable {
             List<List<String>> rows = new ArrayList<>();
             for (JsonNode slot : slots) {
                 rows.add(List.of(cell(slot, "id", 12), cell(slot, "workspaceId", 50), cell(slot, "runtimeStatus", 20),
-                        cell(slot, "placement", 20), cell(slot.path("runner"), "name", 30), cell(slot, "admin", 6),
-                        Table.time(text(slot, "queuedAt"))));
+                        cell(slot, "placement", 20), cell(slot, "admin", 6), Table.time(text(slot, "queuedAt"))));
             }
-            Table.print(context.out(), "", List.of("SLOT", "WORKSPACE", "CONTAINER", "PLACEMENT", "RUNNER", "ADMIN",
+            Table.print(context.out(), "", List.of("SLOT", "WORKSPACE", "CONTAINER", "PLACEMENT", "ADMIN",
                     "QUEUED"), rows);
             return 0;
         }
     }
 
     @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
-            description = {"One workspace slot: its container (and its error), placement, runner and daemon. The "
+            description = {"One workspace slot: its container (and its error), placement and daemon. The "
                     + "status strip of a slot's page.",
                     "GET /workspaces/api/workspaces/{id}. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
@@ -409,7 +408,7 @@ public class WorkspacesCommand implements Runnable {
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits workspaces start 1",
                     "",
-                    "- A slot on an offline runner is refused: HTTP 409 RUNNER_UNAVAILABLE."},
+                    "- A slot on a target that is not available is refused: HTTP 409."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class StartCommand extends ContainerVerb {
@@ -425,7 +424,7 @@ public class WorkspacesCommand implements Runnable {
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits workspaces stop 1",
                     "",
-                    "- A slot on an offline runner is refused: HTTP 409 RUNNER_UNAVAILABLE."},
+                    "- A slot on a target that is not available is refused: HTTP 409."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class StopCommand extends ContainerVerb {
@@ -442,7 +441,8 @@ public class WorkspacesCommand implements Runnable {
             footer = {"  qits workspaces recreate 1",
                     "",
                     "- Refused (HTTP 400) unless the service can prove the working tree clean: commit or discard "
-                            + "the changes, and have the daemon connected, first. An offline runner is HTTP 409."},
+                            + "the changes, and have the daemon connected, first. A target that is not available is "
+                            + "HTTP 409."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class RecreateCommand extends ContainerVerb {
