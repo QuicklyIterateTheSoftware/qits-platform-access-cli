@@ -42,7 +42,12 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build "
                         + "was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), "
                         + "WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it "
-                        + "finished)."},
+                        + "finished).",
+                "create, join, withdraw, approve and decline print the request's quality gates as the platform "
+                        + "sends them: one row per gate (kind, position, state, detail), and, under a gate that is "
+                        + "waiting on something specific, one indented line per check it is waiting for (such as "
+                        + "the upstream request an upstream-in-flight gate names). An older platform with no "
+                        + "qualityGates[] yet gets the deprecated gates table instead (kind, state, reason)."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. "
@@ -772,15 +777,7 @@ public class ReleaseRequestCommand implements Runnable {
                 List.of("created", Table.time(text(request, "createdAt"))),
                 List.of("updated", Table.time(text(request, "updatedAt")))));
         Table.print(out, "  ", null, rows);
-        List<List<String>> gates = new ArrayList<>();
-        request.path("gates").forEach(g -> gates.add(List.of(
-                Table.cell(text(g, "kind"), 20),
-                Table.cell(text(g, "state"), 12),
-                Table.cell(text(g, "detail"), 80))));
-        if (!gates.isEmpty()) {
-            out.println("Gates:");
-            Table.print(out, "  ", List.of("KIND", "STATE", "REASON"), gates);
-        }
+        printGates(out, request);
         List<List<String>> sources = new ArrayList<>();
         request.path("sources").forEach(s -> sources.add(List.of(
                 Table.cell(text(s, "kind"), 20),
@@ -798,6 +795,48 @@ public class ReleaseRequestCommand implements Runnable {
     /** The request that superseded this one, by its logical id, else its short uuid; blank when none. */
     private static String supersededBy(JsonNode request) {
         return ReleaseRequestRefs.label(text(request, "supersededByQualifiedId"), text(request, "supersededBy"));
+    }
+
+    /**
+     * The request's gates (epic qits-897, ticket qits-904). {@code qualityGates[]} is the current
+     * shape: one row per gate (kind, position, state, detail), and, under a gate whose {@code
+     * checks[]} is not empty, one indented line per check (name, state, detail) &mdash; what it is
+     * waiting for, such as the upstream request an {@code upstream-in-flight} gate names (qits-913).
+     * Falls back to the deprecated {@code gates[]} table (kind, state, reason) when the answer has
+     * no {@code qualityGates}, which is an older service that has not grown the field yet.
+     */
+    private static void printGates(PrintStream out, JsonNode request) {
+        JsonNode qualityGates = request.path("qualityGates");
+        if (qualityGates.isArray() && !qualityGates.isEmpty()) {
+            List<List<String>> rows = new ArrayList<>();
+            qualityGates.forEach(g -> rows.add(List.of(
+                    Table.cell(text(g, "kind"), 20),
+                    Table.cell(text(g, "position"), 20),
+                    Table.cell(text(g, "state"), 12),
+                    Table.cell(text(g, "detail"), 80))));
+            out.println("Quality gates:");
+            Table.print(out, "  ", List.of("KIND", "POSITION", "STATE", "DETAIL"), rows);
+            qualityGates.forEach(g -> {
+                List<List<String>> checks = new ArrayList<>();
+                g.path("checks").forEach(c -> checks.add(List.of(
+                        Table.cell(text(c, "name"), 60),
+                        Table.cell(text(c, "state"), 12),
+                        Table.cell(text(c, "detail"), 80))));
+                if (!checks.isEmpty()) {
+                    Table.print(out, "      ", null, checks);
+                }
+            });
+            return;
+        }
+        List<List<String>> gates = new ArrayList<>();
+        request.path("gates").forEach(g -> gates.add(List.of(
+                Table.cell(text(g, "kind"), 20),
+                Table.cell(text(g, "state"), 12),
+                Table.cell(text(g, "detail"), 80))));
+        if (!gates.isEmpty()) {
+            out.println("Gates:");
+            Table.print(out, "  ", List.of("KIND", "STATE", "REASON"), gates);
+        }
     }
 
     /**

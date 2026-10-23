@@ -121,10 +121,17 @@ public final class ProjectsContract {
     static final List<String> CARRIED = Stream.concat(WorkEntities.CARRIED.stream(), Stream.of("parent", "position"))
             .toList();
 
-    /** One release request as {@code ReleaseRequestCommand.printRequest} prints it. */
+    /**
+     * One release request as {@code ReleaseRequestCommand.printRequest} prints it. {@code
+     * qualityGates[].checks[].runId} is not here: the recorder froze it under both {@code ids} and
+     * {@code strings} (a whole uuid in some elements only), so qits-pact-consumer would match it as
+     * a uuid; no row consumes it.
+     */
     static final List<String> REQUEST = List.of("id", "qualifiedId", "repoName", "state", "supersededBy",
             "supersededByQualifiedId", "priority", "summary", "requester", "approvalState", "mergedSha", "version",
-            "detail", "createdAt", "updatedAt", "gates[].kind", "gates[].state", "gates[].detail", "sources[].kind",
+            "detail", "createdAt", "updatedAt", "qualityGates[].kind", "qualityGates[].position",
+            "qualityGates[].state", "qualityGates[].detail", "qualityGates[].checks[].name",
+            "qualityGates[].checks[].state", "qualityGates[].checks[].detail", "sources[].kind",
             "sources[].name", "sources[].ref", "sources[].implicit", "sources[].priority", "sources[].addedBy");
 
     /** Every command that takes a release request finds it by its logical id or its uuid's start. */

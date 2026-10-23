@@ -2389,27 +2389,51 @@
               "approvalState": "APPROVED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for bd6360a2c6",
-              "gates": [
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                },
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                },
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                }
-              ],
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for a CI verdict for bd6360a2c6",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for a CI verdict for bd6360a2c6",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for a CI verdict for bd6360a2c6",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                }
+              ],
               "repoName": "contract-suite-app",
               "requester": "contract-seeder",
               "sources": [
@@ -2481,43 +2505,6 @@
                 }
               ]
             },
-            "$.request.gates": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 3,
-                  "min": 3
-                }
-              ]
-            },
-            "$.request.gates[*].detail": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.request.gates[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.gates[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.id": {
               "combine": "AND",
               "matchers": [
@@ -2544,6 +2531,85 @@
               ]
             },
             "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
               "combine": "AND",
               "matchers": [
                 {
@@ -2938,22 +3004,24 @@
               "approvalState": "NOT_REQUIRED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for 5eed5eed5e",
-              "gates": [
-                {
-                  "detail": null,
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                },
-                {
-                  "detail": null,
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                }
-              ],
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0001",
               "priority": "MEDIUM",
               "qualifiedId": "contract-service-rr-1",
+              "qualityGates": [
+                {
+                  "detail": "Waiting for a CI verdict for 5eed5eed5e",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                },
+                {
+                  "detail": "Waiting for a CI verdict for 5eed5eed5e",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                }
+              ],
               "repoName": "contract-service",
               "requester": "dev",
               "sources": [
@@ -3017,32 +3085,6 @@
                 }
               ]
             },
-            "$.request.gates": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 2,
-                  "min": 2
-                }
-              ]
-            },
-            "$.request.gates[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.gates[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.id": {
               "combine": "AND",
               "matchers": [
@@ -3069,6 +3111,51 @@
               ]
             },
             "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
               "combine": "AND",
               "matchers": [
                 {
@@ -3495,27 +3582,51 @@
               "approvalState": "DECLINED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Declined by dev: The README promises an approval policy nobody has signed off yet.",
-              "gates": [
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                },
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                },
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                }
-              ],
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "FRESH",
+                      "name": "Estate pins",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for bd6360a2c6",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                }
+              ],
               "repoName": "contract-suite-app",
               "requester": "contract-seeder",
               "sources": [
@@ -3587,43 +3698,6 @@
                 }
               ]
             },
-            "$.request.gates": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 3,
-                  "min": 3
-                }
-              ]
-            },
-            "$.request.gates[*].detail": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.request.gates[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.gates[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.id": {
               "combine": "AND",
               "matchers": [
@@ -3650,6 +3724,85 @@
               ]
             },
             "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
               "combine": "AND",
               "matchers": [
                 {
@@ -4044,22 +4197,24 @@
               "approvalState": "NOT_REQUIRED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for 5eed5eed5e",
-              "gates": [
-                {
-                  "detail": null,
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                },
-                {
-                  "detail": null,
-                  "kind": "AUTOMATIONS",
-                  "state": "PASSED"
-                }
-              ],
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0002",
               "priority": "MEDIUM",
               "qualifiedId": "contract-service-rr-1",
+              "qualityGates": [
+                {
+                  "detail": "Waiting for a CI verdict for 5eed5eed5e",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                },
+                {
+                  "detail": "Waiting for a CI verdict for 5eed5eed5e",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                }
+              ],
               "repoName": "contract-service",
               "requester": "contract-seeder",
               "sources": [
@@ -4131,32 +4286,6 @@
                 }
               ]
             },
-            "$.request.gates": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 2,
-                  "min": 2
-                }
-              ]
-            },
-            "$.request.gates[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.gates[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.id": {
               "combine": "AND",
               "matchers": [
@@ -4183,6 +4312,51 @@
               ]
             },
             "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
               "combine": "AND",
               "matchers": [
                 {
@@ -6143,27 +6317,51 @@
               "approvalState": "WAITING",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "The export moves to next quarter's release.",
-              "gates": [
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PENDING"
-                },
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PENDING"
-                },
-                {
-                  "detail": "configured by manual-review",
-                  "kind": "AUTOMATIONS",
-                  "state": "PENDING"
-                }
-              ],
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "SUCCESS on release/contract-suite-app-rr-1",
+                      "name": "Run 00000000-0000-4000-8000-000000000005",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for the automations to answer",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PENDING"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "SUCCESS on release/contract-suite-app-rr-1",
+                      "name": "Run 00000000-0000-4000-8000-000000000005",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for the automations to answer",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PENDING"
+                },
+                {
+                  "checks": [
+                    {
+                      "detail": "SUCCESS on release/contract-suite-app-rr-1",
+                      "name": "Run 00000000-0000-4000-8000-000000000005",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Waiting for the automations to answer",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PENDING"
+                }
+              ],
               "repoName": "contract-suite-app",
               "requester": "contract-seeder",
               "sources": [
@@ -6235,43 +6433,6 @@
                 }
               ]
             },
-            "$.request.gates": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 3,
-                  "min": 3
-                }
-              ]
-            },
-            "$.request.gates[*].detail": {
-              "combine": "OR",
-              "matchers": [
-                {
-                  "match": "type"
-                },
-                {
-                  "match": "null"
-                }
-              ]
-            },
-            "$.request.gates[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.gates[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.id": {
               "combine": "AND",
               "matchers": [
@@ -6298,6 +6459,82 @@
               ]
             },
             "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
               "combine": "AND",
               "matchers": [
                 {

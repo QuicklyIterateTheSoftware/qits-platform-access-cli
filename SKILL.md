@@ -1496,6 +1496,8 @@ Release requests: the one way to release a repository. list shows them (of the w
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
+create, join, withdraw, approve and decline print the request's quality gates as the platform sends them: one row per gate (kind, position, state, detail), and, under a gate that is waiting on something specific, one indented line per check it is waiting for (such as the upstream request an upstream-in-flight gate names). An older platform with no qualityGates[] yet gets the deprecated gates table instead (kind, state, reason).
+
 ### Notes
 
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.

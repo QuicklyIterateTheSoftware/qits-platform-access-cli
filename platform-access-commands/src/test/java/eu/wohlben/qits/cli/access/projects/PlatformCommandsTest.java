@@ -516,6 +516,59 @@ class PlatformCommandsTest {
     }
 
     @Test
+    void printsTheQualityGatesWithAnIndentedCheckPerThingTheGateIsWaitingFor() throws Exception {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
+                  "supersededBy":null,
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "qualityGates":[{"kind":"upstream-in-flight","label":"Upstream releases","position":"pre-run-qa",
+                    "state":"PENDING","detail":"Waiting for upstream releases: qits-ci-frontend-rr-12",
+                    "checks":[{"name":"qits-ci-frontend-rr-12","state":"PENDING","detail":"QUEUED",
+                      "runId":"5eed5eed-0000-4000-8000-00000000000a"}],"runId":null,"link":null}],
+                  "sources":[]}}
+                """.formatted(CI));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("Quality gates:")
+                .contains("KIND")
+                .contains("POSITION")
+                .contains("STATE")
+                .contains("DETAIL")
+                .contains("upstream-in-flight")
+                .contains("pre-run-qa")
+                .contains("Waiting for upstream releases: qits-ci-frontend-rr-12")
+                .contains("qits-ci-frontend-rr-12")
+                .doesNotContain("Gates:");
+    }
+
+    @Test
+    void fallsBackToTheDeprecatedGatesTableWhenTheAnswerHasNoQualityGates() throws Exception {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
+                  "supersededBy":null,
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "gates":[{"kind":"PUBLISH","state":"FAILED","detail":"the tag's release pipeline"}],
+                  "sources":[]}}
+                """.formatted(CI));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("Gates:")
+                .contains("KIND     STATE   REASON")
+                .contains("PUBLISH  FAILED  the tag's release pipeline")
+                .doesNotContain("Quality gates:");
+    }
+
+    @Test
     void createWithoutAPriorityLeavesItToThePlatform() throws Exception {
         Result r = run("release-request", "create", "--project", "qits", "--repository", CI,
                 "--branch", "main", "--summary", "Release main", "-o", "json");
