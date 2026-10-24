@@ -3792,14 +3792,14 @@ qits workspaces agents plugins install pyright-lsp --workspace 1
 
 ## qits targets
 
-The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds; and sign a target in.
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds; and sign a target in.
 
 A target is named by its name or its id (`qits targets list` shows both).
 
 ### Notes
 
-- Reading, and asking for a health check, are open to qits:agent. Updating, deleting and asking for a login check need qits:admin, qits:admin-agent or (for update and delete) qits:system; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
-- Declaring a target and rotating its registration token are not offered here: their answer is a one-time token, and qits never prints a token.
+- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent or (for all but login-check) qits:system; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
+- create and rotate-token print an install line that carries a one-time token: alone on stdout, shown once, and not served by the qits MCP server.
 - --system-url and --output may come before or after the command.
 
 ## qits targets list
@@ -3854,6 +3854,80 @@ qits targets show --target localhost -o json
 ```
 
 - loginCommand and kimiLoginCommand are null until a login state has arrived on the target's current connection: `qits targets sign-in` names that.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets create
+
+Declare a target and print the line that installs its runner, with a one-time registration token in it.
+
+POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+
+THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine. Lost, `qits targets rotate-token` makes a new one.
+
+```
+qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--name <name>` | Required. The new target's name. |
+| `--description <text>` | Free text. |
+| `--min-ci <n>` | Slots reserved for CI. |
+| `--min-desk <n>` | Slots reserved for the desk. |
+| `--min-workspace <n>` | Slots reserved for workspaces. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets create --name buildbox
+qits targets create --name buildbox --description 'The build machine under the desk' --min-ci 2 --min-workspace 2 --min-desk 1
+```
+
+- A minimum left out is not sent. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
+- -o json prints the service's answer: the target, the registration token and the install line.
+- Not served by the qits MCP server: the token would land in a transcript.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets rotate-token
+
+Mint a new registration token for a target whose runner has not registered yet, and print the line that installs its runner with it.
+
+POST /system/api/targets/{id}/registration-token, no body (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+
+THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine.
+
+```
+qits targets rotate-token --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets rotate-token --target buildbox
+qits targets rotate-token --target buildbox -o json
+```
+
+- HTTP 409 ALREADY_REGISTERED: the target's runner has registered and needs no token. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
+- -o json prints the service's answer: the target, the registration token and the install line.
+- Not served by the qits MCP server: the token would land in a transcript.
 
 ### Exit codes
 

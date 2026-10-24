@@ -263,6 +263,20 @@ class McpToolCatalogTest {
     }
 
     @Test
+    void theTargetCommandsThatPrintAnInstallLineAreNotServed() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(catalog.tool("targets_create")).isEmpty();
+        assertThat(catalog.tool("targets_rotate-token")).isEmpty();
+        assertThat(byCommand.get("qits targets create").reason()).isEqualTo("only means something on the caller's machine");
+        assertThat(byCommand.get("qits targets rotate-token").reason())
+                .isEqualTo("only means something on the caller's machine");
+        assertThat(catalog.tool("targets_update")).isPresent();
+        assertThat(catalog.tool("targets_list")).isPresent();
+    }
+
+    @Test
     void everyToolsSchemaIsItsOptionsByTheRules() {
         Map<String, CommandSpec> commands = realTree();
         for (Tool tool : catalog.tools()) {

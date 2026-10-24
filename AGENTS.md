@@ -231,10 +231,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                answer when stdin is no terminal
     targets/   qits targets: execution targets and their leases, qits-system-service's /system/api
                (epic qits-1481, ticket qits-1530). TargetsApi is every door; the command group is
-               modelled on workspaces/'s WorkspaceRunnersCommand. `create` and `registration-token`
-               are left out, as workspaces' `register runner` and `rotate token` are: they answer a
-               one-time token qits never prints. `sign-in` prints the target's login command for a
-               harness and polls `login-check` every 30 seconds until PRESENT or --timeout passes
+               modelled on workspaces/'s WorkspaceRunnersCommand. `create` and `rotate-token`
+               (qits-1574) answer a one-time registration token inside an install line: they print
+               the line alone on stdout, once, and are Interaction.LOCAL, as `users invite` is.
+               `sign-in` prints the target's login command for a harness and polls `login-check`
+               every 30 seconds until PRESENT or --timeout passes
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
@@ -312,11 +313,13 @@ Two packages sit outside `access/`, because neither is about one command:
   prints `{"Authorization":"Bearer <token>"}` because that is what Claude's MCP `headersHelper`
   reads (interim, until qits-684 gives every workspace a long-lived token). Nothing else prints one,
   and stderr and logs never carry one, those two commands' included.
-  Two commands print a secret that is not an access token, because handing it to one person is
-  their whole job: `qits users invite` prints a register token, and `qits users register` prints
-  the generated password, once. Each goes to stdout alone and nowhere else: never stderr, a log, a
-  file or an error message (`UsersCommandsTest` holds both). Both are `Interaction.LOCAL`, so the
-  MCP service does not serve them and neither lands in an agent's transcript.
+  Four commands print a secret that is not an access token, because handing it to one person is
+  their whole job: `qits users invite` prints a register token, `qits users register` prints the
+  generated password, and `qits targets create` and `qits targets rotate-token` print the install
+  line that embeds a target's registration token, each once. Each goes to stdout alone and nowhere
+  else: never stderr, a log, a file or an error message (`UsersCommandsTest` and
+  `TargetsCommandsTest` hold them). All four are `Interaction.LOCAL`, so the MCP service does not
+  serve them and none lands in an agent's transcript.
 - **Every refresh and every write of `t.json` happens under the write lock**, and the file is read
   again under it. Refresh tokens rotate; a spent one presented again revokes the whole session.
   `SessionRefresh` is the only code that spends a `t.json` refresh token; the daemon and the

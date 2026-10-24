@@ -17,8 +17,9 @@ import java.util.List;
  * as JSON trees; {@code listTargets} and {@code listLeases} answer a bare JSON array, never an
  * {@code {entries: […]}} envelope.
  * <p>
- * {@code createTarget} and {@code rotateTargetRegistrationToken} are not here: the CLI never prints
- * a registration token (today's rule for runners, qits-1530).
+ * {@code createTarget} and {@code rotateTargetRegistrationToken} answer a one-time registration
+ * token and the install line that embeds it (qits-1574). Their answer is handed back whole and
+ * never quoted in a message: only {@code create} and {@code rotate-token} decide what is printed.
  */
 final class TargetsApi {
 
@@ -35,6 +36,19 @@ final class TargetsApi {
     /** {@code listTargets}: every target, by name. */
     JsonNode targets() throws CliFailure, InterruptedException {
         return client.get(uri(API + "/targets"));
+    }
+
+    /**
+     * {@code createTarget}: {@code {name, description?, minimums?}}, a 201 {@code {target,
+     * registrationToken, installLine}}.
+     */
+    JsonNode createTarget(JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(API + "/targets"), body);
+    }
+
+    /** {@code rotateTargetRegistrationToken}: no body, a 200 of the same shape as createTarget. */
+    JsonNode rotateTargetRegistrationToken(String id) throws CliFailure, InterruptedException {
+        return client.post(uri(targetPath(id) + "/registration-token"));
     }
 
     /** {@code getTarget}. */
