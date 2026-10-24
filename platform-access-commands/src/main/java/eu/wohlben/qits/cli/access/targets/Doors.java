@@ -11,7 +11,10 @@ final class Doors {
     /** listTargets, getTarget, requestTargetHealthCheck: qits:admin, qits:admin-agent, qits:system, qits:agent. */
     static final String READ = "Any credential may call it, qits:agent included.";
 
-    /** patchTarget, deleteTarget: qits:admin, qits:admin-agent or qits:system. */
+    /**
+     * createTarget, rotateTargetRegistrationToken, patchTarget, deleteTarget: qits:admin,
+     * qits:admin-agent or qits:system.
+     */
     static final String WRITE = "It needs qits:admin, qits:admin-agent or qits:system, which a person's token or "
             + "qits-system's own carries. qits:agent is refused (HTTP 403) by design.";
 

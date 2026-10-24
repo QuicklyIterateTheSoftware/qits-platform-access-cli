@@ -10,6 +10,8 @@ import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,14 +30,17 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@code qits targets …} as a person types it, against a fake edge (epic qits-1481, ticket
- * qits-1530).
+ * {@code qits targets …} as a person types it, against a fake edge (epic qits-1481, tickets
+ * qits-1530 and qits-1574).
  */
 class TargetsCommandsTest {
 
     private static final Instant T0 = Instant.parse("2026-10-23T10:00:00Z");
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String TARGET = "00000000-0000-4000-8000-000000000030";
+    private static final String REG_TOKEN = "reg-token-must-only-reach-stdout";
+    private static final String INSTALL_LINE =
+            "curl -fsSL https://system.qits.example/install.sh | sh -s -- --token " + REG_TOKEN;
 
     @TempDir
     Path home;
@@ -260,5 +265,155 @@ class TargetsCommandsTest {
         assertThat(signIn.exit()).isEqualTo(1);
         assertThat(signIn.err()).contains("still ABSENT after 1m");
         assertThat(time.sleeps).hasSize(2);
+    }
+
+    // --- create and rotate-token (qits-1574) ---
+
+    private static String registration() {
+        return "{\"target\":" + target("ABSENT", null).replace("\"registered\":true", "\"registered\":false")
+                + ",\"registrationToken\":\"" + REG_TOKEN + "\",\"installLine\":\"" + INSTALL_LINE + "\"}";
+    }
+
+    @Test
+    void createSendsTheNameAndOnlyTheGivenMinimumsAndPrintsTheInstallLineAlone() throws Exception {
+        platform.answer("POST", "/system/api/targets", 201, registration());
+
+        Result created = run("targets", "create", "--name", "localhost", "--description", "the build box",
+                "--min-ci", "2", "--min-desk", "1");
+
+        assertThat(created.exit()).as(created.err()).isZero();
+        assertThat(created.out()).isEqualTo(INSTALL_LINE + System.lineSeparator());
+        assertThat(created.err()).doesNotContain(REG_TOKEN).contains("localhost").contains(TARGET)
+                .contains("shown only this once").contains("target's own machine");
+        JsonNode sent = JSON.readTree(platform.requests("POST", "/system/api/targets").getFirst().body());
+        assertThat(sent.path("name").asText()).isEqualTo("localhost");
+        assertThat(sent.path("description").asText()).isEqualTo("the build box");
+        assertThat(sent.path("minimums").path("ci").asInt()).isEqualTo(2);
+        assertThat(sent.path("minimums").path("desk").asInt()).isEqualTo(1);
+        assertThat(sent.path("minimums").has("workspace")).isFalse();
+    }
+
+    @Test
+    void createWithNoMinimumsSendsNoMinimumsAtAll() throws Exception {
+        platform.answer("POST", "/system/api/targets", 201, registration());
+
+        Result created = run("targets", "create", "--name", "localhost");
+
+        assertThat(created.exit()).as(created.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("POST", "/system/api/targets").getFirst().body());
+        assertThat(sent.has("minimums")).isFalse();
+        assertThat(sent.has("description")).isFalse();
+        assertThat(sent.path("name").asText()).isEqualTo("localhost");
+    }
+
+    @Test
+    void createJsonIsTheServicesAnswer() throws Exception {
+        platform.answer("POST", "/system/api/targets", 201, registration());
+
+        Result created = run("targets", "create", "--name", "localhost", "-o", "json");
+
+        assertThat(created.exit()).as(created.err()).isZero();
+        JsonNode printed = JSON.readTree(created.out());
+        assertThat(printed).isEqualTo(JSON.readTree(registration()));
+        assertThat(created.err()).doesNotContain(REG_TOKEN);
+    }
+
+    @Test
+    void createRefusedForAnAgentSaysSoWithoutAToken() {
+        platform.answer("POST", "/system/api/targets", 403,
+                "{\"code\":\"FORBIDDEN\",\"message\":\"this credential is qits:agent\"}");
+
+        Result refused = run("targets", "create", "--name", "localhost");
+
+        assertThat(refused.exit()).isEqualTo(1);
+        assertThat(refused.err()).contains("HTTP 403");
+        assertThat(refused.out()).isEmpty();
+    }
+
+    @Test
+    void createWithATakenNameIsRefused() {
+        platform.answer("POST", "/system/api/targets", 409,
+                "{\"code\":\"TARGET_NAME_TAKEN\",\"message\":\"a target named localhost exists\"}");
+
+        Result refused = run("targets", "create", "--name", "localhost");
+
+        assertThat(refused.exit()).isEqualTo(1);
+        assertThat(refused.err()).contains("HTTP 409").contains("a target named localhost exists");
+        assertThat(refused.out()).isEmpty();
+    }
+
+    @Test
+    void anAnswerWithoutAnInstallLineFailsWithoutQuotingIt() {
+        platform.answer("POST", "/system/api/targets", 201,
+                "{\"target\":{\"id\":\"" + TARGET + "\",\"name\":\"localhost\"},\"registrationToken\":\""
+                        + REG_TOKEN + "\"}");
+
+        Result broken = run("targets", "create", "--name", "localhost");
+
+        assertThat(broken.exit()).isEqualTo(1);
+        assertThat(broken.err()).contains("carries no install line").doesNotContain(REG_TOKEN);
+        assertThat(broken.out()).isEmpty();
+    }
+
+    @Test
+    void rotateTokenResolvesTheNameAndPrintsTheInstallLineAlone() {
+        platform.answer("GET", "/system/api/targets", "[" + target("ABSENT", null) + "]");
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", registration());
+
+        Result rotated = run("targets", "rotate-token", "--target", "localhost");
+
+        assertThat(rotated.exit()).as(rotated.err()).isZero();
+        assertThat(rotated.out()).isEqualTo(INSTALL_LINE + System.lineSeparator());
+        assertThat(rotated.err()).doesNotContain(REG_TOKEN).contains("localhost").contains(TARGET)
+                .contains("shown only this once");
+        assertThat(platform.requests("GET", "/system/api/targets")).hasSize(1);
+        var posted = platform.requests("POST", "/system/api/targets/" + TARGET + "/registration-token");
+        assertThat(posted).hasSize(1);
+        assertThat(posted.getFirst().body()).isNullOrEmpty();
+    }
+
+    @Test
+    void rotateTokenJsonIsTheServicesAnswer() throws Exception {
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", registration());
+
+        Result rotated = run("targets", "rotate-token", "--target", TARGET, "-o", "json");
+
+        assertThat(rotated.exit()).as(rotated.err()).isZero();
+        assertThat(JSON.readTree(rotated.out())).isEqualTo(JSON.readTree(registration()));
+        assertThat(platform.requests("GET", "/system/api/targets")).isEmpty();
+    }
+
+    @Test
+    void rotateTokenOnARegisteredTargetIsRefused() {
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", 409,
+                "{\"code\":\"ALREADY_REGISTERED\",\"message\":\"the target has registered\"}");
+
+        Result refused = run("targets", "rotate-token", "--target", TARGET);
+
+        assertThat(refused.exit()).isEqualTo(1);
+        assertThat(refused.err()).contains("HTTP 409").contains("the target has registered");
+        assertThat(refused.out()).isEmpty();
+    }
+
+    @Test
+    void rotateTokenRefusedForAnAgent() {
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", 403,
+                "{\"message\":\"this credential is qits:agent\"}");
+
+        Result refused = run("targets", "rotate-token", "--target", TARGET);
+
+        assertThat(refused.exit()).isEqualTo(1);
+        assertThat(refused.err()).contains("HTTP 403");
+        assertThat(refused.out()).isEmpty();
+    }
+
+    @Test
+    void theCommandsThatPrintATokenAreLocal() {
+        for (Class<?> command : new Class<?>[] {TargetsCommand.CreateCommand.class,
+                TargetsCommand.RotateTokenCommand.class}) {
+            TuiCommand marker = command.getAnnotation(TuiCommand.class);
+            assertThat(marker).as(command.getSimpleName()).isNotNull();
+            assertThat(marker.interaction()).as(command.getSimpleName()).isEqualTo(Interaction.LOCAL);
+        }
     }
 }

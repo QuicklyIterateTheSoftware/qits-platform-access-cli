@@ -13,6 +13,8 @@ import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.access.platform.Table;
+import eu.wohlben.qits.cli.tui.api.Interaction;
+import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -32,26 +34,32 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
  * command per door; this replaces the old per-slot-type runner groups ({@code qits workspaces
  * runners}, retired by qits-1534).
  * <p>
- * {@code create} and {@code registration-token} are not offered: the CLI never prints a
- * registration token (qits-1530).
+ * {@code create} and {@code rotate-token} answer a one-time registration token inside an install
+ * line (qits-1574). They print that line alone on stdout, once, and never on stderr, in a log or in
+ * an error, the way {@code users invite} prints its register token. Both are {@link
+ * Interaction#LOCAL}, so the MCP service does not serve them and the line never lands in an agent's
+ * transcript.
  */
 @CommandLine.Command(name = "targets", mixinStandardHelpOptions = true,
         subcommands = {TargetsCommand.ListCommand.class, TargetsCommand.ShowCommand.class,
+                TargetsCommand.CreateCommand.class, TargetsCommand.RotateTokenCommand.class,
                 TargetsCommand.UpdateCommand.class, TargetsCommand.GreenlightCommand.class,
                 TargetsCommand.HealthcheckCommand.class, TargetsCommand.LoginCheckCommand.class,
                 TargetsCommand.DeleteCommand.class, TargetsCommand.LeasesCommand.class,
                 TargetsCommand.SignInCommand.class},
         description = {"The execution targets qits-system-runner runs on, and their leases: list them with their "
-                + "connection, slots, login and quarantine; read one in full; change its slot minimums or "
-                + "description; lift a quarantine; ask for a health check or a login check; delete one; list the "
-                + "leases a target or a slot type holds; and sign a target in.",
+                + "connection, slots, login and quarantine; read one in full; declare one, or rotate its registration "
+                + "token, and print the line that installs its runner; change its slot minimums or description; "
+                + "lift a quarantine; ask for a health check or a login check; delete one; list the leases a "
+                + "target or a slot type holds; and sign a target in.",
                 "A target is named by its name or its id (`qits targets list` shows both)."},
         footerHeading = "%nNotes:%n",
-        footer = {"- Reading, and asking for a health check, are open to qits:agent. Updating, deleting and asking "
-                + "for a login check need qits:admin, qits:admin-agent or (for update and delete) qits:system; "
-                + "qits:agent is refused (HTTP 403) by design. Each command's help names its door.",
-                "- Declaring a target and rotating its registration token are not offered here: their answer is a "
-                        + "one-time token, and qits never prints a token.",
+        footer = {"- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a "
+                + "registration token, updating, deleting and asking for a login check need qits:admin, "
+                + "qits:admin-agent or (for all but login-check) qits:system; qits:agent is refused (HTTP 403) by "
+                + "design. Each command's help names its door.",
+                "- create and rotate-token print an install line that carries a one-time token: alone on stdout, "
+                        + "shown once, and not served by the qits MCP server.",
                 "- --system-url and --output may come before or after the command."})
 public class TargetsCommand implements Runnable {
 
@@ -284,6 +292,143 @@ public class TargetsCommand implements Runnable {
                 return 0;
             }
             printTarget(context.out(), answer);
+            return 0;
+        }
+    }
+
+    // --- create and rotate-token ---
+
+    /**
+     * The answer of createTarget or rotateTargetRegistrationToken: the install line alone on stdout,
+     * and on stderr which target it is for, by name and id. The line carries the registration
+     * token, so it is printed nowhere else, and no message here quotes the answer.
+     */
+    static void printInstallLine(CliContext context, boolean json, JsonNode answer, String what, String given)
+            throws CliFailure {
+        JsonNode target = answer == null ? JsonNodeFactory.instance.objectNode() : answer.path("target");
+        String name = text(target, "name").isEmpty() ? given : text(target, "name");
+        String id = text(target, "id");
+        String named = SafeText.line(name) + (id.isEmpty() ? "" : " (" + SafeText.line(id) + ")");
+        String installLine = answer == null ? "" : text(answer, "installLine");
+        if (installLine.isBlank()) {
+            throw new CliFailure("The service " + what + " target " + named + ", but its answer carries no install "
+                    + "line.", CliFailure.FAILED);
+        }
+        if (json) {
+            Json.print(context.out(), answer);
+            return;
+        }
+        context.out().println(SafeText.line(installLine));
+        context.err().println("Install line for target " + named + ": shown only this once. Run it on the "
+                + "target's own machine; it installs the runner, which registers with it once. Lost, `qits targets "
+                + "rotate-token --target " + SafeText.line(name) + "` makes a new one.");
+    }
+
+    @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
+            description = {"Declare a target and print the line that installs its runner, with a one-time "
+                    + "registration token in it.",
+                    "POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}} (HTTP 201 "
+                            + "{target, registrationToken, installLine}). " + Doors.WRITE,
+                    "THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run "
+                            + "it on the target's own machine. Lost, `qits targets rotate-token` makes a new one."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits targets create --name buildbox",
+                    "  qits targets create --name buildbox --description 'The build machine under the desk' "
+                            + "--min-ci 2 --min-workspace 2 --min-desk 1",
+                    "",
+                    "- A minimum left out is not sent. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: "
+                            + "commissioning is off, or the runner plane is not configured or pins no runner version.",
+                    "- -o json prints the service's answer: the target, the registration token and the install line.",
+                    "- Not served by the qits MCP server: the token would land in a transcript."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(interaction = Interaction.LOCAL)
+    public static class CreateCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        TargetsCommand targets;
+
+        @CommandLine.Option(names = "--name", paramLabel = "<name>", required = true,
+                description = "The new target's name.")
+        String name;
+
+        @CommandLine.Option(names = "--description", paramLabel = "<text>", description = "Free text.")
+        String description;
+
+        @CommandLine.Option(names = "--min-ci", paramLabel = "<n>", description = "Slots reserved for CI.")
+        Integer minCi;
+
+        @CommandLine.Option(names = "--min-workspace", paramLabel = "<n>",
+                description = "Slots reserved for workspaces.")
+        Integer minWorkspace;
+
+        @CommandLine.Option(names = "--min-desk", paramLabel = "<n>", description = "Slots reserved for the desk.")
+        Integer minDesk;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = targets.json();
+            String wanted = name == null ? "" : name.strip();
+            if (wanted.isEmpty()) {
+                throw new CliFailure("Name the target: --name <name>.", CliFailure.USAGE);
+            }
+            ObjectNode body = JsonNodeFactory.instance.objectNode();
+            body.put("name", wanted);
+            if (description != null) {
+                body.put("description", description);
+            }
+            ObjectNode minimums = JsonNodeFactory.instance.objectNode();
+            if (minCi != null) {
+                minimums.put("ci", minCi);
+            }
+            if (minWorkspace != null) {
+                minimums.put("workspace", minWorkspace);
+            }
+            if (minDesk != null) {
+                minimums.put("desk", minDesk);
+            }
+            if (!minimums.isEmpty()) {
+                body.set("minimums", minimums);
+            }
+            JsonNode answer = targets.api(context).createTarget(body);
+            printInstallLine(context, json, answer, "declared", wanted);
+            return 0;
+        }
+    }
+
+    @CommandLine.Command(name = "rotate-token", mixinStandardHelpOptions = true,
+            description = {"Mint a new registration token for a target whose runner has not registered yet, and "
+                    + "print the line that installs its runner with it.",
+                    "POST /system/api/targets/{id}/registration-token, no body (HTTP 200 {target, registrationToken, "
+                            + "installLine}). " + Doors.WRITE,
+                    "THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run "
+                            + "it on the target's own machine."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits targets rotate-token --target buildbox",
+                    "  qits targets rotate-token --target buildbox -o json",
+                    "",
+                    "- HTTP 409 ALREADY_REGISTERED: the target's runner has registered and needs no token. HTTP 503: "
+                            + "commissioning is off, or the runner plane is not configured or pins no runner version.",
+                    "- -o json prints the service's answer: the target, the registration token and the install line.",
+                    "- Not served by the qits MCP server: the token would land in a transcript."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+    @TuiCommand(interaction = Interaction.LOCAL)
+    public static class RotateTokenCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        TargetsCommand targets;
+
+        @CommandLine.Option(names = "--target", paramLabel = "<name|id>", required = true,
+                description = "The target's name or id.")
+        String target;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = targets.json();
+            String id = targets.targetId(context, target);
+            JsonNode answer = targets.api(context).rotateTargetRegistrationToken(id);
+            printInstallLine(context, json, answer, "rotated the registration token of", target.strip());
             return 0;
         }
     }

@@ -31,7 +31,8 @@ Commands:
   sign-in, plugins), and a command's terminal (`qits workspaces attach`). The nodes slots are placed
   on are `qits targets`.
 - `qits targets` lists qits-system's execution targets (connection, slots, login, quarantine),
-  reads one in full, updates its description or slot minimums, lifts a quarantine, asks for a
+  reads one in full, declares one or rotates its registration token (printing the install line
+  once), updates its description or slot minimums, lifts a quarantine, asks for a
   health check or a login check, deletes one, lists leases, and `qits targets sign-in` prints a
   target's login command and waits for it to report signed in.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
@@ -604,6 +605,9 @@ Installing it is not part of this version.
     qits workspaces agents plugins list --workspace <n>
     qits workspaces agents plugins install <plugin> --workspace <n>
     qits targets list | show --target <name|id>
+    qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-workspace <n>] \
+        [--min-desk <n>]
+    qits targets rotate-token --target <name|id>
     qits targets update --target <name|id> [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] \
         [--description <text>]
     qits targets greenlight|healthcheck|login-check|delete --target <name|id>
@@ -1498,6 +1502,9 @@ targets list` shows both); `--target` resolves a name by reading `listTargets`.
 
     qits targets list                             GET  /system/api/targets
     qits targets show --target <name|id>          GET  /system/api/targets/{id}
+    qits targets create --name <name>             POST /system/api/targets
+      [--description <text>] [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>]
+    qits targets rotate-token --target <name|id>  POST /system/api/targets/{id}/registration-token
     qits targets update --target <name|id>        PATCH /system/api/targets/{id}
       [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] [--description <text>]
     qits targets greenlight|healthcheck|login-check
@@ -1509,14 +1516,25 @@ targets list` shows both); `--target` resolves a name by reading `listTargets`.
       [--harness claude|kimi] [--timeout <duration>]  POST …/login-check every 30s until PRESENT
 
 Who may: reading, and asking for a health check, is open to every credential, `qits:agent` included.
-Updating and deleting need `qits:admin`, `qits:admin-agent` or `qits:system`; greenlight and
+Declaring (`create`), rotating a registration token (`rotate-token`), updating and deleting need
+`qits:admin`, `qits:admin-agent` or `qits:system`; greenlight and
 login-check need `qits:admin` or `qits:admin-agent` only; `qits:agent` is refused with 403 by design
 wherever it is not named. `qits targets leases` reads every lease for `qits:admin`, `qits:admin-agent`
 and `qits:agent`, and only the caller's own for `qits:system`. Each command's help names its door and
 roles.
 
-Not here, on purpose: declaring a target and rotating its registration token, whose answer is a
-one-time token (qits prints no token but the two the conventions name).
+`qits targets create` declares a target (`{name, description?, minimums?: {ci, workspace, desk}}`;
+a minimum left out is not sent, and with none given `minimums` is left out) and `qits targets
+rotate-token` mints a new registration token for one whose runner has not registered yet. Both
+answer `{target, registrationToken, installLine}`, and the install line embeds the one-time token,
+so it is handled the way `qits users invite` handles a register token: **the install line alone on
+stdout, shown only this once**, and on stderr which target it is for (name and id, never the token)
+and that it is run on the target's own machine. `-o json` prints the service's answer as it is. The
+line is never written to stderr, a file, a log or an error message; an answer without one fails
+without quoting it. A taken name is HTTP 409 `TARGET_NAME_TAKEN`, a target already registered HTTP
+409 `ALREADY_REGISTERED`, commissioning off or no runner version pinned HTTP 503. Both are
+`Interaction.LOCAL`: the qits MCP server does not serve them, because a tool's answer lands in an
+agent's transcript.
 
 `qits targets sign-in` prints the target's login command for `--harness` (default `claude`) — the
 `docker run` that signs the target's credential volume in, run on the target's own machine — with
