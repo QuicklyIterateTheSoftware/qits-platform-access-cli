@@ -81,6 +81,18 @@ public final class ProjectsContract {
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
     static final String HELD_BY_AN_UPSTREAM_RELEASE = "a release request held by an upstream release";
     /**
+     * The front desk doors of {@code qits projects desk} (qits-1572). Pending on the provider: the
+     * golden masters pinned in the root pom record no such state yet, so both rows are skipped with
+     * this state and their door, and stay out of the pact file. They go live with no change here
+     * once qits-maintenance bumps {@code qits.qits-projects-golden-masters.version} past the release
+     * that records this state under the operation ids {@link #DESK_PROMPT_OPERATION} and {@link
+     * #DESK_ANSWER_OPERATION}: write the pact again with {@code -Dgolden.update=true} on that bump. If
+     * the provider records them under other operation ids, the ids here follow.
+     */
+    static final String DESK_RUNNING = "a project whose front desk is running";
+    static final String DESK_PROMPT_OPERATION = "promptFrontDesk";
+    static final String DESK_ANSWER_OPERATION = "getFrontDeskLastAnswer";
+    /**
      * The project list filtered by {@code ?supersededBy=}, the item named by its qualified id; its
      * items are not blocked, so no blockSource.
      */
@@ -576,6 +588,21 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(delivery, "interval")).isNotBlank();
     };
 
+    /** {@code qits projects desk prompt}: the recorded text; the table prints delivered or queued, the position and the command. */
+    private static final Call DESK_PROMPT = (api, params, recorded) -> {
+        JsonNode answer = api.deskPrompt(params.get("projectId"), body(recorded).path("text").asText());
+        assertThat(ProjectsApi.text(answer, "commandId")).isNotBlank();
+        assertThat(answer.path("delivered").isBoolean()).isTrue();
+        assertThat(answer.path("queued").isBoolean()).isTrue();
+    };
+
+    /** {@code qits projects desk answer}: the last answer, whose text is null until the desk has answered. */
+    private static final Call DESK_ANSWER = (api, params, recorded) -> {
+        JsonNode answer = api.deskAnswer(params.get("projectId"));
+        assertThat(answer.has("text")).isTrue();
+        assertThat(answer.path("text").isTextual() || answer.path("text").isNull()).isTrue();
+    };
+
     /** {@code qits work dispatch}: the recorded mode, no rule; the table prints the mode, phase, branch and assignee. */
     private static final Call DISPATCH = (api, params, recorded) -> {
         JsonNode dispatch = api.dispatchWork(params.get("qualifiedId"), body(recorded).path("mode").asText(),
@@ -850,6 +877,18 @@ public final class ProjectsContract {
                 .consumes(Stream.concat(PROJECT.stream(), held(A_PROJECT, "listProjects", DELIVERY).stream()).toList()));
         PROJECT_SCOPED.forEach(c -> rows.add(row(c, A_PROJECT, "listProjects", "project", FIND_PROJECT)
                 .consumes(PROJECT)));
+        rows.add(row("qits projects desk prompt", A_PROJECT, "listProjects", "project", FIND_PROJECT)
+                .consumes(PROJECT));
+        rows.add(row("qits projects desk prompt", DESK_RUNNING, DESK_PROMPT_OPERATION, "deskPrompt", DESK_PROMPT)
+                .consumes(held(DESK_RUNNING, DESK_PROMPT_OPERATION,
+                        List.of("commandId", "state", "delivered", "queued", "position")))
+                .request("POST /projects/api/projects/{projectId}/front-desk/prompt"));
+        rows.add(row("qits projects desk answer", A_PROJECT, "listProjects", "project", FIND_PROJECT)
+                .consumes(PROJECT));
+        rows.add(row("qits projects desk answer", DESK_RUNNING, DESK_ANSWER_OPERATION, "deskAnswer", DESK_ANSWER)
+                .consumes(held(DESK_RUNNING, DESK_ANSWER_OPERATION,
+                        List.of("commandId", "sessionId", "state", "text", "at")))
+                .request("GET /projects/api/projects/{projectId}/front-desk/last-answer"));
         REPOSITORY_SCOPED.forEach(c -> rows.add(row(c, ONE_REPOSITORY, "listProjectRepositories", "repositories",
                 FIND_REPOSITORY).consumes(REPOSITORY)));
 

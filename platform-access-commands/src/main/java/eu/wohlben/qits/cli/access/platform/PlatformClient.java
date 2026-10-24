@@ -69,6 +69,15 @@ public final class PlatformClient {
         return send("GET", uri, HttpRequest.newBuilder(uri).GET());
     }
 
+    /**
+     * A GET whose 403, when {@code roleHintOn403} is false, carries no "reads but does not write"
+     * line: for a read door that an agent's credential is refused as well, where that line would
+     * say the opposite of what happened ({@code qits projects desk answer}).
+     */
+    public JsonNode get(URI uri, boolean roleHintOn403) throws CliFailure, InterruptedException {
+        return send("GET", uri, HttpRequest.newBuilder(uri).GET(), roleHintOn403);
+    }
+
     public JsonNode post(URI uri, JsonNode body) throws CliFailure, InterruptedException {
         return post(uri, body, true);
     }
@@ -446,8 +455,8 @@ public final class PlatformClient {
 
     /**
      * The service's own words: {@code message} (what qits services answer), {@code errors[].message},
-     * a validation answer's {@code violations[].message}, or the idp's {@code error} and
-     * {@code error_description}. A body that is not JSON (an HTML page
+     * a validation answer's {@code violations[].message}, the idp's {@code error} and
+     * {@code error_description}, or {@code reason}. A body that is not JSON (an HTML page
      * from a proxy) gives nothing; it is not quoted.
      */
     static String serviceMessage(String body) {
@@ -479,6 +488,10 @@ public final class PlatformClient {
             String error = node.path("error").asText("");
             String description = node.path("error_description").asText("");
             messages.add(error.isEmpty() ? description : description.isEmpty() ? error : error + ": " + description);
+        }
+        if (messages.isEmpty() && node.path("reason").isTextual()) {
+            // qits-projects' front desk doors answer {"reason":"…"} (qits-1572).
+            messages.add(node.get("reason").asText());
         }
         if (messages.isEmpty() && node.path("title").isTextual()) {
             messages.add(node.get("title").asText());

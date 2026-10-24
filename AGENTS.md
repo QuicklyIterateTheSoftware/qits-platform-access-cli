@@ -515,7 +515,9 @@ reported ticket` (null) and `a ticket with a design`; `discard`'s `getWorkRefine
 release-request approve` / `decline` (qits-1287): the project's door that finds a request by its
 logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
 the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build
-runs`, `declineReleaseRequest` in `a release request awaiting approval`). A path the recorder froze
+runs`, `declineReleaseRequest` in `a release request awaiting approval`); and `qits projects desk prompt` /
+`answer` (qits-1572): `promptFrontDesk` and `getFrontDeskLastAnswer` in `a project whose front desk
+is running`, both pending until a golden-masters pin records that state. A path the recorder froze
 under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole UUID in some
 elements only, so no row consumes it: qits-pact-consumer would match it as a UUID.
 

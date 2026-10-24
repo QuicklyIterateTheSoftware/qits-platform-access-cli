@@ -524,6 +524,35 @@ public final class ProjectsApi {
         return client.get(uri(repositoryPath(repoId) + "/commit-subjects" + query(query)));
     }
 
+    // --- the front desk ---
+
+    /**
+     * {@code {"commandId", "state", "delivered", "queued", "position"}}: one turn handed to the
+     * project's kept front desk session (qits-1572). {@code delivered} when it was typed at once,
+     * {@code queued} with its {@code position} when it waits for the session to be idle. The door
+     * takes {@code qits:admin} or {@code qits:admin-agent}; it answers {@code {"reason"}} on a
+     * refusal (409 no desk running, 429 a full queue, 503 no daemon).
+     */
+    public JsonNode deskPrompt(String projectId, String text) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("text", text);
+        return client.post(uri(deskPath(projectId) + "/prompt"), body);
+    }
+
+    /**
+     * {@code {"commandId", "sessionId", "state", "text", "at"}}: the last answer of the project's
+     * front desk session; {@code text} and {@code at} are null while it has not answered. A read,
+     * but one {@code qits:agent} is refused as well, so its 403 carries no "reads but does not
+     * write" line.
+     */
+    public JsonNode deskAnswer(String projectId) throws CliFailure, InterruptedException {
+        return client.get(uri(deskPath(projectId) + "/last-answer"), false);
+    }
+
+    private static String deskPath(String projectId) {
+        return "/projects/api/projects/" + segment(projectId) + "/front-desk";
+    }
+
     // --- backups ---
 
     /**

@@ -124,7 +124,7 @@ qits checkout-daemon --path /srv/qits --repository qits-qits --no-submodules
 
 ## qits projects
 
-The platform's projects: list shows them, delivery shows one's delivery desk. Other commands take a project's id, slug or name as --project.
+The platform's projects: list shows them, delivery shows one's delivery desk, desk talks to one's front desk. Other commands take a project's id, slug or name as --project.
 
 ## qits projects list
 
@@ -181,6 +181,83 @@ qits projects delivery --project qits -o json
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example no --project, or one the platform does not know), not signed in, or the session ended.
+
+## qits projects desk
+
+A project's front desk: prompt types a turn into its kept front desk session, answer shows that session's last answer.
+
+The session is the one the project's front desk keeps running in its agent container, the same session the delivery loop types its ticks into. It is not a session a person started from the desk panel.
+
+### Notes
+
+- Both take qits:admin or qits:admin-agent. An agent with qits:agent alone is refused (HTTP 403).
+
+## qits projects desk prompt
+
+Type a turn into the project's front desk session. The words after the options are joined with spaces into the turn's text.
+
+Sends POST /projects/api/projects/{projectId}/front-desk/prompt. When the session is idle the turn is typed at once (delivered). While it is busy or waiting on a permission prompt, the turn waits in the desk's queue and is typed in order once the session is idle (queued, with its position). Either way it prints the command id; `qits projects desk answer` shows what the desk answered.
+
+```
+qits projects desk prompt [--output table|json] [--project <project>] [--projects-url <url>] [<text>]
+```
+
+| Name | What it does |
+|---|---|
+| `<text>` | The turn's text (required). The words are joined with spaces. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project (required): its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits projects desk prompt --project qits What is in flight right now?
+qits projects desk prompt --project qits -o json Summarise the open release requests
+```
+
+- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- The turn goes to the session the front desk keeps, the one the delivery loop types its ticks into. While the turn runs the session is busy, and the loop skips its tick until the session is idle again.
+- -o json prints the service's answer: commandId, state, delivered, queued, position.
+
+### Exit codes
+
+- `0` The desk took the turn: delivered, or queued.
+- `1` The platform refused (for example your roles, HTTP 403, a project it does not know, HTTP 404, a front desk that is not running, HTTP 409, a full queue, HTTP 429, or no projects daemon to reach the desk, HTTP 503), or cannot be reached.
+- `2` Used wrongly (for example no --project, one the platform does not know, or no text), not signed in, or the session ended.
+
+## qits projects desk answer
+
+Show the last answer of the project's front desk session: its text, when it was given, the command and session it came from, and the session's state.
+
+Reads GET /projects/api/projects/{projectId}/front-desk/last-answer. A desk that has not answered yet says so and exits with 0.
+
+```
+qits projects desk answer [--output table|json] [--project <project>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project (required): its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits projects desk answer --project qits
+qits projects desk answer --project qits -o json
+```
+
+- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403), although it changes nothing.
+- The last answer is the session's, whatever turn it answered: a prompt of yours, somebody else's, or a delivery tick.
+- -o json prints the service's answer: commandId, sessionId, state, text, at.
+
+### Exit codes
+
+- `0` Done, also when the desk has not answered yet.
+- `1` The platform refused (for example your roles, HTTP 403, a project it does not know, HTTP 404, or no projects daemon to reach the desk, HTTP 503), or cannot be reached.
 - `2` Used wrongly (for example no --project, or one the platform does not know), not signed in, or the session ended.
 
 ## qits repositories

@@ -25,6 +25,8 @@ class PlatformClientTest {
                 "{\"title\":\"Constraint Violation\",\"violations\":[{\"field\":\"create.body.branch\",\"message\":\"must not be blank\"}]}"))
                 .isEqualTo("create.body.branch: must not be blank");
         assertThat(PlatformClient.serviceMessage("{\"title\":\"Bad Request\"}")).isEqualTo("Bad Request");
+        assertThat(PlatformClient.serviceMessage("{\"reason\":\"the front desk is not running\"}"))
+                .isEqualTo("the front desk is not running");
         assertThat(PlatformClient.serviceMessage("<html>gateway</html>")).isEmpty();
         assertThat(PlatformClient.serviceMessage("")).isEmpty();
     }

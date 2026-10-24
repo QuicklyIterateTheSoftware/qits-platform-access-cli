@@ -1489,6 +1489,102 @@ class PlatformCommandsTest {
         assertThat(run("projects", "delivery").err()).contains("Name the project: --project <id, slug or name>.");
     }
 
+    // --- the front desk (qits-1572) ---
+
+    private static final String DESK_PROMPT = "/projects/api/projects/" + QITS + "/front-desk/prompt";
+    private static final String DESK_ANSWER = "/projects/api/projects/" + QITS + "/front-desk/last-answer";
+
+    private void answerProjects() {
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"%s","name":"qits platform","slug":"qits"}}]}
+                """.formatted(QITS));
+    }
+
+    @Test
+    void deskPromptJoinsTheWordsAndSaysWhetherItWasDeliveredOrQueued() throws Exception {
+        answerProjects();
+        platform.answer("POST", DESK_PROMPT, """
+                {"commandId":"c-7","state":"IDLE","delivered":true,"queued":false,"position":null}
+                """);
+
+        Result delivered = run("projects", "desk", "prompt", "--project", "qits", "What", "is", "in", "flight?");
+
+        assertThat(delivered.exit()).as(delivered.err()).isZero();
+        assertThat(JSON.readTree(platform.requests("POST", DESK_PROMPT).getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"text\":\"What is in flight?\"}"));
+        assertThat(delivered.out().lines().toList())
+                .containsExactly("Project qits: delivered to the front desk (command c-7).");
+
+        platform.answer("POST", DESK_PROMPT, """
+                {"commandId":"c-8","state":"BUSY","delivered":false,"queued":true,"position":2}
+                """);
+        Result queued = run("projects", "desk", "prompt", "--project", "qits", "tick now");
+
+        assertThat(queued.exit()).as(queued.err()).isZero();
+        assertThat(queued.out().lines().toList()).containsExactly("Project qits: queued at position 2 (command c-8). "
+                + "The desk is BUSY; the turn is typed once it is idle.");
+        assertThat(JSON.readTree(run("projects", "-o", "json", "desk", "prompt", "--project", "qits", "x").out()))
+                .isEqualTo(JSON.readTree("{\"commandId\":\"c-8\",\"state\":\"BUSY\",\"delivered\":false,"
+                        + "\"queued\":true,\"position\":2}"));
+    }
+
+    @Test
+    void deskPromptNeedsAProjectAndTextAndSurfacesTheServicesReason() {
+        assertThat(run("projects", "desk", "prompt", "hello").err())
+                .contains("Name the project: --project <id, slug or name>.");
+        Result noText = run("projects", "desk", "prompt", "--project", "qits");
+        assertThat(noText.exit()).isEqualTo(2);
+        assertThat(noText.err()).contains("Name the turn's text");
+        assertThat(platform.requests).isEmpty();
+
+        answerProjects();
+        platform.answer("POST", DESK_PROMPT, 429, "{\"reason\":\"the front desk queue is full\"}");
+        Result full = run("projects", "desk", "prompt", "--project", "qits", "one", "more");
+
+        assertThat(full.exit()).isEqualTo(1);
+        assertThat(full.err()).contains("POST " + platform.url() + DESK_PROMPT
+                + " answered HTTP 429: the front desk queue is full");
+        assertThat(full.out()).isEmpty();
+    }
+
+    @Test
+    void deskAnswerPrintsTheLastAnswerCleanedAndSaysWhenThereIsNone() throws Exception {
+        answerProjects();
+        platform.answer("GET", DESK_ANSWER, """
+                {"commandId":"c-7","sessionId":"s-1","state":"IDLE","text":"Two items run.\\n\\u001b[2Jqits-100 waits.",
+                 "at":"2026-10-24T08:00:00Z"}
+                """);
+
+        Result r = run("projects", "desk", "answer", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out().lines().toList()).containsExactly(
+                "Project qits: the front desk's last answer",
+                "FIELD      VALUE",
+                "at         2026-10-24T08:00:00Z",
+                "state      IDLE",
+                "commandId  c-7",
+                "sessionId  s-1",
+                "",
+                "Two items run.",
+                "qits-100 waits.");
+        String json = run("projects", "-o", "json", "desk", "answer", "--project", "qits").out();
+        assertThat(json).doesNotContain("\u001b").contains("\\u001B");
+        assertThat(JSON.readTree(json).path("commandId").asText()).isEqualTo("c-7");
+
+        platform.answer("GET", DESK_ANSWER, """
+                {"commandId":null,"sessionId":null,"state":"IDLE","text":null,"at":null}
+                """);
+        Result none = run("projects", "desk", "answer", "--project", "qits");
+        assertThat(none.exit()).isZero();
+        assertThat(none.out().lines().toList()).containsExactly("Project qits: the front desk has not answered yet.");
+
+        platform.answer("GET", DESK_ANSWER, 503, "{\"reason\":\"no projects daemon is connected\"}");
+        Result down = run("projects", "desk", "answer", "--project", "qits");
+        assertThat(down.exit()).isEqualTo(1);
+        assertThat(down.err()).contains("answered HTTP 503: no projects daemon is connected");
+    }
+
     // --- refusals ---
 
     @Test
