@@ -2202,6 +2202,119 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "getFrontDeskLastAnswer"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits projects desk answer",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits projects desk answer: getFrontDeskLastAnswer",
+      "key": "a628b1b8",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project whose front desk is running",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/front-desk/last-answer",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/front-desk/last-answer"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "at": "2026-01-01T00:00:00Z",
+            "commandId": "desk-command-1",
+            "sessionId": "desk-session-1",
+            "state": "RUNNING",
+            "text": "Two tickets are ready for dev."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.at": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.commandId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.sessionId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.text": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "listProjects"
           },
           "qits-trigger": {
@@ -2379,6 +2492,122 @@
               ]
             },
             "$.entries[*].project.slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "promptFrontDesk"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits projects desk prompt",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits projects desk prompt: promptFrontDesk",
+      "key": "bc018eac",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project whose front desk is running",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "text": "What is ready for dev?"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/front-desk/prompt",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/front-desk/prompt"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "commandId": "desk-command-1",
+            "delivered": true,
+            "position": null,
+            "queued": false,
+            "state": "RUNNING"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.commandId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.delivered": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.queued": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.state": {
               "combine": "AND",
               "matchers": [
                 {
