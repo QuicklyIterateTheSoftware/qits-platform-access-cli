@@ -91,7 +91,7 @@
         <!-- The other providers' golden masters, one per service the commands call (ticket
              qits-1149): each pact under pacts/ is written from its provider's recordings. Bumped by
              qits-maintenance like the one above. -->
-        <qits.workspaces-golden-masters.version>2026.1022.75919</qits.workspaces-golden-masters.version>
+        <qits.workspaces-golden-masters.version>2026.1024.141209</qits.workspaces-golden-masters.version>
         <qits.workspace-daemon-golden-masters.version>2026.1018.152111</qits.workspace-daemon-golden-masters.version>
         <qits.artifacts-golden-masters.version>2026.1019.62657</qits.artifacts-golden-masters.version>
         <qits.ci-golden-masters.version>2026.1018.180637</qits.ci-golden-masters.version>
