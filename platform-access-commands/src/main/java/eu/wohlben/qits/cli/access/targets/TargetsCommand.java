@@ -327,8 +327,8 @@ public class TargetsCommand implements Runnable {
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"Declare a target and print the line that installs its runner, with a one-time "
                     + "registration token in it.",
-                    "POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}} (HTTP 201 "
-                            + "{target, registrationToken, installLine}). " + Doors.WRITE,
+                    "POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} "
+                            + "(HTTP 201 {target, registrationToken, installLine}). " + Doors.WRITE,
                     "THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run "
                             + "it on the target's own machine. Lost, `qits targets rotate-token` makes a new one."},
             footerHeading = HelpText.EXAMPLES,
@@ -336,8 +336,9 @@ public class TargetsCommand implements Runnable {
                     "  qits targets create --name buildbox --description 'The build machine under the desk' "
                             + "--min-ci 2 --min-workspace 2 --min-desk 1",
                     "",
-                    "- A minimum left out is not sent. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: "
-                            + "commissioning is off, or the runner plane is not configured or pins no runner version.",
+                    "- A minimum left out is not sent. HTTP 400: --slots is below the minimums' sum, or outside "
+                            + "0..1024. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is "
+                            + "off, or the runner plane is not configured or pins no runner version.",
                     "- -o json prints the service's answer: the target, the registration token and the install line.",
                     "- Not served by the qits MCP server: the token would land in a transcript."},
             exitCodeListHeading = HelpText.EXIT_CODES,
@@ -365,6 +366,11 @@ public class TargetsCommand implements Runnable {
         @CommandLine.Option(names = "--min-desk", paramLabel = "<n>", description = "Slots reserved for the desk.")
         Integer minDesk;
 
+        @CommandLine.Option(names = "--slots", paramLabel = "<n>",
+                description = "The slots total the install line asks the runner for; default: the reported total, "
+                        + "or the minimums' sum.")
+        Integer slots;
+
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = targets.json();
@@ -390,6 +396,9 @@ public class TargetsCommand implements Runnable {
             if (!minimums.isEmpty()) {
                 body.set("minimums", minimums);
             }
+            if (slots != null) {
+                body.put("slots", slots);
+            }
             JsonNode answer = targets.api(context).createTarget(body);
             printInstallLine(context, json, answer, "declared", wanted);
             return 0;
@@ -397,18 +406,23 @@ public class TargetsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "rotate-token", mixinStandardHelpOptions = true,
-            description = {"Mint a new registration token for a target whose runner has not registered yet, and "
-                    + "print the line that installs its runner with it.",
-                    "POST /system/api/targets/{id}/registration-token, no body (HTTP 200 {target, registrationToken, "
-                            + "installLine}). " + Doors.WRITE,
+            description = {"Mint a new registration token and print the line that installs its runner with it. On "
+                    + "a target whose runner has not registered yet, this is the first token's replacement; on a "
+                    + "REGISTERED target, running the new line reinstalls its runner under the same target (its id "
+                    + "is kept) and the old runner's client is decommissioned once the new one registers.",
+                    "POST /system/api/targets/{id}/registration-token with an optional {slots?} (HTTP 200 {target, "
+                            + "registrationToken, installLine}). " + Doors.WRITE,
                     "THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run "
                             + "it on the target's own machine."},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets rotate-token --target buildbox",
                     "  qits targets rotate-token --target buildbox -o json",
+                    "  qits targets rotate-token --target buildbox --slots 8",
                     "",
-                    "- HTTP 409 ALREADY_REGISTERED: the target's runner has registered and needs no token. HTTP 503: "
-                            + "commissioning is off, or the runner plane is not configured or pins no runner version.",
+                    "- With no --slots, the request carries no body and the service picks max(reported total, the "
+                            + "minimums' sum). HTTP 400: --slots is below the minimums' sum, or outside 0..1024. "
+                            + "HTTP 503: commissioning is off, or the runner plane is not configured or pins no "
+                            + "runner version.",
                     "- -o json prints the service's answer: the target, the registration token and the install line.",
                     "- Not served by the qits MCP server: the token would land in a transcript."},
             exitCodeListHeading = HelpText.EXIT_CODES,
@@ -423,11 +437,16 @@ public class TargetsCommand implements Runnable {
                 description = "The target's name or id.")
         String target;
 
+        @CommandLine.Option(names = "--slots", paramLabel = "<n>",
+                description = "The slots total the install line asks the runner for; default: the reported total, "
+                        + "or the minimums' sum.")
+        Integer slots;
+
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = targets.json();
             String id = targets.targetId(context, target);
-            JsonNode answer = targets.api(context).rotateTargetRegistrationToken(id);
+            JsonNode answer = targets.api(context).rotateTargetRegistrationToken(id, slots);
             printInstallLine(context, json, answer, "rotated the registration token of", target.strip());
             return 0;
         }

@@ -3865,12 +3865,12 @@ qits targets show --target localhost -o json
 
 Declare a target and print the line that installs its runner, with a one-time registration token in it.
 
-POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine. Lost, `qits targets rotate-token` makes a new one.
 
 ```
-qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--system-url <url>]
+qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--slots <n>] [--system-url <url>]
 ```
 
 | Name | What it does |
@@ -3881,6 +3881,7 @@ qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-d
 | `--min-desk <n>` | Slots reserved for the desk. |
 | `--min-workspace <n>` | Slots reserved for workspaces. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the minimums' sum. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
@@ -3890,7 +3891,7 @@ qits targets create --name buildbox
 qits targets create --name buildbox --description 'The build machine under the desk' --min-ci 2 --min-workspace 2 --min-desk 1
 ```
 
-- A minimum left out is not sent. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
+- A minimum left out is not sent. HTTP 400: --slots is below the minimums' sum, or outside 0..1024. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
 - -o json prints the service's answer: the target, the registration token and the install line.
 - Not served by the qits MCP server: the token would land in a transcript.
 
@@ -3902,20 +3903,21 @@ qits targets create --name buildbox --description 'The build machine under the d
 
 ## qits targets rotate-token
 
-Mint a new registration token for a target whose runner has not registered yet, and print the line that installs its runner with it.
+Mint a new registration token and print the line that installs its runner with it. On a target whose runner has not registered yet, this is the first token's replacement; on a REGISTERED target, running the new line reinstalls its runner under the same target (its id is kept) and the old runner's client is decommissioned once the new one registers.
 
-POST /system/api/targets/{id}/registration-token, no body (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+POST /system/api/targets/{id}/registration-token with an optional {slots?} (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine.
 
 ```
-qits targets rotate-token --target <name|id> [--output table|json] [--system-url <url>]
+qits targets rotate-token --target <name|id> [--output table|json] [--slots <n>] [--system-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--target <name\|id>` | Required. The target's name or id. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the minimums' sum. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
@@ -3923,9 +3925,10 @@ qits targets rotate-token --target <name|id> [--output table|json] [--system-url
 ```
 qits targets rotate-token --target buildbox
 qits targets rotate-token --target buildbox -o json
+qits targets rotate-token --target buildbox --slots 8
 ```
 
-- HTTP 409 ALREADY_REGISTERED: the target's runner has registered and needs no token. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
+- With no --slots, the request carries no body and the service picks max(reported total, the minimums' sum). HTTP 400: --slots is below the minimums' sum, or outside 0..1024. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
 - -o json prints the service's answer: the target, the registration token and the install line.
 - Not served by the qits MCP server: the token would land in a transcript.
 

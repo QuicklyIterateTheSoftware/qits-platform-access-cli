@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.access.targets;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 
@@ -20,6 +21,10 @@ import java.util.List;
  * {@code createTarget} and {@code rotateTargetRegistrationToken} answer a one-time registration
  * token and the install line that embeds it (qits-1574). Their answer is handed back whole and
  * never quoted in a message: only {@code create} and {@code rotate-token} decide what is printed.
+ * Since qits-1579, {@code rotateTargetRegistrationToken} also reinstalls a registered target's
+ * runner (the target keeps its id; the old runner's client is decommissioned when the new one
+ * registers), and both doors take an optional {@code slots} total for the install line's
+ * QITS_SYSTEM_RUNNER_SLOTS.
  */
 final class TargetsApi {
 
@@ -39,16 +44,27 @@ final class TargetsApi {
     }
 
     /**
-     * {@code createTarget}: {@code {name, description?, minimums?}}, a 201 {@code {target,
-     * registrationToken, installLine}}.
+     * {@code createTarget}: {@code {name, description?, minimums?, slots?}}, a 201 {@code {target,
+     * registrationToken, installLine}}. {@code slots} is the install line's QITS_SYSTEM_RUNNER_SLOTS;
+     * left out, the service picks max(reported total, the minimums' sum).
      */
     JsonNode createTarget(JsonNode body) throws CliFailure, InterruptedException {
         return client.post(uri(API + "/targets"), body);
     }
 
-    /** {@code rotateTargetRegistrationToken}: no body, a 200 of the same shape as createTarget. */
-    JsonNode rotateTargetRegistrationToken(String id) throws CliFailure, InterruptedException {
-        return client.post(uri(targetPath(id) + "/registration-token"));
+    /**
+     * {@code rotateTargetRegistrationToken}: a 200 of the same shape as createTarget. Works on a
+     * REGISTERED target too (the new install line reinstalls the runner under the same id; the old
+     * runner's client is decommissioned when the new one registers). With {@code slots} null, no
+     * body is sent and the request is exactly what it always was; given, the body is {@code
+     * {"slots": <n>}}, the install line's QITS_SYSTEM_RUNNER_SLOTS.
+     */
+    JsonNode rotateTargetRegistrationToken(String id, Integer slots) throws CliFailure, InterruptedException {
+        URI uri = uri(targetPath(id) + "/registration-token");
+        if (slots == null) {
+            return client.post(uri);
+        }
+        return client.post(uri, JsonNodeFactory.instance.objectNode().put("slots", slots));
     }
 
     /** {@code getTarget}. */

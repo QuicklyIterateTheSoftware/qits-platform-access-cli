@@ -1503,8 +1503,9 @@ targets list` shows both); `--target` resolves a name by reading `listTargets`.
     qits targets list                             GET  /system/api/targets
     qits targets show --target <name|id>          GET  /system/api/targets/{id}
     qits targets create --name <name>             POST /system/api/targets
-      [--description <text>] [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>]
+      [--description <text>] [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] [--slots <n>]
     qits targets rotate-token --target <name|id>  POST /system/api/targets/{id}/registration-token
+      [--slots <n>]
     qits targets update --target <name|id>        PATCH /system/api/targets/{id}
       [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] [--description <text>]
     qits targets greenlight|healthcheck|login-check
@@ -1523,18 +1524,22 @@ wherever it is not named. `qits targets leases` reads every lease for `qits:admi
 and `qits:agent`, and only the caller's own for `qits:system`. Each command's help names its door and
 roles.
 
-`qits targets create` declares a target (`{name, description?, minimums?: {ci, workspace, desk}}`;
-a minimum left out is not sent, and with none given `minimums` is left out) and `qits targets
-rotate-token` mints a new registration token for one whose runner has not registered yet. Both
-answer `{target, registrationToken, installLine}`, and the install line embeds the one-time token,
-so it is handled the way `qits users invite` handles a register token: **the install line alone on
-stdout, shown only this once**, and on stderr which target it is for (name and id, never the token)
-and that it is run on the target's own machine. `-o json` prints the service's answer as it is. The
-line is never written to stderr, a file, a log or an error message; an answer without one fails
-without quoting it. A taken name is HTTP 409 `TARGET_NAME_TAKEN`, a target already registered HTTP
-409 `ALREADY_REGISTERED`, commissioning off or no runner version pinned HTTP 503. Both are
-`Interaction.LOCAL`: the qits MCP server does not serve them, because a tool's answer lands in an
-agent's transcript.
+`qits targets create` declares a target (`{name, description?, minimums?: {ci, workspace, desk},
+slots?}`; a minimum left out is not sent, and with none given `minimums` is left out) and `qits
+targets rotate-token` mints a new registration token and its install line. On a target whose
+runner has not registered yet this is the first token's replacement; on a REGISTERED target
+running the new install line reinstalls its runner under the same target — the id is kept, and the
+old runner's client is decommissioned once the new one registers. Both commands take an optional
+`--slots <n>`, the install line's `QITS_SYSTEM_RUNNER_SLOTS`; left out, it is max(the reported
+total, the minimums' sum). Both answer `{target, registrationToken, installLine}`, and the install
+line embeds the one-time token, so it is handled the way `qits users invite` handles a register
+token: **the install line alone on stdout, shown only this once**, and on stderr which target it is
+for (name and id, never the token) and that it is run on the target's own machine. `-o json` prints
+the service's answer as it is. The line is never written to stderr, a file, a log or an error
+message; an answer without one fails without quoting it. A taken name is HTTP 409
+`TARGET_NAME_TAKEN`, `--slots` below the minimums' sum or outside 0..1024 is HTTP 400, commissioning
+off or no runner version pinned HTTP 503. Both are `Interaction.LOCAL`: the qits MCP server does not
+serve them, because a tool's answer lands in an agent's transcript.
 
 `qits targets sign-in` prints the target's login command for `--harness` (default `claude`) — the
 `docker run` that signs the target's credential volume in, run on the target's own machine — with

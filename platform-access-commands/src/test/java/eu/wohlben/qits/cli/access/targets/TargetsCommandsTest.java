@@ -294,6 +294,17 @@ class TargetsCommandsTest {
     }
 
     @Test
+    void createWithSlotsSendsThem() throws Exception {
+        platform.answer("POST", "/system/api/targets", 201, registration());
+
+        Result created = run("targets", "create", "--name", "localhost", "--slots", "8");
+
+        assertThat(created.exit()).as(created.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("POST", "/system/api/targets").getFirst().body());
+        assertThat(sent.path("slots").asInt()).isEqualTo(8);
+    }
+
+    @Test
     void createWithNoMinimumsSendsNoMinimumsAtAll() throws Exception {
         platform.answer("POST", "/system/api/targets", 201, registration());
 
@@ -384,14 +395,39 @@ class TargetsCommandsTest {
     }
 
     @Test
-    void rotateTokenOnARegisteredTargetIsRefused() {
-        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", 409,
-                "{\"code\":\"ALREADY_REGISTERED\",\"message\":\"the target has registered\"}");
+    void rotateTokenReinstallsARegisteredTarget() {
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", registration());
 
-        Result refused = run("targets", "rotate-token", "--target", TARGET);
+        Result rotated = run("targets", "rotate-token", "--target", TARGET);
+
+        assertThat(rotated.exit()).as(rotated.err()).isZero();
+        assertThat(rotated.out()).isEqualTo(INSTALL_LINE + System.lineSeparator());
+        var posted = platform.requests("POST", "/system/api/targets/" + TARGET + "/registration-token");
+        assertThat(posted).hasSize(1);
+        assertThat(posted.getFirst().body()).isNullOrEmpty();
+    }
+
+    @Test
+    void rotateTokenWithSlotsSendsThemAsTheBody() throws Exception {
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", registration());
+
+        Result rotated = run("targets", "rotate-token", "--target", TARGET, "--slots", "8");
+
+        assertThat(rotated.exit()).as(rotated.err()).isZero();
+        var posted = platform.requests("POST", "/system/api/targets/" + TARGET + "/registration-token");
+        assertThat(posted).hasSize(1);
+        assertThat(JSON.readTree(posted.getFirst().body()).path("slots").asInt()).isEqualTo(8);
+    }
+
+    @Test
+    void rotateTokenWithSlotsBelowTheMinimumsSumIsRefused() {
+        platform.answer("POST", "/system/api/targets/" + TARGET + "/registration-token", 400,
+                "{\"code\":\"SLOTS_BELOW_MINIMUMS\",\"message\":\"slots must cover the minimums\"}");
+
+        Result refused = run("targets", "rotate-token", "--target", TARGET, "--slots", "1");
 
         assertThat(refused.exit()).isEqualTo(1);
-        assertThat(refused.err()).contains("HTTP 409").contains("the target has registered");
+        assertThat(refused.err()).contains("HTTP 400").contains("slots must cover the minimums");
         assertThat(refused.out()).isEmpty();
     }
 
@@ -405,6 +441,24 @@ class TargetsCommandsTest {
         assertThat(refused.exit()).isEqualTo(1);
         assertThat(refused.err()).contains("HTTP 403");
         assertThat(refused.out()).isEmpty();
+    }
+
+    @Test
+    void rotateTokenHelpNamesTheReinstallAndNoLongerALREADY_REGISTERED() {
+        Result help = run("targets", "rotate-token", "--help");
+
+        assertThat(help.exit()).as(help.err()).isZero();
+        assertThat(help.out()).contains("--slots").contains("REGISTERED target").contains("reinstalls its runner")
+                .contains("HTTP 400");
+        assertThat(help.out()).doesNotContain("ALREADY_REGISTERED");
+    }
+
+    @Test
+    void createHelpNamesSlots() {
+        Result help = run("targets", "create", "--help");
+
+        assertThat(help.exit()).as(help.err()).isZero();
+        assertThat(help.out()).contains("--slots");
     }
 
     @Test
