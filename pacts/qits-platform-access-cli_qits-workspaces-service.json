@@ -1000,7 +1000,7 @@
         }
       },
       "description": "qits workspaces active-process: getWorkspaceActiveProcess",
-      "key": "f7d9cf10",
+      "key": "43304935",
       "pending": false,
       "providerStates": [
         {
@@ -1015,7 +1015,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -1077,7 +1077,7 @@
         }
       },
       "description": "qits workspaces active-process: getWorkspaceActiveProcess",
-      "key": "5a96b18a",
+      "key": "a5ed2baf",
       "pending": false,
       "providerStates": [
         {
@@ -1087,7 +1087,7 @@
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
             "bugTicketQualifiedId": "contract-00000001-10",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
           }
         }
@@ -1159,7 +1159,7 @@
         }
       },
       "description": "qits workspaces agents create: createAgent",
-      "key": "820047a9",
+      "key": "cd56c1ce",
       "pending": false,
       "providerStates": [
         {
@@ -1174,7 +1174,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -1965,7 +1965,7 @@
         }
       },
       "description": "qits workspaces agents list: listAgents",
-      "key": "63f908bf",
+      "key": "af4f82e4",
       "pending": false,
       "providerStates": [
         {
@@ -1980,7 +1980,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011"
           }
         }
@@ -2147,7 +2147,7 @@
         }
       },
       "description": "qits workspaces agents list: listAgents",
-      "key": "fd265c12",
+      "key": "487cd637",
       "pending": false,
       "providerStates": [
         {
@@ -2162,7 +2162,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -2332,7 +2332,7 @@
         }
       },
       "description": "qits workspaces agents list: listAgents",
-      "key": "5fe33e8c",
+      "key": "ab39b8b1",
       "pending": false,
       "providerStates": [
         {
@@ -2342,7 +2342,7 @@
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
             "bugTicketQualifiedId": "contract-00000001-10",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
           }
         }
@@ -3211,7 +3211,7 @@
         }
       },
       "description": "qits workspaces list: listWorkspaces",
-      "key": "9098a00f",
+      "key": "dbef1a34",
       "pending": false,
       "providerStates": [
         {
@@ -3226,7 +3226,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011"
           }
         }
@@ -3260,7 +3260,7 @@
                   "daemonOutdated": null,
                   "daemonVersion": null,
                   "id": 1,
-                  "placement": "RUNNER",
+                  "placement": "TARGET",
                   "queuedAt": null,
                   "runtimeError": null,
                   "runtimeStatus": "RUNNING",
@@ -3438,7 +3438,7 @@
         }
       },
       "description": "qits workspaces show: getWorkspace",
-      "key": "a4fc89f8",
+      "key": "f053041d",
       "pending": false,
       "providerStates": [
         {
@@ -3453,7 +3453,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -3479,7 +3479,7 @@
               "daemonOutdated": null,
               "daemonVersion": null,
               "id": 1,
-              "placement": "RUNNER",
+              "placement": "TARGET",
               "queuedAt": null,
               "runtimeError": null,
               "runtimeStatus": "RUNNING",
@@ -3568,7 +3568,7 @@
         }
       },
       "description": "qits workspaces show: getWorkspace",
-      "key": "7b96c72",
+      "key": "530fe697",
       "pending": false,
       "providerStates": [
         {
@@ -3578,7 +3578,7 @@
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
             "bugTicketQualifiedId": "contract-00000001-10",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
           }
         }
@@ -3603,7 +3603,7 @@
               "daemonOutdated": null,
               "daemonVersion": null,
               "id": 1,
-              "placement": "RUNNER",
+              "placement": "TARGET",
               "queuedAt": null,
               "runtimeError": null,
               "runtimeStatus": "PROVISIONING",
@@ -3692,16 +3692,14 @@
         }
       },
       "description": "qits workspaces start: ensureWorkspaceContainer",
-      "key": "4db1497d",
+      "key": "285f5f00",
       "pending": false,
       "providerStates": [
         {
-          "name": "a stopped workspace slot on a runner in service",
+          "name": "a stopped workspace slot",
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost",
             "workspaceId": "1"
           }
         }
@@ -3774,16 +3772,14 @@
         }
       },
       "description": "qits workspaces stop: stopWorkspaceContainer",
-      "key": "f1e2a53b",
+      "key": "b36e45d5",
       "pending": false,
       "providerStates": [
         {
-          "name": "a workspace slot running on a runner in service",
+          "name": "a workspace slot running on a target",
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost",
             "workspaceId": "1"
           }
         }

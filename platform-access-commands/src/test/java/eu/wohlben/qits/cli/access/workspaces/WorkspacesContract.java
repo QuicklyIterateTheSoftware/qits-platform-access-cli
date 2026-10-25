@@ -33,8 +33,8 @@ public final class WorkspacesContract {
     static final String SLOTS_HOSTING_AGENTS = "a project with workspace slots hosting agents";
     static final String SLOT_HOSTING_AGENTS = "a workspace slot hosting agents";
     static final String WORKSPACE_STARTING = "an agent whose workspace is starting";
-    static final String STOPPED_SLOT = "a stopped workspace slot on a runner in service";
-    static final String RUNNING_SLOT = "a workspace slot running on a runner in service";
+    static final String STOPPED_SLOT = "a stopped workspace slot";
+    static final String RUNNING_SLOT = "a workspace slot running on a target";
     static final String DAEMON_NOT_CONNECTED = "an agent whose workspace daemon is not connected";
     static final String BOUND_WORKSPACES = "a project with workspaces bound to work items";
     static final String NO_OPEN_WORKSPACE = "no work item has an open workspace";
