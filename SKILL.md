@@ -154,7 +154,7 @@ qits projects list -o json
 
 ## qits projects delivery
 
-A project's delivery desk: whether its front desk runs the delivery loop, how many items it keeps running at once, whether it may move a REFINED item to READY_FOR_DEV itself, the approvals it may give, and how often the loop ticks.
+A project's delivery desk: whether its front desk holds the delivery rights, how many items it keeps running at once, whether it may move a REFINED item to READY_FOR_DEV itself, and the approvals it may give. The desk runs only when a person prompts it.
 
 The project's wrapper declares it in .config/qits/project.yml under front_desk.delivery. A setting it does not declare prints as the default, marked (default).
 
@@ -187,7 +187,7 @@ qits projects delivery --project qits -o json
 
 A project's front desk: prompt types a turn into its kept front desk session, answer shows that session's last answer.
 
-The session is the one the project's front desk keeps running in its agent container, the same session the delivery loop types its ticks into. It is not a session a person started from the desk panel.
+The session is the one the project's front desk keeps running in its agent container. It runs only when a person prompts it; nothing prompts it on a schedule. It is not a session a person started from the desk panel.
 
 ### Notes
 
@@ -215,10 +215,12 @@ qits projects desk prompt [--output table|json] [--project <project>] [--project
 ```
 qits projects desk prompt --project qits What is in flight right now?
 qits projects desk prompt --project qits -o json Summarise the open release requests
+qits projects desk prompt --project qits Run one pass of the delivery loop: read /tmp/qits-delivery-brief.md and follow it.
 ```
 
 - Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
-- The turn goes to the session the front desk keeps, the one the delivery loop types its ticks into. While the turn runs the session is busy, and the loop skips its tick until the session is idle again.
+- The turn goes to the session the front desk keeps. While the turn runs the session is busy, and a later turn waits in the queue until it is idle again.
+- A delivery pass runs only when prompted, as in the last example; nothing starts one on a schedule (qits-1597).
 - -o json prints the service's answer: commandId, state, delivered, queued, position.
 
 ### Exit codes
@@ -251,7 +253,7 @@ qits projects desk answer --project qits -o json
 ```
 
 - Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403), although it changes nothing.
-- The last answer is the session's, whatever turn it answered: a prompt of yours, somebody else's, or a delivery tick.
+- The last answer is the session's, whatever turn it answered: a prompt of yours or somebody else's.
 - -o json prints the service's answer: commandId, sessionId, state, text, at.
 
 ### Exit codes

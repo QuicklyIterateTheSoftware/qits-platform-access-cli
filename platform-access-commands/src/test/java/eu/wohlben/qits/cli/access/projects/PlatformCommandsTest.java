@@ -1439,7 +1439,7 @@ class PlatformCommandsTest {
     void deliveryPrintsTheProjectsSettings() throws Exception {
         platform.answer("GET", "/projects/api/projects", """
                 {"entries":[{"project":{"id":"%s","name":"qits platform","slug":"qits","delivery":{"enabled":true,
-                  "maxRunning":4,"startRefined":true,"approves":["estate-pins","screenshots"],"interval":"PT5M"}}}]}
+                  "maxRunning":4,"startRefined":true,"approves":["estate-pins","screenshots"]}}}]}
                 """.formatted(QITS));
 
         Result r = run("projects", "delivery", "--project", "qits");
@@ -1451,11 +1451,10 @@ class PlatformCommandsTest {
                 "enabled        true",
                 "max_running    4",
                 "start_refined  true",
-                "approves       estate-pins, screenshots",
-                "interval       PT5M");
+                "approves       estate-pins, screenshots");
         assertThat(JSON.readTree(run("projects", "-o", "json", "delivery", "--project", QITS).out()))
                 .isEqualTo(JSON.readTree("{\"enabled\":true,\"maxRunning\":4,\"startRefined\":true,"
-                        + "\"approves\":[\"estate-pins\",\"screenshots\"],\"interval\":\"PT5M\"}"));
+                        + "\"approves\":[\"estate-pins\",\"screenshots\"]}"));
     }
 
     @Test
@@ -1475,8 +1474,7 @@ class PlatformCommandsTest {
                 "enabled        true",
                 "max_running    2 (default)",
                 "start_refined  false (default)",
-                "approves       none",
-                "interval       PT10M (default)");
+                "approves       none");
         assertThat(older.exit()).isZero();
         assertThat(older.out().lines().toList()).containsExactly(
                 "Project demo: delivery desk",
@@ -1484,8 +1482,7 @@ class PlatformCommandsTest {
                 "enabled        false (default)",
                 "max_running    2 (default)",
                 "start_refined  false (default)",
-                "approves       none (default)",
-                "interval       PT10M (default)");
+                "approves       none (default)");
         assertThat(run("projects", "delivery").err()).contains("Name the project: --project <id, slug or name>.");
     }
 

@@ -111,12 +111,12 @@ public final class ProjectsContract {
      * on the provider: qits-projects records {@code delivery} on its project reads from qits-1490 on,
      * and the golden masters pinned in the root pom (2026.1019.190811) predate it, so {@link #held}
      * binds none of these paths yet and the row binds the lookup alone. Once qits-maintenance bumps
-     * the pin past qits-1490's release, the same row binds all five: write the pact again with
+     * the pin past qits-1490's release, the same row binds all four: write the pact again with
      * {@code -Dgolden.update=true} on that bump.
      */
     static final List<String> DELIVERY = List.of("entries[].project.delivery.enabled",
             "entries[].project.delivery.maxRunning", "entries[].project.delivery.startRefined",
-            "entries[].project.delivery.approves", "entries[].project.delivery.interval");
+            "entries[].project.delivery.approves");
 
     /** Every lookup of a repository by id or name. */
     static final List<String> REPOSITORY = List.of("entries[].repository.id", "entries[].repository.name");
@@ -585,7 +585,6 @@ public final class ProjectsContract {
         assertThat(delivery.path("maxRunning").isInt()).isTrue();
         assertThat(delivery.path("startRefined").isBoolean()).isTrue();
         assertThat(delivery.path("approves").isArray()).isTrue();
-        assertThat(ProjectsApi.text(delivery, "interval")).isNotBlank();
     };
 
     /** {@code qits projects desk prompt}: the recorded text; the table prints delivered or queued, the position and the command. */

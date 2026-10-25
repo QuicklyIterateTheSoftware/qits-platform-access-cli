@@ -71,16 +71,16 @@ public class ProjectsCommand implements Runnable {
     }
 
     /**
-     * {@code qits projects delivery}: the project's front desk delivery loop, as the project read
+     * {@code qits projects delivery}: the project's front desk delivery settings, as the project read
      * carries it (epic qits-1440). Read from the project list, which every {@code --project} lookup
      * reads anyway: the single-project door takes the id only. A field the service does not send — a
-     * service older than the loop sends no {@code delivery} at all — prints as the default the
+     * service older than the delivery desk sends no {@code delivery} at all — prints as the default the
      * service applies when a wrapper declares nothing, marked so.
      */
     @CommandLine.Command(name = "delivery", mixinStandardHelpOptions = true,
-            description = {"A project's delivery desk: whether its front desk runs the delivery loop, how many items "
-                    + "it keeps running at once, whether it may move a REFINED item to READY_FOR_DEV itself, the "
-                    + "approvals it may give, and how often the loop ticks.",
+            description = {"A project's delivery desk: whether its front desk holds the delivery rights, how many "
+                    + "items it keeps running at once, whether it may move a REFINED item to READY_FOR_DEV "
+                    + "itself, and the approvals it may give. The desk runs only when a person prompts it.",
                     "The project's wrapper declares it in .config/qits/project.yml under front_desk.delivery. A "
                             + "setting it does not declare prints as the default, marked (default)."},
             footerHeading = HelpText.EXAMPLES,
@@ -107,8 +107,7 @@ public class ProjectsCommand implements Runnable {
                 List.of("enabled", "enabled", "false"),
                 List.of("maxRunning", "max_running", "2"),
                 List.of("startRefined", "start_refined", "false"),
-                List.of("approves", "approves", "none"),
-                List.of("interval", "interval", "PT10M"));
+                List.of("approves", "approves", "none"));
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
@@ -145,8 +144,8 @@ public class ProjectsCommand implements Runnable {
     /**
      * {@code qits projects desk}: a turn typed into the project's front desk session, and that
      * session's last answer (qits-1572). The session is the one the projects daemon's front desk
-     * keeper launched and keeps, the same one DeliveryKeeper types its delivery ticks into, so a
-     * prompt here and a tick share one conversation, and a tick is skipped while a prompt runs. The answer is what an agent
+     * keeper launched and keeps. Nothing types into it on a schedule (qits-1597): it runs only when a
+     * person prompts it, here or from the desk panel. The answer is what an agent
      * wrote, so its table form goes through {@link SafeText} a line at a time and its JSON form
      * through {@link SafeJson}.
      */
@@ -154,9 +153,9 @@ public class ProjectsCommand implements Runnable {
             subcommands = {DeskCommand.PromptCommand.class, DeskCommand.AnswerCommand.class},
             description = {"A project's front desk: prompt types a turn into its kept front desk session, answer "
                     + "shows that session's last answer.",
-                    "The session is the one the project's front desk keeps running in its agent container, the "
-                            + "same session the delivery loop types its ticks into. It is not a session a person "
-                            + "started from the desk panel."},
+                    "The session is the one the project's front desk keeps running in its agent container. It runs "
+                            + "only when a person prompts it; nothing prompts it on a schedule. It is not a "
+                            + "session a person started from the desk panel."},
             footerHeading = "%nNotes:%n",
             footer = {"- Both take qits:admin or qits:admin-agent. An agent with qits:agent alone is refused "
                     + "(HTTP 403)."})
@@ -184,12 +183,15 @@ public class ProjectsCommand implements Runnable {
                 footerHeading = HelpText.EXAMPLES,
                 footer = {"  qits projects desk prompt --project qits What is in flight right now?",
                         "  qits projects desk prompt --project qits -o json Summarise the open release requests",
+                        "  qits projects desk prompt --project qits Run one pass of the delivery loop: read "
+                                + "/tmp/qits-delivery-brief.md and follow it.",
                         "",
                         "- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP "
                                 + "403).",
-                        "- The turn goes to the session the front desk keeps, the one the delivery loop types "
-                                + "its ticks into. While the turn runs the session is busy, and the loop skips its "
-                                + "tick until the session is idle again.",
+                        "- The turn goes to the session the front desk keeps. While the turn runs the session is "
+                                + "busy, and a later turn waits in the queue until it is idle again.",
+                        "- A delivery pass runs only when prompted, as in the last example; nothing starts one "
+                                + "on a schedule (qits-1597).",
                         "- -o json prints the service's answer: commandId, state, delivered, queued, position."},
                 exitCodeListHeading = HelpText.EXIT_CODES,
                 exitCodeList = {"0:The desk took the turn: delivered, or queued.",
@@ -260,8 +262,8 @@ public class ProjectsCommand implements Runnable {
                         "",
                         "- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP "
                                 + "403), although it changes nothing.",
-                        "- The last answer is the session's, whatever turn it answered: a prompt of yours, "
-                                + "somebody else's, or a delivery tick.",
+                        "- The last answer is the session's, whatever turn it answered: a prompt of yours or "
+                                + "somebody else's.",
                         "- -o json prints the service's answer: commandId, sessionId, state, text, at."},
                 exitCodeListHeading = HelpText.EXIT_CODES,
                 exitCodeList = {"0:Done, also when the desk has not answered yet.",
