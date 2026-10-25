@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -71,15 +72,23 @@ class TargetsCommandsTest {
     }
 
     private Result run(String... args) {
+        return run(InputStream.nullInputStream(), args);
+    }
+
+    private Result run(InputStream in, String... args) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-        CliContext context = new CliContext(Map.copyOf(env), InputStream.nullInputStream(),
+        CliContext context = new CliContext(Map.copyOf(env), in,
                 new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
                 time, time, TokenClient::new, stop -> { });
         int exit = TestCli.execute(context, args);
         Result result = new Result(exit, out.toString(StandardCharsets.UTF_8), err.toString(StandardCharsets.UTF_8));
         assertThat(result.out() + result.err()).doesNotContain(FakeIdp.SECRET);
         return result;
+    }
+
+    private static InputStream stdin(String text) {
+        return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
     }
 
     private static String target(String login, String loginCommand) {
@@ -223,48 +232,160 @@ class TargetsCommandsTest {
                 .isEqualTo("slotType=workspace&state=RUNNING");
     }
 
+    // --- sign-in (qits-1593) ---
+
+    private static final String SIGNIN = "00000000-0000-4000-8000-000000000050";
+
+    private static String quoted(String value) {
+        return value == null ? "null" : "\"" + value + "\"";
+    }
+
+    private static String signIn(String harness, String state, String url, String userCode, String detail) {
+        return """
+                {"signInId":"%s","targetId":"%s","harness":"%s","state":"%s","url":%s,"userCode":%s,"detail":%s,
+                 "startedAt":"2026-10-23T09:00:00Z","updatedAt":"2026-10-23T09:00:00Z"}
+                """.formatted(SIGNIN, TARGET, harness, state, quoted(url), quoted(userCode), quoted(detail));
+    }
+
+    private static final String SIGN_INS = "/system/api/targets/" + TARGET + "/sign-ins";
+    private static final String SIGN_IN = SIGN_INS + "/" + SIGNIN;
+
     @Test
-    void signInAlreadyPresentPrintsTheCommandAndExitsAtOnceWithNoLoginCheck() {
-        platform.answer("GET", "/system/api/targets/" + TARGET,
-                target("PRESENT", "docker run --rm -it --user 1000 --entrypoint claude -v "
-                        + "qits_shared_dot_claude:/claude-home image claude"));
+    void signInAlreadyPresentExitsAtOnceWithNoSignInStarted() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", null));
 
         Result signIn = run("targets", "sign-in", "--target", TARGET);
 
         assertThat(signIn.exit()).as(signIn.err()).isZero();
-        assertThat(signIn.out()).contains("Run this on localhost:").contains("docker run --rm -it")
-                .contains("is already signed in.");
-        assertThat(platform.requests("POST", "/system/api/targets/" + TARGET + "/login-check")).isEmpty();
+        assertThat(signIn.out()).contains("is already signed in.");
+        assertThat(platform.requests("POST", SIGN_INS)).isEmpty();
     }
 
     @Test
-    void signInPollsEvery30SecondsUntilPresent() {
-        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", "docker run --rm -it claude"));
-        platform.answer("POST", "/system/api/targets/" + TARGET + "/login-check", 202, "");
+    void signInClaudeHappyPathPrintsTheUrlReadsTheCodeFromStdinAndSucceeds() throws Exception {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("POST", SIGN_INS, 202, signIn("claude", "STARTING", null, null, null));
+        platform.answer("GET", SIGN_IN, signIn("claude", "AWAITING_CODE",
+                "https://claude.com/cai/oauth/authorize?code=true&state=x", null, null));
+        platform.answer("POST", SIGN_IN + "/code", 202, signIn("claude", "SUCCEEDED", null, null, null));
+        time.afterSleep = () -> platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result signIn = run(stdin("the-code\n"), "targets", "sign-in", "--target", TARGET);
+
+        assertThat(signIn.exit()).as(signIn.err()).isZero();
+        assertThat(signIn.out()).contains("Open this URL in a browser and sign in:")
+                .contains("https://claude.com/cai/oauth/authorize?code=true&state=x")
+                .contains("Paste the code the browser shows:")
+                .contains("is signed in.");
+        JsonNode sent = JSON.readTree(platform.requests("POST", SIGN_IN + "/code").getFirst().body());
+        assertThat(sent.path("code").asText()).isEqualTo("the-code");
+        JsonNode started = JSON.readTree(platform.requests("POST", SIGN_INS).getFirst().body());
+        assertThat(started.path("harness").asText()).isEqualTo("claude");
+    }
+
+    private static String targetKimi(String kimiLogin) {
+        return target("ABSENT", null).replace("\"kimi\":\"ABSENT\"", "\"kimi\":\"" + kimiLogin + "\"");
+    }
+
+    @Test
+    void signInKimiHappyPathPrintsTheUrlAndCodeAndNeverReadsStdin() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, targetKimi("ABSENT"));
+        platform.answer("POST", SIGN_INS, 202, signIn("kimi", "AWAITING_BROWSER",
+                "https://www.kimi.com/code/authorize_device?user_code=ABCD-1234", "ABCD-1234", null));
         time.afterSleep = () -> {
-            if (time.sleeps.size() == 2) {
-                platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", "docker run --rm -it claude"));
+            if (time.sleeps.size() == 1) {
+                platform.answer("GET", SIGN_IN, signIn("kimi", "SUCCEEDED",
+                        "https://www.kimi.com/code/authorize_device?user_code=ABCD-1234", "ABCD-1234", null));
+            } else if (time.sleeps.size() == 2) {
+                platform.answer("GET", "/system/api/targets/" + TARGET, targetKimi("PRESENT"));
             }
         };
 
-        Result signIn = run("targets", "sign-in", "--target", TARGET, "--timeout", "5m");
+        Result signIn = run(InputStream.nullInputStream(), "targets", "sign-in", "--target", TARGET, "--harness",
+                "kimi");
 
         assertThat(signIn.exit()).as(signIn.err()).isZero();
-        assertThat(signIn.out()).contains("Run this on localhost:").contains("is signed in.");
-        assertThat(time.sleeps).containsExactly(Duration.ofSeconds(30), Duration.ofSeconds(30));
-        assertThat(platform.requests("POST", "/system/api/targets/" + TARGET + "/login-check")).hasSize(2);
+        assertThat(signIn.out()).contains("Open this URL in a browser and sign in:")
+                .contains("https://www.kimi.com/code/authorize_device?user_code=ABCD-1234")
+                .contains("Enter the code ABCD-1234 there.")
+                .contains("is signed in.")
+                .doesNotContain("Paste the code the browser shows:");
     }
 
     @Test
-    void signInGivesUpAtTheTimeoutNamingTheLastState() {
-        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", "docker run --rm -it claude"));
-        platform.answer("POST", "/system/api/targets/" + TARGET + "/login-check", 202, "");
+    void signInFailedNamesTheStateAndDetail() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("POST", SIGN_INS, 202, signIn("claude", "FAILED", null, null,
+                "Login failed: Request failed with status code 400"));
 
-        Result signIn = run("targets", "sign-in", "--target", TARGET, "--timeout", "1m");
+        Result signIn = run("targets", "sign-in", "--target", TARGET);
 
         assertThat(signIn.exit()).isEqualTo(1);
-        assertThat(signIn.err()).contains("still ABSENT after 1m");
-        assertThat(time.sleeps).hasSize(2);
+        assertThat(signIn.err()).contains("FAILED").contains("Login failed: Request failed with status code 400");
+    }
+
+    @Test
+    void signInTimeoutDeletesTheSignInAndNamesTheLastState() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("POST", SIGN_INS, 202, signIn("claude", "STARTING", null, null, null));
+        platform.answer("GET", SIGN_IN, signIn("claude", "STARTING", null, null, null));
+        platform.answer("DELETE", SIGN_IN, 202, signIn("claude", "CANCELLED", null, null, null));
+
+        Result signIn = run("targets", "sign-in", "--target", TARGET, "--timeout", "1s");
+
+        assertThat(signIn.exit()).isEqualTo(1);
+        assertThat(signIn.err()).contains("still STARTING after 1s");
+        assertThat(platform.requests("DELETE", SIGN_IN)).isNotEmpty();
+    }
+
+    @Test
+    void signInResumesWithSignInAndCodeSkippingThePost() throws Exception {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("POST", SIGN_IN + "/code", 202, signIn("claude", "SUCCEEDED", null, null, null));
+        time.afterSleep = () -> platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result signIn = run("targets", "sign-in", "--target", TARGET, "--sign-in", SIGNIN, "--code", "654321");
+
+        assertThat(signIn.exit()).as(signIn.err()).isZero();
+        assertThat(signIn.out()).contains("is signed in.");
+        assertThat(platform.requests("POST", SIGN_INS)).isEmpty();
+        JsonNode sent = JSON.readTree(platform.requests("POST", SIGN_IN + "/code").getFirst().body());
+        assertThat(sent.path("code").asText()).isEqualTo("654321");
+    }
+
+    @Test
+    void signInResumesWithSignInAloneByPolling() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("GET", SIGN_IN, signIn("claude", "SUCCEEDED", null, null, null));
+        time.afterSleep = () -> platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result signIn = run("targets", "sign-in", "--target", TARGET, "--sign-in", SIGNIN);
+
+        assertThat(signIn.exit()).as(signIn.err()).isZero();
+        assertThat(signIn.out()).contains("is signed in.");
+        assertThat(platform.requests("POST", SIGN_INS)).isEmpty();
+    }
+
+    @Test
+    void signInCodeWithoutSignInIsAUsageErrorBeforeAnyRequest() {
+        Result signIn = run("targets", "sign-in", "--target", TARGET, "--code", "123456");
+
+        assertThat(signIn.exit()).isEqualTo(2);
+        assertThat(signIn.err()).contains("--code needs --sign-in");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void signInWithEmptyStdinAtAwaitingCodeNamesTheResumeCommandAndFails() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("POST", SIGN_INS, 202, signIn("claude", "AWAITING_CODE",
+                "https://claude.com/cai/oauth/authorize?code=true", null, null));
+
+        Result signIn = run(InputStream.nullInputStream(), "targets", "sign-in", "--target", TARGET);
+
+        assertThat(signIn.exit()).isEqualTo(1);
+        assertThat(signIn.err()).contains("No code given.")
+                .contains("qits targets sign-in --target " + TARGET + " --sign-in " + SIGNIN + " --code <code>");
     }
 
     // --- create and rotate-token (qits-1574) ---

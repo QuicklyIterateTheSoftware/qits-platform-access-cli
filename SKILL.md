@@ -4064,7 +4064,6 @@ qits targets login-check --target localhost
 ```
 
 - A disconnected target is refused: HTTP 409 TARGET_UNAVAILABLE.
-- `qits targets sign-in` sends this itself, every 30 seconds, until the target reports PRESENT.
 
 ### Exit codes
 
@@ -4136,19 +4135,23 @@ qits targets leases --type workspace --state RUNNING
 
 ## qits targets sign-in
 
-Sign a target's credential volume in for a harness: prints the docker command an operator runs on the target's machine, then asks the target to check its sign-in every 30 seconds until it reports PRESENT, or the timeout passes.
+Sign a target's credential volume in for a harness: starts a sign-in on the target (or resumes one with --sign-in), prints its URL and code as the runner reports them, pastes a claude code typed on stdin back to it, and waits for the harness to report signed in.
 
-GET /system/api/targets/{id}, then POST .../login-check every 30s (HTTP 202). It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design. Already PRESENT: prints the command and exits at once, no login-check sent.
+GET /system/api/targets/{id}; POST .../sign-ins {harness} (or POST .../sign-ins/{id}/code {code} to resume with --sign-in and --code); then GET .../sign-ins/{id} every 2s until the sign-in ends, then GET /system/api/targets/{id} every 2s until login.<harness> is PRESENT, or --timeout passes. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+
+Already PRESENT: prints that and exits at once, nothing is started.
 
 ```
-qits targets sign-in --target <name|id> [--harness claude|kimi] [--output table|json] [--system-url <url>] [--timeout <duration>]
+qits targets sign-in --target <name|id> [--code <code>] [--harness claude|kimi] [--output table|json] [--sign-in <id>] [--system-url <url>] [--timeout <duration>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--target <name\|id>` | Required. The target's name or id. |
+| `--code <code>` | The code the browser showed, posted to --sign-in instead of reading one from stdin. |
 | `--harness claude\|kimi` | The harness to sign in. Default: claude. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--sign-in <id>` | Resume this sign-in instead of starting a new one. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 | `--timeout <duration>` | How long to wait: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: 10m. |
 
@@ -4157,16 +4160,18 @@ qits targets sign-in --target <name|id> [--harness claude|kimi] [--output table|
 ```
 qits targets sign-in --target localhost
 qits targets sign-in --target localhost --harness kimi --timeout 2h
+qits targets sign-in --target localhost --sign-in <id> --code 123456
 ```
 
-- The command is null until a login state has arrived on the target's current connection: run `qits targets healthcheck` or wait for the runner to connect, then try again.
-- 1: the target is still ABSENT or UNKNOWN after --timeout; the message names the last state.
+- A claude sign-in pauses at AWAITING_CODE and asks for the code on stdin. With none given (stdin closed or empty), it prints the command that resumes the same sign-in with --sign-in and --code, and exits 1: the sign-in itself keeps running on the target until it expires.
+- --sign-in resumes a sign-in already running, whose URL or code this command already showed; --code needs --sign-in and is a usage error alone.
+- FAILED, EXPIRED or CANCELLED fails naming the state and its detail. --timeout reached deletes the sign-in (best effort) and fails naming the last state.
 - --output has no effect here: this command prints notices, never the service's answer.
 
 ### Exit codes
 
-- `0` The target reports PRESENT (already, or within --timeout).
-- `1` The platform refused or cannot be reached, or --timeout passed with the target still not signed in (the message names the last state).
+- `0` The harness reports PRESENT (already, or once the sign-in succeeds).
+- `1` The platform refused or cannot be reached, the sign-in failed, expired or was cancelled, no code was given at AWAITING_CODE, or --timeout passed (the message names the last state, or the command that resumes).
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits git-login

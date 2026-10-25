@@ -97,6 +97,39 @@ final class TargetsApi {
         return client.post(uri(targetPath(id) + "/login-check"));
     }
 
+    /**
+     * {@code createSignIn}: {@code {"harness": "claude"|"kimi"}}, a 202 {@code SignInView}. 400 on
+     * an unknown harness; 409 {@code TARGET_UNAVAILABLE} when the target is not connected; 409
+     * {@code SIGN_IN_RUNNING} when a non-terminal sign-in for that target and harness already
+     * exists (its {@code signInId} is named in the message).
+     */
+    JsonNode createSignIn(String targetId, String harness) throws CliFailure, InterruptedException {
+        return client.post(uri(signInsPath(targetId)), JsonNodeFactory.instance.objectNode().put("harness", harness));
+    }
+
+    /** {@code getSignIn}: a 200 {@code SignInView}; 404 {@code SIGN_IN_NOT_FOUND}. */
+    JsonNode getSignIn(String targetId, String signInId) throws CliFailure, InterruptedException {
+        return client.get(uri(signInPath(targetId, signInId)));
+    }
+
+    /**
+     * {@code postSignInCode}: {@code {"code": "..."}}, a 202 {@code SignInView}; 409
+     * {@code SIGN_IN_NOT_AWAITING_CODE} unless the sign-in is {@code AWAITING_CODE}. Never logged:
+     * the code is spendable once.
+     */
+    JsonNode postSignInCode(String targetId, String signInId, String code) throws CliFailure, InterruptedException {
+        return client.post(uri(signInPath(targetId, signInId) + "/code"),
+                JsonNodeFactory.instance.objectNode().put("code", code));
+    }
+
+    /**
+     * {@code deleteSignIn}: a 202 {@code SignInView}, {@code CANCELLED} once the runner answers (the
+     * service may set it at once).
+     */
+    JsonNode deleteSignIn(String targetId, String signInId) throws CliFailure, InterruptedException {
+        return client.delete(uri(signInPath(targetId, signInId)));
+    }
+
     /** {@code listLeases}: oldest first; each filter is left out when it is null or blank. */
     JsonNode leases(String targetId, String slotType, String state) throws CliFailure, InterruptedException {
         List<String> query = new ArrayList<>();
@@ -108,6 +141,14 @@ final class TargetsApi {
 
     private static String targetPath(String id) {
         return API + "/targets/" + segment(id);
+    }
+
+    private static String signInsPath(String targetId) {
+        return targetPath(targetId) + "/sign-ins";
+    }
+
+    private static String signInPath(String targetId, String signInId) {
+        return signInsPath(targetId) + "/" + segment(signInId);
     }
 
     private static void add(List<String> query, String name, String value) {
