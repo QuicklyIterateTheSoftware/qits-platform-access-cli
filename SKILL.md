@@ -1597,6 +1597,8 @@ With --repository it shows that repository's open requests only. Open means ever
 
 --state asks for other ones in both forms. The ID column shows the request's id, <repository>-rr-<n>, which `join` and `withdraw` take. -o json also has its uuid (id); the commands take that too.
 
+The FREEZE column is the soft feature freeze: counted branches of the threshold in force (1/3), 3/3 frozen once the request takes no more new branches, off when the threshold is 0, and queued for the request that waits behind a frozen one. A dash means the platform sent no freeze.
+
 ```
 qits release-request list [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--state <STATE|all>]
 ```
@@ -1629,7 +1631,9 @@ qits release-request --project qits --repository qits-ci-service list --state al
 
 Ask for a branch to be released once its builds are green.
 
-The platform may answer with a new request, the open request that already holds the branch, or (on a project wrapper) the open request the branch joined. It prints what came back.
+The platform puts the branch where it belongs: in the repository's active request (opened if there is none), or, while that request is frozen, in the one request queued behind it. The first line printed says where the branch went; the request follows.
+
+The soft feature freeze: an active request is frozen once it holds as many counted branches as the threshold. Counted are branches that name a work item (epics, tasks, tickets of any type, bug fixes included); main, maintenance/* and release/* never count. The threshold is the repository's .config/qits/release-requests.yml feature_freeze, else the project's .config/qits/project.yml release_requests.feature_freeze, else 3; 0 turns the freeze off.
 
 ```
 qits release-request create --branch <branch> --summary <text> [--output table|json] [--priority <priority>] [--project <project>] [--projects-url <url>] [--repository <repository>]
@@ -1652,7 +1656,9 @@ qits release-request --project qits --repository qits-ci-service create --branch
 qits release-request --project qits --repository qits-ci-service create --branch main --summary "Release main" --priority HIGH
 ```
 
-- Asking again for a branch that is on an open request answers that request; it opens no second one. Check the id that comes back.
+- While the active request is frozen, ANY new branch (a feature, a bug fix, a maintenance bump) goes into the request queued behind it, opened if there is none. The queued request folds nothing and runs no gate until the active one has released or been withdrawn.
+- To put a branch into the frozen request anyway, name it: `join --request <its id>`.
+- A branch that is already on a request that has not released answers that request; it opens no second one. Check the id that comes back.
 - On a project wrapper the answer can be a request somebody else opened. Its summary stands, and a red gate holds every branch on it.
 - To add another branch to a request you have, use `join`.
 
@@ -1666,7 +1672,9 @@ qits release-request --project qits --repository qits-ci-service create --branch
 
 Add a branch to an open release request.
 
-The platform folds the request again with the branch and, if that makes a new commit, builds that commit. It prints the request that came back.
+The platform folds the request again with the branch and, if that makes a new commit, builds that commit. The first line printed says where the branch went; the request that came back follows.
+
+Naming the request is how a branch gets past the soft feature freeze: a frozen request takes any branch you join to it by name, and the request marks that source as an explicit join. `create` would have queued it behind the frozen request instead.
 
 ```
 qits release-request join --branch <branch> --request <id> [--output table|json] [--priority <priority>] [--project <project>] [--projects-url <url>] [--repository <repository>]
@@ -1689,8 +1697,8 @@ qits release-request --project qits --repository qits-ci-service join --request 
 qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 --branch feature/log-search --priority BLOCKING
 ```
 
-- Safe to repeat: a branch already on the request adds nothing. With --priority it states that priority again; without, the branch keeps its priority.
-- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request takes no more branches (HTTP 409): open a new one with `create`.
+- Safe to repeat: a branch already on a request that has not released adds nothing and answers that request. With --priority it states that priority again; without, the branch keeps its priority.
+- From RELEASED on a request takes no more branches (HTTP 409, and the message names the next request): join that one, or use `create`.
 
 ### Exit codes
 

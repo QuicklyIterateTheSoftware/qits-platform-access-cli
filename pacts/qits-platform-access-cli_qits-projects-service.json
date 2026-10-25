@@ -2815,6 +2815,12 @@
               "approvalState": "APPROVED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for bd6360a2c6",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
@@ -2839,6 +2845,8 @@
               "sources": [
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -2847,6 +2855,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -2855,6 +2865,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -2902,6 +2914,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -3042,6 +3086,22 @@
               ]
             },
             "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
               "combine": "AND",
               "matchers": [
                 {
@@ -3398,10 +3458,21 @@
       "response": {
         "body": {
           "content": {
+            "placement": {
+              "detail": "feature/export opened contract-service-rr-1, the repository's active release request",
+              "outcome": "CREATED",
+              "queued": false
+            },
             "request": {
               "approvalState": "NOT_REQUIRED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for 5eed5eed5e",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0001",
               "priority": "MEDIUM",
@@ -3419,6 +3490,8 @@
               "sources": [
                 {
                   "addedBy": "dev",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -3427,6 +3500,8 @@
                 },
                 {
                   "addedBy": "dev",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -3452,6 +3527,30 @@
         },
         "matchingRules": {
           "body": {
+            "$.placement.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.placement.outcome": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.placement.queued": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.approvalState": {
               "combine": "AND",
               "matchers": [
@@ -3474,6 +3573,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -3588,6 +3719,22 @@
                 },
                 {
                   "match": "null"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
                 }
               ]
             },
@@ -3973,6 +4120,12 @@
               "approvalState": "DECLINED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Declined by dev: The README promises an approval policy nobody has signed off yet.",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
@@ -3997,6 +4150,8 @@
               "sources": [
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -4005,6 +4160,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -4013,6 +4170,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -4060,6 +4219,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -4200,6 +4391,22 @@
               ]
             },
             "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
               "combine": "AND",
               "matchers": [
                 {
@@ -4556,10 +4763,21 @@
       "response": {
         "body": {
           "content": {
+            "placement": {
+              "detail": "fix/rounding joined contract-service-rr-1 as asked (0 of 3 counted branches)",
+              "outcome": "JOINED",
+              "queued": false
+            },
             "request": {
               "approvalState": "NOT_REQUIRED",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for 5eed5eed5e",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0002",
               "priority": "MEDIUM",
@@ -4577,6 +4795,8 @@
               "sources": [
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -4585,6 +4805,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -4593,6 +4815,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -4618,6 +4842,30 @@
         },
         "matchingRules": {
           "body": {
+            "$.placement.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.placement.outcome": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.placement.queued": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.approvalState": {
               "combine": "AND",
               "matchers": [
@@ -4640,6 +4888,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -4754,6 +5034,22 @@
                 },
                 {
                   "match": "null"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
                 }
               ]
             },
@@ -5190,6 +5486,195 @@
         }
       },
       "description": "qits release-request list: listProjectReleaseRequests",
+      "key": "1fbcd014",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a frozen release request with a queued next request",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "queuedRequestId": "00000000-0000-4000-8000-000000000002",
+            "queuedRequestQualifiedId": "contract-service-rr-2",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "requestId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/release-requests",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/release-requests"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "requests": [
+              {
+                "featureFreeze": {
+                  "features": 1,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
+                "id": "00000000-0000-4000-8000-000000000002",
+                "qualifiedId": "contract-service-rr-2",
+                "queuedBehind": "00000000-0000-4000-8000-000000000004",
+                "queuedBehindQualifiedId": "contract-service-rr-1",
+                "state": "PENDING"
+              },
+              {
+                "featureFreeze": {
+                  "features": 1,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
+                "id": "00000000-0000-4000-8000-000000000002",
+                "qualifiedId": "contract-service-rr-2",
+                "queuedBehind": "00000000-0000-4000-8000-000000000004",
+                "queuedBehindQualifiedId": "contract-service-rr-1",
+                "state": "PENDING"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.requests": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.requests[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].queuedBehind": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].queuedBehindQualifiedId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listProjectReleaseRequests"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request list: listProjectReleaseRequests",
       "key": "519e7da3",
       "pending": false,
       "providerStates": [
@@ -5217,6 +5702,12 @@
             "requests": [
               {
                 "approvalState": "NOT_REQUIRED",
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000002",
                 "priority": "MEDIUM",
                 "qualifiedId": "contract-service-rr-3",
@@ -5228,6 +5719,12 @@
               },
               {
                 "approvalState": "NOT_REQUIRED",
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000002",
                 "priority": "MEDIUM",
                 "qualifiedId": "contract-service-rr-3",
@@ -5239,6 +5736,12 @@
               },
               {
                 "approvalState": "NOT_REQUIRED",
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000002",
                 "priority": "MEDIUM",
                 "qualifiedId": "contract-service-rr-3",
@@ -5250,6 +5753,12 @@
               },
               {
                 "approvalState": "NOT_REQUIRED",
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000002",
                 "priority": "MEDIUM",
                 "qualifiedId": "contract-service-rr-3",
@@ -5261,6 +5770,12 @@
               },
               {
                 "approvalState": "NOT_REQUIRED",
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000002",
                 "priority": "MEDIUM",
                 "qualifiedId": "contract-service-rr-3",
@@ -5272,6 +5787,12 @@
               },
               {
                 "approvalState": "NOT_REQUIRED",
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000002",
                 "priority": "MEDIUM",
                 "qualifiedId": "contract-service-rr-3",
@@ -5308,6 +5829,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -5623,6 +6176,195 @@
         }
       },
       "description": "qits release-request list: listRepositoryReleaseRequests",
+      "key": "d1e16c6d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a frozen release request with a queued next request",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "queuedRequestId": "00000000-0000-4000-8000-000000000002",
+            "queuedRequestQualifiedId": "contract-service-rr-2",
+            "repositoryId": "00000000-0000-4000-8000-000000000003",
+            "requestId": "00000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000003/release-requests"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "requests": [
+              {
+                "featureFreeze": {
+                  "features": 1,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
+                "id": "00000000-0000-4000-8000-000000000002",
+                "qualifiedId": "contract-service-rr-2",
+                "queuedBehind": "00000000-0000-4000-8000-000000000004",
+                "queuedBehindQualifiedId": "contract-service-rr-1",
+                "state": "PENDING"
+              },
+              {
+                "featureFreeze": {
+                  "features": 1,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
+                "id": "00000000-0000-4000-8000-000000000002",
+                "qualifiedId": "contract-service-rr-2",
+                "queuedBehind": "00000000-0000-4000-8000-000000000004",
+                "queuedBehindQualifiedId": "contract-service-rr-1",
+                "state": "PENDING"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.requests": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.requests[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].queuedBehind": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].queuedBehindQualifiedId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.requests[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listRepositoryReleaseRequests"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request list: listRepositoryReleaseRequests",
       "key": "da8928b",
       "pending": false,
       "providerStates": [
@@ -5653,6 +6395,12 @@
           "content": {
             "requests": [
               {
+                "featureFreeze": {
+                  "features": 0,
+                  "frozen": false,
+                  "source": "PLATFORM",
+                  "threshold": 3
+                },
                 "id": "00000000-0000-4000-8000-000000000003",
                 "priority": "HIGH",
                 "qualifiedId": "contract-suite-app-rr-1",
@@ -5680,6 +6428,38 @@
                   "match": "type",
                   "max": 1,
                   "min": 1
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -6176,6 +6956,12 @@
               "approvalState": "WAITING",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "Waiting for a CI verdict for bd6360a2c6",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
@@ -6200,6 +6986,8 @@
               "sources": [
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -6208,6 +6996,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -6216,6 +7006,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -6263,6 +7055,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -6403,6 +7227,22 @@
               ]
             },
             "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
               "combine": "AND",
               "matchers": [
                 {
@@ -7415,6 +8255,12 @@
               "approvalState": "WAITING",
               "createdAt": "2026-01-01T00:00:00Z",
               "detail": "The export moves to next quarter's release.",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
               "id": "00000000-0000-4000-8000-000000000003",
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
               "priority": "HIGH",
@@ -7439,6 +8285,8 @@
               "sources": [
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -7447,6 +8295,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -7455,6 +8305,8 @@
                 },
                 {
                   "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
                   "implicit": false,
                   "kind": "BRANCH",
                   "name": "main",
@@ -7502,6 +8354,38 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -7639,6 +8523,22 @@
               ]
             },
             "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
               "combine": "AND",
               "matchers": [
                 {

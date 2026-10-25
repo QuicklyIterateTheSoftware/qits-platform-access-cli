@@ -81,6 +81,13 @@ public final class ProjectsContract {
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
     static final String HELD_BY_AN_UPSTREAM_RELEASE = "a release request held by an upstream release";
     /**
+     * The soft feature freeze (epic qits-1580): the active request holds its threshold of counted
+     * branches, and a second request waits behind it. The one state that records {@code
+     * queuedBehind} set, so the only one whose rows bind it: everywhere else the field is null, and
+     * a null the pact demanded would break the provider the moment a recording queues a request.
+     */
+    static final String FROZEN_WITH_A_QUEUED_NEXT = "a frozen release request with a queued next request";
+    /**
      * The front desk doors of {@code qits projects desk} (qits-1572). Pending on the provider: the
      * golden masters pinned in the root pom record no such state yet, so both rows are skipped with
      * this state and their door, and stay out of the pact file. They go live with no change here
@@ -138,14 +145,30 @@ public final class ProjectsContract {
      * One release request as {@code ReleaseRequestCommand.printRequest} prints it. {@code
      * qualityGates[].checks[].runId} is not here: the recorder froze it under both {@code ids} and
      * {@code strings} (a whole uuid in some elements only), so qits-pact-consumer would match it as
-     * a uuid; no row consumes it.
+     * a uuid; no row consumes it. Nor are {@code queuedBehind}, {@code queuedNext} and their qualified
+     * ids, which the table prints too: they are null in every state a write door is recorded in, and
+     * a pact must not demand a null the field exists to replace. {@link #FROZEN_WITH_A_QUEUED_NEXT}'s
+     * list rows bind {@code queuedBehind}; no recorded answer the CLI reads sets {@code queuedNext}.
      */
-    static final List<String> REQUEST = List.of("id", "qualifiedId", "repoName", "state", "supersededBy",
+    static final List<String> REQUEST = List.of("id", "qualifiedId", "repoName", "state", "featureFreeze.features",
+            "featureFreeze.threshold", "featureFreeze.frozen", "featureFreeze.source", "supersededBy",
             "supersededByQualifiedId", "priority", "summary", "requester", "approvalState", "mergedSha", "version",
             "detail", "createdAt", "updatedAt", "qualityGates[].kind", "qualityGates[].position",
             "qualityGates[].state", "qualityGates[].detail", "qualityGates[].checks[].name",
             "qualityGates[].checks[].state", "qualityGates[].checks[].detail", "sources[].kind",
-            "sources[].name", "sources[].ref", "sources[].implicit", "sources[].priority", "sources[].addedBy");
+            "sources[].name", "sources[].ref", "sources[].implicit", "sources[].feature", "sources[].explicitJoin",
+            "sources[].priority", "sources[].addedBy");
+
+    /** Where create and join put the branch: the first line of the table form (epic qits-1580). */
+    static final List<String> PLACEMENT = List.of("placement.outcome", "placement.queued", "placement.detail");
+
+    /** The list's FREEZE column, of each request. */
+    static final List<String> FREEZE = List.of("requests[].featureFreeze.features",
+            "requests[].featureFreeze.threshold", "requests[].featureFreeze.frozen",
+            "requests[].featureFreeze.source");
+
+    /** The list's FREEZE column says queued for a request waiting behind a frozen one. */
+    static final List<String> QUEUED = List.of("requests[].queuedBehind", "requests[].queuedBehindQualifiedId");
 
     /**
      * {@code qualityGates} itself, and each gate's {@code checks}, must not pin a length (ticket
@@ -482,6 +505,20 @@ public final class ProjectsContract {
             assertThat(ReleaseRequestRefs.label(r)).isNotBlank();
             assertThat(ProjectsApi.text(r, "state")).isNotBlank();
         });
+    };
+
+    /**
+     * The list's FREEZE column: the active request frozen, the next one queued behind it. The mock
+     * answers every request in the first one's shape, the queued one, so the row asserts the cell
+     * the queued request gets; the frozen one's cell is the same freeze the other list rows bind.
+     */
+    private static final Call FROZEN_AND_QUEUED = (api, params, recorded) -> {
+        JsonNode requests = recorded.operationId().equals("listProjectReleaseRequests")
+                ? api.projectReleaseRequests(params.get("projectId"), null).path("requests")
+                : api.releaseRequests(params.get("repositoryId"), null).path("requests");
+        assertThat(requests.size()).isEqualTo(recorded(recorded, "requests"));
+        assertThat(requests).extracting(ReleaseRequestCommand::freezeCell).contains("queued");
+        assertThat(requests).anySatisfy(r -> assertThat(ProjectsApi.text(r, "queuedBehindQualifiedId")).isNotBlank());
     };
 
     /** {@code qits tui}'s version dropdown: the released requests' versions. */
@@ -925,22 +962,31 @@ public final class ProjectsContract {
         // qits release-request
         rows.add(row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
                 "projectReleaseRequests", PROJECT_RELEASE_REQUESTS).consumes(held(PENDING_REQUESTS,
-                "listProjectReleaseRequests", List.of("requests[].id", "requests[].qualifiedId", "requests[].repoName",
-                        "requests[].state", "requests[].approvalState", "requests[].priority", "requests[].summary",
-                        "requests[].version", "requests[].updatedAt"))));
+                "listProjectReleaseRequests", concat(List.of("requests[].id", "requests[].qualifiedId",
+                        "requests[].repoName", "requests[].state", "requests[].approvalState", "requests[].priority",
+                        "requests[].summary", "requests[].version", "requests[].updatedAt"), FREEZE))));
         rows.add(row("qits release-request list", AWAITING_REQUEST, "listRepositoryReleaseRequests", "releaseRequests",
                 OPEN_REQUESTS).consumes(held(AWAITING_REQUEST, "listRepositoryReleaseRequests",
-                List.of("requests[].id", "requests[].qualifiedId", "requests[].state", "requests[].priority",
-                        "requests[].summary", "requests[].version", "requests[].updatedAt"))));
+                concat(List.of("requests[].id", "requests[].qualifiedId", "requests[].state",
+                        "requests[].priority", "requests[].summary", "requests[].version", "requests[].updatedAt"),
+                        FREEZE))));
+        rows.add(row("qits release-request list", FROZEN_WITH_A_QUEUED_NEXT, "listProjectReleaseRequests",
+                "projectReleaseRequests", FROZEN_AND_QUEUED).consumes(held(FROZEN_WITH_A_QUEUED_NEXT,
+                "listProjectReleaseRequests", concat(List.of("requests[].id", "requests[].qualifiedId",
+                        "requests[].state"), FREEZE, QUEUED))));
+        rows.add(row("qits release-request list", FROZEN_WITH_A_QUEUED_NEXT, "listRepositoryReleaseRequests",
+                "releaseRequests", FROZEN_AND_QUEUED).consumes(held(FROZEN_WITH_A_QUEUED_NEXT,
+                "listRepositoryReleaseRequests", concat(List.of("requests[].id", "requests[].qualifiedId",
+                        "requests[].state"), FREEZE, QUEUED))));
         REQUEST_SCOPED.forEach(c -> rows.add(row(c, REQUESTS_OF_EVERY_STATE, "listRepositoryReleaseRequests",
                 "releaseRequests", FIND).consumes(FIND_REQUEST)));
         rows.add(row("qits release-request create", A_BRANCH_TO_RELEASE, "createReleaseRequest",
                 "createReleaseRequest", CREATE_REQUEST)
-                .consumes(held(A_BRANCH_TO_RELEASE, "createReleaseRequest", prefixed("request.", REQUEST)))
+                .consumes(held(A_BRANCH_TO_RELEASE, "createReleaseRequest", withPlacement()))
                 .anyLength(openEndedRequest()));
         rows.add(row("qits release-request join", OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource",
                 "joinReleaseRequest", JOIN_REQUEST)
-                .consumes(held(OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource", prefixed("request.", REQUEST)))
+                .consumes(held(OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource", withPlacement()))
                 .anyLength(openEndedRequest()));
         rows.add(row("qits release-request withdraw", AWAITING_REQUEST, "withdrawReleaseRequest",
                 "withdrawReleaseRequest", WITHDRAW)
@@ -1117,6 +1163,16 @@ public final class ProjectsContract {
     /** The paths the recording holds: the command reads the others only where the service sends them. */
     private static List<String> held(String state, String operationId, List<String> paths) {
         return BASE.held(state, operationId, paths);
+    }
+
+    @SafeVarargs
+    private static List<String> concat(List<String>... lists) {
+        return Stream.of(lists).flatMap(List::stream).toList();
+    }
+
+    /** What create and join read: the request as printed, and the placement line above it. */
+    private static List<String> withPlacement() {
+        return concat(prefixed("request.", REQUEST), PLACEMENT);
     }
 
     /** {@link #REQUEST_OPEN_ENDED}, prefixed for a row's {@code request.*} body, as {@code anyLength} takes it. */

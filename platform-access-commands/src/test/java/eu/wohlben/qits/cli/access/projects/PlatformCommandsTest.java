@@ -369,7 +369,8 @@ class PlatformCommandsTest {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).contains("ID        STATE     PRIORITY  SUMMARY").contains("11111111  PENDING   HIGH      Ship the new log view")
+        assertThat(r.out()).contains("ID        STATE     FREEZE  PRIORITY  SUMMARY")
+                .contains("11111111  PENDING   -       HIGH      Ship the new log view")
                 .contains("22222222  RELEASED").contains("Cut, still gating")
                 .contains("33333333  REJECTED").doesNotContain("FINALIZED").doesNotContain("Old release");
         assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isNull();
@@ -409,8 +410,8 @@ class PlatformCommandsTest {
 
         assertThat(r.exit()).isZero();
         assertThat(r.out())
-                .contains("ID        REPOSITORY        STATE      APPROVAL      PRIORITY  SUMMARY")
-                .contains("55555555  qits-ci-frontend  PENDING    WAITING       BLOCKING  Dark theme")
+                .contains("ID        REPOSITORY        STATE      FREEZE  APPROVAL      PRIORITY  SUMMARY")
+                .contains("55555555  qits-ci-frontend  PENDING    -       WAITING       BLOCKING  Dark theme")
                 .contains("11111111  qits-ci-service   PENDING")
                 // The landing app's default: the last finalized stay, nothing is dropped.
                 .contains("77777777  qits-ci-service   FINALIZED").contains("2026.910.1");
@@ -609,6 +610,145 @@ class PlatformCommandsTest {
         assertThat(run("release-request", "create", "--project", "qits", "--repository", CI).exit()).isEqualTo(2);
     }
 
+    // --- the soft feature freeze (epic qits-1580) ---
+
+    private static final String QUEUED_ID = "66666666-2222-3333-4444-555555555555";
+
+    @Test
+    void createPrintsWhereTheBranchWentFirstThenTheQueuedRequestBehindTheFrozenOne() {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"%s","qualifiedId":"qits-ci-service-rr-14","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"MEDIUM","summary":"Ship the log search","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,
+                  "detail":"Queued behind qits-ci-service-rr-13: it folds once that request has released",
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "queuedBehind":"%s","queuedBehindQualifiedId":"qits-ci-service-rr-13",
+                  "queuedNext":null,"queuedNextQualifiedId":null,
+                  "featureFreeze":{"features":1,"threshold":3,"frozen":false,"source":"PROJECT"},
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM",
+                              "addedBy":null,"feature":false,"explicitJoin":false},
+                             {"kind":"BRANCH","name":"ticket/qits-9","ref":"refs/heads/ticket/qits-9","implicit":false,
+                              "priority":"MEDIUM","addedBy":"wohlben","feature":true,"explicitJoin":false}]},
+                 "placement":{"outcome":"CREATED","queued":true,
+                  "detail":"ticket/qits-9 is queued in qits-ci-service-rr-14, behind the frozen qits-ci-service-rr-13"}}
+                """.formatted(QUEUED_ID, CI, PENDING_ID));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "ticket/qits-9", "--summary", "Ship the log search");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).startsWith("ticket/qits-9 is queued in qits-ci-service-rr-14, behind the frozen "
+                + "qits-ci-service-rr-13\nRelease request qits-ci-service-rr-14\n");
+        assertThat(r.out().lines().toList()).contains(
+                "  freeze         1 of 3 counted branches (project)",
+                "  queued         behind qits-ci-service-rr-13",
+                "  KIND    NAME           REF                       HOW    FREEZE   PRIORITY  ADDED BY",
+                "  BRANCH  main           refs/heads/main           named  -        MEDIUM    -",
+                "  BRANCH  ticket/qits-9  refs/heads/ticket/qits-9  named  counted  MEDIUM    wohlben");
+        assertThat(r.out()).doesNotContain("  next ");
+        assertThat(r.out()).containsSubsequence("  state ", "  freeze ", "  queued ", "  superseded by ");
+    }
+
+    @Test
+    void joinPrintsWhereTheBranchWentAndMarksTheExplicitJoinOnTheFrozenRequest() {
+        platform.answer("POST", sourcesOf(PENDING_ID), """
+                {"request":{"id":"%s","qualifiedId":"qits-ci-service-rr-13","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":null,
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "queuedBehind":null,"queuedBehindQualifiedId":null,
+                  "queuedNext":"%s","queuedNextQualifiedId":"qits-ci-service-rr-14",
+                  "featureFreeze":{"features":3,"threshold":3,"frozen":true,"source":"PLATFORM"},
+                  "sources":[{"kind":"BRANCH","name":"epic/qits-7","ref":"refs/heads/epic/qits-7","implicit":false,
+                              "priority":"HIGH","addedBy":"wohlben","feature":true,"explicitJoin":false},
+                             {"kind":"BRANCH","name":"ticket/qits-10","ref":"refs/heads/ticket/qits-10","implicit":false,
+                              "priority":"MEDIUM","addedBy":"wohlben","feature":true,"explicitJoin":true}]},
+                 "placement":{"outcome":"JOINED","queued":false,
+                  "detail":"ticket/qits-10 joined qits-ci-service-rr-13 as asked, past its freeze (3 of 3 counted branches)"}}
+                """.formatted(PENDING_ID, CI, QUEUED_ID));
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
+                "--request", "1111", "--branch", "ticket/qits-10");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).startsWith("ticket/qits-10 joined qits-ci-service-rr-13 as asked, past its freeze "
+                + "(3 of 3 counted branches)\nRelease request qits-ci-service-rr-13\n");
+        assertThat(r.out().lines().toList()).contains(
+                "  freeze         3 of 3 counted branches, frozen (platform default)",
+                "  next           qits-ci-service-rr-14",
+                "  BRANCH  ticket/qits-10  refs/heads/ticket/qits-10  named  counted, explicit join  MEDIUM    wohlben");
+        assertThat(r.out()).doesNotContain("  queued ");
+    }
+
+    @Test
+    void aFreezeTurnedOffSaysWhichLevelTurnedItOffAndJsonIsTheServicesAnswer() throws Exception {
+        String answer = """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "featureFreeze":{"features":5,"threshold":0,"frozen":false,"source":"REPOSITORY"},
+                  "sources":[]},
+                 "placement":{"outcome":"PRESENT","queued":false,"detail":"feature/logs is already on 44444444"}}
+                """.formatted(CI);
+        platform.answer("POST", REQUESTS, answer);
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+        assertThat(r.out()).startsWith("feature/logs is already on 44444444\n")
+                .contains("  freeze         off (repository)\n");
+
+        Result json = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view", "-o", "json");
+        assertThat(JSON.readTree(json.out())).isEqualTo(JSON.readTree(answer));
+    }
+
+    @Test
+    void theListsFreezeColumnShowsFrozenCountedOffAndQueued() {
+        String requests = """
+                {"requests":[
+                  {"id":"%1$s","qualifiedId":"qits-ci-service-rr-13","repoName":"qits-ci-service","state":"PENDING",
+                   "approvalState":"NOT_REQUIRED","priority":"HIGH","summary":"Ship the log view",
+                   "updatedAt":"2026-09-12T10:00:00Z","queuedNextQualifiedId":"qits-ci-service-rr-14",
+                   "featureFreeze":{"features":3,"threshold":3,"frozen":true,"source":"PLATFORM"}},
+                  {"id":"%2$s","qualifiedId":"qits-ci-service-rr-14","repoName":"qits-ci-service","state":"PENDING",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Ship the log search",
+                   "updatedAt":"2026-09-12T10:00:00Z","queuedBehind":"%1$s","queuedBehindQualifiedId":"qits-ci-service-rr-13",
+                   "featureFreeze":{"features":1,"threshold":3,"frozen":false,"source":"PLATFORM"}},
+                  {"id":"%3$s","qualifiedId":"qits-ci-frontend-rr-2","repoName":"qits-ci-frontend","state":"READY",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Dark theme",
+                   "updatedAt":"2026-09-12T10:00:00Z",
+                   "featureFreeze":{"features":1,"threshold":3,"frozen":false,"source":"PROJECT"}},
+                  {"id":"%4$s","qualifiedId":"qits-ci-frontend-rr-3","repoName":"qits-ci-frontend","state":"PENDING",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Light theme",
+                   "updatedAt":"2026-09-12T10:00:00Z",
+                   "featureFreeze":{"features":4,"threshold":0,"frozen":false,"source":"REPOSITORY"}}]}
+                """.formatted(PENDING_ID, QUEUED_ID, RELEASED_ID, "77777777-2222-3333-4444-555555555555");
+        platform.answer("GET", PROJECT_REQUESTS, requests);
+        platform.answer("GET", REQUESTS, requests);
+
+        Result project = run("release-request", "--project", "qits", "list");
+        assertThat(project.exit()).as(project.err()).isZero();
+        assertThat(project.out().lines().toList()).anySatisfy(l -> assertThat(l)
+                        .startsWith("ID                     REPOSITORY        STATE    FREEZE      APPROVAL"))
+                .anySatisfy(l -> assertThat(l)
+                        .startsWith("qits-ci-service-rr-13  qits-ci-service   PENDING  3/3 frozen  NOT_REQUIRED"))
+                .anySatisfy(l -> assertThat(l)
+                        .startsWith("qits-ci-service-rr-14  qits-ci-service   PENDING  queued      NOT_REQUIRED"))
+                .anySatisfy(l -> assertThat(l)
+                        .startsWith("qits-ci-frontend-rr-2  qits-ci-frontend  READY    1/3         NOT_REQUIRED"))
+                .anySatisfy(l -> assertThat(l)
+                        .startsWith("qits-ci-frontend-rr-3  qits-ci-frontend  PENDING  off         NOT_REQUIRED"));
+
+        Result repository = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
+        assertThat(repository.exit()).as(repository.err()).isZero();
+        assertThat(repository.out().lines().toList()).anySatisfy(l -> assertThat(l)
+                        .startsWith("ID                     STATE    FREEZE      PRIORITY  SUMMARY"))
+                .anySatisfy(l -> assertThat(l)
+                        .startsWith("qits-ci-service-rr-13  PENDING  3/3 frozen  HIGH      Ship the log view"))
+                .anySatisfy(l -> assertThat(l)
+                        .startsWith("qits-ci-service-rr-14  PENDING  queued      MEDIUM    Ship the log search"));
+    }
+
     // --- joining a branch to a request ---
 
     private static final String PENDING_ID = "11111111-2222-3333-4444-555555555555";
@@ -704,14 +844,15 @@ class PlatformCommandsTest {
     @Test
     void aReleasedRequestTakesNoMoreBranches() {
         platform.answer("POST", sourcesOf(RELEASED_ID), 409,
-                "{\"message\":\"Release request " + RELEASED_ID + " is already RELEASED\"}");
+                "{\"message\":\"Release request " + RELEASED_ID + " is already RELEASED; join qits-ci-service-rr-13\"}");
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "join",
                 "--request", "2222", "--branch", "feature/search");
 
         assertThat(r.exit()).isEqualTo(1);
         assertThat(r.err()).contains("Release request " + RELEASED_ID + " is RELEASED and takes no more branches (HTTP 409). "
-                + "Open a new one with `qits release-request create`.");
+                + "Join the next request the platform names, or use `qits release-request create`. ")
+                .contains("join qits-ci-service-rr-13");
         assertThat(r.out()).isEmpty();
     }
 
@@ -748,8 +889,8 @@ class PlatformCommandsTest {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).startsWith("ID                     STATE     PRIORITY  SUMMARY            VERSION     UPDATED\n"
-                + "qits-ci-service-rr-12  PENDING   HIGH      Ship the log view  -           2026-09-12 ");
+        assertThat(r.out()).startsWith("ID                     STATE     FREEZE  PRIORITY  SUMMARY            VERSION     UPDATED\n"
+                + "qits-ci-service-rr-12  PENDING   -       HIGH      Ship the log view  -           2026-09-12 ");
         assertThat(r.out()).doesNotContain("11111111");
     }
 

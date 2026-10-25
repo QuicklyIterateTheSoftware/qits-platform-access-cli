@@ -163,7 +163,11 @@ public class ReleaseRequestCommand implements Runnable {
                             + "FINALIZED, WITHDRAWN and OBSOLETE.",
                     "--state asks for other ones in both forms. The ID column shows the request's id, "
                             + "<repository>-rr-<n>, which `join` and `withdraw` take. -o json also has its uuid (id); "
-                            + "the commands take that too."},
+                            + "the commands take that too.",
+                    "The FREEZE column is the soft feature freeze: counted branches of the threshold in force "
+                            + "(1/3), 3/3 frozen once the request takes no more new branches, off when the "
+                            + "threshold is 0, and queued for the request that waits behind a frozen one. A dash "
+                            + "means the platform sent no freeze."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits list",
@@ -224,12 +228,13 @@ public class ReleaseRequestCommand implements Runnable {
                 return 0;
             }
             if (wholeProject) {
-                Table.print(context.out(), "", List.of("ID", "REPOSITORY", "STATE", "APPROVAL", "PRIORITY", "SUMMARY",
-                                "VERSION", "UPDATED"),
+                Table.print(context.out(), "", List.of("ID", "REPOSITORY", "STATE", "FREEZE", "APPROVAL", "PRIORITY",
+                                "SUMMARY", "VERSION", "UPDATED"),
                         requests.stream().map(r -> List.of(
                                 Table.cell(ReleaseRequestRefs.label(r), 60),
                                 Table.cell(text(r, "repoName"), 40),
                                 Table.cell(text(r, "state"), 12),
+                                Table.cell(freezeCell(r), 12),
                                 Table.cell(text(r, "approvalState"), 12),
                                 Table.cell(text(r, "priority"), 10),
                                 Table.cell(text(r, "summary"), 60),
@@ -237,10 +242,11 @@ public class ReleaseRequestCommand implements Runnable {
                                 Table.time(text(r, "updatedAt")))).toList());
                 return 0;
             }
-            Table.print(context.out(), "", List.of("ID", "STATE", "PRIORITY", "SUMMARY", "VERSION", "UPDATED"),
+            Table.print(context.out(), "", List.of("ID", "STATE", "FREEZE", "PRIORITY", "SUMMARY", "VERSION", "UPDATED"),
                     requests.stream().map(r -> List.of(
                             Table.cell(ReleaseRequestRefs.label(r), 60),
                             Table.cell(text(r, "state"), 12),
+                            Table.cell(freezeCell(r), 12),
                             Table.cell(text(r, "priority"), 10),
                             Table.cell(text(r, "summary"), 60),
                             Table.cell(text(r, "version"), 24),
@@ -276,8 +282,15 @@ public class ReleaseRequestCommand implements Runnable {
 
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"Ask for a branch to be released once its builds are green.",
-                    "The platform may answer with a new request, the open request that already holds the branch, "
-                            + "or (on a project wrapper) the open request the branch joined. It prints what came back."},
+                    "The platform puts the branch where it belongs: in the repository's active request (opened "
+                            + "if there is none), or, while that request is frozen, in the one request queued "
+                            + "behind it. The first line printed says where the branch went; the request follows.",
+                    "The soft feature freeze: an active request is frozen once it holds as many counted "
+                            + "branches as the threshold. Counted are branches that name a work item (epics, "
+                            + "tasks, tickets of any type, bug fixes included); main, maintenance/* and release/* "
+                            + "never count. The threshold is the repository's .config/qits/release-requests.yml "
+                            + "feature_freeze, else the project's .config/qits/project.yml "
+                            + "release_requests.feature_freeze, else 3; 0 turns the freeze off."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits --repository qits-ci-service create --branch "
@@ -285,8 +298,13 @@ public class ReleaseRequestCommand implements Runnable {
                     "  qits release-request --project qits --repository qits-ci-service create --branch main "
                             + "--summary \"Release main\" --priority HIGH",
                     "",
-                    "- Asking again for a branch that is on an open request answers that request; it opens no "
-                            + "second one. Check the id that comes back.",
+                    "- While the active request is frozen, ANY new branch (a feature, a bug fix, a maintenance "
+                            + "bump) goes into the request queued behind it, opened if there is none. The queued "
+                            + "request folds nothing and runs no gate until the active one has released or been "
+                            + "withdrawn.",
+                    "- To put a branch into the frozen request anyway, name it: `join --request <its id>`.",
+                    "- A branch that is already on a request that has not released answers that request; it "
+                            + "opens no second one. Check the id that comes back.",
                     "- On a project wrapper the answer can be a request somebody else opened. Its summary stands, "
                             + "and a red gate holds every branch on it.",
                     "- To add another branch to a request you have, use `join`."},
@@ -321,6 +339,7 @@ public class ReleaseRequestCommand implements Runnable {
                 SafeJson.print(context.out(), answer);
                 return 0;
             }
+            printPlacement(context.out(), answer);
             printRequest(context.out(), answer.path("request"));
             return 0;
         }
@@ -329,7 +348,11 @@ public class ReleaseRequestCommand implements Runnable {
     @CommandLine.Command(name = "join", mixinStandardHelpOptions = true,
             description = {"Add a branch to an open release request.",
                     "The platform folds the request again with the branch and, if that makes a new commit, "
-                            + "builds that commit. It prints the request that came back."},
+                            + "builds that commit. The first line printed says where the branch went; the request "
+                            + "that came back follows.",
+                    "Naming the request is how a branch gets past the soft feature freeze: a frozen request "
+                            + "takes any branch you join to it by name, and the request marks that source as an "
+                            + "explicit join. `create` would have queued it behind the frozen request instead."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 "
@@ -337,10 +360,11 @@ public class ReleaseRequestCommand implements Runnable {
                     "  qits release-request --project qits --repository qits-ci-service join --request qits-ci-service-rr-12 "
                             + "--branch feature/log-search --priority BLOCKING",
                     "",
-                    "- Safe to repeat: a branch already on the request adds nothing. With --priority it states that "
-                            + "priority again; without, the branch keeps its priority.",
-                    "- A RELEASED, FINALIZED, WITHDRAWN or OBSOLETE request takes no more branches (HTTP 409): open "
-                            + "a new one with `create`."},
+                    "- Safe to repeat: a branch already on a request that has not released adds nothing and "
+                            + "answers that request. With --priority it states that priority again; without, the "
+                            + "branch keeps its priority.",
+                    "- From RELEASED on a request takes no more branches (HTTP 409, and the message names the "
+                            + "next request): join that one, or use `create`."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED,
                     "2:Used wrongly (for example a --request that fits no request, or more than one), not signed in, "
@@ -382,6 +406,7 @@ public class ReleaseRequestCommand implements Runnable {
                 SafeJson.print(context.out(), answer);
                 return 0;
             }
+            printPlacement(context.out(), answer);
             printRequest(context.out(), answer.path("request"));
             return 0;
         }
@@ -390,8 +415,8 @@ public class ReleaseRequestCommand implements Runnable {
         private static CliFailure explain(CliFailure refused, JsonNode found) {
             if (refused.status() == 409) {
                 return new CliFailure("Release request " + ReleaseRequestRefs.name(found) + " is " + settledState(found)
-                        + " and takes no more branches (HTTP 409). Open a new one with `qits release-request create`.",
-                        CliFailure.FAILED);
+                        + " and takes no more branches (HTTP 409). Join the next request the platform names, or "
+                        + "use `qits release-request create`. " + refused.getMessage(), CliFailure.FAILED);
             }
             if (refused.status() == 404) {
                 return new CliFailure("No such request or branch. " + refused.getMessage(), CliFailure.FAILED);
@@ -833,7 +858,19 @@ public class ReleaseRequestCommand implements Runnable {
         }
         rows.addAll(List.of(
                 List.of("repository", Table.cell(text(request, "repoName"), 200)),
-                List.of("state", Table.cell(text(request, "state"), 200)),
+                List.of("state", Table.cell(text(request, "state"), 200))));
+        String freeze = freeze(request.path("featureFreeze"));
+        if (freeze != null) {
+            rows.add(List.of("freeze", Table.cell(freeze, 200)));
+        }
+        String behind = ReleaseRequestRefs.label(text(request, "queuedBehindQualifiedId"), text(request, "queuedBehind"));
+        String next = ReleaseRequestRefs.label(text(request, "queuedNextQualifiedId"), text(request, "queuedNext"));
+        if (!behind.isBlank()) {
+            rows.add(List.of("queued", Table.cell("behind " + behind, 200)));
+        } else if (!next.isBlank()) {
+            rows.add(List.of("next", Table.cell(next, 200)));
+        }
+        rows.addAll(List.of(
                 List.of("superseded by", Table.cell(supersededBy(request), 200)),
                 List.of("priority", Table.cell(text(request, "priority"), 200)),
                 List.of("summary", Table.cell(text(request, "summary"), 200)),
@@ -847,17 +884,93 @@ public class ReleaseRequestCommand implements Runnable {
         Table.print(out, "  ", null, rows);
         printGates(out, request);
         List<List<String>> sources = new ArrayList<>();
-        request.path("sources").forEach(s -> sources.add(List.of(
-                Table.cell(text(s, "kind"), 20),
-                Table.cell(text(s, "name"), 60),
-                Table.cell(text(s, "ref"), 80),
-                Table.cell(s.path("implicit").asBoolean() ? "implicit" : "named", 10),
-                Table.cell(text(s, "priority"), 10),
-                Table.cell(text(s, "addedBy"), 40))));
+        boolean counted = false;
+        for (JsonNode s : request.path("sources")) {
+            counted |= s.has("feature");
+        }
+        boolean freezeColumn = counted;
+        request.path("sources").forEach(s -> {
+            List<String> row = new ArrayList<>(List.of(
+                    Table.cell(text(s, "kind"), 20),
+                    Table.cell(text(s, "name"), 60),
+                    Table.cell(text(s, "ref"), 80),
+                    Table.cell(s.path("implicit").asBoolean() ? "implicit" : "named", 10)));
+            if (freezeColumn) {
+                row.add(Table.cell(sourceFreeze(s), 30));
+            }
+            row.add(Table.cell(text(s, "priority"), 10));
+            row.add(Table.cell(text(s, "addedBy"), 40));
+            sources.add(row);
+        });
         if (!sources.isEmpty()) {
             out.println("Sources:");
-            Table.print(out, "  ", List.of("KIND", "NAME", "REF", "HOW", "PRIORITY", "ADDED BY"), sources);
+            Table.print(out, "  ", freezeColumn
+                    ? List.of("KIND", "NAME", "REF", "HOW", "FREEZE", "PRIORITY", "ADDED BY")
+                    : List.of("KIND", "NAME", "REF", "HOW", "PRIORITY", "ADDED BY"), sources);
         }
+    }
+
+    /**
+     * Where create or join put the branch (epic qits-1580), in the platform's own sentence, as the
+     * first line. An older platform sends no placement, and then nothing is printed for it.
+     */
+    static void printPlacement(PrintStream out, JsonNode answer) {
+        String detail = Table.cell(text(answer.path("placement"), "detail"), 300);
+        if (!detail.equals("-")) {
+            out.println(detail);
+        }
+    }
+
+    /**
+     * The request's freeze row: "1 of 3 counted branches (platform default)", with ", frozen" once
+     * it holds the threshold, or "off (repository)" when the level in force set it to 0. Null when
+     * the platform sent no freeze, so the row is left out.
+     */
+    static String freeze(JsonNode freeze) {
+        if (!freeze.isObject()) {
+            return null;
+        }
+        String level = freezeLevel(text(freeze, "source"));
+        int threshold = freeze.path("threshold").asInt();
+        if (threshold <= 0) {
+            return "off" + level;
+        }
+        return freeze.path("features").asInt() + " of " + threshold + " counted branches"
+                + (freeze.path("frozen").asBoolean() ? ", frozen" : "") + level;
+    }
+
+    /** The level that set the threshold, as the freeze row names it. */
+    private static String freezeLevel(String source) {
+        return switch (source.toUpperCase(Locale.ROOT)) {
+            case "" -> "";
+            case "PLATFORM" -> " (platform default)";
+            default -> " (" + source.toLowerCase(Locale.ROOT) + ")";
+        };
+    }
+
+    /** The list's FREEZE cell: queued, off, 1/3 or 3/3 frozen; a dash when the platform sent no freeze. */
+    static String freezeCell(JsonNode request) {
+        if (!text(request, "queuedBehind").isBlank() || !text(request, "queuedBehindQualifiedId").isBlank()) {
+            return "queued";
+        }
+        JsonNode freeze = request.path("featureFreeze");
+        if (!freeze.isObject()) {
+            return "";
+        }
+        int threshold = freeze.path("threshold").asInt();
+        if (threshold <= 0) {
+            return "off";
+        }
+        return freeze.path("features").asInt() + "/" + threshold + (freeze.path("frozen").asBoolean() ? " frozen" : "");
+    }
+
+    /** A source's FREEZE cell: whether it counts toward the freeze, and whether it was joined past it. */
+    private static String sourceFreeze(JsonNode source) {
+        String counts = source.path("feature").asBoolean() ? "counted" : "";
+        if (source.path("explicitJoin").asBoolean()) {
+            return counts.isEmpty() ? "explicit join" : counts + ", explicit join";
+        }
+        return counts;
     }
 
     /** The request that superseded this one, by its logical id, else its short uuid; blank when none. */
