@@ -18,7 +18,10 @@ final class Doors {
     static final String WRITE = "It needs qits:admin, qits:admin-agent or qits:system, which a person's token or "
             + "qits-system's own carries. qits:agent is refused (HTTP 403) by design.";
 
-    /** greenlightTarget, requestTargetLoginCheck: qits:admin or qits:admin-agent only. */
+    /**
+     * greenlightTarget, requestTargetLoginCheck, createSignIn, getSignIn, postSignInCode,
+     * deleteSignIn: qits:admin or qits:admin-agent only.
+     */
     static final String ADMIN_ONLY = "It needs qits:admin or qits:admin-agent, which a person's token carries. "
             + "qits:agent and qits:system are refused (HTTP 403) by design.";
 

@@ -17,13 +17,18 @@ import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
@@ -608,8 +613,7 @@ public class TargetsCommand implements Runnable {
                     "POST /system/api/targets/{id}/login-check, no body (HTTP 202). " + Doors.ADMIN_ONLY},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets login-check --target localhost",
-                    "", "- A disconnected target is refused: HTTP 409 TARGET_UNAVAILABLE.",
-                    "- `qits targets sign-in` sends this itself, every 30 seconds, until the target reports PRESENT."},
+                    "", "- A disconnected target is refused: HTTP 409 TARGET_UNAVAILABLE."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class LoginCheckCommand extends TargetVerb {
@@ -705,27 +709,38 @@ public class TargetsCommand implements Runnable {
     // --- sign-in ---
 
     @CommandLine.Command(name = "sign-in", mixinStandardHelpOptions = true,
-            description = {"Sign a target's credential volume in for a harness: prints the docker command an "
-                    + "operator runs on the target's machine, then asks the target to check its sign-in every 30 "
-                    + "seconds until it reports PRESENT, or the timeout passes.",
-                    "GET /system/api/targets/{id}, then POST .../login-check every 30s (HTTP 202). " + Doors.ADMIN_ONLY
-                            + " Already PRESENT: prints the command and exits at once, no login-check sent."},
+            description = {"Sign a target's credential volume in for a harness: starts a sign-in on the target (or "
+                    + "resumes one with --sign-in), prints its URL and code as the runner reports them, pastes a "
+                    + "claude code typed on stdin back to it, and waits for the harness to report signed in.",
+                    "GET /system/api/targets/{id}; POST .../sign-ins {harness} (or POST .../sign-ins/{id}/code "
+                            + "{code} to resume with --sign-in and --code); then GET .../sign-ins/{id} every 2s "
+                            + "until the sign-in ends, then GET /system/api/targets/{id} every 2s until login."
+                            + "<harness> is PRESENT, or --timeout passes. " + Doors.ADMIN_ONLY,
+                    "Already PRESENT: prints that and exits at once, nothing is started."},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets sign-in --target localhost",
                     "  qits targets sign-in --target localhost --harness kimi --timeout 2h",
+                    "  qits targets sign-in --target localhost --sign-in <id> --code 123456",
                     "",
-                    "- The command is null until a login state has arrived on the target's current connection: "
-                            + "run `qits targets healthcheck` or wait for the runner to connect, then try again.",
-                    "- 1: the target is still ABSENT or UNKNOWN after --timeout; the message names the last state.",
+                    "- A claude sign-in pauses at AWAITING_CODE and asks for the code on stdin. With none given "
+                            + "(stdin closed or empty), it prints the command that resumes the same sign-in with "
+                            + "--sign-in and --code, and exits 1: the sign-in itself keeps running on the target "
+                            + "until it expires.",
+                    "- --sign-in resumes a sign-in already running, whose URL or code this command already showed; "
+                            + "--code needs --sign-in and is a usage error alone.",
+                    "- FAILED, EXPIRED or CANCELLED fails naming the state and its detail. --timeout reached "
+                            + "deletes the sign-in (best effort) and fails naming the last state.",
                     "- --output has no effect here: this command prints notices, never the service's answer."},
             exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {"0:The target reports PRESENT (already, or within --timeout).",
-                    "1:The platform refused or cannot be reached, or --timeout passed with the target still not "
-                            + "signed in (the message names the last state).",
+            exitCodeList = {"0:The harness reports PRESENT (already, or once the sign-in succeeds).",
+                    "1:The platform refused or cannot be reached, the sign-in failed, expired or was cancelled, no "
+                            + "code was given at AWAITING_CODE, or --timeout passed (the message names the last "
+                            + "state, or the command that resumes).",
                     HelpText.USAGE})
     public static class SignInCommand extends PlatformCommand {
 
-        static final Duration POLL = Duration.ofSeconds(30);
+        static final Duration POLL = Duration.ofSeconds(2);
+        private static final List<String> TERMINAL = List.of("FAILED", "EXPIRED", "CANCELLED");
 
         @CommandLine.ParentCommand
         TargetsCommand targets;
@@ -742,48 +757,123 @@ public class TargetsCommand implements Runnable {
                 description = "How long to wait: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: 10m.")
         String timeout;
 
+        @CommandLine.Option(names = "--sign-in", paramLabel = "<id>",
+                description = "Resume this sign-in instead of starting a new one.")
+        String signIn;
+
+        @CommandLine.Option(names = "--code", paramLabel = "<code>",
+                description = "The code the browser showed, posted to --sign-in instead of reading one from stdin.")
+        String code;
+
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            if (code != null && signIn == null) {
+                throw new CliFailure("--code needs --sign-in: it posts the code to a sign-in already running.",
+                        CliFailure.USAGE);
+            }
             String chosen = harness(harness);
             Duration budget = SignInTimeout.parse(timeout);
             String id = targets.targetId(context, target);
             TargetsApi api = targets.api(context);
-            JsonNode current = api.target(id);
-            String name = text(current, "name");
-            print(context, current, chosen, name);
-            if ("PRESENT".equals(loginValue(current, chosen))) {
+            JsonNode currentTarget = api.target(id);
+            String name = text(currentTarget, "name");
+            if ("PRESENT".equals(loginValue(currentTarget, chosen))) {
                 context.out().println(SafeText.line(name) + " is already signed in.");
                 return 0;
             }
             Instant deadline = context.clock().instant().plus(budget);
-            String state = loginValue(current, chosen);
+
+            JsonNode signInView = signIn == null ? api.createSignIn(id, chosen)
+                    : code != null ? api.postSignInCode(id, signIn, code.strip()) : api.getSignIn(id, signIn);
+
+            BufferedReader stdin = new BufferedReader(new InputStreamReader(context.in(), StandardCharsets.UTF_8));
+            Set<String> printed = new HashSet<>();
+            // A posted code leaves the view at AWAITING_CODE until the runner has passed it on: asking
+            // again then would paste a second code into a login that is already checking the first.
+            boolean codePosted = code != null;
             while (true) {
-                api.requestTargetLoginCheck(id);
+                String signInId = text(signInView, "signInId");
+                String state = text(signInView, "state");
+                printNotices(context, signInView, printed);
+
+                if ("SUCCEEDED".equals(state)) {
+                    return waitForLogin(context, api, id, chosen, name, deadline);
+                }
+                if (TERMINAL.contains(state)) {
+                    String detail = text(signInView, "detail");
+                    throw new CliFailure("Sign-in for " + SafeText.line(name) + " " + state
+                            + (detail.isEmpty() ? "" : ": " + SafeText.line(detail)) + ".", CliFailure.FAILED);
+                }
+                if ("AWAITING_CODE".equals(state) && "claude".equals(chosen) && !codePosted) {
+                    String pasted = readCode(context, stdin);
+                    if (pasted == null) {
+                        throw new CliFailure("No code given. Resume with `qits targets sign-in --target "
+                                + SafeText.line(target.strip()) + " --sign-in " + SafeText.line(signInId)
+                                + " --code <code>`.", CliFailure.FAILED);
+                    }
+                    signInView = api.postSignInCode(id, signInId, pasted);
+                    codePosted = true;
+                    continue;
+                }
+                if (!context.clock().instant().isBefore(deadline)) {
+                    try {
+                        api.deleteSignIn(id, signInId);
+                    } catch (CliFailure ignored) {
+                        // Best effort: the sign-in expires on its own if this does not reach the service.
+                    }
+                    throw new CliFailure("Sign-in for " + SafeText.line(name) + " is still " + state + " after "
+                            + timeout.strip() + ".", CliFailure.FAILED);
+                }
                 context.sleeper().sleep(POLL);
-                current = api.target(id);
-                state = loginValue(current, chosen);
+                signInView = api.getSignIn(id, signInId);
+            }
+        }
+
+        /** After SUCCEEDED, the runner's own login probe: poll the target until the harness is PRESENT. */
+        private int waitForLogin(CliContext context, TargetsApi api, String id, String harness, String name,
+                Instant deadline) throws CliFailure, InterruptedException {
+            while (true) {
+                JsonNode current = api.target(id);
+                String state = loginValue(current, harness);
                 if ("PRESENT".equals(state)) {
                     context.out().println(SafeText.line(name) + " is signed in.");
                     return 0;
                 }
                 if (!context.clock().instant().isBefore(deadline)) {
                     throw new CliFailure("Target " + SafeText.line(name) + " is still " + state + " after "
-                            + timeout.strip() + ". Sign in with the command above, then run `qits targets sign-in "
-                            + "--target " + SafeText.line(target.strip()) + "` again.", CliFailure.FAILED);
+                            + timeout.strip() + ".", CliFailure.FAILED);
                 }
+                context.sleeper().sleep(POLL);
             }
         }
 
-        private static void print(CliContext context, JsonNode target, String harness, String name) {
-            String command = "kimi".equals(harness) ? text(target, "kimiLoginCommand") : text(target, "loginCommand");
-            if (command.isEmpty()) {
-                context.out().println("Target " + SafeText.line(name) + " has not reported a login command yet: "
-                        + "its runner may not be connected. Run this on " + SafeText.line(name) + " once it is, "
-                        + "with claude's own sign-in.");
-                return;
+        /** The URL and, for kimi, the user code: each printed once, the first time it shows up. */
+        private static void printNotices(CliContext context, JsonNode signInView, Set<String> printed) {
+            String url = text(signInView, "url");
+            if (!url.isEmpty() && printed.add("url")) {
+                context.out().println("Open this URL in a browser and sign in:");
+                context.out().println("  " + SafeText.line(url));
             }
-            context.out().println("Run this on " + SafeText.line(name) + ":");
-            context.out().println("  " + SafeText.line(command));
+            String userCode = text(signInView, "userCode");
+            if (!userCode.isEmpty() && printed.add("userCode")) {
+                context.out().println("Enter the code " + SafeText.line(userCode) + " there.");
+            }
+        }
+
+        /** One trimmed line pasted on stdin; null for an empty line or a closed stdin. */
+        private static String readCode(CliContext context, BufferedReader stdin) throws CliFailure {
+            context.out().println("Paste the code the browser shows:");
+            context.out().flush();
+            String line;
+            try {
+                line = stdin.readLine();
+            } catch (IOException e) {
+                throw new CliFailure("Cannot read the code from stdin: " + e.getMessage(), CliFailure.USAGE);
+            }
+            if (line == null || line.strip().isEmpty()) {
+                return null;
+            }
+            return line.strip();
         }
     }
 }

@@ -33,8 +33,8 @@ Commands:
 - `qits targets` lists qits-system's execution targets (connection, slots, login, quarantine),
   reads one in full, declares one or rotates its registration token (printing the install line
   once), updates its description or slot minimums, lifts a quarantine, asks for a
-  health check or a login check, deletes one, lists leases, and `qits targets sign-in` prints a
-  target's login command and waits for it to report signed in.
+  health check or a login check, deletes one, lists leases, and `qits targets sign-in` runs a
+  harness's sign-in on the target through the API and waits for it to report signed in.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the container's own credential instead.
@@ -613,6 +613,7 @@ Installing it is not part of this version.
     qits targets greenlight|healthcheck|login-check|delete --target <name|id>
     qits targets leases [--target <name|id>] [--type ci|workspace|desk] [--state <state>]
     qits targets sign-in --target <name|id> [--harness claude|kimi] [--timeout <duration>]
+      [--sign-in <id>] [--code <code>]
 
 They call the platform through its edge over HTTPS, with the access token from `qits login` as a
 bearer. The options of `projects`, `repositories`, `work` and `release-request` may come before or
@@ -1513,8 +1514,9 @@ targets list` shows both); `--target` resolves a name by reading `listTargets`.
     qits targets delete --target <name|id>        DELETE /system/api/targets/{id}
     qits targets leases [--target <name|id>]      GET  /system/api/leases?targetId=&slotType=&state=
       [--type ci|workspace|desk] [--state <state>]
-    qits targets sign-in --target <name|id>       GET  /system/api/targets/{id}, then
-      [--harness claude|kimi] [--timeout <duration>]  POST …/login-check every 30s until PRESENT
+    qits targets sign-in --target <name|id>       GET  /system/api/targets/{id}; POST …/sign-ins
+      [--harness claude|kimi] [--timeout <duration>]  {harness}, then GET …/sign-ins/{id} every 2s
+      [--sign-in <id>] [--code <code>]                until it ends, then GET the target every 2s
 
 Who may: reading, and asking for a health check, is open to every credential, `qits:agent` included.
 Declaring (`create`), rotating a registration token (`rotate-token`), updating and deleting need
@@ -1541,12 +1543,19 @@ message; an answer without one fails without quoting it. A taken name is HTTP 40
 off or no runner version pinned HTTP 503. Both are `Interaction.LOCAL`: the qits MCP server does not
 serve them, because a tool's answer lands in an agent's transcript.
 
-`qits targets sign-in` prints the target's login command for `--harness` (default `claude`) — the
-`docker run` that signs the target's credential volume in, run on the target's own machine — with
-"run this on `<name>`". A target already `PRESENT` for that harness exits 0 at once; otherwise the
-command asks the target to check its sign-in (`login-check`) every 30 seconds until it reports
-`PRESENT` (exit 0) or `--timeout` (default `10m`) passes (exit 1, naming the last state:
-`ABSENT` or `UNKNOWN`).
+`qits targets sign-in` runs the harness's own sign-in on the target (the system runner there runs
+it in its credential volume and relays the URL and code over its socket) through the API, for
+`--harness` (default `claude`). A target already `PRESENT` for that harness exits 0 at once;
+otherwise it `POST`s `/system/api/targets/{id}/sign-ins {harness}` (or, with `--sign-in`, resumes
+that one instead of starting a new one) and polls `GET .../sign-ins/{id}` every 2 seconds, printing
+the URL and, for `kimi`, the user code the first time each shows up. At `AWAITING_CODE` (`claude`)
+it asks for the code on stdin and posts it with `POST .../sign-ins/{id}/code`; with none given
+(stdin closed or empty) it fails (exit 1) naming the command that resumes the same sign-in with
+`--sign-in` and `--code` — the sign-in itself keeps running on the target until it expires.
+`FAILED`, `EXPIRED` or `CANCELLED` fails naming the state and its detail; `--timeout` (default
+`10m`) reached deletes the sign-in (best effort) and fails naming the last state. Once the sign-in
+`SUCCEEDED`, it polls `GET /system/api/targets/{id}` the same way until `login.<harness>` is
+`PRESENT` (exit 0) or `--timeout` passes. `--code` without `--sign-in` is a usage error (exit 2).
 
 ## Git pushes from this workstation
 
