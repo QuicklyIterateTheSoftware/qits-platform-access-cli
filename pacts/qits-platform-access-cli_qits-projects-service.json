@@ -2093,7 +2093,6 @@
                   "delivery": {
                     "approves": [],
                     "enabled": false,
-                    "interval": "PT10M",
                     "maxRunning": 2,
                     "startRefined": false
                   },
@@ -2124,14 +2123,6 @@
               ]
             },
             "$.entries[*].project.delivery.enabled": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.entries[*].project.delivery.interval": {
               "combine": "AND",
               "matchers": [
                 {
