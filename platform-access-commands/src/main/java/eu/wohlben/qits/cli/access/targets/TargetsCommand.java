@@ -788,6 +788,9 @@ public class TargetsCommand implements Runnable {
 
             BufferedReader stdin = new BufferedReader(new InputStreamReader(context.in(), StandardCharsets.UTF_8));
             Set<String> printed = new HashSet<>();
+            // A posted code leaves the view at AWAITING_CODE until the runner has passed it on: asking
+            // again then would paste a second code into a login that is already checking the first.
+            boolean codePosted = code != null;
             while (true) {
                 String signInId = text(signInView, "signInId");
                 String state = text(signInView, "state");
@@ -801,7 +804,7 @@ public class TargetsCommand implements Runnable {
                     throw new CliFailure("Sign-in for " + SafeText.line(name) + " " + state
                             + (detail.isEmpty() ? "" : ": " + SafeText.line(detail)) + ".", CliFailure.FAILED);
                 }
-                if ("AWAITING_CODE".equals(state) && "claude".equals(chosen)) {
+                if ("AWAITING_CODE".equals(state) && "claude".equals(chosen) && !codePosted) {
                     String pasted = readCode(context, stdin);
                     if (pasted == null) {
                         throw new CliFailure("No code given. Resume with `qits targets sign-in --target "
@@ -809,6 +812,7 @@ public class TargetsCommand implements Runnable {
                                 + " --code <code>`.", CliFailure.FAILED);
                     }
                     signInView = api.postSignInCode(id, signInId, pasted);
+                    codePosted = true;
                     continue;
                 }
                 if (!context.clock().instant().isBefore(deadline)) {

@@ -283,6 +283,26 @@ class TargetsCommandsTest {
         assertThat(started.path("harness").asText()).isEqualTo("claude");
     }
 
+    @Test
+    void signInPostsTheCodeOnceWhileTheRunnerIsStillPassingItOn() throws Exception {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("ABSENT", null));
+        platform.answer("POST", SIGN_INS, 202, signIn("claude", "AWAITING_CODE",
+                "https://claude.com/cai/oauth/authorize?code=true&state=x", null, null));
+        platform.answer("POST", SIGN_IN + "/code", 202, signIn("claude", "AWAITING_CODE",
+                "https://claude.com/cai/oauth/authorize?code=true&state=x", null, null));
+        time.afterSleep = () -> {
+            platform.answer("GET", SIGN_IN, signIn("claude", "SUCCEEDED", null, null, null));
+            platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", null));
+        };
+
+        Result signIn = run(stdin("first-code\nsecond-code\n"), "targets", "sign-in", "--target", TARGET);
+
+        assertThat(signIn.exit()).as(signIn.err()).isZero();
+        assertThat(platform.requests("POST", SIGN_IN + "/code")).hasSize(1);
+        JsonNode sent = JSON.readTree(platform.requests("POST", SIGN_IN + "/code").getFirst().body());
+        assertThat(sent.path("code").asText()).isEqualTo("first-code");
+    }
+
     private static String targetKimi(String kimiLogin) {
         return target("ABSENT", null).replace("\"kimi\":\"ABSENT\"", "\"kimi\":\"" + kimiLogin + "\"");
     }
