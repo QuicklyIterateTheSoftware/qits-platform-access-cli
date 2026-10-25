@@ -142,23 +142,25 @@ public class ProjectsCommand implements Runnable {
     }
 
     /**
-     * {@code qits projects desk}: a turn typed into the project's front desk session, and that
-     * session's last answer (qits-1572). The session is the one the projects daemon's front desk
-     * keeper launched and keeps. Nothing types into it on a schedule (qits-1597): it runs only when a
-     * person prompts it, here or from the desk panel. The answer is what an agent
+     * {@code qits projects desk}: a turn typed into the project's front desk session, that
+     * session's last answer (qits-1572), and the messages its desk triggers sent it (epic
+     * qits-1604). The session is the one the projects daemon's front desk keeper launched and
+     * keeps. Nothing types into it on a schedule (qits-1597): it runs only when a person prompts
+     * it, here or from the desk panel. The answer is what an agent
      * wrote, so its table form goes through {@link SafeText} a line at a time and its JSON form
      * through {@link SafeJson}.
      */
     @CommandLine.Command(name = "desk", mixinStandardHelpOptions = true,
-            subcommands = {DeskCommand.PromptCommand.class, DeskCommand.AnswerCommand.class},
+            subcommands = {DeskCommand.PromptCommand.class, DeskCommand.AnswerCommand.class,
+                    DeskCommand.TriggersCommand.class},
             description = {"A project's front desk: prompt types a turn into its kept front desk session, answer "
-                    + "shows that session's last answer.",
+                    + "shows that session's last answer, triggers shows the messages its desk triggers sent it.",
                     "The session is the one the project's front desk keeps running in its agent container. It runs "
                             + "only when a person prompts it; nothing prompts it on a schedule. It is not a "
                             + "session a person started from the desk panel."},
             footerHeading = "%nNotes:%n",
-            footer = {"- Both take qits:admin or qits:admin-agent. An agent with qits:agent alone is refused "
-                    + "(HTTP 403)."})
+            footer = {"- prompt and answer take qits:admin or qits:admin-agent; an agent with qits:agent alone is "
+                    + "refused (HTTP 403). triggers is a plain read, open to qits:agent too."})
     public static class DeskCommand implements Runnable {
 
         @CommandLine.ParentCommand
@@ -310,6 +312,85 @@ public class ProjectsCommand implements Runnable {
                 context.out().println();
                 WorkEntities.lines(context.out(), "", text.asText());
                 return 0;
+            }
+        }
+
+        /**
+         * {@code qits projects desk triggers}: what a desk trigger source admitted into the
+         * project's delivery desk, and whether the desk took it (epic qits-1604). A plain read: the
+         * windows a trigger source (work verified, a release request waiting on approval) opened,
+         * closed into a message and tried to deliver, newest first. Unlike {@code prompt} and
+         * {@code answer}, this one is open to {@code qits:agent} alone.
+         */
+        @CommandLine.Command(name = "triggers", mixinStandardHelpOptions = true,
+                description = {"The messages the project's desk triggers sent its front desk: one row per window, "
+                        + "newest first by when it opened.",
+                        "Reads GET /projects/api/projects/{projectId}/desk-triggers. A window is OPEN (still "
+                                + "collecting), OWED (closed, not yet delivered), DELIVERED or QUEUED (handed to "
+                                + "the desk, with the command it became) or FAILED (never to be delivered)."},
+                footerHeading = HelpText.EXAMPLES,
+                footer = {"  qits projects desk triggers --project qits",
+                        "  qits projects desk triggers --project qits --limit 50",
+                        "  qits projects desk triggers --project qits -o json",
+                        "",
+                        "- Open to qits:agent as well as a person or admin agent: it reads but does not write.",
+                        "- --limit is 1 to 100; the service defaults to 20 when it is not given.",
+                        "- The table shows one row per message: when it opened, its state, how many lines it "
+                                + "collected, their sources, how many deliveries were tried and when the desk "
+                                + "accepted it. -o json prints the service's answer in full, each message's "
+                                + "events included."},
+                exitCodeListHeading = HelpText.EXIT_CODES,
+                exitCodeList = {"0:Done, also when there are no messages.",
+                        "1:The platform refused (for example a --limit outside 1..100, HTTP 400, or a project it "
+                                + "does not know, HTTP 404), or cannot be reached.",
+                        "2:Used wrongly (for example no --project, or one the platform does not know), not "
+                                + "signed in, or the session ended."})
+        @TuiCommand(effect = Effect.READ)
+        public static class TriggersCommand extends PlatformCommand {
+
+            @CommandLine.ParentCommand
+            DeskCommand desk;
+
+            @Completes(ProjectSource.class)
+            @CommandLine.Option(names = "--project", paramLabel = "<project>",
+                    description = "The project (required): its id, slug or name.")
+            String project;
+
+            @CommandLine.Option(names = "--limit", paramLabel = "<n>",
+                    description = "At most this many messages, the newest. 1 to 100. Default: 20.")
+            Integer limit;
+
+            @Override
+            protected int execute(CliContext context) throws CliFailure, InterruptedException {
+                boolean json = json(desk.parent.options.output);
+                String wanted = RepositoriesCommand.required(project, RepositoriesCommand.NAME_THE_PROJECT);
+                ProjectsApi api = ProjectsApi.connect(context, desk.parent.options.projectsUrl);
+                JsonNode found = api.project(wanted);
+                JsonNode answer = api.deskTriggers(text(found, "id"), limit);
+                if (json) {
+                    SafeJson.print(context.out(), answer);
+                    return 0;
+                }
+                String label = SafeText.line(ProjectsApi.projectLabel(found));
+                List<JsonNode> messages = new ArrayList<>();
+                answer.path("messages").forEach(messages::add);
+                if (messages.isEmpty()) {
+                    context.out().println("Project " + label + ": no desk trigger messages.");
+                    return 0;
+                }
+                context.out().println("Project " + label + ": desk trigger messages");
+                Table.print(context.out(), "", List.of("OPENED", "STATE", "EVENTS", "SOURCES", "ATTEMPTS", "ACCEPTED"),
+                        messages.stream().map(TriggersCommand::row).toList());
+                return 0;
+            }
+
+            private static List<String> row(JsonNode message) {
+                List<String> sources = new ArrayList<>();
+                message.path("events").forEach(event -> sources.add(SafeText.line(text(event, "source"))));
+                String accepted = SafeText.line(text(message, "acceptedAt"));
+                return List.of(SafeText.line(text(message, "openedAt")), SafeText.line(text(message, "state")),
+                        String.valueOf(message.path("events").size()), Table.cell(String.join(", ", sources), 60),
+                        SafeText.line(text(message, "attempts")), accepted.isEmpty() ? "-" : accepted);
             }
         }
     }

@@ -374,7 +374,7 @@ class McpToolCatalogTest {
             }
         });
         assertThat(reads).containsExactlyInAnyOrder(
-                "projects_list", "projects_delivery", "projects_desk_answer", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
+                "projects_list", "projects_delivery", "projects_desk_answer", "projects_desk_triggers", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
                 "repositories_commit-changes", "repositories_commit-diff", "repositories_commit-subjects",
                 "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
                 "work_members_list", "work_refinement_show", "work_design_list", "work_design_get",
