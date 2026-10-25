@@ -15,7 +15,9 @@ import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
@@ -385,7 +387,7 @@ public class ProjectsCommand implements Runnable {
             }
 
             private static List<String> row(JsonNode message) {
-                List<String> sources = new ArrayList<>();
+                Set<String> sources = new LinkedHashSet<>();
                 message.path("events").forEach(event -> sources.add(SafeText.line(text(event, "source"))));
                 String accepted = SafeText.line(text(message, "acceptedAt"));
                 return List.of(SafeText.line(text(message, "openedAt")), SafeText.line(text(message, "state")),

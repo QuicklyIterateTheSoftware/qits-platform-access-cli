@@ -1738,6 +1738,8 @@ class PlatformCommandsTest {
                    "message":"Two items moved.",
                    "events":[{"source":"work-verified","itemRef":"qits-100","itemId":"i-1","label":"Thing",
                               "cause":"tok-x","eventId":"e-1","occurredAt":"2026-10-25T08:00:01Z"},
+                             {"source":"work-verified","itemRef":"qits-101","itemId":"i-3","label":"Other",
+                              "cause":"tok-x","eventId":"e-3","occurredAt":"2026-10-25T08:00:01Z"},
                              {"source":"approval-needed","itemRef":"qits-service-rr-1","itemId":null,"label":null,
                               "cause":"fold abc","eventId":"e-2","occurredAt":"2026-10-25T08:00:02Z"}]},
                   {"id":"m-1","state":"OPEN","openedAt":"2026-10-25T07:00:00Z","closesAt":"2026-10-25T07:05:00Z",
@@ -1760,7 +1762,7 @@ class PlatformCommandsTest {
         JsonNode parsed = JSON.readTree(json);
         assertThat(parsed.path("messages")).hasSize(2);
         assertThat(parsed.path("messages").get(0).path("id").asText()).isEqualTo("m-2");
-        assertThat(parsed.path("messages").get(0).path("events")).hasSize(2);
+        assertThat(parsed.path("messages").get(0).path("events")).hasSize(3);
     }
 
     @Test
