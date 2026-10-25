@@ -100,6 +100,18 @@ public final class ProjectsContract {
     static final String DESK_PROMPT_OPERATION = "promptFrontDesk";
     static final String DESK_ANSWER_OPERATION = "getFrontDeskLastAnswer";
     /**
+     * The desk trigger read door of {@code qits projects desk triggers} (epic qits-1604, task
+     * qits-1613): pending on the provider the same way the two rows above are. The golden masters
+     * pinned in the root pom record no such state yet, so the row is skipped with this state and
+     * its door, and stays out of the pact file. It goes live with no change here once
+     * qits-maintenance bumps {@code qits.qits-projects-golden-masters.version} past the release
+     * that records this state under the operation id {@link #DESK_TRIGGERS_OPERATION}: write the
+     * pact again with {@code -Dgolden.update=true} on that bump. If the provider records it under
+     * another operation id, the id here follows.
+     */
+    static final String DESK_RECEIVED_A_TRIGGER = "a project whose desk received a trigger message";
+    static final String DESK_TRIGGERS_OPERATION = "listDeskTriggerMessages";
+    /**
      * The project list filtered by {@code ?supersededBy=}, the item named by its qualified id; its
      * items are not blocked, so no blockSource.
      */
@@ -127,6 +139,15 @@ public final class ProjectsContract {
 
     /** Every lookup of a repository by id or name. */
     static final List<String> REPOSITORY = List.of("entries[].repository.id", "entries[].repository.name");
+
+    /**
+     * What {@code qits projects desk triggers} reads of each message: what the table prints,
+     * {@code openedAt}, {@code state}, each event's {@code source} (the EVENTS count and the
+     * SOURCES column), {@code attempts} and {@code acceptedAt}. {@code -o json} prints the answer
+     * as it came and reads no field of it.
+     */
+    static final List<String> DESK_TRIGGERS_FIELDS = List.of("messages[].openedAt", "messages[].state",
+            "messages[].events[].source", "messages[].attempts", "messages[].acceptedAt");
 
     /** One work item as a row of a list ({@code WorkEntities.printRows}): each only where the service sends it. */
     static final List<String> ROW = List.of("qualifiedId", "id", "archetype", "status", "outcome", "blocked",
@@ -639,6 +660,20 @@ public final class ProjectsContract {
         assertThat(answer.path("text").isTextual() || answer.path("text").isNull()).isTrue();
     };
 
+    /**
+     * {@code qits projects desk triggers}: the recorded messages, sent with no {@code limit} query
+     * (the command's own default, read as the service's); the table prints one row per message.
+     */
+    private static final Call DESK_TRIGGERS = (api, params, recorded) -> {
+        JsonNode answer = api.deskTriggers(params.get("projectId"), null);
+        assertThat(answer.path("messages")).isNotEmpty();
+        answer.path("messages").forEach(m -> {
+            assertThat(ProjectsApi.text(m, "openedAt")).isNotBlank();
+            assertThat(ProjectsApi.text(m, "state")).isNotBlank();
+            assertThat(m.path("attempts").isInt()).isTrue();
+        });
+    };
+
     /** {@code qits work dispatch}: the recorded mode, no rule; the table prints the mode, phase, branch and assignee. */
     private static final Call DISPATCH = (api, params, recorded) -> {
         JsonNode dispatch = api.dispatchWork(params.get("qualifiedId"), body(recorded).path("mode").asText(),
@@ -925,6 +960,12 @@ public final class ProjectsContract {
                 .consumes(held(DESK_RUNNING, DESK_ANSWER_OPERATION,
                         List.of("commandId", "sessionId", "state", "text", "at")))
                 .request("GET /projects/api/projects/{projectId}/front-desk/last-answer"));
+        rows.add(row("qits projects desk triggers", A_PROJECT, "listProjects", "project", FIND_PROJECT)
+                .consumes(PROJECT));
+        rows.add(row("qits projects desk triggers", DESK_RECEIVED_A_TRIGGER, DESK_TRIGGERS_OPERATION, "deskTriggers",
+                DESK_TRIGGERS)
+                .consumes(held(DESK_RECEIVED_A_TRIGGER, DESK_TRIGGERS_OPERATION, DESK_TRIGGERS_FIELDS))
+                .request("GET /projects/api/projects/{projectId}/desk-triggers"));
         REPOSITORY_SCOPED.forEach(c -> rows.add(row(c, ONE_REPOSITORY, "listProjectRepositories", "repositories",
                 FIND_REPOSITORY).consumes(REPOSITORY)));
 

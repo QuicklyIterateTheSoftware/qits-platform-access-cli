@@ -185,13 +185,13 @@ qits projects delivery --project qits -o json
 
 ## qits projects desk
 
-A project's front desk: prompt types a turn into its kept front desk session, answer shows that session's last answer.
+A project's front desk: prompt types a turn into its kept front desk session, answer shows that session's last answer, triggers shows the messages its desk triggers sent it.
 
 The session is the one the project's front desk keeps running in its agent container. It runs only when a person prompts it; nothing prompts it on a schedule. It is not a session a person started from the desk panel.
 
 ### Notes
 
-- Both take qits:admin or qits:admin-agent. An agent with qits:agent alone is refused (HTTP 403).
+- prompt and answer take qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403). triggers is a plain read, open to qits:agent too.
 
 ## qits projects desk prompt
 
@@ -260,6 +260,41 @@ qits projects desk answer --project qits -o json
 
 - `0` Done, also when the desk has not answered yet.
 - `1` The platform refused (for example your roles, HTTP 403, a project it does not know, HTTP 404, or no projects daemon to reach the desk, HTTP 503), or cannot be reached.
+- `2` Used wrongly (for example no --project, or one the platform does not know), not signed in, or the session ended.
+
+## qits projects desk triggers
+
+The messages the project's desk triggers sent its front desk: one row per window, newest first by when it opened.
+
+Reads GET /projects/api/projects/{projectId}/desk-triggers. A window is OPEN (still collecting), OWED (closed, not yet delivered), DELIVERED or QUEUED (handed to the desk, with the command it became) or FAILED (never to be delivered).
+
+```
+qits projects desk triggers [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--limit <n>` | At most this many messages, the newest. 1 to 100. Default: 20. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project (required): its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits projects desk triggers --project qits
+qits projects desk triggers --project qits --limit 50
+qits projects desk triggers --project qits -o json
+```
+
+- Open to qits:agent as well as a person or admin agent: it reads but does not write.
+- --limit is 1 to 100; the service defaults to 20 when it is not given.
+- The table shows one row per message: when it opened, its state, how many lines it collected, their sources, how many deliveries were tried and when the desk accepted it. -o json prints the service's answer in full, each message's events included.
+
+### Exit codes
+
+- `0` Done, also when there are no messages.
+- `1` The platform refused (for example a --limit outside 1..100, HTTP 400, or a project it does not know, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example no --project, or one the platform does not know), not signed in, or the session ended.
 
 ## qits repositories

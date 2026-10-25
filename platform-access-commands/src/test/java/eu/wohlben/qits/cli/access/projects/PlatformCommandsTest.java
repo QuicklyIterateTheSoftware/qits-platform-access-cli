@@ -1723,6 +1723,72 @@ class PlatformCommandsTest {
         assertThat(down.err()).contains("answered HTTP 503: no projects daemon is connected");
     }
 
+    // --- the desk triggers (qits-1613) ---
+
+    private static final String DESK_TRIGGERS = "/projects/api/projects/" + QITS + "/desk-triggers";
+
+    @Test
+    void deskTriggersPrintsOneRowPerMessageNewestFirst() throws Exception {
+        answerProjects();
+        platform.answer("GET", DESK_TRIGGERS, """
+                {"messages":[
+                  {"id":"m-2","state":"DELIVERED","openedAt":"2026-10-25T08:00:00Z","closesAt":"2026-10-25T08:05:00Z",
+                   "closedAt":"2026-10-25T08:05:00Z","acceptedAt":"2026-10-25T08:05:10Z","attempts":1,
+                   "lastStatus":200,"lastDetail":null,"commandId":"c-9","queuePosition":null,
+                   "message":"Two items moved.",
+                   "events":[{"source":"work-verified","itemRef":"qits-100","itemId":"i-1","label":"Thing",
+                              "cause":"tok-x","eventId":"e-1","occurredAt":"2026-10-25T08:00:01Z"},
+                             {"source":"work-verified","itemRef":"qits-101","itemId":"i-3","label":"Other",
+                              "cause":"tok-x","eventId":"e-3","occurredAt":"2026-10-25T08:00:01Z"},
+                             {"source":"approval-needed","itemRef":"qits-service-rr-1","itemId":null,"label":null,
+                              "cause":"fold abc","eventId":"e-2","occurredAt":"2026-10-25T08:00:02Z"}]},
+                  {"id":"m-1","state":"OPEN","openedAt":"2026-10-25T07:00:00Z","closesAt":"2026-10-25T07:05:00Z",
+                   "closedAt":null,"acceptedAt":null,"attempts":0,"lastStatus":null,"lastDetail":null,
+                   "commandId":null,"queuePosition":null,"message":null,"events":[]}
+                ]}
+                """);
+
+        Result r = run("projects", "desk", "triggers", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", DESK_TRIGGERS)).hasSize(1);
+        assertThat(platform.requests("GET", DESK_TRIGGERS).getFirst().query()).isNullOrEmpty();
+        assertThat(r.out().lines().toList()).contains("Project qits: desk trigger messages")
+                .anySatisfy(line -> assertThat(line).contains("2026-10-25T08:00:00Z").contains("DELIVERED")
+                        .contains("work-verified, approval-needed").contains("2026-10-25T08:05:10Z"))
+                .anySatisfy(line -> assertThat(line).contains("2026-10-25T07:00:00Z").contains("OPEN"));
+
+        String json = run("projects", "-o", "json", "desk", "triggers", "--project", "qits").out();
+        JsonNode parsed = JSON.readTree(json);
+        assertThat(parsed.path("messages")).hasSize(2);
+        assertThat(parsed.path("messages").get(0).path("id").asText()).isEqualTo("m-2");
+        assertThat(parsed.path("messages").get(0).path("events")).hasSize(3);
+    }
+
+    @Test
+    void deskTriggersSendsLimitOnlyWhenGivenAndSaysWhenThereAreNone() {
+        answerProjects();
+        platform.answer("GET", DESK_TRIGGERS, "{\"messages\":[]}");
+
+        Result none = run("projects", "desk", "triggers", "--project", "qits");
+        assertThat(none.exit()).as(none.err()).isZero();
+        assertThat(none.out().lines().toList()).containsExactly("Project qits: no desk trigger messages.");
+        assertThat(platform.requests("GET", DESK_TRIGGERS).getFirst().query()).isNullOrEmpty();
+
+        Result limited = run("projects", "desk", "triggers", "--project", "qits", "--limit", "5");
+        assertThat(limited.exit()).as(limited.err()).isZero();
+        assertThat(platform.requests("GET", DESK_TRIGGERS).getLast().query()).isEqualTo("limit=5");
+
+        platform.answer("GET", DESK_TRIGGERS, 400, "{\"message\":\"limit must be between 1 and 100, was 500\"}");
+        Result tooMany = run("projects", "desk", "triggers", "--project", "qits", "--limit", "500");
+        assertThat(tooMany.exit()).isEqualTo(1);
+        assertThat(tooMany.err()).contains("answered HTTP 400: limit must be between 1 and 100, was 500");
+
+        Result noProject = run("projects", "desk", "triggers");
+        assertThat(noProject.exit()).isEqualTo(2);
+        assertThat(noProject.err()).contains("Name the project: --project <id, slug or name>.");
+    }
+
     // --- refusals ---
 
     @Test

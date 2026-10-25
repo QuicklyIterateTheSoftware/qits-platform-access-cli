@@ -553,6 +553,25 @@ public final class ProjectsApi {
         return "/projects/api/projects/" + segment(projectId) + "/front-desk";
     }
 
+    /**
+     * {@code {"messages":[{id, state, openedAt, closesAt, closedAt, acceptedAt, attempts, lastStatus,
+     * lastDetail, commandId, queuePosition, message, events}]}}: the project's desk trigger
+     * windows, newest first by {@code openedAt} (epic qits-1604, task qits-1613). Every state (OPEN,
+     * OWED, DELIVERED, QUEUED, FAILED), with the lines each window collected. A null {@code limit}
+     * leaves the query empty, which the service answers as its own default (20); the service 400s a
+     * limit outside 1..100 and 404s an unknown project. Unlike the front desk's own doors, this one
+     * reads but does not write, so {@code qits:agent} alone is enough.
+     */
+    public JsonNode deskTriggers(String projectId, Integer limit) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "limit", limit == null ? null : limit.toString());
+        return client.get(uri(deskTriggersPath(projectId) + query(query)));
+    }
+
+    private static String deskTriggersPath(String projectId) {
+        return "/projects/api/projects/" + segment(projectId) + "/desk-triggers";
+    }
+
     // --- backups ---
 
     /**
