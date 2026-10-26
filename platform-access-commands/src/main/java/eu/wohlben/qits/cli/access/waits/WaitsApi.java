@@ -9,8 +9,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * An agent's waits in qits-workspaces ({@code /workspaces/api/agents/{agentId}/waits}, qits-1153 W8),
- * read as JSON trees like the other services' answers.
+ * An agent's waits, or a project's desk's, in qits-workspaces ({@code
+ * /workspaces/api/agents/{agentId}/waits} or {@code /workspaces/api/desks/{projectId}/waits}, qits-1153
+ * W8, qits-1618), read as JSON trees like the other services' answers. Both doors take the same
+ * request and answer the same shape; only the path differs, by who holds the waits.
  */
 final class WaitsApi {
 
@@ -22,23 +24,47 @@ final class WaitsApi {
         this.base = base;
     }
 
-    /** {@code {label?, selection, timeout?}} in; the new wait out (201). */
-    JsonNode create(String agentId, JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri(path(agentId)), body);
+    /**
+     * Who a wait belongs to: one agent, or one project's desk (qits-1618). Never both; {@link
+     * WaitCommand#holder} is the one place that decides which.
+     */
+    sealed interface Holder {
+
+        record Agent(String id) implements Holder {
+        }
+
+        record Desk(String projectId) implements Holder {
+        }
+
+        static Holder agent(String id) {
+            return new Agent(id);
+        }
+
+        static Holder desk(String projectId) {
+            return new Desk(projectId);
+        }
     }
 
-    /** The agent's waits, in the state given, or in every state when it is null. */
-    JsonNode list(String agentId, String state) throws CliFailure, InterruptedException {
-        return client.get(uri(path(agentId) + (state == null ? "" : "?state=" + segment(state))));
+    /** {@code {label?, selection, timeout?}} in; the new wait out (201). */
+    JsonNode create(Holder holder, JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(path(holder)), body);
+    }
+
+    /** The holder's waits, in the state given, or in every state when it is null. */
+    JsonNode list(Holder holder, String state) throws CliFailure, InterruptedException {
+        return client.get(uri(path(holder) + (state == null ? "" : "?state=" + segment(state))));
     }
 
     /** Cancels one wait: the wait as it now stands, or nothing (204). */
-    JsonNode cancel(String agentId, String waitId) throws CliFailure, InterruptedException {
-        return client.delete(uri(path(agentId) + "/" + segment(waitId)));
+    JsonNode cancel(Holder holder, String waitId) throws CliFailure, InterruptedException {
+        return client.delete(uri(path(holder) + "/" + segment(waitId)));
     }
 
-    static String path(String agentId) {
-        return "/workspaces/api/agents/" + segment(agentId) + "/waits";
+    static String path(Holder holder) {
+        return switch (holder) {
+            case Holder.Agent agent -> "/workspaces/api/agents/" + segment(agent.id()) + "/waits";
+            case Holder.Desk desk -> "/workspaces/api/desks/" + segment(desk.projectId()) + "/waits";
+        };
     }
 
     private URI uri(String path) throws CliFailure {

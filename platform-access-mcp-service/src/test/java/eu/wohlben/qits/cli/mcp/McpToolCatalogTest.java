@@ -692,13 +692,45 @@ class McpToolCatalogTest {
     @Test
     void aCallAddsTheAgentOfTheCallersToken() {
         String agent = "07a79d74-b3ff-40a3-9b66-bceda7435a37";
-        assertThat(ToolRunner.callEnvironment(agent)).isEqualTo(Map.of("QITS_AGENT_ID", agent));
-        assertThat(ToolRunner.callEnvironment(jakarta.json.Json.createValue(agent)))
+        assertThat(ToolRunner.callEnvironment(agent, null, null, null)).isEqualTo(Map.of("QITS_AGENT_ID", agent));
+        assertThat(ToolRunner.callEnvironment(jakarta.json.Json.createValue(agent), null, null, null))
                 .isEqualTo(Map.of("QITS_AGENT_ID", agent));
-        assertThat(ToolRunner.callEnvironment(null)).isEmpty();
-        assertThat(ToolRunner.callEnvironment("")).isEmpty();
-        assertThat(ToolRunner.callEnvironment("../projects")).isEmpty();
-        assertThat(ToolRunner.callEnvironment(42)).isEmpty();
+        assertThat(ToolRunner.callEnvironment(null, null, null, null)).isEmpty();
+        assertThat(ToolRunner.callEnvironment("", null, null, null)).isEmpty();
+        assertThat(ToolRunner.callEnvironment("../projects", null, null, null)).isEmpty();
+        assertThat(ToolRunner.callEnvironment(42, null, null, null)).isEmpty();
+    }
+
+    /**
+     * qits-1618: with no agent claim, a desk's token (the role qits:desk-admin, or a context_kind of
+     * desk-session or desk-delivery) adds its project claim as QITS_DESK_PROJECT instead.
+     */
+    @Test
+    void aCallAddsTheDeskProjectOfADesksTokenWithNoAgent() {
+        String project = "17a79d74-b3ff-40a3-9b66-bceda7435a38";
+        assertThat(ToolRunner.callEnvironment(null, project, "desk-session", null))
+                .isEqualTo(Map.of("QITS_DESK_PROJECT", project));
+        assertThat(ToolRunner.callEnvironment(null, project, "desk-delivery", Set.of()))
+                .isEqualTo(Map.of("QITS_DESK_PROJECT", project));
+        assertThat(ToolRunner.callEnvironment(null, jakarta.json.Json.createValue(project), "desk-session", null))
+                .isEqualTo(Map.of("QITS_DESK_PROJECT", project));
+        // the role alone is enough, with no desk context_kind
+        assertThat(ToolRunner.callEnvironment(null, project, null, Set.of("qits:desk-admin")))
+                .isEqualTo(Map.of("QITS_DESK_PROJECT", project));
+        assertThat(ToolRunner.callEnvironment(null, project, "agent-container", Set.of("qits:desk-admin")))
+                .isEqualTo(Map.of("QITS_DESK_PROJECT", project));
+        // an agent claim wins over a project claim, whatever the context_kind or roles say
+        String agent = "07a79d74-b3ff-40a3-9b66-bceda7435a37";
+        assertThat(ToolRunner.callEnvironment(agent, project, "desk-session", Set.of("qits:desk-admin")))
+                .isEqualTo(Map.of("QITS_AGENT_ID", agent));
+        // neither the role nor a desk context_kind: the project claim is not a desk's, so nothing
+        assertThat(ToolRunner.callEnvironment(null, project, "agent-container", Set.of())).isEmpty();
+        assertThat(ToolRunner.callEnvironment(null, project, null, null)).isEmpty();
+        assertThat(ToolRunner.callEnvironment(null, project, null, Set.of("qits:agent"))).isEmpty();
+        // not a uuid: nothing, whatever the context_kind or roles say
+        assertThat(ToolRunner.callEnvironment(null, "../projects", "desk-session", Set.of("qits:desk-admin")))
+                .isEmpty();
+        assertThat(ToolRunner.callEnvironment(null, null, "desk-session", Set.of("qits:desk-admin"))).isEmpty();
     }
 
     @Test

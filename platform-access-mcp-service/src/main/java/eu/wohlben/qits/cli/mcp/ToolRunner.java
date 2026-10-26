@@ -47,8 +47,24 @@ public final class ToolRunner {
     /** The variable `qits wait` reads its agent from; on this server it comes from the caller's token. */
     static final String AGENT_VARIABLE = "QITS_AGENT_ID";
 
+    /** The variable `qits wait --desk` reads its project from when none was given (qits-1618). */
+    static final String DESK_PROJECT_VARIABLE = "QITS_DESK_PROJECT";
+
     /** The claim of the caller's token that names its agent (qits-1213). */
     public static final String AGENT_CLAIM = "agent";
+
+    /** The claim of the caller's token that names its project: an agent's project, or a desk's (qits-1618). */
+    public static final String PROJECT_CLAIM = "project";
+
+    /** The claim naming the kind of session a token was minted for: a desk's is {@code desk-session} or
+     * {@code desk-delivery} (qits-1618). epic qits-1621/qits-1622 is expected to replace this arm with
+     * the role below alone; both are kept until that role is the only thing a desk's token carries. */
+    public static final String CONTEXT_KIND_CLAIM = "context_kind";
+
+    private static final java.util.Set<String> DESK_CONTEXT_KINDS = java.util.Set.of("desk-session", "desk-delivery");
+
+    /** The role a desk's token is expected to carry once epic qits-1621/qits-1622 ships it (qits-1618). */
+    public static final String DESK_ADMIN_ROLE = "qits:desk-admin";
 
     private static final Pattern UUID =
             Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
@@ -110,19 +126,43 @@ public final class ToolRunner {
 
     /**
      * What one call adds to {@link #environment}, from the caller's token: QITS_AGENT_ID when the
-     * token's {@value #AGENT_CLAIM} claim names an agent. The command runs here, not in the agent's
-     * container, so the variable the harness sets there never reaches it (qits-1213). A claim that is
-     * not one uuid adds nothing.
+     * token's {@value #AGENT_CLAIM} claim names an agent, else QITS_DESK_PROJECT when the token names
+     * no agent, its {@value #PROJECT_CLAIM} claim names a project, and the token is a desk's — the
+     * role {@value #DESK_ADMIN_ROLE} (epic qits-1621/qits-1622), or a {@value #CONTEXT_KIND_CLAIM} of
+     * {@code desk-session} or {@code desk-delivery} (kept alongside the role: harmless, and it is
+     * what a desk's own tokens carry today). The command runs here, not in the agent's container or
+     * the desk's session, so the variable either harness sets there never reaches it (qits-1213,
+     * qits-1618). A claim that is not one uuid, on either arm, adds nothing.
      *
-     * @param agentClaim the claim's value as the token gives it, or null
+     * @param agentClaim      the token's {@value #AGENT_CLAIM} claim, as it gives it, or null
+     * @param projectClaim    the token's {@value #PROJECT_CLAIM} claim, as it gives it, or null
+     * @param contextKindClaim the token's {@value #CONTEXT_KIND_CLAIM} claim, as it gives it, or null
+     * @param roles           the token's roles (its {@code groups} claim), or null when it carries none
      */
-    public static Map<String, String> callEnvironment(Object agentClaim) {
-        String agent = agentClaim == null ? null : agentClaim instanceof String text ? text
-                : agentClaim instanceof jakarta.json.JsonString json ? json.getString() : null;
-        if (agent == null || !UUID.matcher(agent.strip()).matches()) {
+    public static Map<String, String> callEnvironment(Object agentClaim, Object projectClaim,
+            Object contextKindClaim, Collection<String> roles) {
+        String agent = claimText(agentClaim);
+        if (agent != null && UUID.matcher(agent).matches()) {
+            return Map.of(AGENT_VARIABLE, agent);
+        }
+        String project = claimText(projectClaim);
+        if (project == null || !UUID.matcher(project).matches()) {
             return Map.of();
         }
-        return Map.of(AGENT_VARIABLE, agent.strip());
+        String contextKind = claimText(contextKindClaim);
+        boolean deskContext = contextKind != null && DESK_CONTEXT_KINDS.contains(contextKind);
+        boolean deskAdmin = roles != null && roles.contains(DESK_ADMIN_ROLE);
+        if (!deskContext && !deskAdmin) {
+            return Map.of();
+        }
+        return Map.of(DESK_PROJECT_VARIABLE, project);
+    }
+
+    /** A claim's value as a plain, stripped string: a {@code String} or a {@code jakarta.json.JsonString}. */
+    private static String claimText(Object claim) {
+        String value = claim == null ? null : claim instanceof String text ? text
+                : claim instanceof jakarta.json.JsonString json ? json.getString() : null;
+        return value == null ? null : value.strip();
     }
 
     /** Runs {@code tool} with {@code arguments} as {@code credential}'s holder. */

@@ -2714,21 +2714,22 @@ qits observe metrics --source _service/qits-ci --name http.server.active_request
 
 ## qits wait
 
-Declare what this agent waits on: a domain event that fits a selection. The platform gives the agent a turn when one arrives, or when the timeout passes. The command returns at once; it never blocks.
+Declare what this holder waits on: a domain event that fits a selection. The platform gives the holder a turn when one arrives, or when the timeout passes. The command returns at once; it never blocks.
 
-Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets for the usual waits; list shows this agent's waits and cancel ends one.
+Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets for the usual waits; list shows the holder's waits and cancel ends one.
 
 Each --when is one group of conditions, separated by spaces, that must all hold. An event that fits any group matches; with no --when, every event of the name does. Conditions: path=value equal, path^=value starts with, path? present, !path absent. A path is the payload's fields joined by dots; [] after a field means some element of that array, and the conditions of one group that go through the same name[] must hold on the same element (entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or is empty: label="two words", note="". At most 8 groups of 8 conditions.
 
-The agent is --agent, else QITS_AGENT_ID: the harness sets it in an agent's environment, and the MCP server sets it from the caller's token. An agent may declare and cancel waits for itself only.
+The holder is --agent or --desk (give one, not both), else QITS_AGENT_ID, else QITS_DESK_PROJECT: the harness sets QITS_AGENT_ID in an agent's environment and QITS_DESK_PROJECT in a project's kept front-desk session, and the MCP server sets QITS_AGENT_ID from the caller's token's agent claim, or QITS_DESK_PROJECT from its project claim when the token names no agent and is a desk's (the role qits:desk-admin, or a context_kind of desk-session or desk-delivery). An agent may declare and cancel waits for itself only; a project's desk, for its own project's only.
 
 ```
-qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json] [--timeout <duration>] [--when <conditions>...] [--workspaces-url <url>]
+qits wait [--agent <id>] [--desk <project>] [--event <Name>] [--label <text>] [--output table|json] [--timeout <duration>] [--when <conditions>...] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--event <Name>` | Required, unless a preset is named. The event's name, as the bus carries it: BuildFailed, EntityTransitioned. |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
@@ -2740,7 +2741,7 @@ qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json]
 
 - Declare the wait, then end your turn. You get a new turn that names what fired: the event, or the timeout.
 - Never poll in a background loop (sleep, watch, `qits events`) for something a wait can say.
-- While a wait is open, the platform shows the agent as waiting on its label, not as blocked.
+- While a wait is open, the platform shows the holder as waiting on its label, not as blocked.
 - A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.
 
 ```
@@ -2751,13 +2752,14 @@ qits wait --event BuildFailed --when 'repoName=qits-ci-service branch=main' --la
 qits wait --event EntityTransitioned --when 'entities[].status=VERIFIED' --timeout 30m
 qits wait list --state OPEN
 qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
+qits wait release-request qits-ci-service-rr-12 --desk qits-ci
 ```
 
 ### Exit codes
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, no --event, a --when or --timeout that cannot be read or is over a limit), not signed in, or the session ended.
+- `2` Used wrongly (no holder, both --agent and --desk, no --event, a --when or --timeout that cannot be read or is over a limit), not signed in, or the session ended.
 
 ## qits wait release-request
 
@@ -2766,13 +2768,14 @@ Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBS
 The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> state=<STATE> for a uuid.
 
 ```
-qits wait release-request [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
+qits wait release-request [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
 ```
 
 | Name | What it does |
 |---|---|
 | `<id>` | The release request: its id (qits-ci-service-rr-12) or its whole uuid. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
@@ -2792,7 +2795,7 @@ qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, not a whole id or uuid), not signed in, or the session ended.
+- `2` Used wrongly (no holder, not a whole id or uuid), not signed in, or the session ended.
 
 ## qits wait work
 
@@ -2801,14 +2804,15 @@ Wait until a work item reaches a status.
 The item is looked up in the projects service first, so its qualified id (qits-123) works. The same as --event EntityTransitioned --when 'entities[].entityId=<its id> entities[].status=<STATUS>'.
 
 ```
-qits wait work --status <STATUS> [--agent <id>] [--label <text>] [--output table|json] [--projects-url <url>] [--timeout <duration>] [--workspaces-url <url>] <entity>
+qits wait work --status <STATUS> [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--projects-url <url>] [--timeout <duration>] [--workspaces-url <url>] <entity>
 ```
 
 | Name | What it does |
 |---|---|
 | `<entity>` | The work item: its qualified id (qits-123) or its id. |
 | `--status <STATUS>` | Required. The status to wait for: REFINED, READY_FOR_DEV, IMPLEMENTED, VERIFIED, DONE, DROPPED or another word of the item's lifecycle. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where the item is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
@@ -2826,7 +2830,7 @@ qits wait work qits-123 --status DONE --timeout 1d --label 'qits-123 to be done'
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (no agent id, no --status), not signed in, or the session ended.
+- `2` Used wrongly (no holder, no --status), not signed in, or the session ended.
 
 ## qits wait ci-run
 
@@ -2835,13 +2839,14 @@ Wait until a CI run ends: SUCCESS, FAILED, CANCELLED, CONFIG_ERROR or TIMED_OUT.
 The same as --event BuildStatusChanged with one group per final status: runId=<id> status=<STATUS>.
 
 ```
-qits wait ci-run [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <run id>
+qits wait ci-run [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <run id>
 ```
 
 | Name | What it does |
 |---|---|
 | `<run id>` | The run's whole id. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
@@ -2859,19 +2864,20 @@ qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, not a whole id), not signed in, or the session ended.
+- `2` Used wrongly (no holder, not a whole id), not signed in, or the session ended.
 
 ## qits wait list
 
-This agent's waits: id, state, event, label, when it was declared and when it times out.
+The holder's waits: id, state, event, label, when it was declared and when it times out.
 
 ```
-qits wait list [--agent <id>] [--output table|json] [--state <STATE>] [--workspaces-url <url>]
+qits wait list [--agent <id>] [--desk <project>] [--output table|json] [--state <STATE>] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--state <STATE>` | Only the waits in this state: OPEN, MATCHED, TIMED_OUT or CANCELLED. Default: all. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
@@ -2887,20 +2893,21 @@ qits wait list --state OPEN -o json
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, a state qits does not know), not signed in, or the session ended.
+- `2` Used wrongly (no holder, a state qits does not know), not signed in, or the session ended.
 
 ## qits wait cancel
 
-End one of this agent's open waits. The agent gets no turn for it.
+End one of the holder's open waits. An agent holder gets no turn for it.
 
 ```
-qits wait cancel [--agent <id>] [--output table|json] [--workspaces-url <url>] <wait id>
+qits wait cancel [--agent <id>] [--desk <project>] [--output table|json] [--workspaces-url <url>] <wait id>
 ```
 
 | Name | What it does |
 |---|---|
 | `<wait id>` | The wait's id, as `qits wait list` shows it. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
 
@@ -2914,7 +2921,7 @@ qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
 
 - `0` Done.
 - `1` The platform refused (for example a wait it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (no agent id), not signed in, or the session ended.
+- `2` Used wrongly (no holder), not signed in, or the session ended.
 
 ## qits workspaces
 

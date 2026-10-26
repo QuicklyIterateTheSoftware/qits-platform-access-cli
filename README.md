@@ -22,9 +22,10 @@ Commands:
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service; `qits observe query` asks the same filters of what it still holds.
-- `qits wait` declares what an agent waits on (a release request to end, a work item to reach a
-  status, a CI run to end, or any domain event that fits a selection); the platform gives the agent
-  a turn when it happens. `qits wait list|cancel` show and end the agent's waits.
+- `qits wait` declares what an agent, or a project's desk, waits on (a release request to end, a
+  work item to reach a status, a CI run to end, or any domain event that fits a selection); the
+  platform gives the holder a turn when it happens. `qits wait list|cancel` show and end the
+  holder's waits.
 - `qits workspaces` is every action the landing app's workspace pages offer, one command each, on
   the same qits-workspaces door: the slots and their containers (start, stop, recreate, the start's
   log), the agents (create, discard, prompt, the prompt draft, the chat, the files, the harness,
@@ -1370,17 +1371,24 @@ Notes go to stderr, one line each with a time:
 
 ### qits wait
 
-    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>] [--agent <id>]
+    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>] [--agent <id>|--desk <project>]
 
-An agent declares what it waits on; the platform gives it a turn when that happens (qits-1153). The
-command sends the wait to qits-workspaces (`POST /workspaces/api/agents/{agentId}/waits`), prints it
-and returns at once. It never blocks. Declare the wait, then end the turn: the next turn names what
-fired, the event or the timeout. Never poll for the same thing in a background loop.
+An agent, or a project's desk, declares what it waits on; the platform gives the holder a turn when
+that happens (qits-1153, qits-1618). The command sends the wait to qits-workspaces — `POST
+/workspaces/api/agents/{agentId}/waits` for an agent, `POST /workspaces/api/desks/{projectId}/waits`
+for a desk — prints it and returns at once. It never blocks. Declare the wait, then end the turn:
+the next turn names what fired, the event or the timeout. Never poll for the same thing in a
+background loop.
 
-The agent is `--agent`, else `QITS_AGENT_ID`. The harness sets the variable in an agent's
-environment; the MCP server runs the command without that environment, so it sets the variable from
-the `agent` claim of the caller's token. Without either the command exits with 2. An agent may
-declare and cancel waits for itself only.
+The holder is `--agent` or `--desk` (never both), else `QITS_AGENT_ID`, else `QITS_DESK_PROJECT`.
+The harness sets `QITS_AGENT_ID` in an agent's environment and `QITS_DESK_PROJECT` in a project's
+kept front-desk session; the MCP server runs the command without that environment, so it sets
+`QITS_AGENT_ID` from the `agent` claim of the caller's token, or `QITS_DESK_PROJECT` from its
+`project` claim when the token names no agent and is a desk's (the role `qits:desk-admin`, or a
+`context_kind` of `desk-session` or `desk-delivery`). `--desk` takes the project's id, slug or name,
+looked up in the projects service the way the other commands with a `--project` do; the environment
+variable is always a project uuid already. Without any of the four the command exits with 2. An
+agent may declare and cancel waits for itself only; a project's desk, for its own project's only.
 
 Each `--when` is one group of conditions that must all hold; an event that fits any group matches,
 and with no `--when` every event of the name does. The conditions are those of `qits observe`, on
@@ -1421,7 +1429,8 @@ release-request list` shows it (`qits-ci-service-rr-12`, in that case) or its wh
 preset gives a label of its own (`release request qits-ci-service-rr-12 to end`); `--label`
 replaces it.
 
-`qits wait list [--state <STATE>]` shows the agent's waits, and `qits wait cancel <wait id>` ends one.
+`qits wait list [--state <STATE>]` shows the holder's waits, and `qits wait cancel <wait id>` ends
+one.
 
 ### qits workspaces
 

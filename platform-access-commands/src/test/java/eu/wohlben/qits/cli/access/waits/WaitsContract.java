@@ -67,7 +67,7 @@ public final class WaitsContract {
         List<List<WhenGrammar.Condition>> groups = List.of(List.of(
                 new WhenGrammar.Condition("entities[].entityId", WhenGrammar.Op.EXACT, when.get(0).path("value").asText()),
                 new WhenGrammar.Condition("entities[].status", WhenGrammar.Op.EXACT, when.get(1).path("value").asText())));
-        wait(api.create(params.get("agentId"), WaitCommand.body(WaitCommand.WorkWait.EVENT, groups,
+        wait(api.create(WaitsApi.Holder.agent(params.get("agentId")), WaitCommand.body(WaitCommand.WorkWait.EVENT, groups,
                 sent.path("label").asText(), sent.path("timeout").asText())));
     };
 
@@ -75,7 +75,7 @@ public final class WaitsContract {
     private static final Call DECLARE_RELEASE_REQUEST = (api, params, recorded) -> {
         WhenGrammar.Condition which = new WhenGrammar.Condition("releaseRequestId", WhenGrammar.Op.EXACT,
                 params.get("releaseRequestId"));
-        wait(api.create(params.get("agentId"), WaitCommand.body(WaitCommand.ReleaseRequestWait.EVENT,
+        wait(api.create(WaitsApi.Holder.agent(params.get("agentId")), WaitCommand.body(WaitCommand.ReleaseRequestWait.EVENT,
                 WaitCommand.onePerValue(which, "state", WaitCommand.ReleaseRequestWait.FINAL_STATES),
                 "release request " + WaitCommand.shortId(params.get("releaseRequestId")) + " to end", null)));
     };
@@ -83,20 +83,20 @@ public final class WaitsContract {
     /** {@code qits wait ci-run <uuid>}: one group per final status, the preset's label. */
     private static final Call DECLARE_CI_RUN = (api, params, recorded) -> {
         WhenGrammar.Condition which = new WhenGrammar.Condition("runId", WhenGrammar.Op.EXACT, params.get("runId"));
-        wait(api.create(params.get("agentId"), WaitCommand.body(WaitCommand.CiRunWait.EVENT,
+        wait(api.create(WaitsApi.Holder.agent(params.get("agentId")), WaitCommand.body(WaitCommand.CiRunWait.EVENT,
                 WaitCommand.onePerValue(which, "status", WaitCommand.CiRunWait.FINAL_STATUSES),
                 "CI run " + WaitCommand.shortId(params.get("runId")) + " to end", null)));
     };
 
     /** {@code qits wait list --state open}: id, state, event, label, created and expires of each. */
     private static final Call LIST = (api, params, recorded) -> {
-        List<JsonNode> waits = WaitCommand.ListCommand.waits(api.list(params.get("agentId"),
+        List<JsonNode> waits = WaitCommand.ListCommand.waits(api.list(WaitsApi.Holder.agent(params.get("agentId")),
                 recorded.example(recorded.query().get("state").getFirst())));
         assertThat(waits).isNotEmpty().allSatisfy(WaitsContract::wait);
     };
 
     private static final Call CANCEL = (api, params, recorded) ->
-            wait(api.cancel(params.get("agentId"), params.get("waitId")));
+            wait(api.cancel(WaitsApi.Holder.agent(params.get("agentId")), params.get("waitId")));
 
     /** The rows, for qits-workspaces' contract. */
     public static final List<CliRow> ROWS = rows();
