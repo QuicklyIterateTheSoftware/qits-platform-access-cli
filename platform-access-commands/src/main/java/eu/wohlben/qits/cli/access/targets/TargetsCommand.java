@@ -56,13 +56,15 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 + "connection, slots, login and quarantine; read one in full; declare one, or rotate its registration "
                 + "token, and print the line that installs its runner; change its slot minimums or description; "
                 + "lift a quarantine; ask for a health check or a login check; delete one; list the leases a "
-                + "target or a slot type holds; and sign a target in.",
+                + "target or a slot type holds, show one or end one; and sign a target in.",
                 "A target is named by its name or its id (`qits targets list` shows both)."},
         footerHeading = "%nNotes:%n",
         footer = {"- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a "
                 + "registration token, updating, deleting and asking for a login check need qits:admin, "
                 + "qits:admin-agent, qits:desk-admin or (for all but login-check) qits:system; qits:agent alone is "
                 + "refused (HTTP 403) by design. Each command's help names its door.",
+                "- Ending a lease takes qits:admin, qits:admin-agent or qits:desk-admin, which end any lease and are "
+                        + "audited, or qits:system, which ends its own.",
                 "- create and rotate-token print an install line that carries a one-time token: alone on stdout, "
                         + "shown once, and not served by the qits MCP server.",
                 "- --system-url and --output may come before or after the command."})
@@ -660,11 +662,16 @@ public class TargetsCommand implements Runnable {
     // --- leases ---
 
     @CommandLine.Command(name = "leases", mixinStandardHelpOptions = true,
-            description = {"Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state.",
+            subcommands = {TargetsCommand.LeasesCommand.ShowLeaseCommand.class,
+                    TargetsCommand.LeasesCommand.EndLeaseCommand.class},
+            description = {"Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state. "
+                    + "show reads one lease; end ends one.",
                     "GET /system/api/leases?targetId=&slotType=&state=. " + Doors.LEASES},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets leases", "  qits targets leases --target localhost",
-                    "  qits targets leases --type workspace --state RUNNING"},
+                    "  qits targets leases --type workspace --state RUNNING",
+                    "  qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001",
+                    "  qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'stuck in ENDING'"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class LeasesCommand extends PlatformCommand {
@@ -703,6 +710,111 @@ public class TargetsCommand implements Runnable {
             }
             Table.print(context.out(), "", List.of("ID", "TYPE", "OWNER", "STATE", "DETAIL", "REQUESTED"), rows);
             return 0;
+        }
+
+        /** A lease's fields, for a person; what {@code show} and {@code end} print. */
+        static void printLease(PrintStream out, JsonNode lease) {
+            List<List<String>> rows = new ArrayList<>();
+            rows.add(List.of("id", cell(lease, "id", 60)));
+            rows.add(List.of("slot type", cell(lease, "slotType", 20)));
+            rows.add(List.of("owner", cell(lease, "ownerApp", 60) + "/" + cell(lease, "ownerRef", 120)));
+            rows.add(List.of("state", cell(lease, "state", 20)));
+            rows.add(List.of("detail", cell(lease, "detail", 400)));
+            rows.add(List.of("target", cell(lease, "targetId", 60)));
+            rows.add(List.of("project", cell(lease, "projectId", 60)));
+            rows.add(List.of("work", cell(lease, "workKey", 120)));
+            rows.add(List.of("priority", cell(lease, "priority", 10)));
+            rows.add(List.of("exit code", cell(lease, "exitCode", 10)));
+            rows.add(List.of("requested", Table.time(text(lease, "requestedAt"))));
+            rows.add(List.of("granted", Table.time(text(lease, "grantedAt"))));
+            rows.add(List.of("started", Table.time(text(lease, "startedAt"))));
+            rows.add(List.of("ended", Table.time(text(lease, "endedAt"))));
+            Table.print(out, "  ", null, rows);
+        }
+
+        static String leaseId(String given) throws CliFailure {
+            String wanted = given == null ? "" : given.strip();
+            if (!isUuid(wanted)) {
+                throw new CliFailure("Name the lease by its id, a UUID (`qits targets leases` shows it).",
+                        CliFailure.USAGE);
+            }
+            return wanted;
+        }
+
+        @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
+                description = {"Show one lease: its slot type, owner, state and detail, its target, and when it was "
+                        + "requested, granted, started and ended. A lease the ENDING deadline or an operator ended "
+                        + "says so in its detail.",
+                        "GET /system/api/leases/{id}. " + Doors.LEASE},
+                footerHeading = HelpText.EXAMPLES,
+                footer = {"  qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001",
+                        "  qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001 -o json"},
+                exitCodeListHeading = HelpText.EXIT_CODES,
+                exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
+        public static class ShowLeaseCommand extends PlatformCommand {
+
+            @CommandLine.ParentCommand
+            LeasesCommand leases;
+
+            @CommandLine.Parameters(index = "0", paramLabel = "<lease id>", description = "The lease's id.")
+            String lease;
+
+            @Override
+            protected int execute(CliContext context) throws CliFailure, InterruptedException {
+                boolean json = leases.targets.json();
+                JsonNode answer = leases.targets.api(context).getLease(leaseId(lease));
+                if (json) {
+                    Json.print(context.out(), answer);
+                    return 0;
+                }
+                printLease(context.out(), answer);
+                return 0;
+            }
+        }
+
+        @CommandLine.Command(name = "end", mixinStandardHelpOptions = true,
+                description = {"End a lease, then show it. A queued lease, or one with no target, is ENDED at once. "
+                        + "A granted or running one goes ENDING: its runner removes the container and reports it "
+                        + "gone, and then it is ENDED. A lease already ENDING that an operator ends goes ENDED at "
+                        + "once: that is the door for a lease stuck in ENDING because its runner never reported.",
+                        "The owning service (qits-ci, qits-workspaces) hears of it from the lease's change event and "
+                                + "lets go of its run or slot.",
+                        "DELETE /system/api/leases/{id}?reason=. " + Doors.END_LEASE},
+                footerHeading = HelpText.EXAMPLES,
+                footer = {"  qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001",
+                        "  qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'runner gone'",
+                        "",
+                        "- --reason is recorded in the audit row, and in the detail of an ENDING lease it ends.",
+                        "- Ending a lease stops what runs in it: a CI run's step, or an agent's workspace container."},
+                exitCodeListHeading = HelpText.EXIT_CODES,
+                exitCodeList = {"0:The lease is ENDING or ENDED; it is printed.", HelpText.REFUSED, HelpText.USAGE})
+        public static class EndLeaseCommand extends PlatformCommand {
+
+            @CommandLine.ParentCommand
+            LeasesCommand leases;
+
+            @CommandLine.Parameters(index = "0", paramLabel = "<lease id>", description = "The lease's id.")
+            String lease;
+
+            @CommandLine.Option(names = "--reason", paramLabel = "<text>",
+                    description = "Why it is ended: recorded in the audit row, and in the detail of an ENDING "
+                            + "lease.")
+            String reason;
+
+            @Override
+            protected int execute(CliContext context) throws CliFailure, InterruptedException {
+                boolean json = leases.targets.json();
+                String id = leaseId(lease);
+                JsonNode answer = leases.targets.api(context).endLease(id,
+                        reason == null || reason.isBlank() ? null : reason.strip());
+                if (json) {
+                    Json.print(context.out(), answer);
+                    return 0;
+                }
+                context.out().println("Lease " + id + " is " + SafeText.line(text(answer, "state")) + ".");
+                printLease(context.out(), answer);
+                return 0;
+            }
         }
     }
 

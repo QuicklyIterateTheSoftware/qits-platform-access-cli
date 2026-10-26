@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * <b>What the commands ask qits-ci, and why</b> (ticket qits-1149): {@code qits ci runs|run|retry},
+ * <b>What the commands ask qits-ci, and why</b> (ticket qits-1149): {@code qits ci runs|run|retry|cancel},
  * {@code qits ci report show|submit}, the changelog's gate highlights and the tui's run dropdown,
  * each row through {@link CiApi} against a pact mock server, written to {@code
  * pacts/qits-platform-access-cli_qits-ci-service.json}.
@@ -131,6 +131,17 @@ public final class CiContract {
             assertThatThrownBy(() -> ci.retry(params.get("runId")))
                     .isInstanceOfSatisfying(CliFailure.class, f -> assertThat(f.status()).isEqualTo(409));
 
+    /**
+     * {@code qits ci cancel}: the 202, which answers nothing, sent with the recorded body's reason
+     * (the command then reads the run through {@code getRun}, a row of its own). Pending until a
+     * qits-ci golden-masters pin records {@code cancelRun} in {@value #RUNNING}.
+     */
+    private static final Call CANCEL = (ci, params, recorded) -> {
+        JsonNode body = CliRow.exampleBody(recorded);
+        JsonNode reason = body == null ? null : body.get("reason");
+        ci.cancel(params.get("runId"), reason == null || reason.isNull() ? null : reason.asText());
+    };
+
     /** {@code report show}: the run's commit, request, baseline and each report's kind, version, step and highlights. */
     private static final Call REPORTS = (ci, params, recorded) -> {
         JsonNode answer = ci.reports(params.get("runId"));
@@ -203,6 +214,8 @@ public final class CiContract {
             row("qits ci retry", RETRIES_ANOTHER, "retryRun", "retry", RETRY).consumes("runId"),
             row("qits ci retry", RUNNING, "retryRun", "retry", RETRY_UNFINISHED)
                     .request("POST /ci/api/runs/{runId}/retry"),
+            row("qits ci cancel", RUNNING, "cancelRun", "cancel", CANCEL)
+                    .request("POST /ci/api/runs/{runId}/cancel"),
             row("qits ci report show", WITH_REPORTS, "listRunReports", "reports", REPORTS)
                     .consumes(held(WITH_REPORTS, "listRunReports", List.of("commitSha", "releaseRequestQualifiedId",
                             "releaseRequestId", "baseline.version", "baseline.runId", "reports[].id", "reports[].kind",

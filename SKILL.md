@@ -1928,13 +1928,13 @@ qits release-request --project qits --repository qits-ci-frontend override --req
 
 ## qits ci
 
-The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, retry runs a finished run again, and report shows a run's release reports (report submit is the CI step's side, which collects and uploads them).
+The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, retry runs a finished run again, cancel stops a queued or running one, and report shows a run's release reports (report submit is the CI step's side, which collects and uploads them).
 
 A release request's gating runs build its backing branch release/<request id> and carry the request's id. Statuses: QUEUED and RUNNING (not finished), SUCCESS, FAILED (the code's verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code).
 
 ### Notes
 
-- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent.
+- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent. cancel takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk.
 - To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.
 - --project, --repository, --output and the two -url options may come before or after the command.
 - A release request's QA run carries release reports: which tests failed, with their class, name and message, and the line coverage of the tree and of the change, with more kinds to come. `qits ci report show <run id>` lists them.
@@ -2051,6 +2051,46 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
 - `0` The new run is queued.
 - `1` The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
+- `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
+
+## qits ci cancel
+
+Stop a queued or running CI run, then show it.
+
+A queued run is cancelled at once and never starts. A running one is asked to stop: its step in flight is stopped and the rest are skipped, which takes a moment, so the run shown may still say RUNNING. Run `qits ci run <run id>` again to see it end. A cancelled run ends CANCELLED, which is not a verdict on the code: it publishes neither BuildSuccessful nor BuildFailed.
+
+Sends POST /ci/api/runs/{runId}/cancel with {reason} (HTTP 202), then GET /ci/api/runs/{runId}.
+
+```
+qits ci cancel [--ci-url <url>] [--output table|json] [--project <project>] [--projects-url <url>] [--reason <text>] [--repository <repository>] <run id>
+```
+
+| Name | What it does |
+|---|---|
+| `<run id>` | The run to cancel: its id, or its start when --project and --repository name its repository. |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
+| `--reason <text>` | Why it is cancelled, kept on the run. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits ci cancel 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17
+qits ci cancel 5f2c0a9e --project qits --repository qits-ci-service --reason 'superseded by a fix'
+```
+
+- Only a queued or running run can be cancelled. One that has finished answers HTTP 409.
+- --reason is kept on the run as its cancellation reason, and `qits ci run` shows it.
+- Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk. qits:agent alone is refused (HTTP 403).
+- -o json prints the run as the service answers it after the cancel.
+
+### Exit codes
+
+- `0` The run is cancelled, or asked to stop; it is printed.
+- `1` The platform refused: the run has already finished (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
 - `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
 ## qits ci report
@@ -3839,13 +3879,14 @@ qits workspaces agents plugins install pyright-lsp --workspace 1
 
 ## qits targets
 
-The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds; and sign a target in.
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; and sign a target in.
 
 A target is named by its name or its id (`qits targets list` shows both).
 
 ### Notes
 
 - Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent, qits:desk-admin or (for all but login-check) qits:system; qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
+- Ending a lease takes qits:admin, qits:admin-agent or qits:desk-admin, which end any lease and are audited, or qits:system, which ends its own.
 - create and rotate-token print an install line that carries a one-time token: alone on stdout, shown once, and not served by the qits MCP server.
 - --system-url and --output may come before or after the command.
 
@@ -4140,7 +4181,7 @@ qits targets delete --target localhost
 
 ## qits targets leases
 
-Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state.
+Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state. show reads one lease; end ends one.
 
 GET /system/api/leases?targetId=&slotType=&state=. qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read every lease; qits:system reads only its own.
 
@@ -4162,11 +4203,77 @@ qits targets leases [--output table|json] [--state <state>] [--system-url <url>]
 qits targets leases
 qits targets leases --target localhost
 qits targets leases --type workspace --state RUNNING
+qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001
+qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'stuck in ENDING'
 ```
 
 ### Exit codes
 
 - `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets leases show
+
+Show one lease: its slot type, owner, state and detail, its target, and when it was requested, granted, started and ended. A lease the ENDING deadline or an operator ended says so in its detail.
+
+GET /system/api/leases/{id}. qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read any lease; qits:system reads only its own.
+
+```
+qits targets leases show [--output table|json] [--system-url <url>] <lease id>
+```
+
+| Name | What it does |
+|---|---|
+| `<lease id>` | The lease's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001
+qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001 -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets leases end
+
+End a lease, then show it. A queued lease, or one with no target, is ENDED at once. A granted or running one goes ENDING: its runner removes the container and reports it gone, and then it is ENDED. A lease already ENDING that an operator ends goes ENDED at once: that is the door for a lease stuck in ENDING because its runner never reported.
+
+The owning service (qits-ci, qits-workspaces) hears of it from the lease's change event and lets go of its run or slot.
+
+DELETE /system/api/leases/{id}?reason=. It needs qits:admin, qits:admin-agent or qits:desk-admin, which end any lease, or qits:system, which ends only its own (HTTP 403 NOT_YOUR_LEASE). An operator's end is audited (target_audit, LEASE_END). qits:agent alone is refused (HTTP 403).
+
+```
+qits targets leases end [--output table|json] [--reason <text>] [--system-url <url>] <lease id>
+```
+
+| Name | What it does |
+|---|---|
+| `<lease id>` | The lease's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--reason <text>` | Why it is ended: recorded in the audit row, and in the detail of an ENDING lease. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001
+qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'runner gone'
+```
+
+- --reason is recorded in the audit row, and in the detail of an ENDING lease it ends.
+- Ending a lease stops what runs in it: a CI run's step, or an agent's workspace container.
+
+### Exit codes
+
+- `0` The lease is ENDING or ENDED; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 

@@ -139,6 +139,23 @@ final class TargetsApi {
         return client.get(uri(API + "/leases" + (query.isEmpty() ? "" : "?" + String.join("&", query))));
     }
 
+    /** {@code getLease}: one lease, a 200 {@code LeaseDto}; 404 for no such lease, or one not the caller's. */
+    JsonNode getLease(String id) throws CliFailure, InterruptedException {
+        return client.get(uri(API + "/leases/" + segment(id)));
+    }
+
+    /**
+     * {@code endLease}: a 200 {@code LeaseDto}, ENDING or ENDED; the reason, when given, as {@code
+     * ?reason=} (epic qits-1621, dossier "CI cancel and lease end"). An operator (qits:admin,
+     * qits:admin-agent, qits:desk-admin) ends any lease, and the service audits it; an ENDING lease
+     * an operator ends goes ENDED at once. qits:system ends only its own (403 NOT_YOUR_LEASE).
+     */
+    JsonNode endLease(String id, String reason) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        add(query, "reason", reason);
+        return client.delete(uri(API + "/leases/" + segment(id) + (query.isEmpty() ? "" : "?" + query.getFirst())));
+    }
+
     private static String targetPath(String id) {
         return API + "/targets/" + segment(id);
     }

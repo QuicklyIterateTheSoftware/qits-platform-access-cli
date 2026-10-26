@@ -391,6 +391,64 @@ class CiCommandsTest {
         assertThat(forbidden.err()).contains("Your roles do not allow this (HTTP 403)");
     }
 
+    // --- cancel (qits-1644) ---
+
+    @Test
+    void cancelPostsTheReasonThenShowsTheRun() throws Exception {
+        platform.answer("POST", RUNS + "/" + QUEUED + "/cancel", 202, "");
+        platform.answer("GET", RUNS + "/" + QUEUED, """
+                {"id":"%s","repoName":"qits-ci-service","status":"CANCELLED","cancellationReason":"superseded",
+                 "createdAt":"2026-09-12T09:59:00Z","startedAt":null,"finishedAt":"2026-09-12T10:00:00Z",
+                 "steps":[],"live":null}
+                """.formatted(QUEUED));
+
+        Result r = run("ci", "cancel", "dddd", "--project", "qits", "--repository", "qits-ci-service",
+                "--reason", "superseded");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        FakePlatform.Request post = platform.requests("POST", RUNS + "/" + QUEUED + "/cancel").getFirst();
+        assertThat(JSON.readTree(post.body())).isEqualTo(JSON.readTree("{\"reason\":\"superseded\"}"));
+        assertThat(post.authorization()).isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
+        assertThat(platform.requests("GET", RUNS + "/" + QUEUED)).hasSize(1);
+        assertThat(r.out()).startsWith("Run " + QUEUED).contains("CANCELLED").contains("superseded");
+    }
+
+    @Test
+    void cancelWithoutAReasonSendsAnEmptyObjectAndPrintsJson() throws Exception {
+        platform.answer("POST", RUNS + "/" + FAILED + "/cancel", 202, "");
+
+        Result r = run("ci", "-o", "json", "cancel", FAILED);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("POST", RUNS + "/" + FAILED + "/cancel").getFirst().body()).isEqualTo("{}");
+        assertThat(JSON.readTree(r.out()).path("id").asText()).isEqualTo(FAILED);
+    }
+
+    @Test
+    void cancellingAFinishedOrUnknownRunIsRefused() {
+        platform.answer("POST", RUNS + "/" + SUCCESS + "/cancel", 409, "{\"message\":\"CI run has already finished\"}");
+        Result finished = run("ci", "cancel", SUCCESS);
+        assertThat(finished.exit()).isEqualTo(1);
+        assertThat(finished.err()).contains("Run " + SUCCESS + " has already finished, so there is nothing to cancel "
+                + "(HTTP 409).");
+        assertThat(platform.requests("GET", RUNS + "/" + SUCCESS)).isEmpty();
+
+        Result unknown = run("ci", "cancel", NEXT);
+        assertThat(unknown.exit()).isEqualTo(1);
+        assertThat(unknown.err()).contains("No such run: " + NEXT + " (HTTP 404).");
+    }
+
+    @Test
+    void theHelpNamesTheRolesTheServerAdmits() {
+        // picocli may break a line after "qits:", so the words are joined again before they are read.
+        String ci = run("ci", "--help").out().replaceAll("\\s+", " ").replace("qits: ", "qits:");
+        assertThat(ci).contains("retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent")
+                .contains("cancel takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk")
+                .doesNotContain("retry needs qits:admin.");
+        assertThat(run("ci", "cancel", "--help").out().replaceAll("\\s+", " ").replace("qits: ", "qits:"))
+                .contains("Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk.");
+    }
+
     // --- the address ---
 
     @Test

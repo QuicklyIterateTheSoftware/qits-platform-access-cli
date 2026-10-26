@@ -232,6 +232,91 @@ class TargetsCommandsTest {
                 .isEqualTo("slotType=workspace&state=RUNNING");
     }
 
+    // --- leases show and end (qits-1644) ---
+
+    private static final String LEASE = "00000000-0000-4000-8000-000000000040";
+
+    private static String lease(String state, String detail) {
+        return """
+                {"id":"%s","slotType":"CI","ownerApp":"qits-ci","ownerRef":"run-7","projectId":null,"workKey":null,
+                 "pinTargetId":null,"targetId":"%s","priority":5,"state":"%s","spec":{},"specHash":"abc",
+                 "adopt":null,"exitCode":null,"detail":%s,"requestedAt":"2026-10-23T09:00:00Z",
+                 "grantedAt":"2026-10-23T09:00:05Z","startedAt":"2026-10-23T09:00:10Z","endedAt":null}
+                """.formatted(LEASE, TARGET, state, quoted(detail));
+    }
+
+    @Test
+    void leasesShowReadsOneLease() throws Exception {
+        platform.answer("GET", "/system/api/leases/" + LEASE, lease("RUNNING", null));
+
+        Result shown = run("targets", "leases", "show", LEASE);
+
+        assertThat(shown.exit()).as(shown.err()).isZero();
+        assertThat(shown.out()).contains(LEASE).contains("qits-ci/run-7").contains("RUNNING").contains(TARGET);
+        assertThat(platform.requests("GET", "/system/api/leases")).isEmpty();
+
+        Result json = run("targets", "-o", "json", "leases", "show", LEASE);
+        assertThat(JSON.readTree(json.out()).path("specHash").asText()).isEqualTo("abc");
+    }
+
+    @Test
+    void theBareLeasesCommandStillLists() {
+        platform.answer("GET", "/system/api/leases", "[]");
+
+        Result leases = run("targets", "leases", "--target", TARGET);
+
+        assertThat(leases.exit()).as(leases.err()).isZero();
+        assertThat(leases.out()).isEqualTo("No leases.\n");
+        assertThat(platform.requests("GET", "/system/api/leases").getFirst().query()).isEqualTo("targetId=" + TARGET);
+    }
+
+    @Test
+    void leasesEndSendsTheReasonAndPrintsTheLease() {
+        platform.answer("DELETE", "/system/api/leases/" + LEASE, 200, lease("ENDED", "ended by someone: runner gone"));
+
+        Result ended = run("targets", "leases", "end", LEASE, "--reason", "runner gone");
+
+        assertThat(ended.exit()).as(ended.err()).isZero();
+        FakePlatform.Request delete = platform.requests("DELETE", "/system/api/leases/" + LEASE).getFirst();
+        assertThat(delete.query()).isEqualTo("reason=runner%20gone");
+        assertThat(ended.out()).startsWith("Lease " + LEASE + " is ENDED.")
+                .contains("ended by someone: runner gone");
+    }
+
+    @Test
+    void leasesEndWithoutAReasonSendsNoQuery() {
+        platform.answer("DELETE", "/system/api/leases/" + LEASE, 200, lease("ENDING", null));
+
+        Result ended = run("targets", "leases", "end", LEASE);
+
+        assertThat(ended.exit()).as(ended.err()).isZero();
+        assertThat(platform.requests("DELETE", "/system/api/leases/" + LEASE).getFirst().query()).isNullOrEmpty();
+        assertThat(ended.out()).startsWith("Lease " + LEASE + " is ENDING.");
+    }
+
+    @Test
+    void leasesEndRefusedOrWithoutAnIdSaysSo() {
+        platform.answer("DELETE", "/system/api/leases/" + LEASE, 403, "{\"message\":\"NOT_YOUR_LEASE\"}");
+        Result refused = run("targets", "leases", "end", LEASE);
+        assertThat(refused.exit()).isEqualTo(1);
+        assertThat(refused.err()).contains("403");
+
+        Result notAnId = run("targets", "leases", "end", "stuck-one");
+        assertThat(notAnId.exit()).isEqualTo(2);
+        assertThat(notAnId.err()).contains("Name the lease by its id");
+        assertThat(platform.requests).noneMatch(r -> r.method().equals("DELETE") && r.path().contains("stuck-one"));
+    }
+
+    @Test
+    void leasesEndHelpNamesTheOperatorRolesTheAuditAndTheStuckEnding() {
+        Result help = run("targets", "leases", "end", "--help");
+
+        assertThat(help.exit()).as(help.err()).isZero();
+        String text = help.out().replaceAll("\\s+", " ");
+        assertThat(text).contains("qits:admin, qits:admin-agent or qits:desk-admin").contains("audited")
+                .contains("A lease already ENDING that an operator ends goes ENDED at once");
+    }
+
     // --- sign-in (qits-1593) ---
 
     private static final String SIGNIN = "00000000-0000-4000-8000-000000000050";

@@ -37,6 +37,18 @@ final class Doors {
     static final String LEASES = "qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read every lease; "
             + "qits:system reads only its own.";
 
+    /** getLease: as listLeases, one lease; qits:system reads only its own (404 otherwise). */
+    static final String LEASE = "qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read any lease; "
+            + "qits:system reads only its own.";
+
+    /**
+     * endLease (epic qits-1621): qits:system ends its own leases; qits:admin, qits:admin-agent and
+     * qits:desk-admin end any lease, and each such end is audited.
+     */
+    static final String END_LEASE = "It needs qits:admin, qits:admin-agent or qits:desk-admin, which end any lease, "
+            + "or qits:system, which ends only its own (HTTP 403 NOT_YOUR_LEASE). An operator's end is audited "
+            + "(target_audit, LEASE_END). qits:agent alone is refused (HTTP 403).";
+
     private Doors() {
     }
 }
