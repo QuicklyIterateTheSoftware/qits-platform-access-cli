@@ -530,7 +530,7 @@ public final class ProjectsApi {
      * {@code {"commandId", "state", "delivered", "queued", "position"}}: one turn handed to the
      * project's kept front desk session (qits-1572). {@code delivered} when it was typed at once,
      * {@code queued} with its {@code position} when it waits for the session to be idle. The door
-     * takes {@code qits:admin} or {@code qits:admin-agent}; it answers {@code {"reason"}} on a
+     * takes {@code qits:admin}, {@code qits:admin-agent} or {@code qits:desk-admin}; it answers {@code {"reason"}} on a
      * refusal (409 no desk running, 429 a full queue, 503 no daemon).
      */
     public JsonNode deskPrompt(String projectId, String text) throws CliFailure, InterruptedException {

@@ -52,7 +52,9 @@ import java.util.Locale;
                         + "matches logs only.",
                 "- F=V and F^=V match case: status=ERROR, not status=error. F~V ignores case.",
                 "- level takes >= only (level>=WARN), and only logs have a level.",
-                "- --filter '*' streams every record, which can be a lot."},
+                "- --filter '*' streams every record, which can be a lot.",
+                "- The stream and the subcommands take qits:admin, qits:admin-agent, qits:desk-admin or "
+                        + "qits:agent."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Stopped by SIGINT or SIGTERM, or stdout was closed.",
                 "1:The platform refused the socket (401, 403 or another 4xx).",

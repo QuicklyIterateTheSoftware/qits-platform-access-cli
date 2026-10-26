@@ -161,8 +161,8 @@ public class ProjectsCommand implements Runnable {
                             + "only when a person prompts it; nothing prompts it on a schedule. It is not a "
                             + "session a person started from the desk panel."},
             footerHeading = "%nNotes:%n",
-            footer = {"- prompt and answer take qits:admin or qits:admin-agent; an agent with qits:agent alone is "
-                    + "refused (HTTP 403). triggers is a plain read, open to qits:agent too."})
+            footer = {"- prompt and answer take qits:admin, qits:admin-agent or qits:desk-admin; an agent with "
+                    + "qits:agent alone is refused (HTTP 403). triggers is a plain read, open to qits:agent too."})
     public static class DeskCommand implements Runnable {
 
         @CommandLine.ParentCommand
@@ -190,8 +190,8 @@ public class ProjectsCommand implements Runnable {
                         "  qits projects desk prompt --project qits Run one pass of the delivery loop: read "
                                 + "/tmp/qits-delivery-brief.md and follow it.",
                         "",
-                        "- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP "
-                                + "403).",
+                        "- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is "
+                                + "refused (HTTP 403).",
                         "- The turn goes to the session the front desk keeps. While the turn runs the session is "
                                 + "busy, and a later turn waits in the queue until it is idle again.",
                         "- A delivery pass runs only when prompted, as in the last example; nothing starts one "
@@ -264,8 +264,8 @@ public class ProjectsCommand implements Runnable {
                 footer = {"  qits projects desk answer --project qits",
                         "  qits projects desk answer --project qits -o json",
                         "",
-                        "- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP "
-                                + "403), although it changes nothing.",
+                        "- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is "
+                                + "refused (HTTP 403), although it changes nothing.",
                         "- The last answer is the session's, whatever turn it answered: a prompt of yours or "
                                 + "somebody else's.",
                         "- -o json prints the service's answer: commandId, sessionId, state, text, at."},

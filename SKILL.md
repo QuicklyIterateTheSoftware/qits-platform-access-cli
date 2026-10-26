@@ -191,7 +191,7 @@ The session is the one the project's front desk keeps running in its agent conta
 
 ### Notes
 
-- prompt and answer take qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403). triggers is a plain read, open to qits:agent too.
+- prompt and answer take qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403). triggers is a plain read, open to qits:agent too.
 
 ## qits projects desk prompt
 
@@ -218,7 +218,7 @@ qits projects desk prompt --project qits -o json Summarise the open release requ
 qits projects desk prompt --project qits Run one pass of the delivery loop: read /tmp/qits-delivery-brief.md and follow it.
 ```
 
-- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).
 - The turn goes to the session the front desk keeps. While the turn runs the session is busy, and a later turn waits in the queue until it is idle again.
 - A delivery pass runs only when prompted, as in the last example; nothing starts one on a schedule (qits-1597).
 - -o json prints the service's answer: commandId, state, delivered, queued, position.
@@ -252,7 +252,7 @@ qits projects desk answer --project qits
 qits projects desk answer --project qits -o json
 ```
 
-- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403), although it changes nothing.
+- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403), although it changes nothing.
 - The last answer is the session's, whatever turn it answered: a prompt of yours or somebody else's.
 - -o json prints the service's answer: commandId, sessionId, state, text, at.
 
@@ -538,7 +538,7 @@ When the sign-in ends (git exits, or the server refuses in the terminal, for exa
 
 With stdin not a terminal it only streams what the terminal prints: nothing is typed.
 
-WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent, a person's token; qits:agent is refused.
+WS /projects/api/repositories/{id}/remote-login. Needs qits:admin, qits:admin-agent or qits:desk-admin; qits:agent alone is refused. The backup-sync it asks for afterwards pushes, and qits:desk-admin never pushes: for the delivery desk that call is refused (HTTP 403).
 
 ```
 qits repositories remote-login [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
@@ -1410,7 +1410,7 @@ An item has at most one room, opened only while the item is at REPORTED and neve
 ### Notes
 
 - --entity is the epic or the ticket, not the room. The room's own id is in show's ID column.
-- show takes qits:admin, qits:admin-agent or qits:agent. open and discard take qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- show takes qits:admin, qits:admin-agent, qits:desk-admin or qits:agent. open and discard take qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).
 
 ## qits work refinement open
 
@@ -1508,7 +1508,7 @@ There is no draft: a design is live the moment it is written, and a person may r
 ### Notes
 
 - --entity is the epic or the ticket, not the refinement. An item with no open refinement has no designs.
-- Reading takes qits:admin or qits:agent. Writing takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- Reading takes qits:admin or qits:agent. Writing takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).
 
 ## qits work design list
 
@@ -1934,7 +1934,7 @@ A release request's gating runs build its backing branch release/<request id> an
 
 ### Notes
 
-- Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.
+- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent.
 - To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.
 - --project, --repository, --output and the two -url options may come before or after the command.
 - A release request's QA run carries release reports: which tests failed, with their class, name and message, and the line coverage of the tree and of the change, with more kinds to come. `qits ci report show <run id>` lists them.
@@ -2045,7 +2045,7 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
 - Only a finished run can be retried. One that is queued or running answers HTTP 409: wait for it.
 - A retry builds the same commit. To fix the code, push the branch instead: the release request folds again and builds the new commit.
-- Needs the role qits:admin.
+- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent.
 
 ### Exit codes
 
@@ -2533,6 +2533,7 @@ qits observe --filter 'service=qits-ci-daemon resource.qits.ci.run_id=5f2c0a9e-1
 - F=V and F^=V match case: status=ERROR, not status=error. F~V ignores case.
 - level takes >= only (level>=WARN), and only logs have a level.
 - --filter '*' streams every record, which can be a lot.
+- The stream and the subcommands take qits:admin, qits:admin-agent, qits:desk-admin or qits:agent.
 
 ### Exit codes
 
@@ -2742,6 +2743,7 @@ qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json]
 - Never poll in a background loop (sleep, watch, `qits events`) for something a wait can say.
 - While a wait is open, the platform shows the agent as waiting on its label, not as blocked.
 - A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.
+- Waits take qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Every agent, admin-agent and desk-admin included, declares, lists and cancels its own waits only; qits:admin and qits:system act on any agent.
 
 ```
 qits wait release-request qits-ci-service-rr-12
@@ -2924,8 +2926,8 @@ A slot is a workspace row, named by its number (`qits workspaces list` shows it)
 
 ### Notes
 
-- Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin or qits:admin-agent, which a person's token carries; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
-- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's.
+- Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project); qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
+- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there: the slot is a shell that can push.
 - `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads the chat's transcript and sends prompts.
 - --workspaces-url, --projects-url and --output may come before or after the command.
 
@@ -3023,7 +3025,7 @@ qits workspaces active-process 1
 
 Bring a slot's container up, or join the start already running. Start on a slot's page.
 
-POST /workspaces/api/workspaces/{id}/ensure-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/workspaces/{id}/ensure-container, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces start [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
@@ -3054,7 +3056,7 @@ qits workspaces start 1
 
 Stop a slot's container. Stop on a slot's page.
 
-POST /workspaces/api/workspaces/{id}/stop-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/workspaces/{id}/stop-container, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces stop [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
@@ -3085,7 +3087,7 @@ qits workspaces stop 1
 
 Replace a slot's container with a new one. Recreate on a slot's page.
 
-POST /workspaces/api/workspaces/{id}/recreate-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/workspaces/{id}/recreate-container, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces recreate [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
@@ -3155,7 +3157,7 @@ Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to
 
 With stdin not a terminal (a pipe, a script, `qits tui`) it only streams what the command prints: nothing is typed and the size is left alone. It still ends when the command does.
 
-WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces attach --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <command>
@@ -3250,7 +3252,7 @@ An agent is named by its id (`qits workspaces agents list` shows it); a work ite
 
 ### Notes
 
-- create, discard, prompt, draft save and draft discard need qits:admin or qits:admin-agent; qits:agent is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
+- create, discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
 
 ## qits workspaces agents list
 
@@ -3289,7 +3291,7 @@ qits workspaces agents list --workspace 1 -o json
 
 Start an agent on a ticket or an epic, in a harness and posture of your choosing. An item that already has an ACTIVE agent answers that one (fresh: false). Create agent on the Workspaces page.
 
-POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, instruction?}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, instruction?}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents create --repository <id> --work <work> [--admin] [--entity <qualified id>] [--harness CLAUDE|KIMI] [--instruction <text>] [--kind TICKET|EPIC] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3327,7 +3329,7 @@ qits workspaces agents create --repository <id> --work qits-120 --kind EPIC --ha
 
 Remove an agent: its worktrees, credential and draft go. Discard on a slot's or an item's agent page; --force is Discard anyway.
 
-POST /workspaces/api/agents/{id}/discard with {"force": false|true}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/agents/{id}/discard with {"force": false|true}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents discard [--force] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3360,7 +3362,7 @@ qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1 --force
 
 Send a prompt to a work item's agent: said when its current turn ends (at once if it is idle), as its first turn, or to a yielded agent that resumes to hear it. An item with no agent is told so, and nothing is created. Send on an agent's Chat tab.
 
-POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents prompt [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <work> <text>
@@ -3423,7 +3425,7 @@ qits workspaces agents draft show 00000000-0000-4000-8000-0000000000a1
 
 Save the agent's prompt draft, as typing in its prompt box does. The draft holds the text and no picked file ranges.
 
-PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{"text":<text>,"picked":[]}', serializedPrompt: <text, trimmed>}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{"text":<text>,"picked":[]}', serializedPrompt: <text, trimmed>}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents draft save [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <text>
@@ -3453,7 +3455,7 @@ qits workspaces agents draft save 00000000-0000-4000-8000-0000000000a1 'Check th
 
 Delete the agent's saved prompt draft: Discard on a restored draft.
 
-DELETE /workspaces/api/agents/{id}/prompt-draft. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+DELETE /workspaces/api/agents/{id}/prompt-draft. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents draft discard [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3482,7 +3484,7 @@ qits workspaces agents draft discard 00000000-0000-4000-8000-0000000000a1
 
 Read the agent's conversation: its harness command's transcript, in order. The agent's Chat tab, without the live socket.
 
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents chat --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3514,7 +3516,7 @@ qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1 -
 
 End the agent's running harness command: Terminate on a live chat.
 
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents terminate --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3545,7 +3547,7 @@ qits workspaces agents terminate 00000000-0000-4000-8000-0000000000a1 --workspac
 
 Rewrite rough notes into a prompt, in the slot's container: Refine in the prompt box. Prints the rewrite; nothing is sent to an agent.
 
-POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents refine --workspace <n> [--output table|json] [--preamble <text>] [--projects-url <url>] [--workspaces-url <url>] <notes>
@@ -3578,7 +3580,7 @@ The agent's harness on its slot's daemon: its last command, whether it still run
 
 With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since `qits workspaces agents chat` reads it.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents harness --workspace <n> [--attach] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3616,7 +3618,7 @@ The agent's worktree, as its Files tab shows it: the tree, one file, and the fra
 
 The agent's worktree: without --path the whole tree, every gitignored directory a stub with its entry count; with --path that directory, one level deep.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents files list --workspace <n> [--output table|json] [--path <dir>] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3648,7 +3650,7 @@ qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspa
 
 One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB cap, is not shown.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents files read --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <path>
@@ -3679,7 +3681,7 @@ qits workspaces agents files read 00000000-0000-4000-8000-0000000000a1 src/main/
 
 The frameworks the agent's worktree holds (each with its member paths) and which tests reach each source file: the Files tab's footer and its test links.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents files detect --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3713,7 +3715,7 @@ Whether anybody signed the slot's harnesses in, on the credential volume every c
 
 Each harness of the slot's daemon, whether it is signed in, and the daemon's hint when it is not.
 
-GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents sign-in status --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3742,7 +3744,7 @@ qits workspaces agents sign-in status --workspace 1
 
 Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an interactive terminal: --attach attaches this one to it at once, or `qits workspaces attach <command> --workspace <n>` later, with the command id this prints. The agent's Terminal tab in the landing app shows the same terminal.
 
-POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents sign-in open --workspace <n> [--attach] [--harness CLAUDE|KIMI] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3780,7 +3782,7 @@ The plugins on the agent home every container of the slot's daemon shares: the p
 
 The plugins installed, each marketplace-qualified, and whether it is switched on.
 
-GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents plugins list --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3809,7 +3811,7 @@ qits workspaces agents plugins list --workspace 1
 
 Install a plugin on the shared agent home: Install on a plugin not installed yet. Prints the installed set as it now is.
 
-POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents plugins install --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <plugin>
@@ -3843,7 +3845,7 @@ A target is named by its name or its id (`qits targets list` shows both).
 
 ### Notes
 
-- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent or (for all but login-check) qits:system; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
+- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent, qits:desk-admin or (for all but login-check) qits:system; qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
 - create and rotate-token print an install line that carries a one-time token: alone on stdout, shown once, and not served by the qits MCP server.
 - --system-url and --output may come before or after the command.
 
@@ -3910,7 +3912,7 @@ qits targets show --target localhost -o json
 
 Declare a target and print the line that installs its runner, with a one-time registration token in it.
 
-POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine. Lost, `qits targets rotate-token` makes a new one.
 
@@ -3950,7 +3952,7 @@ qits targets create --name buildbox --description 'The build machine under the d
 
 Mint a new registration token and print the line that installs its runner with it. On a target whose runner has not registered yet, this is the first token's replacement; on a REGISTERED target, running the new line reinstalls its runner under the same target (its id is kept) and the old runner's client is decommissioned once the new one registers.
 
-POST /system/api/targets/{id}/registration-token with an optional {slots?} (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+POST /system/api/targets/{id}/registration-token with an optional {slots?} (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine.
 
@@ -3987,7 +3989,7 @@ qits targets rotate-token --target buildbox --slots 8
 
 Change a target's description or slot minimums. Only what is given is sent; a minimum left out keeps its value.
 
-PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 ```
 qits targets update --target <name|id> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--system-url <url>]
@@ -4022,7 +4024,7 @@ qits targets update --target localhost --description 'The build machine under th
 
 Lift a target's quarantine. The service quarantines a target itself, after a failed health check, or when it registers.
 
-POST /system/api/targets/{id}/greenlight, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+POST /system/api/targets/{id}/greenlight, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design.
 
 ```
 qits targets greenlight --target <name|id> [--output table|json] [--system-url <url>]
@@ -4080,7 +4082,7 @@ qits targets healthcheck --target localhost
 
 Ask a connected target to probe its credential volume's sign-in again. The result shows in a later `qits targets show` or `qits targets list`.
 
-POST /system/api/targets/{id}/login-check, no body (HTTP 202). It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+POST /system/api/targets/{id}/login-check, no body (HTTP 202). It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design.
 
 ```
 qits targets login-check --target <name|id> [--output table|json] [--system-url <url>]
@@ -4110,7 +4112,7 @@ qits targets login-check --target localhost
 
 Decommission a target: retire its runner and give its credentials back.
 
-DELETE /system/api/targets/{id}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+DELETE /system/api/targets/{id}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 ```
 qits targets delete --target <name|id> [--output table|json] [--system-url <url>]
@@ -4140,7 +4142,7 @@ qits targets delete --target localhost
 
 Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state.
 
-GET /system/api/leases?targetId=&slotType=&state=. qits:admin, qits:admin-agent and qits:agent read every lease; qits:system reads only its own.
+GET /system/api/leases?targetId=&slotType=&state=. qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read every lease; qits:system reads only its own.
 
 ```
 qits targets leases [--output table|json] [--state <state>] [--system-url <url>] [--target <name|id>] [--type ci|workspace|desk]
@@ -4172,7 +4174,7 @@ qits targets leases --type workspace --state RUNNING
 
 Sign a target's credential volume in for a harness: starts a sign-in on the target (or resumes one with --sign-in), prints its URL and code as the runner reports them, pastes a claude code typed on stdin back to it, and waits for the harness to report signed in.
 
-GET /system/api/targets/{id}; POST .../sign-ins {harness} (or POST .../sign-ins/{id}/code {code} to resume with --sign-in and --code); then GET .../sign-ins/{id} every 2s until the sign-in ends, then GET /system/api/targets/{id} every 2s until login.<harness> is PRESENT, or --timeout passes. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+GET /system/api/targets/{id}; POST .../sign-ins {harness} (or POST .../sign-ins/{id}/code {code} to resume with --sign-in and --code); then GET .../sign-ins/{id} every 2s until the sign-in ends, then GET /system/api/targets/{id} every 2s until login.<harness> is PRESENT, or --timeout passes. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design.
 
 Already PRESENT: prints that and exits at once, nothing is started.
 

@@ -61,8 +61,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footerHeading = "%nNotes:%n",
         footer = {"- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a "
                 + "registration token, updating, deleting and asking for a login check need qits:admin, "
-                + "qits:admin-agent or (for all but login-check) qits:system; qits:agent is refused (HTTP 403) by "
-                + "design. Each command's help names its door.",
+                + "qits:admin-agent, qits:desk-admin or (for all but login-check) qits:system; qits:agent alone is "
+                + "refused (HTTP 403) by design. Each command's help names its door.",
                 "- create and rotate-token print an install line that carries a one-time token: alone on stdout, "
                         + "shown once, and not served by the qits MCP server.",
                 "- --system-url and --output may come before or after the command."})

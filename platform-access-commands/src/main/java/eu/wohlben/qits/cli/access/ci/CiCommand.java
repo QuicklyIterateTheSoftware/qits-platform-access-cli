@@ -44,7 +44,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code)."},
         footerHeading = "%nNotes:%n",
         footer = {
-                "- Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.",
+                "- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or "
+                        + "qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or "
+                        + "qits:agent.",
                 "- To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict "
                         + "also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.",
                 "- --project, --repository, --output and the two -url options may come before or after the command.",
@@ -422,7 +424,7 @@ public class CiCommand implements Runnable {
                     "- Only a finished run can be retried. One that is queued or running answers HTTP 409: wait for it.",
                     "- A retry builds the same commit. To fix the code, push the branch instead: the release request "
                             + "folds again and builds the new commit.",
-                    "- Needs the role qits:admin."},
+                    "- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The new run is queued.",
                     "1:The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), "

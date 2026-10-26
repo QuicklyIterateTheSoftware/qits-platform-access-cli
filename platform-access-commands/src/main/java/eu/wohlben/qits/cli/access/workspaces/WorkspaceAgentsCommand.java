@@ -47,8 +47,9 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.slot;
                         + "id (qits-123) or its id. The commands that read the agent's container take its slot "
                         + "with --workspace."},
         footerHeading = "%nNotes:%n",
-        footer = {"- create, discard, prompt, draft save and draft discard need qits:admin or qits:admin-agent; "
-                + "qits:agent is refused (HTTP 403) by design. The reads are open to it, and so is everything that "
+        footer = {"- create, discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or "
+                + "qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent "
+                + "alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that "
                 + "goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins)."})
 public class WorkspaceAgentsCommand implements Runnable {
 
