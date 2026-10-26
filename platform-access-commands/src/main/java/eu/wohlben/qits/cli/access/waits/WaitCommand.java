@@ -60,8 +60,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- While a wait is open, the platform shows the agent as waiting on its label, not as blocked.",
                 "- A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.",
                 "- Waits take qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Every "
-                        + "agent, admin-agent and desk-admin included, declares, lists and cancels its own waits "
-                        + "only; qits:admin and qits:system act on any agent.",
+                        + "agent, admin-agent included, declares, lists and cancels its own waits only; "
+                        + "qits:desk-admin acts on the agents of its own project and names one with --agent; "
+                        + "qits:admin and qits:system act on any agent.",
                 "",
                 "  qits wait release-request qits-ci-service-rr-12",
                 "  qits wait work qits-123 --status VERIFIED --timeout 2h",

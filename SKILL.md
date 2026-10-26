@@ -538,7 +538,7 @@ When the sign-in ends (git exits, or the server refuses in the terminal, for exa
 
 With stdin not a terminal it only streams what the terminal prints: nothing is typed.
 
-WS /projects/api/repositories/{id}/remote-login. Needs qits:admin, qits:admin-agent or qits:desk-admin; qits:agent alone is refused. The backup-sync it asks for afterwards pushes, and qits:desk-admin never pushes: for the delivery desk that call is refused (HTTP 403).
+WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent; qits:agent alone is refused, and so is qits:desk-admin: the socket runs an interactive push to the forge, and the delivery desk never pushes (epic qits-1621).
 
 ```
 qits repositories remote-login [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
@@ -2783,7 +2783,7 @@ qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json]
 - Never poll in a background loop (sleep, watch, `qits events`) for something a wait can say.
 - While a wait is open, the platform shows the agent as waiting on its label, not as blocked.
 - A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.
-- Waits take qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Every agent, admin-agent and desk-admin included, declares, lists and cancels its own waits only; qits:admin and qits:system act on any agent.
+- Waits take qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Every agent, admin-agent included, declares, lists and cancels its own waits only; qits:desk-admin acts on the agents of its own project and names one with --agent; qits:admin and qits:system act on any agent.
 
 ```
 qits wait release-request qits-ci-service-rr-12
