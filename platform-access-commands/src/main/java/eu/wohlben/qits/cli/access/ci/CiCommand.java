@@ -35,16 +35,19 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "ci", mixinStandardHelpOptions = true, modelTransformer = CiCommand.StepCommands.class,
         subcommands = {CiCommand.RunsCommand.class, CiCommand.RunCommand.class, CiCommand.RetryCommand.class,
-                ReportCommand.class},
+                CiCommand.CancelCommand.class, ReportCommand.class},
         description = {"The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and "
-                        + "their logs, retry runs a finished run again, and report shows a run's release reports "
-                        + "(report submit is the CI step's side, which collects and uploads them).",
+                        + "their logs, retry runs a finished run again, cancel stops a queued or running one, and "
+                        + "report shows a run's release reports (report submit is the CI step's side, which collects "
+                        + "and uploads them).",
                 "A release request's gating runs build its backing branch release/<request id> and carry the "
                         + "request's id. Statuses: QUEUED and RUNNING (not finished), SUCCESS, FAILED (the code's "
                         + "verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code)."},
         footerHeading = "%nNotes:%n",
         footer = {
-                "- Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.",
+                "- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or "
+                        + "qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or "
+                        + "qits:agent. cancel takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk.",
                 "- To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict "
                         + "also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.",
                 "- --project, --repository, --output and the two -url options may come before or after the command.",
@@ -422,7 +425,7 @@ public class CiCommand implements Runnable {
                     "- Only a finished run can be retried. One that is queued or running answers HTTP 409: wait for it.",
                     "- A retry builds the same commit. To fix the code, push the branch instead: the release request "
                             + "folds again and builds the new commit.",
-                    "- Needs the role qits:admin."},
+                    "- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The new run is queued.",
                     "1:The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), "
@@ -466,6 +469,72 @@ public class CiCommand implements Runnable {
             out.println("Run " + id + " runs again as run " + next + ", at the same commit. It is queued.");
             out.println("Follow it:  qits ci run " + next);
             out.println("Its verdict also comes as an event:  qits events --filter=BuildSuccessful,BuildFailed");
+            return 0;
+        }
+    }
+
+    @CommandLine.Command(name = "cancel", mixinStandardHelpOptions = true,
+            description = {"Stop a queued or running CI run, then show it.",
+                    "A queued run is cancelled at once and never starts. A running one is asked to stop: its step "
+                            + "in flight is stopped and the rest are skipped, which takes a moment, so the run shown "
+                            + "may still say RUNNING. Run `qits ci run <run id>` again to see it end. A cancelled run "
+                            + "ends CANCELLED, which is not a verdict on the code: it publishes neither BuildSuccessful "
+                            + "nor BuildFailed.",
+                    "Sends POST /ci/api/runs/{runId}/cancel with {reason} (HTTP 202), then GET /ci/api/runs/{runId}."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits ci cancel 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17",
+                    "  qits ci cancel 5f2c0a9e --project qits --repository qits-ci-service --reason 'superseded by a fix'",
+                    "",
+                    "- Only a queued or running run can be cancelled. One that has finished answers HTTP 409.",
+                    "- --reason is kept on the run as its cancellation reason, and `qits ci run` shows it.",
+                    "- Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk. qits:agent alone is refused "
+                            + "(HTTP 403).",
+                    "- -o json prints the run as the service answers it after the cancel."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The run is cancelled, or asked to stop; it is printed.",
+                    "1:The platform refused: the run has already finished (HTTP 409), there is no such run (HTTP 404), "
+                            + "or your roles do not allow it (HTTP 403). Or it cannot be reached.",
+                    "2:Used wrongly (for example an id start that fits no run of the repository, or more than one), "
+                            + "not signed in, or the session ended."})
+    public static class CancelCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        CiCommand parent;
+
+        @Completes(RunSource.class)
+        @CommandLine.Parameters(index = "0", paramLabel = "<run id>",
+                description = "The run to cancel: its id, or its start when --project and --repository name its "
+                        + "repository.")
+        String runId;
+
+        @CommandLine.Option(names = "--reason", paramLabel = "<text>",
+                description = "Why it is cancelled, kept on the run.")
+        String reason;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.output);
+            String wanted = required(runId, "Name the run: qits ci cancel <run id>.");
+            boolean lookedUp = parent.repositoryNamed();
+            Apis apis = parent.connect(context);
+            String id = parent.runId(context, apis, wanted);
+            try {
+                apis.ci().cancel(id, blank(reason) ? null : reason.strip());
+            } catch (CliFailure refused) {
+                if (refused.status() == 409) {
+                    throw new CliFailure("Run " + id + " has already finished, so there is nothing to cancel "
+                            + "(HTTP 409).", CliFailure.FAILED);
+                }
+                throw refused.status() == 404 ? noSuchRun(id, lookedUp) : refused;
+            }
+            JsonNode run = apis.ci().run(id);
+            PrintStream out = context.out();
+            if (json) {
+                RunView.printJson(out, run);
+                return 0;
+            }
+            RunView.printRun(out, run, context.clock().instant());
             return 0;
         }
     }

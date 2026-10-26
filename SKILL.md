@@ -191,7 +191,7 @@ The session is the one the project's front desk keeps running in its agent conta
 
 ### Notes
 
-- prompt and answer take qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403). triggers is a plain read, open to qits:agent too.
+- prompt and answer take qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403). triggers is a plain read, open to qits:agent too.
 
 ## qits projects desk prompt
 
@@ -218,7 +218,7 @@ qits projects desk prompt --project qits -o json Summarise the open release requ
 qits projects desk prompt --project qits Run one pass of the delivery loop: read /tmp/qits-delivery-brief.md and follow it.
 ```
 
-- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).
 - The turn goes to the session the front desk keeps. While the turn runs the session is busy, and a later turn waits in the queue until it is idle again.
 - A delivery pass runs only when prompted, as in the last example; nothing starts one on a schedule (qits-1597).
 - -o json prints the service's answer: commandId, state, delivered, queued, position.
@@ -252,7 +252,7 @@ qits projects desk answer --project qits
 qits projects desk answer --project qits -o json
 ```
 
-- Takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403), although it changes nothing.
+- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403), although it changes nothing.
 - The last answer is the session's, whatever turn it answered: a prompt of yours or somebody else's.
 - -o json prints the service's answer: commandId, sessionId, state, text, at.
 
@@ -538,7 +538,7 @@ When the sign-in ends (git exits, or the server refuses in the terminal, for exa
 
 With stdin not a terminal it only streams what the terminal prints: nothing is typed.
 
-WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent, a person's token; qits:agent is refused.
+WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent; qits:agent alone is refused, and so is qits:desk-admin: the socket runs an interactive push to the forge, and the delivery desk never pushes (epic qits-1621).
 
 ```
 qits repositories remote-login [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
@@ -1410,7 +1410,7 @@ An item has at most one room, opened only while the item is at REPORTED and neve
 ### Notes
 
 - --entity is the epic or the ticket, not the room. The room's own id is in show's ID column.
-- show takes qits:admin, qits:admin-agent or qits:agent. open and discard take qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- show takes qits:admin, qits:admin-agent, qits:desk-admin or qits:agent. open and discard take qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).
 
 ## qits work refinement open
 
@@ -1508,7 +1508,7 @@ There is no draft: a design is live the moment it is written, and a person may r
 ### Notes
 
 - --entity is the epic or the ticket, not the refinement. An item with no open refinement has no designs.
-- Reading takes qits:admin or qits:agent. Writing takes qits:admin or qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403).
+- Reading takes qits:admin or qits:agent. Writing takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).
 
 ## qits work design list
 
@@ -1928,13 +1928,13 @@ qits release-request --project qits --repository qits-ci-frontend override --req
 
 ## qits ci
 
-The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, retry runs a finished run again, and report shows a run's release reports (report submit is the CI step's side, which collects and uploads them).
+The builds of qits-ci: runs lists a repository's runs, run shows one run with its steps and their logs, retry runs a finished run again, cancel stops a queued or running one, and report shows a run's release reports (report submit is the CI step's side, which collects and uploads them).
 
 A release request's gating runs build its backing branch release/<request id> and carry the request's id. Statuses: QUEUED and RUNNING (not finished), SUCCESS, FAILED (the code's verdict), and CANCELLED, TIMED_OUT, CONFIG_ERROR (the run's end, not a verdict on the code).
 
 ### Notes
 
-- Reading runs needs the role qits:admin or qits:system. retry needs qits:admin.
+- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent. cancel takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk.
 - To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.
 - --project, --repository, --output and the two -url options may come before or after the command.
 - A release request's QA run carries release reports: which tests failed, with their class, name and message, and the line coverage of the tree and of the change, with more kinds to come. `qits ci report show <run id>` lists them.
@@ -2045,12 +2045,52 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 
 - Only a finished run can be retried. One that is queued or running answers HTTP 409: wait for it.
 - A retry builds the same commit. To fix the code, push the branch instead: the release request folds again and builds the new commit.
-- Needs the role qits:admin.
+- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent.
 
 ### Exit codes
 
 - `0` The new run is queued.
 - `1` The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
+- `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
+
+## qits ci cancel
+
+Stop a queued or running CI run, then show it.
+
+A queued run is cancelled at once and never starts. A running one is asked to stop: its step in flight is stopped and the rest are skipped, which takes a moment, so the run shown may still say RUNNING. Run `qits ci run <run id>` again to see it end. A cancelled run ends CANCELLED, which is not a verdict on the code: it publishes neither BuildSuccessful nor BuildFailed.
+
+Sends POST /ci/api/runs/{runId}/cancel with {reason} (HTTP 202), then GET /ci/api/runs/{runId}.
+
+```
+qits ci cancel [--ci-url <url>] [--output table|json] [--project <project>] [--projects-url <url>] [--reason <text>] [--repository <repository>] <run id>
+```
+
+| Name | What it does |
+|---|---|
+| `<run id>` | The run to cancel: its id, or its start when --project and --repository name its repository. |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
+| `--reason <text>` | Why it is cancelled, kept on the run. |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits ci cancel 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17
+qits ci cancel 5f2c0a9e --project qits --repository qits-ci-service --reason 'superseded by a fix'
+```
+
+- Only a queued or running run can be cancelled. One that has finished answers HTTP 409.
+- --reason is kept on the run as its cancellation reason, and `qits ci run` shows it.
+- Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk. qits:agent alone is refused (HTTP 403).
+- -o json prints the run as the service answers it after the cancel.
+
+### Exit codes
+
+- `0` The run is cancelled, or asked to stop; it is printed.
+- `1` The platform refused: the run has already finished (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
 - `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
 ## qits ci report
@@ -2533,6 +2573,7 @@ qits observe --filter 'service=qits-ci-daemon resource.qits.ci.run_id=5f2c0a9e-1
 - F=V and F^=V match case: status=ERROR, not status=error. F~V ignores case.
 - level takes >= only (level>=WARN), and only logs have a level.
 - --filter '*' streams every record, which can be a lot.
+- The stream and the subcommands take qits:admin, qits:admin-agent, qits:desk-admin or qits:agent.
 
 ### Exit codes
 
@@ -2714,21 +2755,22 @@ qits observe metrics --source _service/qits-ci --name http.server.active_request
 
 ## qits wait
 
-Declare what this agent waits on: a domain event that fits a selection. The platform gives the agent a turn when one arrives, or when the timeout passes. The command returns at once; it never blocks.
+Declare what this holder waits on: a domain event that fits a selection. The platform gives the holder a turn when one arrives, or when the timeout passes. The command returns at once; it never blocks.
 
-Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets for the usual waits; list shows this agent's waits and cancel ends one.
+Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets for the usual waits; list shows the holder's waits and cancel ends one.
 
 Each --when is one group of conditions, separated by spaces, that must all hold. An event that fits any group matches; with no --when, every event of the name does. Conditions: path=value equal, path^=value starts with, path? present, !path absent. A path is the payload's fields joined by dots; [] after a field means some element of that array, and the conditions of one group that go through the same name[] must hold on the same element (entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or is empty: label="two words", note="". At most 8 groups of 8 conditions.
 
-The agent is --agent, else QITS_AGENT_ID: the harness sets it in an agent's environment, and the MCP server sets it from the caller's token. An agent may declare and cancel waits for itself only.
+The holder is --agent or --desk (give one, not both), else QITS_AGENT_ID, else QITS_DESK_PROJECT: the harness sets QITS_AGENT_ID in an agent's environment and QITS_DESK_PROJECT in a project's kept front-desk session, and the MCP server sets QITS_AGENT_ID from the caller's token's agent claim, or QITS_DESK_PROJECT from its project claim when the token names no agent and is a desk's (the role qits:desk-admin, or a context_kind of desk-session or desk-delivery). An agent may declare and cancel waits for itself only; a project's desk, for its own project's only.
 
 ```
-qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json] [--timeout <duration>] [--when <conditions>...] [--workspaces-url <url>]
+qits wait [--agent <id>] [--desk <project>] [--event <Name>] [--label <text>] [--output table|json] [--timeout <duration>] [--when <conditions>...] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--event <Name>` | Required, unless a preset is named. The event's name, as the bus carries it: BuildFailed, EntityTransitioned. |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
@@ -2740,8 +2782,9 @@ qits wait [--agent <id>] [--event <Name>] [--label <text>] [--output table|json]
 
 - Declare the wait, then end your turn. You get a new turn that names what fired: the event, or the timeout.
 - Never poll in a background loop (sleep, watch, `qits events`) for something a wait can say.
-- While a wait is open, the platform shows the agent as waiting on its label, not as blocked.
+- While a wait is open, the platform shows the holder as waiting on its label, not as blocked.
 - A wait closes when it fires, times out or is cancelled. Declare a new one to wait again.
+- Waits take qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Every agent, admin-agent included, declares, lists and cancels its own waits only; qits:desk-admin acts on the agents of its own project and names one with --agent; qits:admin and qits:system act on any agent.
 
 ```
 qits wait release-request qits-ci-service-rr-12
@@ -2751,13 +2794,14 @@ qits wait --event BuildFailed --when 'repoName=qits-ci-service branch=main' --la
 qits wait --event EntityTransitioned --when 'entities[].status=VERIFIED' --timeout 30m
 qits wait list --state OPEN
 qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
+qits wait release-request qits-ci-service-rr-12 --desk qits-ci
 ```
 
 ### Exit codes
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, no --event, a --when or --timeout that cannot be read or is over a limit), not signed in, or the session ended.
+- `2` Used wrongly (no holder, both --agent and --desk, no --event, a --when or --timeout that cannot be read or is over a limit), not signed in, or the session ended.
 
 ## qits wait release-request
 
@@ -2766,13 +2810,14 @@ Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBS
 The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> state=<STATE> for a uuid.
 
 ```
-qits wait release-request [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
+qits wait release-request [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
 ```
 
 | Name | What it does |
 |---|---|
 | `<id>` | The release request: its id (qits-ci-service-rr-12) or its whole uuid. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
@@ -2792,7 +2837,7 @@ qits wait release-request 4f2a91c0-1d2e-4c3b-9a8f-0123456789ab
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, not a whole id or uuid), not signed in, or the session ended.
+- `2` Used wrongly (no holder, not a whole id or uuid), not signed in, or the session ended.
 
 ## qits wait work
 
@@ -2801,14 +2846,15 @@ Wait until a work item reaches a status.
 The item is looked up in the projects service first, so its qualified id (qits-123) works. The same as --event EntityTransitioned --when 'entities[].entityId=<its id> entities[].status=<STATUS>'.
 
 ```
-qits wait work --status <STATUS> [--agent <id>] [--label <text>] [--output table|json] [--projects-url <url>] [--timeout <duration>] [--workspaces-url <url>] <entity>
+qits wait work --status <STATUS> [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--projects-url <url>] [--timeout <duration>] [--workspaces-url <url>] <entity>
 ```
 
 | Name | What it does |
 |---|---|
 | `<entity>` | The work item: its qualified id (qits-123) or its id. |
 | `--status <STATUS>` | Required. The status to wait for: REFINED, READY_FOR_DEV, IMPLEMENTED, VERIFIED, DONE, DROPPED or another word of the item's lifecycle. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where the item is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
@@ -2826,7 +2872,7 @@ qits wait work qits-123 --status DONE --timeout 1d --label 'qits-123 to be done'
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (no agent id, no --status), not signed in, or the session ended.
+- `2` Used wrongly (no holder, no --status), not signed in, or the session ended.
 
 ## qits wait ci-run
 
@@ -2835,13 +2881,14 @@ Wait until a CI run ends: SUCCESS, FAILED, CANCELLED, CONFIG_ERROR or TIMED_OUT.
 The same as --event BuildStatusChanged with one group per final status: runId=<id> status=<STATUS>.
 
 ```
-qits wait ci-run [--agent <id>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <run id>
+qits wait ci-run [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <run id>
 ```
 
 | Name | What it does |
 |---|---|
 | `<run id>` | The run's whole id. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
@@ -2859,19 +2906,20 @@ qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
 
 - `0` The wait is declared; it is printed.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, not a whole id), not signed in, or the session ended.
+- `2` Used wrongly (no holder, not a whole id), not signed in, or the session ended.
 
 ## qits wait list
 
-This agent's waits: id, state, event, label, when it was declared and when it times out.
+The holder's waits: id, state, event, label, when it was declared and when it times out.
 
 ```
-qits wait list [--agent <id>] [--output table|json] [--state <STATE>] [--workspaces-url <url>]
+qits wait list [--agent <id>] [--desk <project>] [--output table|json] [--state <STATE>] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--state <STATE>` | Only the waits in this state: OPEN, MATCHED, TIMED_OUT or CANCELLED. Default: all. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
@@ -2887,20 +2935,21 @@ qits wait list --state OPEN -o json
 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly (no agent id, a state qits does not know), not signed in, or the session ended.
+- `2` Used wrongly (no holder, a state qits does not know), not signed in, or the session ended.
 
 ## qits wait cancel
 
-End one of this agent's open waits. The agent gets no turn for it.
+End one of the holder's open waits. An agent holder gets no turn for it.
 
 ```
-qits wait cancel [--agent <id>] [--output table|json] [--workspaces-url <url>] <wait id>
+qits wait cancel [--agent <id>] [--desk <project>] [--output table|json] [--workspaces-url <url>] <wait id>
 ```
 
 | Name | What it does |
 |---|---|
 | `<wait id>` | The wait's id, as `qits wait list` shows it. |
-| `--agent <id>` | The agent whose waits these are. Default: QITS_AGENT_ID (on the MCP server, from the caller's token). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
 | `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
 
@@ -2914,7 +2963,7 @@ qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
 
 - `0` Done.
 - `1` The platform refused (for example a wait it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (no agent id), not signed in, or the session ended.
+- `2` Used wrongly (no holder), not signed in, or the session ended.
 
 ## qits workspaces
 
@@ -2924,8 +2973,8 @@ A slot is a workspace row, named by its number (`qits workspaces list` shows it)
 
 ### Notes
 
-- Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin or qits:admin-agent, which a person's token carries; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
-- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's.
+- Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project); qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
+- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there: the slot is a shell that can push.
 - `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads the chat's transcript and sends prompts.
 - --workspaces-url, --projects-url and --output may come before or after the command.
 
@@ -3023,7 +3072,7 @@ qits workspaces active-process 1
 
 Bring a slot's container up, or join the start already running. Start on a slot's page.
 
-POST /workspaces/api/workspaces/{id}/ensure-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/workspaces/{id}/ensure-container, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces start [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
@@ -3054,7 +3103,7 @@ qits workspaces start 1
 
 Stop a slot's container. Stop on a slot's page.
 
-POST /workspaces/api/workspaces/{id}/stop-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/workspaces/{id}/stop-container, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces stop [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
@@ -3085,7 +3134,7 @@ qits workspaces stop 1
 
 Replace a slot's container with a new one. Recreate on a slot's page.
 
-POST /workspaces/api/workspaces/{id}/recreate-container, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/workspaces/{id}/recreate-container, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces recreate [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <workspace>
@@ -3155,7 +3204,7 @@ Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to
 
 With stdin not a terminal (a pipe, a script, `qits tui`) it only streams what the command prints: nothing is typed and the size is left alone. It still ends when the command does.
 
-WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+WS /workspaces/container/{slot}/terminal/commands/{commandId}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces attach --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <command>
@@ -3250,7 +3299,7 @@ An agent is named by its id (`qits workspaces agents list` shows it); a work ite
 
 ### Notes
 
-- create, discard, prompt, draft save and draft discard need qits:admin or qits:admin-agent; qits:agent is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
+- create, discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
 
 ## qits workspaces agents list
 
@@ -3289,7 +3338,7 @@ qits workspaces agents list --workspace 1 -o json
 
 Start an agent on a ticket or an epic, in a harness and posture of your choosing. An item that already has an ACTIVE agent answers that one (fresh: false). Create agent on the Workspaces page.
 
-POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, instruction?}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, instruction?}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents create --repository <id> --work <work> [--admin] [--entity <qualified id>] [--harness CLAUDE|KIMI] [--instruction <text>] [--kind TICKET|EPIC] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3327,7 +3376,7 @@ qits workspaces agents create --repository <id> --work qits-120 --kind EPIC --ha
 
 Remove an agent: its worktrees, credential and draft go. Discard on a slot's or an item's agent page; --force is Discard anyway.
 
-POST /workspaces/api/agents/{id}/discard with {"force": false|true}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/agents/{id}/discard with {"force": false|true}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents discard [--force] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3360,7 +3409,7 @@ qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1 --force
 
 Send a prompt to a work item's agent: said when its current turn ends (at once if it is idle), as its first turn, or to a yielded agent that resumes to hear it. An item with no agent is told so, and nothing is created. Send on an agent's Chat tab.
 
-POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents prompt [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <work> <text>
@@ -3423,7 +3472,7 @@ qits workspaces agents draft show 00000000-0000-4000-8000-0000000000a1
 
 Save the agent's prompt draft, as typing in its prompt box does. The draft holds the text and no picked file ranges.
 
-PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{"text":<text>,"picked":[]}', serializedPrompt: <text, trimmed>}. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{"text":<text>,"picked":[]}', serializedPrompt: <text, trimmed>}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents draft save [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <text>
@@ -3453,7 +3502,7 @@ qits workspaces agents draft save 00000000-0000-4000-8000-0000000000a1 'Check th
 
 Delete the agent's saved prompt draft: Discard on a restored draft.
 
-DELETE /workspaces/api/agents/{id}/prompt-draft. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
+DELETE /workspaces/api/agents/{id}/prompt-draft. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
 
 ```
 qits workspaces agents draft discard [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3482,7 +3531,7 @@ qits workspaces agents draft discard 00000000-0000-4000-8000-0000000000a1
 
 Read the agent's conversation: its harness command's transcript, in order. The agent's Chat tab, without the live socket.
 
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents chat --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3514,7 +3563,7 @@ qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1 -
 
 End the agent's running harness command: Terminate on a live chat.
 
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents terminate --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3545,7 +3594,7 @@ qits workspaces agents terminate 00000000-0000-4000-8000-0000000000a1 --workspac
 
 Rewrite rough notes into a prompt, in the slot's container: Refine in the prompt box. Prints the rewrite; nothing is sent to an agent.
 
-POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+POST /workspaces/container/{slot}/prompt-refinements with {transcript, preamble?}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents refine --workspace <n> [--output table|json] [--preamble <text>] [--projects-url <url>] [--workspaces-url <url>] <notes>
@@ -3578,7 +3627,7 @@ The agent's harness on its slot's daemon: its last command, whether it still run
 
 With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since `qits workspaces agents chat` reads it.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents harness --workspace <n> [--attach] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3616,7 +3665,7 @@ The agent's worktree, as its Files tab shows it: the tree, one file, and the fra
 
 The agent's worktree: without --path the whole tree, every gitignored directory a stub with its entry count; with --path that directory, one level deep.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents files list --workspace <n> [--output table|json] [--path <dir>] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3648,7 +3697,7 @@ qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspa
 
 One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB cap, is not shown.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents files read --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <path>
@@ -3679,7 +3728,7 @@ qits workspaces agents files read 00000000-0000-4000-8000-0000000000a1 src/main/
 
 The frameworks the agent's worktree holds (each with its member paths) and which tests reach each source file: the Files tab's footer and its test links.
 
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents files detect --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
@@ -3713,7 +3762,7 @@ Whether anybody signed the slot's harnesses in, on the credential volume every c
 
 Each harness of the slot's daemon, whether it is signed in, and the daemon's hint when it is not.
 
-GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agents/available. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents sign-in status --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3742,7 +3791,7 @@ qits workspaces agents sign-in status --workspace 1
 
 Start a harness's sign-in in the slot's container: Open the sign-in terminal. It is an interactive terminal: --attach attaches this one to it at once, or `qits workspaces attach <command> --workspace <n>` later, with the command id this prints. The agent's Terminal tab in the landing app shows the same terminal.
 
-POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+POST /workspaces/container/{slot}/agents/sign-in with {agentType} for --harness, else {}; the answer's command.id is the terminal's command. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents sign-in open --workspace <n> [--attach] [--harness CLAUDE|KIMI] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3780,7 +3829,7 @@ The plugins on the agent home every container of the slot's daemon shares: the p
 
 The plugins installed, each marketplace-qualified, and whether it is switched on.
 
-GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+GET /workspaces/container/{slot}/agent-plugins. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents plugins list --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
@@ -3809,7 +3858,7 @@ qits workspaces agents plugins list --workspace 1
 
 Install a plugin on the shared agent home: Install on a plugin not installed yet. Prints the installed set as it now is.
 
-POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's.
+POST /workspaces/container/{slot}/agent-plugins/{pluginId}/install with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
 
 ```
 qits workspaces agents plugins install --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <plugin>
@@ -3837,13 +3886,15 @@ qits workspaces agents plugins install pyright-lsp --workspace 1
 
 ## qits targets
 
-The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds; and sign a target in.
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; sign a target in; and read or handle a target's own docker containers and volumes without a shell on it.
 
 A target is named by its name or its id (`qits targets list` shows both).
 
 ### Notes
 
-- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent or (for all but login-check) qits:system; qits:agent is refused (HTTP 403) by design. Each command's help names its door.
+- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent, qits:desk-admin or (for all but login-check) qits:system; qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
+- Ending a lease takes qits:admin, qits:admin-agent or qits:desk-admin, which end any lease and are audited, or qits:system, which ends its own.
+- `qits targets docker` needs qits:admin, qits:admin-agent or qits:desk-admin; qits:agent and qits:system are refused (HTTP 403). Every call is audited; see its own help.
 - create and rotate-token print an install line that carries a one-time token: alone on stdout, shown once, and not served by the qits MCP server.
 - --system-url and --output may come before or after the command.
 
@@ -3910,7 +3961,7 @@ qits targets show --target localhost -o json
 
 Declare a target and print the line that installs its runner, with a one-time registration token in it.
 
-POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine. Lost, `qits targets rotate-token` makes a new one.
 
@@ -3950,7 +4001,7 @@ qits targets create --name buildbox --description 'The build machine under the d
 
 Mint a new registration token and print the line that installs its runner with it. On a target whose runner has not registered yet, this is the first token's replacement; on a REGISTERED target, running the new line reinstalls its runner under the same target (its id is kept) and the old runner's client is decommissioned once the new one registers.
 
-POST /system/api/targets/{id}/registration-token with an optional {slots?} (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+POST /system/api/targets/{id}/registration-token with an optional {slots?} (HTTP 200 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine.
 
@@ -3987,7 +4038,7 @@ qits targets rotate-token --target buildbox --slots 8
 
 Change a target's description or slot minimums. Only what is given is sent; a minimum left out keeps its value.
 
-PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 ```
 qits targets update --target <name|id> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--system-url <url>]
@@ -4022,7 +4073,7 @@ qits targets update --target localhost --description 'The build machine under th
 
 Lift a target's quarantine. The service quarantines a target itself, after a failed health check, or when it registers.
 
-POST /system/api/targets/{id}/greenlight, no body. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+POST /system/api/targets/{id}/greenlight, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design.
 
 ```
 qits targets greenlight --target <name|id> [--output table|json] [--system-url <url>]
@@ -4080,7 +4131,7 @@ qits targets healthcheck --target localhost
 
 Ask a connected target to probe its credential volume's sign-in again. The result shows in a later `qits targets show` or `qits targets list`.
 
-POST /system/api/targets/{id}/login-check, no body (HTTP 202). It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+POST /system/api/targets/{id}/login-check, no body (HTTP 202). It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design.
 
 ```
 qits targets login-check --target <name|id> [--output table|json] [--system-url <url>]
@@ -4110,7 +4161,7 @@ qits targets login-check --target localhost
 
 Decommission a target: retire its runner and give its credentials back.
 
-DELETE /system/api/targets/{id}. It needs qits:admin, qits:admin-agent or qits:system, which a person's token or qits-system's own carries. qits:agent is refused (HTTP 403) by design.
+DELETE /system/api/targets/{id}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 ```
 qits targets delete --target <name|id> [--output table|json] [--system-url <url>]
@@ -4138,9 +4189,9 @@ qits targets delete --target localhost
 
 ## qits targets leases
 
-Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state.
+Leases, oldest first: filter by target, slot type (ci, workspace or desk) or state. show reads one lease; end ends one.
 
-GET /system/api/leases?targetId=&slotType=&state=. qits:admin, qits:admin-agent and qits:agent read every lease; qits:system reads only its own.
+GET /system/api/leases?targetId=&slotType=&state=. qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read every lease; qits:system reads only its own.
 
 ```
 qits targets leases [--output table|json] [--state <state>] [--system-url <url>] [--target <name|id>] [--type ci|workspace|desk]
@@ -4160,6 +4211,8 @@ qits targets leases [--output table|json] [--state <state>] [--system-url <url>]
 qits targets leases
 qits targets leases --target localhost
 qits targets leases --type workspace --state RUNNING
+qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001
+qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'stuck in ENDING'
 ```
 
 ### Exit codes
@@ -4168,11 +4221,75 @@ qits targets leases --type workspace --state RUNNING
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
+## qits targets leases show
+
+Show one lease: its slot type, owner, state and detail, its target, and when it was requested, granted, started and ended. A lease the ENDING deadline or an operator ended says so in its detail.
+
+GET /system/api/leases/{id}. qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read any lease; qits:system reads only its own.
+
+```
+qits targets leases show [--output table|json] [--system-url <url>] <lease id>
+```
+
+| Name | What it does |
+|---|---|
+| `<lease id>` | The lease's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001
+qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001 -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets leases end
+
+End a lease, then show it. A queued lease, or one with no target, is ENDED at once. A granted or running one goes ENDING: its runner removes the container and reports it gone, and then it is ENDED. A lease already ENDING that an operator ends goes ENDED at once: that is the door for a lease stuck in ENDING because its runner never reported.
+
+The owning service (qits-ci, qits-workspaces) hears of it from the lease's change event and lets go of its run or slot.
+
+DELETE /system/api/leases/{id}?reason=. It needs qits:admin, qits:admin-agent or qits:desk-admin, which end any lease, or qits:system, which ends only its own (HTTP 403 NOT_YOUR_LEASE). An operator's end is audited (target_audit, LEASE_END). qits:agent alone is refused (HTTP 403).
+
+```
+qits targets leases end [--output table|json] [--reason <text>] [--system-url <url>] <lease id>
+```
+
+| Name | What it does |
+|---|---|
+| `<lease id>` | The lease's id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--reason <text>` | Why it is ended: recorded in the audit row, and in the detail of an ENDING lease. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001
+qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'runner gone'
+```
+
+- --reason is recorded in the audit row, and in the detail of an ENDING lease it ends.
+- Ending a lease stops what runs in it: a CI run's step, or an agent's workspace container.
+
+### Exit codes
+
+- `0` The lease is ENDING or ENDED; it is printed.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
 ## qits targets sign-in
 
 Sign a target's credential volume in for a harness: starts a sign-in on the target (or resumes one with --sign-in), prints its URL and code as the runner reports them, pastes a claude code typed on stdin back to it, and waits for the harness to report signed in.
 
-GET /system/api/targets/{id}; POST .../sign-ins {harness} (or POST .../sign-ins/{id}/code {code} to resume with --sign-in and --code); then GET .../sign-ins/{id} every 2s until the sign-in ends, then GET /system/api/targets/{id} every 2s until login.<harness> is PRESENT, or --timeout passes. It needs qits:admin or qits:admin-agent, which a person's token carries. qits:agent and qits:system are refused (HTTP 403) by design.
+GET /system/api/targets/{id}; POST .../sign-ins {harness} (or POST .../sign-ins/{id}/code {code} to resume with --sign-in and --code); then GET .../sign-ins/{id} every 2s until the sign-in ends, then GET /system/api/targets/{id} every 2s until login.<harness> is PRESENT, or --timeout passes. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design.
 
 Already PRESENT: prints that and exits at once, nothing is started.
 
@@ -4207,6 +4324,304 @@ qits targets sign-in --target localhost --sign-in <id> --code 123456
 
 - `0` The harness reports PRESENT (already, or once the sign-in succeeds).
 - `1` The platform refused or cannot be reached, the sign-in failed, expired or was cancelled, no code was given at AWAITING_CODE, or --timeout passed (the message names the last state, or the command that resumes).
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker
+
+A target's own docker containers and volumes: list and inspect them, read a container's log (or a lease's own, by its id), run a command in one, stop or remove one, and read the target's audit trail.
+
+The runner answers only for resources it owns (named qits-system-runner-*, or labelled qits.system.runner=<targetId>); its own process container refuses exec, stop and rm.
+
+### Notes
+
+- It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+## qits targets docker ps
+
+The target runner's own containers (docker ps -a).
+
+GET /system/api/targets/{id}/docker/containers. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker ps --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker ps --target localhost
+qits targets docker ps --target localhost -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker inspect
+
+docker inspect of one of the runner's containers, secrets redacted.
+
+GET /system/api/targets/{id}/docker/containers/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker inspect --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker inspect --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 404: no such target, or no such container of its runner.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker logs
+
+A container's log: either --target and its name, or --lease and the lease ends up on its own container.
+
+GET /system/api/targets/{id}/docker/containers/{name}/logs?tail=&since=, or GET /system/api/leases/{id}/logs?tail=&since= for --lease. text/plain. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker logs [--lease <id>] [--output table|json] [--since <s>] [--system-url <url>] [--tail <n>] [--target <name|id>] [<name>]
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name; required with --target, and not given with --lease. |
+| `--lease <id>` | A lease's id: reads its own container's log, on its target. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--since <s>` | Only lines at or after this time. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+| `--tail <n>` | The newest lines to read. |
+| `--target <name\|id>` | The target's name or id; needs the container's name too. |
+
+### Examples
+
+```
+qits targets docker logs --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+qits targets docker logs --target localhost qits-system-runner-work-ws-1-a1b2c3d4 --tail 50
+qits targets docker logs --lease 3f2a9c1e-0000-4000-8000-000000000001
+```
+
+- --tail defaults to 200 and is capped at 5000 by the service; the output is capped at 1 MiB, and a notice on stderr says so when the service cut it.
+- --lease reads the lease's own container, resolved by its target and the qits.system.runner.lease label; HTTP 404: no such lease, it is on no target, or its container is gone. HTTP 409 TARGET_UNAVAILABLE: its target is not connected.
+- -o json has no effect here: the log is always printed as text.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker exec
+
+docker exec in one of the runner's containers: no TTY, no stdin.
+
+POST /system/api/targets/{id}/docker/containers/{name}/exec {argv, timeoutSeconds?}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker exec --target <name|id> [--output table|json] [--system-url <url>] [--timeout <seconds>] <name> [<argv>]
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `<argv>` | The command and its arguments, after --; no shell is put in front. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+| `--timeout <seconds>` | How long it may run; default 30, at most 120. |
+
+### Examples
+
+```
+qits targets docker exec --target localhost qits-system-runner-work-ws-1-a1b2c3d4 -- ls -la
+qits targets docker exec --target localhost qits-system-runner-work-ws-1-a1b2c3d4 --timeout 60 -- cat /etc/hostname
+```
+
+- --timeout defaults to 30 and is capped at 120 by the service; stdout and stderr are capped at 1 MiB each, each with its own truncation notice on stderr.
+- The exit code is the command run in the container's, printed and also this command's own exit code when it is 0..125 (a shell's reserved range above that prints but is not repeated as this command's exit, to keep it inside this CLI's own codes).
+- HTTP 403 DOCKER_REFUSED: the runner's own process container.
+
+### Exit codes
+
+- `0-125` The command ran, with this exit code.
+- `126,127` The command ran; its own exit code is printed, but not repeated here.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker stop
+
+docker stop -t 10 of one of the runner's containers.
+
+POST /system/api/targets/{id}/docker/containers/{name}/stop, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker stop --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker stop --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 403 DOCKER_REFUSED: the runner's own process container.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker rm
+
+docker rm -f of one of the runner's containers.
+
+DELETE /system/api/targets/{id}/docker/containers/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker rm --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker rm --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 403 DOCKER_REFUSED: the runner's own process container.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker volumes
+
+The target runner's own volumes (docker volume ls).
+
+GET /system/api/targets/{id}/docker/volumes. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker volumes --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker volumes --target localhost
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker volume
+
+docker volume inspect of one of the runner's volumes, with its size, secrets redacted.
+
+GET /system/api/targets/{id}/docker/volumes/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker volume --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The volume's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker volume --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 404: no such target, or no such volume of its runner.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker audit
+
+The target's docker audit rows, newest first: every call this group made against it, refusals and timeouts included.
+
+GET /system/api/targets/{id}/docker/audit?limit=. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker audit --target <name|id> [--limit <n>] [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `--limit <n>` | At most this many rows. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker audit --target localhost
+qits targets docker audit --target localhost --limit 20
+```
+
+- --limit defaults to 100 and is capped at 500 by the service.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits git-login

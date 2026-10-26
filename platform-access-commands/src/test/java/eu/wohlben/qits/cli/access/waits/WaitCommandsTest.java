@@ -39,7 +39,9 @@ class WaitCommandsTest {
     private static final String REQUEST = "4f2a91c0-1d2e-4c3b-9a8f-0123456789ab";
     private static final String RUN = "0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a";
     private static final String ENTITY = "45a14f8e-f550-45bb-a117-6b34d8c472e3";
+    private static final String PROJECT = "c9e1c2d3-0000-4000-8000-0000000000c3";
     private static final String WAITS = "/workspaces/api/agents/" + AGENT + "/waits";
+    private static final String DESK_WAITS = "/workspaces/api/desks/" + PROJECT + "/waits";
     private static final char ESC = 0x1B;
 
     @TempDir
@@ -86,6 +88,25 @@ class WaitCommandsTest {
         platform.answer("GET", "/projects/api/work/qits-123", """
                 {"id":"%s","archetype":"TICKET","qualifiedId":"qits-123","status":"IMPLEMENTING","title":"t"}
                 """.formatted(ENTITY));
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"%s","name":"qits platform","slug":"qits","description":"d","dns":null}}]}
+                """.formatted(PROJECT));
+        // The service answers the same shape on the desk door as it does on the agent one.
+        platform.route("POST", DESK_WAITS, request -> {
+            try {
+                JsonNode sent = JSON.readTree(request.body());
+                var wait = JSON.createObjectNode();
+                wait.put("id", WAIT);
+                wait.put("projectId", PROJECT);
+                wait.set("label", sent.path("label").isMissingNode() ? null : sent.get("label"));
+                wait.set("selection", sent.get("selection"));
+                wait.put("state", "OPEN");
+                wait.put("createdAt", "2026-10-10T10:00:00Z");
+                return new FakePlatform.Answer(201, wait.toString(), Map.of());
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        });
     }
 
     @AfterEach
@@ -165,6 +186,79 @@ class WaitCommandsTest {
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(platform.requests("POST", "/workspaces/api/agents/" + OTHER_AGENT + "/waits")).hasSize(1);
         assertThat(platform.requests("POST", WAITS)).isEmpty();
+    }
+
+    // --- the desk holder (qits-1618) ---
+
+    @Test
+    void deskByIdSendsToTheDeskDoor() {
+        Result result = run("wait", "--desk", PROJECT, "--event", "BuildFailed", "--when", "repoName=x");
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(platform.requests("POST", DESK_WAITS)).hasSize(1);
+        assertThat(platform.requests("POST", WAITS)).isEmpty();
+    }
+
+    @Test
+    void deskAcceptsASlugOrName() {
+        assertThat(run("wait", "--desk", "qits", "--event", "BuildFailed", "--when", "repoName=x").exit()).isZero();
+        assertThat(platform.requests("POST", DESK_WAITS)).hasSize(1);
+
+        assertThat(run("wait", "--desk", "qits platform", "--event", "BuildFailed", "--when", "repoName=x").exit())
+                .isZero();
+        assertThat(platform.requests("POST", DESK_WAITS)).hasSize(2);
+    }
+
+    @Test
+    void deskOverridesTheAgentEnvironment() {
+        Result result = run("wait", "--desk", PROJECT, "--event", "BuildFailed", "--when", "repoName=x");
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(platform.requests("POST", WAITS)).isEmpty();
+    }
+
+    @Test
+    void theDeskEnvironmentIsUsedAsGivenWithNoLookup() {
+        env.remove("QITS_AGENT_ID");
+        env.put("QITS_DESK_PROJECT", PROJECT);
+
+        Result result = run("wait", "--event", "BuildFailed", "--when", "repoName=x");
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(platform.requests("POST", DESK_WAITS)).hasSize(1);
+        assertThat(platform.requests("GET", "/projects/api/projects")).isEmpty();
+    }
+
+    @Test
+    void agentAndDeskAreMutuallyExclusive() {
+        Result result = run("wait", "--agent", AGENT, "--desk", PROJECT, "--event", "BuildFailed", "--when", "repoName=x");
+
+        assertThat(result.exit()).isEqualTo(2);
+        assertThat(result.err()).contains("--agent and --desk are mutually exclusive");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void withNoHolderAtAllItNamesAllFour() {
+        env.remove("QITS_AGENT_ID");
+
+        Result result = run("wait", "--event", "BuildFailed", "--when", "repoName=x");
+
+        assertThat(result.exit()).isEqualTo(2);
+        assertThat(result.err()).contains("--agent").contains("--desk").contains("QITS_AGENT_ID")
+                .contains("QITS_DESK_PROJECT");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void listAndCancelUseTheDeskHolderToo() {
+        platform.answer("GET", DESK_WAITS, "[]");
+        assertThat(run("wait", "--desk", PROJECT, "list").out()).contains("No waits.");
+
+        platform.answer("DELETE", DESK_WAITS + "/" + WAIT, 204, "");
+        Result cancel = run("wait", "--desk", PROJECT, "cancel", WAIT);
+        assertThat(cancel.exit()).as(cancel.err()).isZero();
+        assertThat(platform.requests("DELETE", DESK_WAITS + "/" + WAIT)).hasSize(1);
     }
 
     @Test

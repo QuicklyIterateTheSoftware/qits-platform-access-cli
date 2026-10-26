@@ -8,26 +8,58 @@ package eu.wohlben.qits.cli.access.targets;
  */
 final class Doors {
 
-    /** listTargets, getTarget, requestTargetHealthCheck: qits:admin, qits:admin-agent, qits:system, qits:agent. */
+    /**
+     * listTargets, getTarget, requestTargetHealthCheck: qits:admin, qits:admin-agent, qits:desk-admin,
+     * qits:system, qits:agent.
+     */
     static final String READ = "Any credential may call it, qits:agent included.";
 
     /**
      * createTarget, rotateTargetRegistrationToken, patchTarget, deleteTarget: qits:admin,
-     * qits:admin-agent or qits:system.
+     * qits:admin-agent, qits:desk-admin (epic qits-1621) or qits:system.
      */
-    static final String WRITE = "It needs qits:admin, qits:admin-agent or qits:system, which a person's token or "
-            + "qits-system's own carries. qits:agent is refused (HTTP 403) by design.";
+    static final String WRITE = "It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a "
+            + "person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP "
+            + "403) by design.";
 
     /**
      * greenlightTarget, requestTargetLoginCheck, createSignIn, getSignIn, postSignInCode,
-     * deleteSignIn: qits:admin or qits:admin-agent only.
+     * deleteSignIn: qits:admin, qits:admin-agent or qits:desk-admin only.
      */
-    static final String ADMIN_ONLY = "It needs qits:admin or qits:admin-agent, which a person's token carries. "
-            + "qits:agent and qits:system are refused (HTTP 403) by design.";
+    static final String ADMIN_ONLY = "It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's "
+            + "token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by "
+            + "design.";
 
-    /** listLeases: qits:system sees its own leases; qits:admin, qits:admin-agent and qits:agent see every lease. */
-    static final String LEASES = "qits:admin, qits:admin-agent and qits:agent read every lease; qits:system reads "
-            + "only its own.";
+    /**
+     * listLeases: qits:system sees its own leases; qits:admin, qits:admin-agent, qits:desk-admin and
+     * qits:agent see every lease.
+     */
+    static final String LEASES = "qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read every lease; "
+            + "qits:system reads only its own.";
+
+    /** getLease: as listLeases, one lease; qits:system reads only its own (404 otherwise). */
+    static final String LEASE = "qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read any lease; "
+            + "qits:system reads only its own.";
+
+    /**
+     * endLease (epic qits-1621): qits:system ends its own leases; qits:admin, qits:admin-agent and
+     * qits:desk-admin end any lease, and each such end is audited.
+     */
+    static final String END_LEASE = "It needs qits:admin, qits:admin-agent or qits:desk-admin, which end any lease, "
+            + "or qits:system, which ends only its own (HTTP 403 NOT_YOUR_LEASE). An operator's end is audited "
+            + "(target_audit, LEASE_END). qits:agent alone is refused (HTTP 403).";
+
+    /**
+     * Every {@code /targets/{id}/docker} and {@code /leases/{id}/logs} door (epic qits-1621, dossier
+     * "Docker over the runner socket"): qits:admin, qits:admin-agent or qits:desk-admin only.
+     */
+    static final String DOCKER = "It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token "
+            + "or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. "
+            + "Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts "
+            + "included; `qits targets docker audit` reads them back. An inspect's environment and label values, "
+            + "and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own "
+            + "answer and the service redacts inspect and listing JSON again. The runner only touches its own "
+            + "target's containers and volumes.";
 
     private Doors() {
     }

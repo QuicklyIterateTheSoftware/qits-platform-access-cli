@@ -285,10 +285,12 @@ class InteractionClassesTest {
 
         // The live streams run on their own and hold their query; `artifacts publish npm` publishes
         // and keeps its npm subcommands (epic qits-620); `wait` declares a wait bare and holds its
-        // presets, list and cancel (qits-1153); every other parent only leads.
+        // presets, list and cancel (qits-1153); `targets leases` lists bare and holds show and end
+        // (qits-1621); every other parent only leads.
         List<String> runnableParents = new ArrayList<>();
         collectRunnableParents(qits, "", runnableParents);
-        assertThat(runnableParents).containsExactlyInAnyOrder("events", "observe", "wait", "artifacts publish npm");
+        assertThat(runnableParents).containsExactlyInAnyOrder(
+                "events", "observe", "wait", "artifacts publish npm", "targets leases");
         assertThat(qits.child("events").child("query").interaction()).isEqualTo(Interaction.PLAIN);
         assertThat(qits.child("observe").child("query").interaction()).isEqualTo(Interaction.PLAIN);
     }

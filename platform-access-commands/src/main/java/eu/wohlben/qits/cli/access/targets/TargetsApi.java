@@ -1,9 +1,12 @@
 package eu.wohlben.qits.cli.access.targets;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
+import eu.wohlben.qits.cli.access.platform.PlatformClient.TextAnswer;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -137,6 +140,109 @@ final class TargetsApi {
         add(query, "slotType", slotType);
         add(query, "state", state);
         return client.get(uri(API + "/leases" + (query.isEmpty() ? "" : "?" + String.join("&", query))));
+    }
+
+    /** {@code getLease}: one lease, a 200 {@code LeaseDto}; 404 for no such lease, or one not the caller's. */
+    JsonNode getLease(String id) throws CliFailure, InterruptedException {
+        return client.get(uri(API + "/leases/" + segment(id)));
+    }
+
+    /**
+     * {@code endLease}: a 200 {@code LeaseDto}, ENDING or ENDED; the reason, when given, as {@code
+     * ?reason=} (epic qits-1621, dossier "CI cancel and lease end"). An operator (qits:admin,
+     * qits:admin-agent, qits:desk-admin) ends any lease, and the service audits it; an ENDING lease
+     * an operator ends goes ENDED at once. qits:system ends only its own (403 NOT_YOUR_LEASE).
+     */
+    JsonNode endLease(String id, String reason) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        add(query, "reason", reason);
+        return client.delete(uri(API + "/leases/" + segment(id) + (query.isEmpty() ? "" : "?" + query.getFirst())));
+    }
+
+    // --- docker (epic qits-1621, dossier "Docker over the runner socket") ---
+
+    /** {@code listTargetContainers}: {@code docker ps -a} rows, labels redacted. */
+    JsonNode containers(String targetId) throws CliFailure, InterruptedException {
+        return client.get(uri(dockerPath(targetId) + "/containers"));
+    }
+
+    /** {@code inspectTargetContainer}: {@code docker inspect}, secrets redacted; 404 for no such container. */
+    JsonNode container(String targetId, String name) throws CliFailure, InterruptedException {
+        return client.get(uri(dockerPath(targetId) + "/containers/" + segment(name)));
+    }
+
+    /**
+     * {@code targetContainerLogs}: {@code docker logs}, text/plain with {@code X-Qits-Truncated}.
+     * {@code tail} and {@code since} are left out when null or blank.
+     */
+    TextAnswer containerLogs(String targetId, String name, Integer tail, String since)
+            throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        if (tail != null) {
+            query.add("tail=" + tail);
+        }
+        add(query, "since", since);
+        return client.getText(uri(dockerPath(targetId) + "/containers/" + segment(name) + "/logs"
+                + (query.isEmpty() ? "" : "?" + String.join("&", query))));
+    }
+
+    /**
+     * {@code execInTargetContainer}: {@code {argv, timeoutSeconds?}}, a 200 {@code {exitCode, stdout,
+     * stderr, truncated}}. No TTY, no stdin; 400 for an empty argv.
+     */
+    JsonNode execInContainer(String targetId, String name, List<String> argv, Integer timeoutSeconds)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JsonNodeFactory.instance.objectNode();
+        ArrayNode args = body.putArray("argv");
+        argv.forEach(args::add);
+        if (timeoutSeconds != null) {
+            body.put("timeoutSeconds", timeoutSeconds);
+        }
+        return client.post(uri(dockerPath(targetId) + "/containers/" + segment(name) + "/exec"), body);
+    }
+
+    /** {@code stopTargetContainer}: {@code docker stop -t 10}, no body; 403 DOCKER_REFUSED for the runner's own. */
+    JsonNode stopContainer(String targetId, String name) throws CliFailure, InterruptedException {
+        return client.post(uri(dockerPath(targetId) + "/containers/" + segment(name) + "/stop"));
+    }
+
+    /** {@code removeTargetContainer}: {@code docker rm -f}; 403 DOCKER_REFUSED for the runner's own. */
+    JsonNode removeContainer(String targetId, String name) throws CliFailure, InterruptedException {
+        return client.delete(uri(dockerPath(targetId) + "/containers/" + segment(name)));
+    }
+
+    /** {@code listTargetVolumes}: {@code docker volume ls} rows, labels redacted. */
+    JsonNode volumes(String targetId) throws CliFailure, InterruptedException {
+        return client.get(uri(dockerPath(targetId) + "/volumes"));
+    }
+
+    /** {@code inspectTargetVolume}: {@code docker volume inspect} with its size, secrets redacted. */
+    JsonNode volume(String targetId, String name) throws CliFailure, InterruptedException {
+        return client.get(uri(dockerPath(targetId) + "/volumes/" + segment(name)));
+    }
+
+    /** {@code targetAudit}: the target's audit rows, newest first; {@code limit} left out when null. */
+    JsonNode targetAudit(String targetId, Integer limit) throws CliFailure, InterruptedException {
+        String query = limit == null ? "" : "?limit=" + limit;
+        return client.get(uri(dockerPath(targetId) + "/audit" + query));
+    }
+
+    /**
+     * {@code leaseLogs}: a lease's own log, {@code docker logs} of its container on its target.
+     * 404 for no such lease, its container gone, or it is on no target; 409 TARGET_UNAVAILABLE.
+     */
+    TextAnswer leaseLogs(String leaseId, Integer tail, String since) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        if (tail != null) {
+            query.add("tail=" + tail);
+        }
+        add(query, "since", since);
+        return client.getText(uri(API + "/leases/" + segment(leaseId) + "/logs"
+                + (query.isEmpty() ? "" : "?" + String.join("&", query))));
+    }
+
+    private static String dockerPath(String targetId) {
+        return targetPath(targetId) + "/docker";
     }
 
     private static String targetPath(String id) {

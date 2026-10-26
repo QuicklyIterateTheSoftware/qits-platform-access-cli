@@ -189,6 +189,36 @@ public final class PlatformClient {
         }
     }
 
+    /** A GET whose answer is {@code text/plain}, with a header read off it: {@code docker logs}. */
+    public record TextAnswer(String body, boolean truncated) {
+    }
+
+    /**
+     * A GET read as raw text rather than JSON, with {@code X-Qits-Truncated} read off the answer: a
+     * target's own {@code docker logs} and a lease's (epic qits-1621). A refusal reads as one of
+     * {@link #get}'s.
+     */
+    public TextAnswer getText(URI uri) throws CliFailure, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(REQUEST_TIMEOUT)
+                .header("Accept", "text/plain")
+                .header("Authorization", bearer())
+                .GET()
+                .build();
+        try (HttpClient http = newClient()) {
+            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            int status = response.statusCode();
+            if (status < 200 || status >= 300) {
+                throw explained(status, refusal("GET", uri, status, response.headers(), response.body()));
+            }
+            boolean truncated = response.headers().firstValue("X-Qits-Truncated")
+                    .map(Boolean::parseBoolean).orElse(false);
+            return new TextAnswer(response.body(), truncated);
+        } catch (IOException e) {
+            throw CliFailure.retryable("Cannot reach " + uri + ": " + describe(e));
+        }
+    }
+
     /**
      * A HEAD: what the service says about a file without sending it ({@code Content-Length}, a
      * digest). A refusal reads as one of {@link #get}'s.

@@ -36,8 +36,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footer = {
                 "- --entity is the epic or the ticket, not the refinement. An item with no open refinement has no "
                         + "designs.",
-                "- Reading takes qits:admin or qits:agent. Writing takes qits:admin or qits:admin-agent; an "
-                        + "agent with qits:agent alone is refused (HTTP 403)."})
+                "- Reading takes qits:admin or qits:agent. Writing takes qits:admin, qits:admin-agent or "
+                        + "qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403)."})
 public class WorkDesignCommand implements Runnable {
 
     @CommandLine.ParentCommand

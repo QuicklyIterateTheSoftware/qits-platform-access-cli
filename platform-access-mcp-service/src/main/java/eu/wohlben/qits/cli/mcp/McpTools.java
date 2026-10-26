@@ -121,7 +121,9 @@ public class McpTools implements InitialResponseInfo {
             return ToolResponse.error("This call carried no bearer; nothing was run.");
         }
         ToolRunner.Result result = runner.run(tool, arguments, new RequestCredential(token),
-                ToolRunner.callEnvironment(caller.getClaim(ToolRunner.AGENT_CLAIM)));
+                ToolRunner.callEnvironment(caller.getClaim(ToolRunner.AGENT_CLAIM),
+                        caller.getClaim(ToolRunner.PROJECT_CLAIM), caller.getClaim(ToolRunner.CONTEXT_KIND_CLAIM),
+                        caller.getGroups()));
         List<TextContent> content = result.texts().stream().map(TextContent::new).toList();
         return new ToolResponse(result.error(), content);
     }

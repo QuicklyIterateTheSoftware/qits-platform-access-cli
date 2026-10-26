@@ -35,8 +35,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --entity is the epic or the ticket, not the room. The room's own id is in show's ID column.",
-                "- show takes qits:admin, qits:admin-agent or qits:agent. open and discard take qits:admin or "
-                        + "qits:admin-agent; an agent with qits:agent alone is refused (HTTP 403)."})
+                "- show takes qits:admin, qits:admin-agent, qits:desk-admin or qits:agent. open and discard take "
+                        + "qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused "
+                        + "(HTTP 403)."})
 public class WorkRefinementCommand implements Runnable {
 
     @CommandLine.ParentCommand

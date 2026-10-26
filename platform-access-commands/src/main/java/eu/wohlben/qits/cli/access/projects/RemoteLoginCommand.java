@@ -54,8 +54,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "repository's last backup. The pushes run in the background, so a result still says "
                         + "AUTH_REQUIRED until its push has run: ask again with `qits repositories list -o json`.",
                 "With stdin not a terminal it only streams what the terminal prints: nothing is typed.",
-                "WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent, a "
-                        + "person's token; qits:agent is refused."},
+                "WS /projects/api/repositories/{id}/remote-login. Needs qits:admin or qits:admin-agent; "
+                        + "qits:agent alone is refused, and so is qits:desk-admin: the socket runs an interactive "
+                        + "push to the forge, and the delivery desk never pushes (epic qits-1621)."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits repositories remote-login --project qits",
                 "  qits repositories remote-login --project qits --repository qits-ci-service",

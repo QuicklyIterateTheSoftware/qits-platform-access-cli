@@ -6,8 +6,8 @@ The `qits` command: access to the qits platform from a Linux or WSL workstation.
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
 that session fresh), `qits projects|repositories|work|release-request` (the projects service;
-`work` is every work item, of every archetype), `qits ci runs|run|retry|report` (qits-ci's runs, a
-run's step logs, a retry, a run's release reports), `qits database diagram` (a repository's entity
+`work` is every work item, of every archetype), `qits ci runs|run|retry|cancel|report` (qits-ci's runs, a
+run's step logs, a retry, a cancel, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
 delete), `qits events` (the live event
 stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits workspaces` (every action
@@ -158,7 +158,7 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                terminal/'s TerminalAttach; without --repository it is the list's
                wrapper.repositoryId, as the page's Backups panel picks it, and a clean close is
                followed by the panel's project-wide backup-sync and one re-read 3 s later
-    ci/        qits ci: runs, run (with the step logs) and retry, on qits-ci's run API
+    ci/        qits ci: runs, run (with the step logs), retry and cancel, on qits-ci's run API
     report/    qits ci report: release reports. The framework (ReportKind, ReportParser,
                StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
                and parsers (ReportKinds: a new kind is one entry there plus its class), the

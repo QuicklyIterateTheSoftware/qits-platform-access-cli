@@ -11,8 +11,8 @@ Commands:
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
   and `qits release-request … list|create|join|withdraw|approve|decline|regenerate` read from and ask the projects service;
   `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in.
-- `qits ci runs|run|retry` lists a repository's CI runs, shows a run with its steps and their logs,
-  and runs a finished run again. `qits ci report show` shows a run's release reports (which tests
+- `qits ci runs|run|retry|cancel` lists a repository's CI runs, shows a run with its steps and their logs,
+  runs a finished run again, and stops a queued or running one. `qits ci report show` shows a run's release reports (which tests
   failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
   change adds or removes; the entity diagram's tables and columns it changes); `qits ci report submit` is the
   CI step's side that collects and uploads them.
@@ -22,9 +22,10 @@ Commands:
   ones that already happened in a window of time.
 - `qits observe` prints what qits-observability takes in (logs, spans, metrics) as it arrives,
   filtered by the service; `qits observe query` asks the same filters of what it still holds.
-- `qits wait` declares what an agent waits on (a release request to end, a work item to reach a
-  status, a CI run to end, or any domain event that fits a selection); the platform gives the agent
-  a turn when it happens. `qits wait list|cancel` show and end the agent's waits.
+- `qits wait` declares what an agent, or a project's desk, waits on (a release request to end, a
+  work item to reach a status, a CI run to end, or any domain event that fits a selection); the
+  platform gives the holder a turn when it happens. `qits wait list|cancel` show and end the
+  holder's waits.
 - `qits workspaces` is every action the landing app's workspace pages offer, one command each, on
   the same qits-workspaces door: the slots and their containers (start, stop, recreate, the start's
   log), the agents (create, discard, prompt, the prompt draft, the chat, the files, the harness,
@@ -565,6 +566,7 @@ Installing it is not part of this version.
         [--status <STATUS>] [--release-request <id>] [--limit <n>]
     qits ci run <run id> [--logs] [--project <project> --repository <repository>]
     qits ci retry <run id> [--project <project> --repository <repository>]
+    qits ci cancel <run id> [--reason <text>] [--project <project> --repository <repository>]
     qits ci report show <run id> [--kind <kind>] [--project <project> --repository <repository>]
     qits ci report submit --exit-code <n> [--root <dir>]          (in a CI step only)
     qits users invite
@@ -612,6 +614,8 @@ Installing it is not part of this version.
         [--description <text>]
     qits targets greenlight|healthcheck|login-check|delete --target <name|id>
     qits targets leases [--target <name|id>] [--type ci|workspace|desk] [--state <state>]
+    qits targets leases show <lease id>
+    qits targets leases end <lease id> [--reason <text>]
     qits targets sign-in --target <name|id> [--harness claude|kimi] [--timeout <duration>]
       [--sign-in <id>] [--code <code>]
 
@@ -1370,17 +1374,24 @@ Notes go to stderr, one line each with a time:
 
 ### qits wait
 
-    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>] [--agent <id>]
+    qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>] [--agent <id>|--desk <project>]
 
-An agent declares what it waits on; the platform gives it a turn when that happens (qits-1153). The
-command sends the wait to qits-workspaces (`POST /workspaces/api/agents/{agentId}/waits`), prints it
-and returns at once. It never blocks. Declare the wait, then end the turn: the next turn names what
-fired, the event or the timeout. Never poll for the same thing in a background loop.
+An agent, or a project's desk, declares what it waits on; the platform gives the holder a turn when
+that happens (qits-1153, qits-1618). The command sends the wait to qits-workspaces — `POST
+/workspaces/api/agents/{agentId}/waits` for an agent, `POST /workspaces/api/desks/{projectId}/waits`
+for a desk — prints it and returns at once. It never blocks. Declare the wait, then end the turn:
+the next turn names what fired, the event or the timeout. Never poll for the same thing in a
+background loop.
 
-The agent is `--agent`, else `QITS_AGENT_ID`. The harness sets the variable in an agent's
-environment; the MCP server runs the command without that environment, so it sets the variable from
-the `agent` claim of the caller's token. Without either the command exits with 2. An agent may
-declare and cancel waits for itself only.
+The holder is `--agent` or `--desk` (never both), else `QITS_AGENT_ID`, else `QITS_DESK_PROJECT`.
+The harness sets `QITS_AGENT_ID` in an agent's environment and `QITS_DESK_PROJECT` in a project's
+kept front-desk session; the MCP server runs the command without that environment, so it sets
+`QITS_AGENT_ID` from the `agent` claim of the caller's token, or `QITS_DESK_PROJECT` from its
+`project` claim when the token names no agent and is a desk's (the role `qits:desk-admin`, or a
+`context_kind` of `desk-session` or `desk-delivery`). `--desk` takes the project's id, slug or name,
+looked up in the projects service the way the other commands with a `--project` do; the environment
+variable is always a project uuid already. Without any of the four the command exits with 2. An
+agent may declare and cancel waits for itself only; a project's desk, for its own project's only.
 
 Each `--when` is one group of conditions that must all hold; an event that fits any group matches,
 and with no `--when` every event of the name does. The conditions are those of `qits observe`, on
@@ -1421,7 +1432,8 @@ release-request list` shows it (`qits-ci-service-rr-12`, in that case) or its wh
 preset gives a label of its own (`release request qits-ci-service-rr-12 to end`); `--label`
 replaces it.
 
-`qits wait list [--state <STATE>]` shows the agent's waits, and `qits wait cancel <wait id>` ends one.
+`qits wait list [--state <STATE>]` shows the holder's waits, and `qits wait cancel <wait id>` ends
+one.
 
 ### qits workspaces
 
@@ -1514,16 +1526,22 @@ targets list` shows both); `--target` resolves a name by reading `listTargets`.
     qits targets delete --target <name|id>        DELETE /system/api/targets/{id}
     qits targets leases [--target <name|id>]      GET  /system/api/leases?targetId=&slotType=&state=
       [--type ci|workspace|desk] [--state <state>]
+    qits targets leases show <lease id>           GET  /system/api/leases/{id}
+    qits targets leases end <lease id>            DELETE /system/api/leases/{id}?reason=
+      [--reason <text>]
     qits targets sign-in --target <name|id>       GET  /system/api/targets/{id}; POST …/sign-ins
       [--harness claude|kimi] [--timeout <duration>]  {harness}, then GET …/sign-ins/{id} every 2s
       [--sign-in <id>] [--code <code>]                until it ends, then GET the target every 2s
 
 Who may: reading, and asking for a health check, is open to every credential, `qits:agent` included.
 Declaring (`create`), rotating a registration token (`rotate-token`), updating and deleting need
-`qits:admin`, `qits:admin-agent` or `qits:system`; greenlight and
-login-check need `qits:admin` or `qits:admin-agent` only; `qits:agent` is refused with 403 by design
-wherever it is not named. `qits targets leases` reads every lease for `qits:admin`, `qits:admin-agent`
-and `qits:agent`, and only the caller's own for `qits:system`. Each command's help names its door and
+`qits:admin`, `qits:admin-agent`, `qits:desk-admin` or `qits:system`; greenlight and
+login-check need `qits:admin`, `qits:admin-agent` or `qits:desk-admin` only; `qits:agent` alone is refused
+with 403 by design wherever it is not named. `qits targets leases` (and `leases show`) reads every lease for
+`qits:admin`, `qits:admin-agent`, `qits:desk-admin` and `qits:agent`, and only the caller's own for
+`qits:system`. `qits targets leases end` takes `qits:admin`, `qits:admin-agent` or `qits:desk-admin`, which
+end any lease and are audited (`target_audit`, `LEASE_END`), or `qits:system`, which ends only its own; a
+lease already ENDING that an operator ends goes ENDED at once (epic qits-1621). Each command's help names its door and
 roles.
 
 `qits targets create` declares a target (`{name, description?, minimums?: {ci, workspace, desk},

@@ -1,6 +1,8 @@
 package eu.wohlben.qits.cli.access.ci;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 
@@ -41,6 +43,19 @@ public final class CiApi {
     /** {@code {"runId":…}}: the new run, queued. HTTP 409 when the run has not finished. */
     public JsonNode retry(String runId) throws CliFailure, InterruptedException {
         return client.post(uri("/ci/api/runs/" + segment(runId) + "/retry"));
+    }
+
+    /**
+     * Cancels a queued or running run: {@code 202} with no body, since a running run has only been
+     * asked to stop. HTTP 404 for no such run, 409 for one that has already finished. The body is
+     * qits-ci's {@code CancelRunRequest}, {@code {"reason"}}, the reason left out when there is none.
+     */
+    public void cancel(String runId, String reason) throws CliFailure, InterruptedException {
+        ObjectNode body = JsonNodeFactory.instance.objectNode();
+        if (reason != null) {
+            body.put("reason", reason);
+        }
+        client.post(uri("/ci/api/runs/" + segment(runId) + "/cancel"), body);
     }
 
     /**
