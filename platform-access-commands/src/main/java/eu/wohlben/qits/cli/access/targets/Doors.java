@@ -49,6 +49,18 @@ final class Doors {
             + "or qits:system, which ends only its own (HTTP 403 NOT_YOUR_LEASE). An operator's end is audited "
             + "(target_audit, LEASE_END). qits:agent alone is refused (HTTP 403).";
 
+    /**
+     * Every {@code /targets/{id}/docker} and {@code /leases/{id}/logs} door (epic qits-1621, dossier
+     * "Docker over the runner socket"): qits:admin, qits:admin-agent or qits:desk-admin only.
+     */
+    static final String DOCKER = "It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token "
+            + "or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. "
+            + "Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts "
+            + "included; `qits targets docker audit` reads them back. An inspect's environment and label values, "
+            + "and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own "
+            + "answer and the service redacts inspect and listing JSON again. The runner only touches its own "
+            + "target's containers and volumes.";
+
     private Doors() {
     }
 }

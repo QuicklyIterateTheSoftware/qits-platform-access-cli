@@ -696,4 +696,169 @@ class TargetsCommandsTest {
             assertThat(marker.interaction()).as(command.getSimpleName()).isEqualTo(Interaction.LOCAL);
         }
     }
+
+    // --- docker (qits-1646) ---
+
+    private static final String CONTAINER = "qits-system-runner-work-ws-1-a1b2c3d4";
+    private static final String DOCKER = "/system/api/targets/" + TARGET + "/docker";
+
+    @Test
+    void dockerPsIsATableAndJson() throws Exception {
+        platform.answer("GET", DOCKER + "/containers", "[{\"Names\":\"" + CONTAINER
+                + "\",\"Image\":\"qits/workspace:2026\",\"Status\":\"Up 2 hours\"}]");
+
+        Result table = run("targets", "docker", "ps", "--target", TARGET);
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("NAME").contains(CONTAINER).contains("Up 2 hours");
+
+        Result json = run("targets", "docker", "ps", "--target", TARGET, "-o", "json");
+        assertThat(JSON.readTree(json.out()).get(0).path("Image").asText()).isEqualTo("qits/workspace:2026");
+    }
+
+    @Test
+    void dockerPsWithNoContainersSaysSo() {
+        platform.answer("GET", DOCKER + "/containers", "[]");
+        Result table = run("targets", "docker", "ps", "--target", TARGET);
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("No containers.");
+    }
+
+    @Test
+    void dockerInspectPrintsTheRedactedInspect() throws Exception {
+        platform.answer("GET", DOCKER + "/containers/" + CONTAINER,
+                "{\"Id\":\"abc\",\"Config\":{\"Env\":[\"TOKEN=***\"]}}");
+
+        Result inspect = run("targets", "docker", "inspect", "--target", TARGET, CONTAINER);
+
+        assertThat(inspect.exit()).as(inspect.err()).isZero();
+        assertThat(JSON.readTree(inspect.out()).path("Id").asText()).isEqualTo("abc");
+    }
+
+    @Test
+    void dockerLogsByTargetReadsTheTextAndNamesATruncation() {
+        platform.answer("GET", DOCKER + "/containers/" + CONTAINER + "/logs", 200, "line one\nline two",
+                "X-Qits-Truncated", "true");
+
+        Result logs = run("targets", "docker", "logs", "--target", TARGET, CONTAINER, "--tail", "50",
+                "--since", "2026-10-23T00:00:00Z");
+
+        assertThat(logs.exit()).as(logs.err()).isZero();
+        assertThat(logs.out()).isEqualTo("line one\nline two\n");
+        assertThat(logs.err()).contains("cut off at 1 MiB");
+        assertThat(platform.requests("GET", DOCKER + "/containers/" + CONTAINER + "/logs").getFirst().query())
+                .isEqualTo("tail=50&since=2026-10-23T00%3A00%3A00Z");
+    }
+
+    @Test
+    void dockerLogsByLeaseReadsTheLeasesOwnLog() {
+        platform.answer("GET", "/system/api/leases/" + LEASE + "/logs", 200, "the lease's own log");
+
+        Result logs = run("targets", "docker", "logs", "--lease", LEASE);
+
+        assertThat(logs.exit()).as(logs.err()).isZero();
+        assertThat(logs.out()).isEqualTo("the lease's own log\n");
+        assertThat(platform.requests("GET", "/system/api/leases/" + LEASE + "/logs")).isNotEmpty();
+    }
+
+    @Test
+    void dockerLogsNeedsExactlyOneOfTargetOrLease() {
+        Result neither = run("targets", "docker", "logs", CONTAINER);
+        assertThat(neither.exit()).isEqualTo(2);
+        assertThat(neither.err()).contains("--target").contains("--lease");
+
+        Result both = run("targets", "docker", "logs", "--target", TARGET, "--lease", LEASE, CONTAINER);
+        assertThat(both.exit()).isEqualTo(2);
+
+        Result leaseWithName = run("targets", "docker", "logs", "--lease", LEASE, CONTAINER);
+        assertThat(leaseWithName.exit()).isEqualTo(2);
+        assertThat(leaseWithName.err()).contains("takes no container name");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void dockerExecSendsArgvAndMapsTheExitCode() throws Exception {
+        platform.answer("POST", DOCKER + "/containers/" + CONTAINER + "/exec",
+                "{\"exitCode\":0,\"stdout\":\"hi\\n\",\"stderr\":\"\",\"truncated\":false}");
+
+        Result exec = run("targets", "docker", "exec", "--target", TARGET, CONTAINER, "--", "echo", "hi");
+
+        assertThat(exec.exit()).as(exec.err()).isZero();
+        assertThat(exec.out()).isEqualTo("hi\n\n");
+        JsonNode sent = JSON.readTree(platform.requests("POST", DOCKER + "/containers/" + CONTAINER + "/exec")
+                .getFirst().body());
+        assertThat(sent.path("argv")).isEqualTo(JSON.createArrayNode().add("echo").add("hi"));
+    }
+
+    @Test
+    void dockerExecWithANonZeroExitCodeIsTheCommandsOwnExit() {
+        platform.answer("POST", DOCKER + "/containers/" + CONTAINER + "/exec",
+                "{\"exitCode\":3,\"stdout\":\"\",\"stderr\":\"boom\\n\",\"truncated\":false}");
+
+        Result exec = run("targets", "docker", "exec", "--target", TARGET, CONTAINER, "--", "false");
+
+        assertThat(exec.exit()).isEqualTo(3);
+        assertThat(exec.err()).isEqualTo("boom\n\n");
+    }
+
+    @Test
+    void dockerExecWithNoArgvIsRefusedBeforeAnyRequest() {
+        Result exec = run("targets", "docker", "exec", "--target", TARGET, CONTAINER);
+        assertThat(exec.exit()).isEqualTo(2);
+        assertThat(exec.err()).contains("Name the command to run");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void dockerStopAndRmPrintADoneMessage() {
+        platform.answer("POST", DOCKER + "/containers/" + CONTAINER + "/stop",
+                "{\"name\":\"" + CONTAINER + "\",\"output\":\"" + CONTAINER + "\"}");
+        Result stop = run("targets", "docker", "stop", "--target", TARGET, CONTAINER);
+        assertThat(stop.exit()).as(stop.err()).isZero();
+        assertThat(stop.out()).contains("Stopped " + CONTAINER);
+
+        platform.answer("DELETE", DOCKER + "/containers/" + CONTAINER,
+                "{\"name\":\"" + CONTAINER + "\",\"output\":\"" + CONTAINER + "\"}");
+        Result rm = run("targets", "docker", "rm", "--target", TARGET, CONTAINER);
+        assertThat(rm.exit()).as(rm.err()).isZero();
+        assertThat(rm.out()).contains("Removed " + CONTAINER);
+    }
+
+    @Test
+    void dockerVolumesAndVolume() throws Exception {
+        platform.answer("GET", DOCKER + "/volumes",
+                "[{\"Name\":\"" + CONTAINER + "\",\"Driver\":\"local\",\"Scope\":\"local\"}]");
+        Result volumes = run("targets", "docker", "volumes", "--target", TARGET);
+        assertThat(volumes.exit()).as(volumes.err()).isZero();
+        assertThat(volumes.out()).contains("NAME").contains(CONTAINER).contains("local");
+
+        platform.answer("GET", DOCKER + "/volumes/" + CONTAINER,
+                "{\"Name\":\"" + CONTAINER + "\",\"Mountpoint\":\"/var/lib/docker/volumes/x\"}");
+        Result volume = run("targets", "docker", "volume", "--target", TARGET, CONTAINER);
+        assertThat(volume.exit()).as(volume.err()).isZero();
+        assertThat(JSON.readTree(volume.out()).path("Name").asText()).isEqualTo(CONTAINER);
+    }
+
+    @Test
+    void dockerAuditIsATableNewestFirstWithTheLimitAsQuery() {
+        platform.answer("GET", DOCKER + "/audit", """
+                [{"id":"00000000-0000-4000-8000-000000000060","at":"2026-10-23T09:00:00Z","actor":"agent",
+                  "roles":"qits:admin","targetId":"%s","leaseId":null,"operation":"DOCKER_LOGS",
+                  "resource":"%s","args":{"tail":50},"outcome":"OK","detail":null}]
+                """.formatted(TARGET, CONTAINER));
+
+        Result audit = run("targets", "docker", "audit", "--target", TARGET, "--limit", "20");
+
+        assertThat(audit.exit()).as(audit.err()).isZero();
+        assertThat(audit.out()).contains("OPERATION").contains("DOCKER_LOGS").contains(CONTAINER).contains("OK");
+        assertThat(platform.requests("GET", DOCKER + "/audit").getFirst().query()).isEqualTo("limit=20");
+    }
+
+    @Test
+    void dockerHelpNamesTheRolesAndTheAudit() {
+        Result help = run("targets", "docker", "ps", "--help");
+
+        assertThat(help.exit()).as(help.err()).isZero();
+        String text = help.out().replaceAll("\\s+", " ");
+        assertThat(text).contains("qits:desk-admin").contains("target_audit").contains("redacts");
+    }
 }

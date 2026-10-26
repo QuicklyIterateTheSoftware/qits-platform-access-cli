@@ -51,12 +51,13 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 TargetsCommand.UpdateCommand.class, TargetsCommand.GreenlightCommand.class,
                 TargetsCommand.HealthcheckCommand.class, TargetsCommand.LoginCheckCommand.class,
                 TargetsCommand.DeleteCommand.class, TargetsCommand.LeasesCommand.class,
-                TargetsCommand.SignInCommand.class},
+                TargetsCommand.SignInCommand.class, TargetDockerCommand.class},
         description = {"The execution targets qits-system-runner runs on, and their leases: list them with their "
                 + "connection, slots, login and quarantine; read one in full; declare one, or rotate its registration "
                 + "token, and print the line that installs its runner; change its slot minimums or description; "
                 + "lift a quarantine; ask for a health check or a login check; delete one; list the leases a "
-                + "target or a slot type holds, show one or end one; and sign a target in.",
+                + "target or a slot type holds, show one or end one; sign a target in; and read or handle a "
+                + "target's own docker containers and volumes without a shell on it.",
                 "A target is named by its name or its id (`qits targets list` shows both)."},
         footerHeading = "%nNotes:%n",
         footer = {"- Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a "
@@ -65,6 +66,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 + "refused (HTTP 403) by design. Each command's help names its door.",
                 "- Ending a lease takes qits:admin, qits:admin-agent or qits:desk-admin, which end any lease and are "
                         + "audited, or qits:system, which ends its own.",
+                "- `qits targets docker` needs qits:admin, qits:admin-agent or qits:desk-admin; qits:agent and "
+                        + "qits:system are refused (HTTP 403). Every call is audited; see its own help.",
                 "- create and rotate-token print an install line that carries a one-time token: alone on stdout, "
                         + "shown once, and not served by the qits MCP server.",
                 "- --system-url and --output may come before or after the command."})

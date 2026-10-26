@@ -3879,7 +3879,7 @@ qits workspaces agents plugins install pyright-lsp --workspace 1
 
 ## qits targets
 
-The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; and sign a target in.
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; sign a target in; and read or handle a target's own docker containers and volumes without a shell on it.
 
 A target is named by its name or its id (`qits targets list` shows both).
 
@@ -3887,6 +3887,7 @@ A target is named by its name or its id (`qits targets list` shows both).
 
 - Reading, and asking for a health check, are open to qits:agent. Declaring, rotating a registration token, updating, deleting and asking for a login check need qits:admin, qits:admin-agent, qits:desk-admin or (for all but login-check) qits:system; qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
 - Ending a lease takes qits:admin, qits:admin-agent or qits:desk-admin, which end any lease and are audited, or qits:system, which ends its own.
+- `qits targets docker` needs qits:admin, qits:admin-agent or qits:desk-admin; qits:agent and qits:system are refused (HTTP 403). Every call is audited; see its own help.
 - create and rotate-token print an install line that carries a one-time token: alone on stdout, shown once, and not served by the qits MCP server.
 - --system-url and --output may come before or after the command.
 
@@ -4316,6 +4317,304 @@ qits targets sign-in --target localhost --sign-in <id> --code 123456
 
 - `0` The harness reports PRESENT (already, or once the sign-in succeeds).
 - `1` The platform refused or cannot be reached, the sign-in failed, expired or was cancelled, no code was given at AWAITING_CODE, or --timeout passed (the message names the last state, or the command that resumes).
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker
+
+A target's own docker containers and volumes: list and inspect them, read a container's log (or a lease's own, by its id), run a command in one, stop or remove one, and read the target's audit trail.
+
+The runner answers only for resources it owns (named qits-system-runner-*, or labelled qits.system.runner=<targetId>); its own process container refuses exec, stop and rm.
+
+### Notes
+
+- It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+## qits targets docker ps
+
+The target runner's own containers (docker ps -a).
+
+GET /system/api/targets/{id}/docker/containers. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker ps --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker ps --target localhost
+qits targets docker ps --target localhost -o json
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker inspect
+
+docker inspect of one of the runner's containers, secrets redacted.
+
+GET /system/api/targets/{id}/docker/containers/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker inspect --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker inspect --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 404: no such target, or no such container of its runner.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker logs
+
+A container's log: either --target and its name, or --lease and the lease ends up on its own container.
+
+GET /system/api/targets/{id}/docker/containers/{name}/logs?tail=&since=, or GET /system/api/leases/{id}/logs?tail=&since= for --lease. text/plain. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker logs [--lease <id>] [--output table|json] [--since <s>] [--system-url <url>] [--tail <n>] [--target <name|id>] [<name>]
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name; required with --target, and not given with --lease. |
+| `--lease <id>` | A lease's id: reads its own container's log, on its target. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--since <s>` | Only lines at or after this time. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+| `--tail <n>` | The newest lines to read. |
+| `--target <name\|id>` | The target's name or id; needs the container's name too. |
+
+### Examples
+
+```
+qits targets docker logs --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+qits targets docker logs --target localhost qits-system-runner-work-ws-1-a1b2c3d4 --tail 50
+qits targets docker logs --lease 3f2a9c1e-0000-4000-8000-000000000001
+```
+
+- --tail defaults to 200 and is capped at 5000 by the service; the output is capped at 1 MiB, and a notice on stderr says so when the service cut it.
+- --lease reads the lease's own container, resolved by its target and the qits.system.runner.lease label; HTTP 404: no such lease, it is on no target, or its container is gone. HTTP 409 TARGET_UNAVAILABLE: its target is not connected.
+- -o json has no effect here: the log is always printed as text.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker exec
+
+docker exec in one of the runner's containers: no TTY, no stdin.
+
+POST /system/api/targets/{id}/docker/containers/{name}/exec {argv, timeoutSeconds?}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker exec --target <name|id> [--output table|json] [--system-url <url>] [--timeout <seconds>] <name> [<argv>]
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `<argv>` | The command and its arguments, after --; no shell is put in front. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+| `--timeout <seconds>` | How long it may run; default 30, at most 120. |
+
+### Examples
+
+```
+qits targets docker exec --target localhost qits-system-runner-work-ws-1-a1b2c3d4 -- ls -la
+qits targets docker exec --target localhost qits-system-runner-work-ws-1-a1b2c3d4 --timeout 60 -- cat /etc/hostname
+```
+
+- --timeout defaults to 30 and is capped at 120 by the service; stdout and stderr are capped at 1 MiB each, each with its own truncation notice on stderr.
+- The exit code is the command run in the container's, printed and also this command's own exit code when it is 0..125 (a shell's reserved range above that prints but is not repeated as this command's exit, to keep it inside this CLI's own codes).
+- HTTP 403 DOCKER_REFUSED: the runner's own process container.
+
+### Exit codes
+
+- `0-125` The command ran, with this exit code.
+- `126,127` The command ran; its own exit code is printed, but not repeated here.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker stop
+
+docker stop -t 10 of one of the runner's containers.
+
+POST /system/api/targets/{id}/docker/containers/{name}/stop, no body. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker stop --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker stop --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 403 DOCKER_REFUSED: the runner's own process container.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker rm
+
+docker rm -f of one of the runner's containers.
+
+DELETE /system/api/targets/{id}/docker/containers/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker rm --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The container's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker rm --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 403 DOCKER_REFUSED: the runner's own process container.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker volumes
+
+The target runner's own volumes (docker volume ls).
+
+GET /system/api/targets/{id}/docker/volumes. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker volumes --target <name|id> [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker volumes --target localhost
+```
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker volume
+
+docker volume inspect of one of the runner's volumes, with its size, secrets redacted.
+
+GET /system/api/targets/{id}/docker/volumes/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker volume --target <name|id> [--output table|json] [--system-url <url>] <name>
+```
+
+| Name | What it does |
+|---|---|
+| `<name>` | The volume's name. |
+| `--target <name\|id>` | Required. The target's name or id. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker volume --target localhost qits-system-runner-work-ws-1-a1b2c3d4
+```
+
+- HTTP 404: no such target, or no such volume of its runner.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits targets docker audit
+
+The target's docker audit rows, newest first: every call this group made against it, refusals and timeouts included.
+
+GET /system/api/targets/{id}/docker/audit?limit=. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
+
+```
+qits targets docker audit --target <name|id> [--limit <n>] [--output table|json] [--system-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--target <name\|id>` | Required. The target's name or id. |
+| `--limit <n>` | At most this many rows. |
+| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits targets docker audit --target localhost
+qits targets docker audit --target localhost --limit 20
+```
+
+- --limit defaults to 100 and is capped at 500 by the service.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits git-login
