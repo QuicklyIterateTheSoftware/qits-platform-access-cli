@@ -38,8 +38,8 @@ import java.util.Optional;
                 "  qits registry-login --configure --remove-stale",
                 "  qits registry-login",
                 "",
-                "- --dry-run writes nothing. It prints a unified diff per file, with every token shown as <token>, "
-                        + "or \"No changes\".",
+                "- --dry-run writes nothing. It prints a unified diff per file, or \"No changes\". Every secret "
+                        + "shows as <token>, and lines outside the blocks show only when they change.",
                 "- --remove-stale also drops lines for the old *.dev.localhost registries, and entries outside the "
                         + "blocks that use the same registries or ids. Without it they stay, with a warning.",
                 "- A workstation command: inside the platform, or with QITS_TOKEN, the container has its own "
@@ -93,6 +93,17 @@ public class RegistryLoginCommand extends PlatformCommand {
         }
         RegistryLogins logins = new RegistryLogins(context.sessionFile().directory());
 
+        Optional<RegistryState> saved;
+        try {
+            saved = configure ? Optional.empty() : logins.state();
+        } catch (IOException e) {
+            throw new CliFailure(e.getMessage(), CliFailure.FAILED);
+        }
+        if (!configure && saved.isEmpty()) {
+            throw new CliFailure("Registry logins are not set up — run `qits registry-login --configure`.",
+                    CliFailure.USAGE);
+        }
+
         // A one-off write should leave npm and Maven a token with time to run, as the daemon does.
         SessionRefresh.refreshIfDue(context.sessionFile(), RegistryLogins.MARGIN, context.clock(), context.idpFor());
         Session session = context.tokens().session();
@@ -109,12 +120,7 @@ public class RegistryLoginCommand extends PlatformCommand {
                         path(mavenSettings, home(env).resolve(".m2").resolve("settings.xml")).toString(),
                         found.npm(), found.mavenUrl());
             } else {
-                Optional<RegistryState> saved = logins.state();
-                if (saved.isEmpty()) {
-                    throw new CliFailure("Registry logins are not set up — run `qits registry-login --configure`.",
-                            CliFailure.USAGE);
-                }
-                state = saved.get();
+                state = saved.orElseThrow();
             }
 
             List<RegistryLogins.FileChange> changes = logins.apply(state, session.accessToken(), removeStale, dryRun);

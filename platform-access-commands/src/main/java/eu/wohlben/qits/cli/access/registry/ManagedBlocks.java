@@ -263,14 +263,89 @@ public final class ManagedBlocks {
 
     // ---------------------------------------------------------------- redaction
 
+    /** npm keys whose value is a secret, or close enough to one that it is not shown. */
+    private static final Pattern NPM_SECRET_KEY = Pattern.compile(
+            "(?i).*(_auth\\s*$|token|secret|password|username|cert|key).*");
+    private static final Pattern XML_SECRET = Pattern.compile(
+            "(<(password|passphrase|privateKey|username)(?:\\s[^>]*)?>)(.*?)(</\\2\\s*>)", Pattern.DOTALL);
+    private static final Pattern HTTP_HEADERS = Pattern.compile("<httpHeaders\\b.*?</httpHeaders\\s*>", Pattern.DOTALL);
+    private static final Pattern HEADER_VALUE = Pattern.compile("(<value(?:\\s[^>]*)?>)(.*?)(</value\\s*>)", Pattern.DOTALL);
+
+    /** {@code ~/.npmrc} with every secret value shown as {@code <token>}. Same lines. */
+    static String maskNpmrc(String text) {
+        StringBuilder out = new StringBuilder();
+        for (String line : text.split("\n", -1)) {
+            String trimmed = line.strip();
+            int eq = line.indexOf('=');
+            boolean comment = trimmed.startsWith("#") || trimmed.startsWith(";");
+            if (!comment && eq > 0 && NPM_SECRET_KEY.matcher(line.substring(0, eq)).matches()) {
+                line = line.substring(0, eq + 1) + "<token>";
+            }
+            out.append(line).append('\n');
+        }
+        return out.substring(0, out.length() - 1);
+    }
+
+    /**
+     * {@code settings.xml} with the content of every password, passphrase, private key, user name
+     * and HTTP header value shown as {@code <token>}, across line breaks. Same lines.
+     */
+    static String maskSettings(String text) {
+        String masked = replace(text, XML_SECRET, m -> m.group(1) + hide(m.group(3)) + m.group(4));
+        return replace(masked, HTTP_HEADERS, headers -> replace(headers.group(),
+                HEADER_VALUE, v -> v.group(1) + hideHeader(v.group(2)) + v.group(3)));
+    }
+
+    /** The indexes of the lines inside the CLI's blocks, markers included. */
+    static Set<Integer> ownLines(String text) {
+        Set<Integer> own = new java.util.HashSet<>();
+        List<String> lines = text.lines().toList();
+        boolean inside = false;
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line.contains(BEGIN)) {
+                inside = true;
+            }
+            if (inside) {
+                own.add(i);
+            }
+            if (line.contains(END)) {
+                inside = false;
+            }
+        }
+        return own;
+    }
+
+    /** A header value keeps its scheme word ({@code Bearer <token>}), so the diff still says what it is. */
+    private static String hideHeader(String content) {
+        Matcher scheme = Pattern.compile("^(\\s*(?:Bearer|Basic)\\s+)(\\S.*)$", Pattern.DOTALL).matcher(content);
+        return scheme.matches() ? scheme.group(1) + hide(scheme.group(2)) : hide(content);
+    }
+
+    /** Every run of non-newline characters becomes {@code <token>}, so the line count stays. */
+    private static String hide(String content) {
+        return content.isBlank() ? content : content.replaceAll("[^\\n]+", "<token>");
+    }
+
+    private static String replace(String text, Pattern pattern, java.util.function.Function<Matcher, String> with) {
+        Matcher m = pattern.matcher(text);
+        StringBuilder out = new StringBuilder();
+        while (m.find()) {
+            m.appendReplacement(out, Matcher.quoteReplacement(with.apply(m)));
+        }
+        m.appendTail(out);
+        return out.toString();
+    }
+
     private static final List<Pattern> SECRETS = List.of(
-            Pattern.compile("(_authToken\\s*=\\s*)\\S+"),
-            Pattern.compile("(_auth\\s*=\\s*)\\S+"),
-            Pattern.compile("(_password\\s*=\\s*)\\S+"),
-            Pattern.compile("(Bearer\\s+)[^\\s<\"']+"),
+            Pattern.compile("(?i)(_authToken\\s*=\\s*)\\S+"),
+            Pattern.compile("(?i)(_auth\\s*=\\s*)\\S+"),
+            Pattern.compile("(?i)(_password\\s*=\\s*)\\S+"),
+            Pattern.compile("(?i)(Bearer\\s+)[^\\s<\"']+"),
+            Pattern.compile("(?i)(Basic\\s+)[^\\s<\"']+"),
             Pattern.compile("(<password>)[^<]*"));
 
-    /** One line with every credential replaced by {@code <token>}. */
+    /** The last pass over one printed line: anything that still looks like a credential. */
     public static String redact(String line) {
         String out = line;
         for (Pattern secret : SECRETS) {

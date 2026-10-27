@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
 /**
  * Writes the registry blocks of {@link ManagedBlocks} into the files {@link RegistryState} names,
@@ -77,16 +78,18 @@ public final class RegistryLogins implements SessionListener {
                 throw new IOException(settings + " is not a Maven settings file: " + notSettings.getMessage());
             }
             List<FileChange> changes = new ArrayList<>();
-            changes.add(change(npmrc, npmBefore, npm, dryRun));
-            changes.add(change(settings, mavenBefore, maven, dryRun));
+            changes.add(change(npmrc, npmBefore, npm, ManagedBlocks::maskNpmrc, dryRun));
+            changes.add(change(settings, mavenBefore, maven, ManagedBlocks::maskSettings, dryRun));
             return changes;
         }
     }
 
-    private static FileChange change(Path path, String before, ManagedBlocks.Result after, boolean dryRun)
+    private static FileChange change(Path path, String before, ManagedBlocks.Result after,
+                                     UnaryOperator<String> mask, boolean dryRun)
             throws IOException {
         boolean changed = !before.equals(after.text());
-        String diff = UnifiedDiff.of(path.toString(), before, after.text(), ManagedBlocks::redact);
+        String diff = UnifiedDiff.of(path.toString(), before, after.text(), mask.apply(before),
+                mask.apply(after.text()), ManagedBlocks.ownLines(after.text()));
         if (changed && !dryRun) {
             write(path, after.text());
         }

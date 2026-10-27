@@ -1687,8 +1687,11 @@ session-daemon` replaces it each time it refreshes the session. No long-lived se
 - Only the blocks change. Each file is replaced atomically with mode 0600; a symbolic link is
   followed. `--remove-stale` also drops the `*.dev.localhost` registries and entries outside the
   blocks that use the same registries or ids; without it they stay, with a warning.
-- `--dry-run` writes nothing and prints a unified diff per file, every token shown as `<token>`,
-  or `No changes`.
+- `--dry-run` writes nothing and prints a unified diff per file, or `No changes`. It masks by
+  structure: in settings.xml the content of every `<password>`, `<passphrase>`, `<privateKey>`,
+  `<username>` and httpHeaders `<value>`, across lines; in .npmrc the value of every key that ends
+  in `_auth` or contains token, secret, password, username, cert or key. Context lines come only
+  from the CLI's blocks: a foreign line shows only when it changes, and then masked.
 - While `registries.json` exists, the daemon refreshes at least 5 minutes before expiry (access
   tokens last 15 minutes), so a build that starts always has 5 minutes of token. Delete the file
   to stop.

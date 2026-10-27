@@ -104,18 +104,16 @@ class RegistryLoginsTest {
         String diff = diffs(logins().apply(state(), TOKEN, true, true));
 
         assertThat(Files.readString(home.resolve(".npmrc"))).isEqualTo(before);
+        // Foreign lines show only when they change; context comes from the block alone.
         assertThat(diff).contains("""
-                @@ -2,8 +2,7 @@
-                 b=2
-                 c=3
-                 d=4
+                @@ -5,1 +4,0 @@
                 -//mirror.dev.localhost:8080/x/:_auth=<token>
-                \s
+                @@ -7,3 +6,3 @@
                  # >>> qits registry-login: managed by the qits CLI, edits here are replaced >>>
                 -//registry.qits.example/artifacts/npm/npm/:_authToken=<token>
                 +//registry.qits.example/artifacts/npm/npm/:_authToken=<token>
                  # <<< qits registry-login <<<
-                """);
+                """).doesNotContain("b=2");
     }
 
     @Test
@@ -136,6 +134,72 @@ class RegistryLoginsTest {
         String diff = diffs(logins().apply(state(), TOKEN, true, true));
 
         assertThat(diff).isNotEmpty().doesNotContain("SECRET");
+    }
+
+    @Test
+    void aDryRunMasksAMultiLinePasswordAndForeignHeaderValues() throws Exception {
+        Files.createDirectories(home.resolve(".m2"));
+        Files.writeString(home.resolve(".m2/settings.xml"), """
+                <settings>
+                  <servers>
+                    <server>
+                      <id>corp</id>
+                      <password>
+                        SECRET-multi-line
+                      </password>
+                      <privateKey>SECRET-key</privateKey>
+                      <configuration><httpHeaders><property><name>X-Api</name>
+                        <value>SECRET-header</value></property></httpHeaders></configuration>
+                    </server>
+                  </servers>
+                </settings>
+                """);
+        String settings = home.resolve(".m2/settings.xml").toString();
+        // --remove-stale has nothing to drop here, so make every foreign line change: a new state
+        // points at a fresh file and the old one is the content above.
+        String before = Files.readString(Path.of(settings));
+        String masked = ManagedBlocks.maskSettings(before);
+
+        assertThat(masked).doesNotContain("SECRET").contains("<password>\n<token>\n")
+                .contains("<value><token></value>").contains("<privateKey><token></privateKey>");
+        assertThat(masked.lines().count()).isEqualTo(before.lines().count());
+
+        String diff = diffs(logins().apply(state(), TOKEN, false, true));
+        assertThat(diff).doesNotContain("SECRET").doesNotContain("corp").doesNotContain("X-Api");
+    }
+
+    @Test
+    void aDryRunMasksForeignNpmSecretsByKey() {
+        String before = """
+                //npm.example/:_authToken=SECRET-a
+                //npm.example/:_password=SECRET-b
+                //npm.example/:username=SECRET-c
+                //npm.example/:certfile=SECRET-d
+                my-client-secret=SECRET-e
+                API_TOKEN=SECRET-f
+                save-exact=true
+                """;
+
+        String masked = ManagedBlocks.maskNpmrc(before);
+
+        assertThat(masked).doesNotContain("SECRET").contains("save-exact=true")
+                .contains("my-client-secret=<token>");
+        assertThat(masked.lines().count()).isEqualTo(before.lines().count());
+    }
+
+    @Test
+    void aDryRunThatDropsForeignSecretLinesShowsThemMasked() throws Exception {
+        Files.writeString(home.resolve(".npmrc"), """
+                //registry.dev.localhost:8080/:_password=SECRET-old
+                //registry.dev.localhost:8080/:client-secret=SECRET-other
+                //npm.example/:_authToken=SECRET-kept
+                """);
+
+        String diff = diffs(logins().apply(state(), TOKEN, true, true));
+
+        assertThat(diff).doesNotContain("SECRET").doesNotContain("npm.example")
+                .contains("-//registry.dev.localhost:8080/:_password=<token>")
+                .contains("-//registry.dev.localhost:8080/:client-secret=<token>");
     }
 
     // ---------------------------------------------------------------- the daemon's hook

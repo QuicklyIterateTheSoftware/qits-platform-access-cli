@@ -14,6 +14,7 @@ A workspace is the token home: on a runner node, or an admin or editor workspace
 - Sign in once with `qits login`, and keep `qits session-daemon` running so the session stays fresh.
 - Release only through a release request: `qits release-request create`, or `join` to add a branch to an open one. A push releases nothing.
 - Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from `qits git-credential`.
+- On a workstation, npm and Maven get the platform's registries from `qits registry-login --configure`, kept fresh by `qits session-daemon`. Do not write registry tokens by hand.
 - qits never prints a token. The one exception is `qits git-credential get`, which Git runs. Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new password, once).
 - To wait for something on the platform, declare it with `qits wait` and end your turn: you get a new turn when it happens. Never poll for it in a background loop.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
@@ -79,6 +80,7 @@ systemctl --user enable --now qits-session-daemon
 - The systemd unit is in the README. Only one daemon runs at a time; a second one exits with 1.
 - When the session ends (revoked or expired), it says so, keeps running, and carries on after the next `qits login`.
 - Without it, a command refreshes an access token that is about to expire before it calls the platform.
+- After `qits registry-login --configure` it also writes each new token into the registry blocks of ~/.npmrc and ~/.m2/settings.xml, and refreshes at least 5 minutes before expiry.
 
 ### Exit codes
 
@@ -4691,6 +4693,47 @@ Inside the platform Git is set up for every host at once, so the injected host i
 - `0` Done. For a host without a sign-in, and inside the platform for any host but the injected one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why on stderr and still exits 0, so Git carries on.
 - `1` The sign-in file cannot be read or written.
 - `2` No action named.
+
+## qits registry-login
+
+Give npm and Maven on this workstation a login for the platform's registries: the access token of `qits login`, in a block of ~/.npmrc and two of ~/.m2/settings.xml that the CLI owns.
+
+--configure sets it up: it asks the platform which npm registries there are, writes the blocks, and records the setup in $XDG_CONFIG_HOME/qits/registries.json. From then on `qits session-daemon` writes each new token into the blocks, and refreshes at least 5 minutes before expiry. Without --configure it writes the current token once.
+
+Only the blocks change; the rest of each file stays as it is. Each file is replaced atomically with mode 0600. The Maven blocks are the mirror `qits-maven-host` for the repository `qits-maven`, and servers for both ids with an `Authorization: Bearer` header.
+
+```
+qits registry-login [--artifacts-url <url>] [--configure] [--dry-run] [--maven-settings <file>] [--mirror-url <url>] [--npmrc <file>] [--remove-stale]
+```
+
+| Name | What it does |
+|---|---|
+| `--artifacts-url <url>` | With --configure: qits-artifacts. Default: QITS_ARTIFACTS_URL, else https://registry.qits.<domain of the session's idp>. |
+| `--configure` | Set up the blocks (again), with the registries the platform lists now. |
+| `--dry-run` | Write nothing; print the changes as a redacted unified diff. |
+| `--maven-settings <file>` | With --configure: the Maven user settings. Default: ~/.m2/settings.xml. |
+| `--mirror-url <url>` | With --configure: qits-mirror. Default: QITS_MIRROR_URL, else https://mirror.qits.<domain of the session's idp>. |
+| `--npmrc <file>` | With --configure: the npm user config. Default: NPM_CONFIG_USERCONFIG, else ~/.npmrc. |
+| `--remove-stale` | Also drop *.dev.localhost registries and duplicates of the blocks' entries. |
+
+### Examples
+
+```
+qits registry-login --configure --remove-stale --dry-run
+qits registry-login --configure --remove-stale
+qits registry-login
+```
+
+- --dry-run writes nothing. It prints a unified diff per file, or "No changes". Every secret shows as <token>, and lines outside the blocks show only when they change.
+- --remove-stale also drops lines for the old *.dev.localhost registries, and entries outside the blocks that use the same registries or ids. Without it they stay, with a warning.
+- A workstation command: inside the platform, or with QITS_TOKEN, the container has its own registry setup.
+- To stop: delete $XDG_CONFIG_HOME/qits/registries.json and the blocks.
+
+### Exit codes
+
+- `0` Done, or nothing to change.
+- `1` A file cannot be read or written, or the session cannot be refreshed.
+- `2` Used wrongly, not signed in, not set up, or not on a workstation.
 
 ## qits artifacts
 
