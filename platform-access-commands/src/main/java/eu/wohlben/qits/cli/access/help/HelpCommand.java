@@ -4,8 +4,8 @@ import picocli.CommandLine;
 
 /** Help for agents. Hidden: a person reads `qits --help`, an agent reads `qits help skill`. */
 @CommandLine.Command(name = "help", hidden = true, mixinStandardHelpOptions = true,
-        subcommands = SkillCommand.class,
-        description = "Help for agents.")
+        subcommands = {SkillCommand.class, GuideCommand.class},
+        description = "Help for agents and people: `qits help skill` and `qits help guide`.")
 public class HelpCommand implements Runnable {
 
     @CommandLine.Spec
