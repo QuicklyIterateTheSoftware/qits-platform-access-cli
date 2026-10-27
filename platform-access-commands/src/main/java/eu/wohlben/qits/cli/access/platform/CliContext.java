@@ -4,7 +4,6 @@ import eu.wohlben.qits.cli.access.daemon.Sleeper;
 import eu.wohlben.qits.cli.access.daemon.StopSignals;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.session.SessionFile;
-import eu.wohlben.qits.cli.session.AgentCredential;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.session.Mode;
 import eu.wohlben.qits.cli.session.PlatformEndpoints;
@@ -30,7 +29,7 @@ import java.util.function.Supplier;
  * process.
  *
  * @param onStop installs what SIGTERM and SIGINT do
- * @param credentials what a call is made with. Null is today's choice by mode (see {@link
+ * @param credentials what a call is made with. Null is the choice by mode (see {@link
  *                    #credential()}); a host that runs the commands for somebody else — the MCP
  *                    service, which forwards its caller's bearer — hands its own.
  */
@@ -53,6 +52,15 @@ public record CliContext(
      */
     public static final String MCP_SERVICE = "QITS_MCP_SERVICE";
 
+    /**
+     * What a call says in-platform when nobody handed the command a credential. That home has none
+     * of its own: its host — the MCP service — hands every command its caller's bearer, and a
+     * workspace that holds a token of its own is the token home instead.
+     */
+    static final String NOTHING_HANDED = "There is no credential in this environment: in the platform ("
+            + Mode.OVERRIDE + ") a command calls with the credential the process running it hands it, and none "
+            + "was handed. A workspace's own token is " + Mode.TOKEN + ".";
+
     public CliContext {
         if (credentials == null) {
             // The components, not the accessors: a compact constructor has not assigned them yet.
@@ -61,7 +69,9 @@ public record CliContext(
             Function<String, TokenClient> idps = idpFor;
             credentials = () -> switch (Mode.of(environment)) {
                 case EDGE_TOKEN -> new TokenCredential(environment);
-                case IN_PLATFORM -> AgentCredential.of(environment, time);
+                case IN_PLATFORM -> () -> {
+                    throw new CliFailure(NOTHING_HANDED, CliFailure.USAGE);
+                };
                 case WORKSTATION -> new AccessTokens(SessionFile.fromEnvironment(environment), time, idps);
             };
         }
@@ -112,11 +122,12 @@ public record CliContext(
     }
 
     /**
-     * What this process calls the platform with: the session file outside, the workspace
-     * credential inside, the workspace token in the token home — a runner node, or an admin or
-     * editor workspace placed directly on qits-containers — unless the context was built with a
-     * credential of its own. The homes are never mixed — in-platform never opens the session file,
-     * a workstation never mints with a client secret, and the token home does neither.
+     * What this process calls the platform with: the session file outside, the workspace token in
+     * the token home — every agent container, a runner node, an admin or editor workspace placed
+     * directly on qits-containers — and, in-platform, the credential the context was built with
+     * ({@link #withCredential}), which is the only one that home has: without it a call refuses
+     * with {@link #NOTHING_HANDED}. A context built with a credential of its own uses it in every
+     * home. The homes are never mixed — only a workstation ever opens the session file.
      */
     public Credential credential() {
         return credentials.get();

@@ -88,9 +88,8 @@ import java.util.function.Consumer;
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no "
                         + "option names another address.",
-                "- The bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or QITS_COMMISSIONED_CLIENT_ID "
-                        + "and QITS_COMMISSIONED_CLIENT_SECRET, the first that is set, as for `qits artifacts "
-                        + "publish`. qits-ci takes only the run's own ci-run token, while the run is running.",
+                "- The bearer comes from QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, the first that is "
+                        + "set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.",
                 "- No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without "
                         + "the comparison.",
                 "- A non-zero --exit-code means the step may have stopped part way, so its test count and coverage "
@@ -166,8 +165,8 @@ public class SubmitCommand extends PlatformCommand {
         Step step = step(context.env());
         Path tree = root(root);
         String origin = ciOrigin != null ? ciOrigin : Store.publicOrigin("ci", context.env());
-        CiApi ci = new CiApi(new PlatformClient(PublishCredential.forCiStep(context.env(), context.err(),
-                context.clock())), origin);
+        CiApi ci = new CiApi(new PlatformClient(PublishCredential.forCiStep(context.env(), context.err())),
+                origin);
         FutureTask<Integer> task = new FutureTask<>(() -> submit(context, ci, step, tree));
         Thread worker = new Thread(task, "qits-report-submit");
         worker.setDaemon(true);

@@ -29,9 +29,8 @@ import java.util.Optional;
  * handed to registers with it; the idp generates the password and shows it once.
  * <p>
  * {@code invite} and {@code register} print a secret, so they are {@link Interaction#LOCAL}, the
- * way {@code git-credential} and {@code mcp-credential} are: the MCP service does not serve them,
- * because its answer lands in an agent's transcript rather than in front of the one person meant to
- * read it.
+ * way {@code git-credential} is: the MCP service does not serve them, because its answer lands in
+ * an agent's transcript rather than in front of the one person meant to read it.
  */
 @CommandLine.Command(name = "users", mixinStandardHelpOptions = true,
         subcommands = {UsersCommand.InviteCommand.class, UsersCommand.RegisterCommand.class,

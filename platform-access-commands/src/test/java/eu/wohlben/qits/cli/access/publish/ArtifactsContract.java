@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +81,7 @@ public final class ArtifactsContract {
 
     static Http http() {
         return new Http(new PublishCredential(new Env(Map.of(PublishCredential.TOKEN, "pact-consumer-test")),
-                console(), Clock.systemUTC()));
+                console()));
     }
 
     static Store store(String url) {

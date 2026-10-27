@@ -27,10 +27,10 @@ import java.util.Optional;
  * <p>
  * It has the CLI's two homes like every other command. On a workstation the sign-in of
  * {@code qits git-login} answers, from {@code git.json}. Inside the platform there is no sign-in to
- * read — {@code qits git-login} needs a browser and is refused there — so the container's own
- * credential answers instead, for the injected git host and no other. In the token home — a runner
- * node, or an admin or editor workspace placed directly on qits-containers — the workspace token
- * answers, for the public git host {@code githost.qits.<QITS_DOMAIN>} and no other.
+ * read — {@code qits git-login} needs a browser and is refused there — so the credential the
+ * process was handed answers instead, for the injected git host and no other. In the token home
+ * — a runner node, or an admin or editor workspace placed directly on qits-containers — the
+ * workspace token answers, for the public git host {@code githost.qits.<QITS_DOMAIN>} and no other.
  */
 @TuiCommand(interaction = Interaction.LOCAL)
 @CommandLine.Command(name = "git-credential", mixinStandardHelpOptions = true,
@@ -40,7 +40,7 @@ import java.util.Optional;
                         + "refreshing it first when needed. store is ignored. erase drops the cached access token "
                         + "and keeps the sign-in.",
                 "Inside the platform there is no sign-in and none is needed: get answers the injected git host "
-                        + "(QITS_GIT_AUTH_HOST) from the container's own credential, and answers no other host. "
+                        + "(QITS_GIT_AUTH_HOST) with the credential the process was handed, and answers no other host. "
                         + "store and erase do nothing there, and no file is written.",
                 "With a workspace token (QITS_TOKEN) get answers https://githost.qits.<QITS_DOMAIN> with that "
                         + "token, and answers no other host; store and erase do nothing and no file is written."},
@@ -51,7 +51,7 @@ import java.util.Optional;
                 "The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, "
                         + "because that is Git's helper protocol.",
                 "Inside the platform Git is set up for every host at once, so the injected host is checked before "
-                        + "anything is minted: the platform's bearer is never handed to a host someone else named."},
+                        + "the credential is touched: the platform's bearer is never handed to a host someone else named."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Done. For a host without a sign-in, and inside the platform for any host but the injected "
                 + "one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why "
@@ -109,8 +109,8 @@ public class GitCredentialCommand extends PlatformCommand {
     }
 
     /**
-     * The container's answer. No store, no lock, nothing on disk: a {@code client_credentials}
-     * token is stateless and minted on demand, and the agent's config folder is becoming a git
+     * The in-platform answer. No store, no lock, nothing on disk: the credential is the one the
+     * process was handed and lives in memory, and the agent's config folder is becoming a git
      * repository — a machine credential committed to a branch is a leak with a history.
      * <p>
      * {@code store} and {@code erase} therefore have nothing to do. They must not even reach
@@ -124,9 +124,9 @@ public class GitCredentialCommand extends PlatformCommand {
             context.out().print("username=oauth2\npassword=" + context.credential().bearer() + "\n\n");
             context.out().flush();
         } catch (CliFailure noCredential) {
-            // Git's helper protocol is silence, so an idp that is unreachable or refuses the client
-            // is not this command's failure: it says why on stderr, prints nothing, and exits 0 so
-            // Git is free to ask its other helpers. A refusal never holds the token or the secret.
+            // Git's helper protocol is silence, so a credential that cannot be had is not this
+            // command's failure: it says why on stderr, prints nothing, and exits 0 so Git is free
+            // to ask its other helpers. A refusal never holds the token.
             context.err().println(noCredential.getMessage());
             context.err().flush();
         }

@@ -10,16 +10,15 @@ import eu.wohlben.qits.cli.access.platform.PlatformCommand;
  * code and message qits-publish always gave.
  * <p>
  * <b>This command must never touch the person's session.</b> It runs inside a CI step container
- * with no person signed in, so it reads only {@link CliContext#env()}, {@link CliContext#out()},
- * {@link CliContext#err()} and {@link CliContext#clock()} — never {@link CliContext#sessionFile()}
- * or {@link CliContext#tokens()}. {@code qits login} and {@code qits git-login} do not apply here.
+ * with no person signed in, so it reads only {@link CliContext#env()}, {@link CliContext#out()} and
+ * {@link CliContext#err()} — never {@link CliContext#sessionFile()} or {@link CliContext#tokens()}.
+ * {@code qits login} and {@code qits git-login} do not apply here.
  * <p>
  * <b>It does present a machine credential, and that is not the same thing.</b> Only a CI run may
- * publish to qits-artifacts now, so every request goes out with a bearer — from a token command,
- * from a token, or minted from the commissioned client pair the step container carries. All three
- * are environment and memory only; none of them is a person's session, and nothing here reads or
- * writes a file under the person's config folder. {@link PublishCredential} is where that is
- * decided, once.
+ * publish to qits-artifacts now, so every request goes out with a bearer — from a token command
+ * or from a token the step container carries. Both are environment and memory only; neither is a
+ * person's session, and nothing here reads or writes a file under the person's config folder.
+ * {@link PublishCredential} is where that is decided, once.
  */
 abstract class AbstractPublishCommand extends PlatformCommand {
 
@@ -37,7 +36,7 @@ abstract class AbstractPublishCommand extends PlatformCommand {
     protected final int execute(CliContext context) throws CliFailure {
         Env env = new Env(context.env());
         Console console = new Console(context.out(), context.err());
-        credential = new PublishCredential(env, console, context.clock());
+        credential = new PublishCredential(env, console);
         try {
             return run(env, console);
         } catch (CliException e) {

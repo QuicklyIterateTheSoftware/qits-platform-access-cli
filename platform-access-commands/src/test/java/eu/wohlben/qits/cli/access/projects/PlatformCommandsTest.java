@@ -1378,7 +1378,7 @@ class PlatformCommandsTest {
      * over it.
      */
     @Test
-    void a403ToAnAgentCredentialPrintsTheDoorsSentenceWithoutTheReadOnlyHint() {
+    void a403ToAnAgentsTokenPrintsTheDoorsSentenceWithoutTheReadOnlyHint() {
         answerProjectRequest(DECIDED, FOLD);
         String refusal = "You may not approve release request " + DECIDED + " at " + FOLD.substring(0, 10)
                 + ": its open approval requirements are manual-review (configured by manual-review) admits person."

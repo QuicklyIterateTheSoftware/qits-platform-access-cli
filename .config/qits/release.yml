@@ -230,8 +230,8 @@ release:
       # stays: `-am` still resolves the parent and junit off qits-maven's mirror of Central.
       qits_domain=${QITS_DOMAIN:-wohlben.eu}
       QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central" \
-      QITS_MAVEN_AUTH_USR="${QITS_COMMISSIONED_CLIENT_ID:-${QITS_MAVEN_AUTH_USR-}}" \
-      QITS_MAVEN_AUTH_PSW="${QITS_COMMISSIONED_CLIENT_SECRET:-${QITS_MAVEN_AUTH_PSW-}}" \
+      QITS_MAVEN_AUTH_USR="${QITS_MAVEN_AUTH_USR-}" \
+      QITS_MAVEN_AUTH_PSW="${QITS_MAVEN_AUTH_PSW-}" \
       ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -am package -DskipTests
       QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central" \
       ./mvnw -B -ntp -s .qits-maven-settings.xml -pl platform-access-cli-binary -DskipTests \

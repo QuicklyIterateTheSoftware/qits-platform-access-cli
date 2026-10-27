@@ -7,14 +7,14 @@ description: "Use for any work on the qits platform from a terminal: signing in,
 
 Each command calls the platform through its edge, with the session of `qits login`, except `qits artifacts publish`, which runs in a CI step container with no person and never touches that session. `qits <command> --help` shows a command's options, examples and exit codes.
 
-A workspace is the token home: on a runner node, or an admin or editor workspace placed directly on qits-containers, with QITS_TOKEN set every command sends that token as it is, to the public vhosts https://<app>.qits.<QITS_DOMAIN>. It wins over the session and the commissioned pair, nothing is minted or written to disk, and a 401 means the token was deleted with the workspace's container. QITS_URL_<APP> still overrides an address.
+A workspace is the token home: on a runner node, or an admin or editor workspace placed directly on qits-containers, with QITS_TOKEN set every command sends that token as it is, to the public vhosts https://<app>.qits.<QITS_DOMAIN>. It wins over the session, nothing is minted or written to disk, and a 401 means the token was deleted with the workspace's container. QITS_URL_<APP> still overrides an address.
 
 ## Platform rules
 
 - Sign in once with `qits login`, and keep `qits session-daemon` running so the session stays fresh.
 - Release only through a release request: `qits release-request create`, or `join` to add a branch to an open one. A push releases nothing.
 - Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from `qits git-credential`.
-- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, and `qits mcp-credential`, which Claude runs. Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new password, once).
+- qits never prints a token. The one exception is `qits git-credential get`, which Git runs. Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new password, once).
 - To wait for something on the platform, declare it with `qits wait` and end your turn: you get a new turn when it happens. Never poll for it in a background loop.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
 
@@ -2133,7 +2133,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 - entity-changes reads the generated docs/database/*.md (the files `qits database diagram` wrote; a hand-written file there is ignored), only in step 0, and compares them with the same files at the baseline's tag, fetched as for coverage. Without a baseline, or at a baseline from before the diagrams, every unit is CURRENT: the diagram is new.
 - screenshots reads the committed screenshot baselines (vitest browser mode's **/__screenshots__/<spec file>/<name>-<browser>-<platform>.png) from `git ls-tree` at HEAD and at the baseline's tag, fetched as for coverage, and lists the NEW, CHANGED and REMOVED ones by path and blob id, never their bytes, with the keys of **/testing/browser/renderer.txt that changed. Only in a step that rendered them: one on the renderer image (/etc/qits-renderer-provenance) or with @qits/angular's run record (node_modules/.cache/@qits/angular/screenshot-references.json); otherwise `screenshots: not reported (not rendered in this step)`, and `(no screenshot baselines)` when neither side holds one. QITS_CI_REPO_ID names the repository for the images. Without a baseline every image is NEW.
 - The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no option names another address.
-- The bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.
+- The bearer comes from QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.
 - No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without the comparison.
 - A non-zero --exit-code means the step may have stopped part way, so its test count and coverage are partial: they are sent and say so, and never compared with the baseline's.
 - Gives up after 120 seconds in all, whatever is still waiting.
@@ -4665,7 +4665,7 @@ Git's credential helper for the platform's git host. Git runs it; a person does 
 
 On a workstation `qits git-login` sets it up: get prints that sign-in's access token, refreshing it first when needed. store is ignored. erase drops the cached access token and keeps the sign-in.
 
-Inside the platform there is no sign-in and none is needed: get answers the injected git host (QITS_GIT_AUTH_HOST) from the container's own credential, and answers no other host. store and erase do nothing there, and no file is written.
+Inside the platform there is no sign-in and none is needed: get answers the injected git host (QITS_GIT_AUTH_HOST) with the credential the process was handed, and answers no other host. store and erase do nothing there, and no file is written.
 
 With a workspace token (QITS_TOKEN) get answers https://githost.qits.<QITS_DOMAIN> with that token, and answers no other host; store and erase do nothing and no file is written.
 
@@ -4684,40 +4684,13 @@ git config --global --get-all credential.https://githost.qits.wohlben.eu.helper
 ```
 
 The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, because that is Git's helper protocol.
-Inside the platform Git is set up for every host at once, so the injected host is checked before anything is minted: the platform's bearer is never handed to a host someone else named.
+Inside the platform Git is set up for every host at once, so the injected host is checked before the credential is touched: the platform's bearer is never handed to a host someone else named.
 
 ### Exit codes
 
 - `0` Done. For a host without a sign-in, and inside the platform for any host but the injected one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why on stderr and still exits 0, so Git carries on.
 - `1` The sign-in file cannot be read or written.
 - `2` No action named.
-
-## qits mcp-credential
-
-The headers helper of Claude's MCP entry for the qits MCP server. Claude runs it; a person does not.
-
-Prints {"Authorization":"Bearer <token>"} on stdout: inside the platform the container's own credential, on a workstation the session of `qits login`, refreshed first when needed, and with a workspace token (QITS_TOKEN) that token as it is.
-
-Interim: once every workspace has a long-lived token of its own (qits-684) the entry carries it as a plain header and this command goes.
-
-```
-qits mcp-credential
-```
-
-### Examples
-
-```
-"qits": {"type": "http", "url": "http://dev-qits-platform-access-mcp-service:8080/mcp", "headersHelper": "qits mcp-credential"}
-```
-
-The example is the entry in Claude's MCP configuration. Do not run it yourself: it prints a token on stdout, because that is what a headers helper does.
-
-With QITS_TOKEN set the header carries that token, so an entry rendered with this helper keeps working on a runner node; the url there is the public vhost, not the wire alias.
-
-### Exit codes
-
-- `0` Printed.
-- `1` No token to be had (not signed in, the session ended, or the idp refused or cannot be reached): one line on stderr and nothing on stdout, so Claude connects without the header and is told 401.
 
 ## qits artifacts
 
@@ -4732,7 +4705,7 @@ Every publish follows one rule, for every surface: absent, PUT it and say what l
 ### Notes
 
 - This command never signs in and never reads or writes what `qits login` keeps: it runs in a CI step container with no person. `qits login` and `qits git-login` do not apply to it.
-- Only a CI run may publish to qits-artifacts, so every request carries a bearer. The token comes from the first of these the environment has: QITS_PUBLISH_TOKEN_COMMAND (an executable that prints a fresh token, re-run for every request), QITS_PUBLISH_TOKEN (a token), or QITS_COMMISSIONED_CLIENT_ID and QITS_COMMISSIONED_CLIENT_SECRET (minted at the idp). With none of them the request still goes out, unauthenticated, and the store answers 401: the store decides who may write, not this client.
+- Only a CI run may publish to qits-artifacts, so every request carries a bearer. The token comes from the first of these the environment has: QITS_PUBLISH_TOKEN_COMMAND (an executable that prints a fresh token, re-run for every request), else QITS_PUBLISH_TOKEN (a token). With neither of them the request still goes out, unauthenticated, and the store answers 401: the store decides who may write, not this client.
 - Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as `qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.
 - The store is https://registry.qits.$QITS_DOMAIN and the Maven Central cache https://mirror.qits.$QITS_DOMAIN; QITS_DOMAIN defaults to wohlben.eu. No other variable names an address: the hosted npm and maven repositories, the docs, sbom and daemon stores are fixed paths under the store's host.
 
@@ -5160,13 +5133,13 @@ qits changelog bump-message --group targeted --applied applied.tsv --body body.t
 
 - --applied holds one `<ecosystem><TAB><name>` line per change the step applied; --body the step's own lines (`- maven g:a 1 -> 2 (pom.xml)`), printed as they are.
 - With tickets the subject is `chore(qits-9, qits-10): bump(<group>): <N> dependencies`, the ids sorted by project and number.
-- The store is https://registry.qits.$QITS_DOMAIN; the bearer comes from QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or the commissioned pair, as for `qits artifacts publish`.
+- The store is https://registry.qits.$QITS_DOMAIN; the bearer comes from QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, as for `qits artifacts publish`.
 
 ### Exit codes
 
 - `0` The message is on stdout.
 - `1` Refused: an option or QITS_EVENT_PAYLOAD missing or unreadable, no credential in the environment, a changelog that is not published (404) or whose last line is not `associated tickets: ...`, or another 4xx.
-- `2` Could not ask: the store unreachable, a 5xx, or a token command or idp that failed. A step may retry a 2.
+- `2` Could not ask: the store unreachable, a 5xx, or a token command that failed. A step may retry a 2.
 
 ## qits agents
 

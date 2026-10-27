@@ -5,9 +5,10 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
 /**
  * What a call to the platform is made with, whichever home this is.
  * <p>
- * A workstation's is the session from {@code qits login}, kept fresh in a file; a container's is a
- * token minted from its commissioned client and held in memory only. One method, so no caller has
- * to know which it is holding — and the two are never mixed, because the mode picks one at startup.
+ * A workstation's is the session from {@code qits login}, kept fresh in a file; a workspace's is the
+ * token it was handed ({@code QITS_TOKEN}), held in memory only; a command the MCP service runs
+ * carries its caller's bearer. One method, so no caller has to know which it is holding — and they
+ * are never mixed, because the mode picks one at startup.
  * <p>
  * There is deliberately nothing here that judges, before a call, whether this credential may dial a
  * service. There used to be: it read the minted token's {@code aud} claim and refused any service

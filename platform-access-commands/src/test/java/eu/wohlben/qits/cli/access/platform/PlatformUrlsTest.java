@@ -56,8 +56,7 @@ class PlatformUrlsTest {
     @Test
     void insideTheEventsDefaultCarriesTheTierAndEveryOverrideStillBeatsIt() throws Exception {
         Map<String, String> container = Map.of(
-                Mode.CLIENT_ID, "dyn-workspace-352-m8m08",
-                Mode.CLIENT_SECRET, "a secret",
+                Mode.OVERRIDE, "true",
                 "QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352");
 
         assertThat(PlatformUrls.events(null, container, null))

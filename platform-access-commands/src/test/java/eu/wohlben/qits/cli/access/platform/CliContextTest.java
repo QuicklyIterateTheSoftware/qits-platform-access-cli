@@ -2,7 +2,6 @@ package eu.wohlben.qits.cli.access.platform;
 
 import eu.wohlben.qits.cli.access.FakeTime;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
-import eu.wohlben.qits.cli.session.AgentCredential;
 import eu.wohlben.qits.cli.session.Credential;
 import eu.wohlben.qits.cli.session.Mode;
 import eu.wohlben.qits.cli.session.RequestCredential;
@@ -38,15 +37,24 @@ class CliContextTest {
     @Test
     void withoutOneOfItsOwnTheModeChooses() {
         assertThat(context(Map.of("XDG_CONFIG_HOME", "/nonexistent")).credential()).isInstanceOf(AccessTokens.class);
-        assertThat(context(Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret")).credential())
-                .isInstanceOf(AgentCredential.class);
     }
 
-    /** The token wins over the pair, and is sent as it is, stripped, with nothing minted. */
+    /** In-platform has no credential of its own: without one handed, a call refuses and says why. */
+    @Test
+    void inPlatformWithNothingHandedRefusesTheCall() {
+        CliContext inside = context(Map.of(Mode.OVERRIDE, "true"));
+
+        assertThat(inside.mode()).isEqualTo(Mode.IN_PLATFORM);
+        assertThatThrownBy(() -> inside.credential().bearer())
+                .isInstanceOfSatisfying(CliFailure.class, f -> assertThat(f.exitCode()).isEqualTo(CliFailure.USAGE))
+                .hasMessage(CliContext.NOTHING_HANDED);
+    }
+
+    /** The token wins over the override, and is sent as it is, stripped, with nothing minted. */
     @Test
     void aWorkspaceTokenIsTheCredentialAndTheIdpIsItsVhost() throws Exception {
         CliContext runner = context(Map.of(Mode.TOKEN, " the workspace token\n", "QITS_DOMAIN", "wohlben.eu",
-                Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret", "XDG_CONFIG_HOME", "/nonexistent"));
+                Mode.OVERRIDE, "true", "XDG_CONFIG_HOME", "/nonexistent"));
 
         assertThat(runner.mode()).isEqualTo(Mode.EDGE_TOKEN);
         assertThat(runner.credential()).isInstanceOf(TokenCredential.class);
@@ -76,7 +84,7 @@ class CliContextTest {
     @Test
     void aCarriedCredentialWinsOverTheMode() throws Exception {
         Credential caller = new RequestCredential("the caller's token");
-        CliContext inside = context(Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret")).withCredential(caller);
+        CliContext inside = context(Map.of(Mode.OVERRIDE, "true")).withCredential(caller);
         CliContext outside = context(Map.of("XDG_CONFIG_HOME", "/nonexistent")).withCredential(caller);
 
         assertThat(inside.credential()).isSameAs(caller);

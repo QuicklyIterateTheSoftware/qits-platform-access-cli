@@ -90,8 +90,9 @@ public final class ToolRunner {
     /**
      * The environment every call runs in: in-platform, the environment's label and the service
      * addresses this service was configured with. None of this process's own environment beyond
-     * those names — in particular no commissioned client, which this service never has. The one
-     * thing a call adds is from the caller's token: see {@link #callEnvironment}.
+     * those names — in particular no {@code QITS_TOKEN}, which would turn every command into the
+     * token home and send it to the public edge. The one thing a call adds is from the caller's
+     * token: see {@link #callEnvironment}.
      *
      * @param config what this service was configured with, by variable name; null for an unset one
      */

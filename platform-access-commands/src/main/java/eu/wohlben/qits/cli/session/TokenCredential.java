@@ -10,8 +10,8 @@ import java.util.Map;
  * as it is.
  * <p>
  * Nothing is minted, refreshed or written anywhere. The token is the workspace's own and lives as
- * long as the workspace does, so there is nothing to keep fresh — and, like the commissioned
- * credential, it never touches the session file or the agent's config folder.
+ * long as the workspace does, so there is nothing to keep fresh — and it never touches the session
+ * file or the agent's config folder.
  * <p>
  * <b>No message here holds the token.</b>
  */
@@ -42,7 +42,7 @@ public final class TokenCredential implements Credential {
     /** {@code agent (qits:agent) via token workspace-352}. */
     @Override
     public String who() {
-        return "agent (" + AgentCredential.AGENT_ROLE + ") via token " + subject;
+        return "agent (" + AgentToken.AGENT_ROLE + ") via token " + subject;
     }
 
     /**
@@ -57,7 +57,7 @@ public final class TokenCredential implements Credential {
             return "401 - the workspace token (" + Mode.TOKEN + ") was not accepted: it has been deleted,"
                     + " which happens when the workspace's container is deleted or recreated";
         }
-        return AgentCredential.explainAgent(status, null);
+        return AgentToken.explain(status, null);
     }
 
     @Override

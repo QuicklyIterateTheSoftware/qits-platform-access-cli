@@ -1,14 +1,13 @@
 package eu.wohlben.qits.cli.session;
 
 import eu.wohlben.qits.cli.access.FakePlatform;
-import eu.wohlben.qits.cli.access.FakeTime;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
+import java.util.Map;
 import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,14 +52,14 @@ class RequestCredentialTest {
     }
 
     @Test
-    void anAgentsTokenIsRefusedInTheWorkspaceCredentialsOwnWords() {
-        AgentCredential workspace = new AgentCredential("http://idp", "id", "secret", "qits-platform",
-                new FakeTime(Instant.parse("2026-10-01T10:00:00Z")));
+    void anAgentsTokenIsRefusedInTheWorkspaceTokensOwnWords() {
+        TokenCredential workspace = new TokenCredential(Map.of(Mode.TOKEN, "qits_tok_x"));
         RequestCredential forwarded = new RequestCredential(AGENT);
 
         assertThat(forwarded.explain(403)).isEqualTo(workspace.explain(403))
                 .isEqualTo("403 - this credential is qits:agent, which reads but does not write");
-        assertThat(forwarded.explain(401)).isEqualTo(workspace.explain(401));
+        assertThat(forwarded.explain(401)).isEqualTo("401 - this service did not accept the workspace credential,"
+                + " which asked the idp for the audience qits-platform");
         assertThat(forwarded.explain(404)).isNull();
     }
 

@@ -15,15 +15,13 @@ class ModeTest {
     private static final String IDP = "https://idp.qits.wohlben.eu/idp";
 
     private static final Map<String, String> CONTAINER = Map.of(
-            Mode.CLIENT_ID, "dyn-workspace-352-m8m08",
-            Mode.CLIENT_SECRET, "a secret",
+            Mode.OVERRIDE, "true",
             "QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352",
             "QITS_GIT_AUTH_TOKEN_URL", "http://qits-platform-idp:8080/idp/token");
 
     /** A project-agent container: no workspace daemon, and the two URLs that factory does inject. */
     private static final Map<String, String> PROJECT_AGENT = Map.of(
-            Mode.CLIENT_ID, "dyn-project-agent-7-k22qd",
-            Mode.CLIENT_SECRET, "a secret",
+            Mode.OVERRIDE, "true",
             "QITS_PROJECTS_DAEMON_URL", "http://qa-qits-projects:8080/projects/agents/daemon",
             "QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp");
 
@@ -31,26 +29,31 @@ class ModeTest {
         return new PlatformEndpoints(Mode.of(env), env, idpUrl);
     }
 
+    /**
+     * Only the override leads inside. The retired commissioned client pair is no signal any more:
+     * a container still carrying one is a workstation unless something else says otherwise.
+     */
     @Test
-    void theCommissionedPairIsTheSignal() {
+    void onlyTheOverrideLeadsInside() {
         assertThat(Mode.of(Map.of())).isEqualTo(Mode.WORKSTATION);
-        assertThat(Mode.of(Map.of(Mode.CLIENT_ID, "id"))).isEqualTo(Mode.WORKSTATION);
-        assertThat(Mode.of(Map.of(Mode.CLIENT_SECRET, "secret"))).isEqualTo(Mode.WORKSTATION);
-        assertThat(Mode.of(Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, " "))).isEqualTo(Mode.WORKSTATION);
+        assertThat(Mode.of(Map.of("QITS_COMMISSIONED_CLIENT_ID", "id", "QITS_COMMISSIONED_CLIENT_SECRET", "secret")))
+                .isEqualTo(Mode.WORKSTATION);
+        assertThat(Mode.of(Map.of("QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352")))
+                .as("a wire alias in the environment is an address, not a home").isEqualTo(Mode.WORKSTATION);
         assertThat(Mode.of(CONTAINER)).isEqualTo(Mode.IN_PLATFORM);
     }
 
     @Test
-    void theOverrideIsHonouredInBothDirectionsButIsNotTheSignal() {
+    void theOverrideIsHonouredInBothDirections() {
         assertThat(Mode.of(Map.of(Mode.OVERRIDE, "true"))).isEqualTo(Mode.IN_PLATFORM);
-        Map<String, String> saysNo = Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret",
-                Mode.OVERRIDE, "false");
-        assertThat(Mode.of(saysNo)).isEqualTo(Mode.WORKSTATION);
+        assertThat(Mode.of(Map.of(Mode.OVERRIDE, " TRUE "))).isEqualTo(Mode.IN_PLATFORM);
+        assertThat(Mode.of(Map.of(Mode.OVERRIDE, "false"))).isEqualTo(Mode.WORKSTATION);
+        assertThat(Mode.of(Map.of(Mode.OVERRIDE, " "))).as("a blank override is no override").isEqualTo(Mode.WORKSTATION);
     }
 
-    /** The token, then the pair, then the session file; and the override never beats a token. */
+    /** The token, then the override, then the session file; and the override never beats a token. */
     @Test
-    void aTokenWinsOverThePairWhichWinsOverTheSession() {
+    void aTokenWinsOverTheOverrideWhichWinsOverTheSession() {
         Map<String, String> both = new HashMap<>(CONTAINER);
         both.put(Mode.TOKEN, "the workspace token");
         assertThat(Mode.of(both)).isEqualTo(Mode.EDGE_TOKEN);

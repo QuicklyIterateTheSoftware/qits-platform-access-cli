@@ -130,7 +130,7 @@ public class ChangelogCommand extends AbstractPublishCommand {
         }
         CliContext context = context();
         Map<String, String> variables = context.env();
-        PlatformClient client = new PlatformClient(PublishCredential.forCiStep(variables, context.err(), context.clock()));
+        PlatformClient client = new PlatformClient(PublishCredential.forCiStep(variables, context.err()));
         ProjectsApi projects = new ProjectsApi(client,
                 projectsOrigin != null ? projectsOrigin : Store.publicOrigin("projects", variables));
         CiApi ci = new CiApi(client, ciOrigin != null ? ciOrigin : Store.publicOrigin("ci", variables));

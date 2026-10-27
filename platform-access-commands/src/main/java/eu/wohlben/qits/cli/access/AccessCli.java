@@ -13,7 +13,6 @@ import eu.wohlben.qits.cli.access.git.GitCredentialCommand;
 import eu.wohlben.qits.cli.access.git.GitLoginCommand;
 import eu.wohlben.qits.cli.access.help.HelpCommand;
 import eu.wohlben.qits.cli.access.login.LoginCommand;
-import eu.wohlben.qits.cli.access.mcp.McpCredentialCommand;
 import eu.wohlben.qits.cli.access.observe.ObserveCommand;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
@@ -47,7 +46,7 @@ import picocli.CommandLine;
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
-                ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class, McpCredentialCommand.class,
+                ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class,
                 ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, UpdateCommand.class,
                 HelpCommand.class},
         description = {
@@ -62,8 +61,8 @@ import picocli.CommandLine;
                         + "session. `qits <command> --help` shows a command's options, examples and exit codes.",
                 "A workspace is the token home: on a runner node, or an admin or editor workspace placed "
                         + "directly on qits-containers, with QITS_TOKEN set every command sends that token as it "
-                        + "is, to the public vhosts https://<app>.qits.<QITS_DOMAIN>. It wins over the session and "
-                        + "the commissioned pair, nothing is minted or written to disk, and a 401 means the token "
+                        + "is, to the public vhosts https://<app>.qits.<QITS_DOMAIN>. It wins over the session, "
+                        + "nothing is minted or written to disk, and a 401 means the token "
                         + "was deleted with the workspace's container. QITS_URL_<APP> still overrides an address."},
         footerHeading = "%nPlatform rules:%n",
         footer = {
@@ -72,9 +71,8 @@ import picocli.CommandLine;
                         + "branch to an open one. A push releases nothing.",
                 "- Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from "
                         + "`qits git-credential`.",
-                "- qits never prints a token. The two exceptions are `qits git-credential get`, which Git runs, "
-                        + "and `qits mcp-credential`, which Claude runs. Two commands print a secret meant for one "
-                        + "person: `qits users invite` (a register token) and `qits users register` (the new "
+                "- qits never prints a token. The one exception is `qits git-credential get`, which Git runs. "
+                        + "Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new "
                         + "password, once).",
                 "- To wait for something on the platform, declare it with `qits wait` and end your turn: you get a "
                         + "new turn when it happens. Never poll for it in a background loop.",

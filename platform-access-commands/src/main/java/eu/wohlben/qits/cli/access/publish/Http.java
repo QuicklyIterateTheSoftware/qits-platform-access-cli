@@ -22,10 +22,9 @@ import java.util.Map;
  * <p><b>Every request carries a bearer, because only a CI run may publish.</b> qits-artifacts used to
  * answer an anonymous publish and no longer does: the store refuses one, so a request without an
  * {@code Authorization} header is a 401 rather than a coordinate. {@link PublishCredential} decides
- * where the token comes from — a token command, a token, or the commissioned client pair minted at
- * the idp — and this class puts it on the wire. The reads go out with it too: the store has wanted a
- * bearer to <em>read</em> a daemon binary for some time, so an unauthenticated probe was only ever a
- * 401 waiting to be met.
+ * where the token comes from — a token command or a token — and this class puts it on the wire.
+ * The reads go out with it too: the store has wanted a bearer to <em>read</em> a daemon binary for
+ * some time, so an unauthenticated probe was only ever a 401 waiting to be met.
  *
  * <p><b>A request with no credential is still sent.</b> When the environment holds no token at all
  * the header is simply absent and the call happens anyway — the store is the authority on who may

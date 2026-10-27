@@ -1,9 +1,7 @@
 package eu.wohlben.qits.cli.session;
 
 import eu.wohlben.qits.cli.access.AccessCli;
-import eu.wohlben.qits.cli.access.FakeIdp;
 import eu.wohlben.qits.cli.access.FakePlatform;
-import eu.wohlben.qits.cli.access.FakeTime;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.tui.api.Interaction;
@@ -17,7 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
+import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,28 +23,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** What an agent is told when a door says no — worded once, not printed raw. */
 class InPlatformRefusalsTest {
 
-    private static final Instant T0 = Instant.parse("2026-09-13T10:00:00Z");
-
-    private FakeIdp idp;
     private FakePlatform platform;
-    private FakeTime time;
 
     @BeforeEach
     void start() throws Exception {
-        idp = new FakeIdp();
         platform = new FakePlatform();
-        time = new FakeTime(T0);
     }
 
     @AfterEach
     void stop() {
-        idp.close();
         platform.close();
     }
 
-    private AgentCredential agent() {
-        String base = idp.url().substring(0, idp.url().length() - "/idp".length());
-        return new AgentCredential(base, idp.commissionedId, idp.commissionedSecret, "qits-platform", time);
+    /** An agent's token, as the MCP service hands it on: {@code qits:agent}, for {@code qits-platform}. */
+    private Credential agent() {
+        Base64.Encoder base64 = Base64.getUrlEncoder().withoutPadding();
+        String claims = "{\"sub\":\"workspace-7f3a\",\"aud\":[\"qits-platform\"],\"groups\":[\"qits:agent\"]}";
+        return new RequestCredential(base64.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8))
+                + "." + base64.encodeToString(claims.getBytes(StandardCharsets.UTF_8)) + ".signature");
     }
 
     @Test
@@ -60,18 +54,15 @@ class InPlatformRefusalsTest {
     }
 
     /**
-     * The defect this replaced: the credential refused a service its {@code aud} claim did not
-     * name, before dialling it. Every qits service also accepts {@code qits-platform} — the one
-     * audience this token carries — so that refusal answered for services that would have said yes.
-     * {@code localhost} stands in for a wire alias here on purpose: a single label, not in the
-     * grant, exactly the shape the old check refused.
+     * Nothing judges a token's {@code aud} claim before dialling: every qits service also accepts
+     * {@code qits-platform} — the one audience this token carries — so only the service may say no.
+     * {@code localhost} stands in for a wire alias here on purpose: a single label, not among the
+     * token's audiences.
      */
     @Test
-    void aServiceOutsideTheGrantIsDialledRatherThanRefused() throws Exception {
+    void aServiceOutsideTheTokensAudiencesIsDialledRatherThanRefused() throws Exception {
         platform.answer("GET", "/observability/api/telemetry/sources", "{\"sources\":[]}");
-        AgentCredential agent = agent();
-        assertThat(agent.granted()).doesNotContain("localhost");
-        assertThat(new PlatformClient(agent).get(byName("/observability/api/telemetry/sources")))
+        assertThat(new PlatformClient(agent()).get(byName("/observability/api/telemetry/sources")))
                 .isNotNull();
         assertThat(platform.requests("GET", "/observability/api/telemetry/sources"))
                 .as("the call went out; the service decides, not the claim").hasSize(1);
@@ -95,7 +86,7 @@ class InPlatformRefusalsTest {
 
     @Test
     void aWorkstationSessionAddsNothingOfItsOwn() {
-        assertThat(new AgentCredential("http://idp", "id", "secret", "a", time).explain(404)).isNull();
+        assertThat(agent().explain(404)).isNull();
         assertThat(((Credential) () -> "token").explain(403)).isNull();
         assertThat(((Credential) () -> "token").explain(401)).isNull();
     }

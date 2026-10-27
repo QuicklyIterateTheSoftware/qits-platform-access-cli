@@ -20,10 +20,12 @@ Claude Code runs: the work-links hook and the work-items status line), `qits upd
 replacing itself with the newest release, also started in the background), and `qits tui` (an
 interactive screen over all of them). The README says how each behaves.
 
-It has **two homes**. A workstation, where a person signs in with a browser and the session lives in
-a file, and a workspace container on the platform, where the commissioned client pair the container
-was injected with is the credential and the services are dialled by their wire aliases. The mode is
-decided once at startup and the two are never mixed.
+It has **three homes**. A workstation, where a person signs in with a browser and the session lives
+in a file; a workspace handed a token of its own (`QITS_TOKEN`: every agent container, a runner
+node, an admin or editor workspace), which sends that token as it is to the public vhosts; and
+in-platform (`QITS_PLATFORM=true`), which the MCP service sets for the commands it runs: services
+are dialled by their wire aliases, with the caller's own bearer handed to each command. The mode is
+decided once at startup and the homes are never mixed.
 
 ## Four modules
 
@@ -261,7 +263,6 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                register sends no bearer: the register token is the credential, and the person has
                no session yet. The idp's address is the session's, the wire alias inside
                (PlatformEndpoints), or, for register with no session, IdpUrl's default
-    mcp/       qits mcp-credential: Claude's MCP headers helper (interim, retired by qits-684)
     agents/    qits agents claude: what Claude Code runs. hook work-links (WorkLinks, the id matching;
                LinkProjects, the slug cache, refreshed by the same command's hidden --refresh started
                detached). The hook path never waits for the network and never fails: errors print nothing
@@ -290,9 +291,10 @@ Two packages sit outside `access/`, because neither is about one command:
                  resolution and caching of sources. TuiApp is all of the behaviour, with no
                  terminal in it. api/ and model/ are in platform-access-commands, beside the
                  commands that use them; the rest, and JLine, are in platform-access-cli.
-    ../session/  which of the CLI's two homes this is (Mode), where the services are in it
-                 (PlatformEndpoints), the container's credential (AgentCredential), what a call
-                 is made with either way (Credential), and BrowserGuard.
+    ../session/  which of the CLI's three homes this is (Mode), where the services are in it
+                 (PlatformEndpoints), the workspace's token (TokenCredential), a caller's bearer
+                 handed in by the MCP service (RequestCredential), what a call is made with any
+                 way (Credential), and BrowserGuard.
 
 ## Conventions
 
@@ -308,11 +310,9 @@ Two packages sit outside `access/`, because neither is about one command:
   `Session`, `TokenResponse` and `Pkce` override `toString` for that reason. An error from the idp
   names its status, `error` and `error_description`, never the request form. A Jackson error on a
   session or token body is replaced, because its message can quote the body.
-  **The two exceptions are `qits git-credential get`**, which prints the git access token on
-  stdout because that is Git's credential helper protocol, **and `qits mcp-credential`**, which
-  prints `{"Authorization":"Bearer <token>"}` because that is what Claude's MCP `headersHelper`
-  reads (interim, until qits-684 gives every workspace a long-lived token). Nothing else prints one,
-  and stderr and logs never carry one, those two commands' included.
+  **The one exception is `qits git-credential get`**, which prints the git access token on
+  stdout because that is Git's credential helper protocol. Nothing else prints one, and stderr and
+  logs never carry one, that command's included.
   Four commands print a secret that is not an access token, because handing it to one person is
   their whole job: `qits users invite` prints a register token, `qits users register` prints the
   generated password, and `qits targets create` and `qits targets rotate-token` print the install
@@ -335,11 +335,12 @@ Two packages sit outside `access/`, because neither is about one command:
   application list (`platform:<name>` against `<envUuid>:<name>`), never spelled. The epic
   *Remove the platform service concept* deletes the environment prefix and the platform/environment
   split; that must stay one edit there.
-- **One credential interface**: `Credential`. `AccessTokens` is the workstation's, `AgentCredential`
-  the container's, and `CliContext.credential()` picks by mode. A command never asks which it has.
-  The two are never mixed: in-platform never opens the session file, and a workstation never mints
-  with a client secret (`BothHomesTest`). The third, `RequestCredential`, is a caller's bearer handed
-  in whole by the MCP service (`CliContext.withCredential`); it never mints or refreshes. That service
+- **One credential interface**: `Credential`. `AccessTokens` is the workstation's, `TokenCredential`
+  the token home's, and `CliContext.credential()` picks by mode. A command never asks which it has.
+  They are never mixed: only a workstation opens the session file (`BothHomesTest`). The third,
+  `RequestCredential`, is a caller's bearer handed in whole by the MCP service
+  (`CliContext.withCredential`); it never mints or refreshes. In-platform has no credential of its
+  own: a call there without one handed refuses (`CliContext.NOTHING_HANDED`). That service
   sets `QITS_MCP_SERVICE`, and `CliContext.system()` then throws: a command it forgot to hand a
   context must not call the platform as the service.
 - **The TUI holds no command's name.** Everything it shows it read from picocli's model.
@@ -388,16 +389,15 @@ Two packages sit outside `access/`, because neither is about one command:
   `credential.helper`: the person's global helper serves GitHub and must stay. A test that runs
   `git config --global` sets `GIT_CONFIG_GLOBAL` to a scratch file first.
 - **`qits artifacts publish` never touches `t.json`, `git.json` or their locks.** It runs in a CI
-  step container with no person signed in, so its commands read only `CliContext.env()`, `.out()`,
-  `.err()` and `.clock()` — never `.sessionFile()` or `.tokens()`. If a change to `publish/` needs
+  step container with no person signed in, so its commands read only `CliContext.env()`, `.out()`
+  and `.err()` — never `.sessionFile()` or `.tokens()`. If a change to `publish/` needs
   either, that change belongs somewhere else.
 - **Every publish request carries a bearer.** Only a CI run may write to qits-artifacts, and its
   reads want one too, so `Http` puts an `Authorization` header on every PUT, GET and HEAD.
   `PublishCredential` is the one place that decides where the token comes from, in this order:
   `QITS_PUBLISH_TOKEN_COMMAND` (an executable printing a fresh token, run again for every request,
-  because a release step can publish an hour after it started), `QITS_PUBLISH_TOKEN`, then the
-  commissioned pair through `AgentCredential` — the CLI's one minter, never a second one here. With
-  none of them the request is still **sent**, without the header: the store is the authority on who
+  because a release step can publish an hour after it started), then `QITS_PUBLISH_TOKEN`. With
+  neither of them the request is still **sent**, without the header: the store is the authority on who
   may write, and refusing locally would hide its 401 behind a message about a variable. A command
   builds its client with `AbstractPublishCommand.http()`, never `new Http(...)`, so an anonymous
   client cannot be had by forgetting an argument.

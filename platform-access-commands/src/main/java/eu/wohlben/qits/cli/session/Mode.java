@@ -6,22 +6,25 @@ import java.util.Map;
  * Which of the CLI's three homes this process is in.
  * <p>
  * A workstation, where a person signed in with a browser and the session lives in a file; a
- * container on the platform, where there is no browser and no person and the credential is the
- * commissioned client pair the container was injected with; or a workspace handed a token of its
- * own ({@code QITS_TOKEN}) — a runner node, or an admin or editor workspace placed directly on
- * qits-containers — which has neither and reaches the platform through the public edge, because
- * only the edge exchanges that token (and, on a runner node, no wire alias resolves at all).
+ * process on the container network that runs commands for somebody else — the MCP service, which
+ * hands every command its caller's own bearer — where services are dialled by their wire aliases;
+ * or a workspace handed a token of its own ({@code QITS_TOKEN}) — every agent container, a runner
+ * node, an admin or editor workspace placed directly on qits-containers — which reaches the
+ * platform through the public edge, because only the edge exchanges that token.
  * <p>
- * They are never mixed: in-platform never reads the session file, a workstation never mints with a
- * client secret, and the token home does neither. The decision is a function of the environment, which does not change while
- * a process runs, so it is made once and holds for every command in it.
+ * They are never mixed: only a workstation ever reads the session file. The decision is a
+ * function of the environment, which does not change while a process runs, so it is made once and
+ * holds for every command in it.
  */
 public enum Mode {
 
     /** A person's machine: the session file from {@code qits login}. */
     WORKSTATION,
 
-    /** A workspace container: the commissioned client, minted at the internal idp. */
+    /**
+     * On the container network, dialling wire aliases, with the credential its host hands each
+     * command — the MCP service and its caller's bearer. Only {@link #OVERRIDE} chooses it.
+     */
     IN_PLATFORM,
 
     /**
@@ -32,19 +35,16 @@ public enum Mode {
 
     /**
      * The workspace's own token. Non-blank, it decides the home ahead of everything else — the
-     * override and the pair included: a container that was handed one was addressed on purpose, and
-     * a workspace carrying one — a runner node, or an admin or editor workspace placed directly on
-     * qits-containers — has to dial the public edge, the only place that token is accepted.
+     * override included: a container that was handed one was addressed on purpose, and a workspace
+     * carrying one has to dial the public edge, the only place that token is accepted.
      */
     public static final String TOKEN = "QITS_TOKEN";
 
-    public static final String CLIENT_ID = "QITS_COMMISSIONED_CLIENT_ID";
-    public static final String CLIENT_SECRET = "QITS_COMMISSIONED_CLIENT_SECRET";
-
     /**
-     * An explicit answer, honoured in both directions — but never the signal. No container on the
-     * platform sets it today, so a CLI that waited for it would never notice where it is. It chooses
-     * between the workstation and the pair only; it does not beat {@link #TOKEN}.
+     * An explicit answer, honoured in both directions, and the only way into {@link #IN_PLATFORM}:
+     * the MCP service sets it for every command it runs ({@code ToolRunner}). It chooses between the
+     * workstation and in-platform only; it does not beat {@link #TOKEN}. Unset, the home is a
+     * workstation.
      */
     public static final String OVERRIDE = "QITS_PLATFORM";
 
@@ -56,10 +56,10 @@ public enum Mode {
         if (override != null && !override.isBlank()) {
             return Boolean.parseBoolean(override.strip()) ? IN_PLATFORM : WORKSTATION;
         }
-        return given(env, CLIENT_ID) && given(env, CLIENT_SECRET) ? IN_PLATFORM : WORKSTATION;
+        return WORKSTATION;
     }
 
-    /** The commissioned pair and the wire aliases. False in the token home, which has neither. */
+    /** The wire aliases and a handed credential. False in the token home, which dials the edge. */
     public boolean inPlatform() {
         return this == IN_PLATFORM;
     }

@@ -64,14 +64,13 @@ import java.util.regex.Pattern;
                 "- With tickets the subject is `chore(qits-9, qits-10): bump(<group>): <N> dependencies`, the "
                         + "ids sorted by project and number.",
                 "- The store is https://registry.qits.$QITS_DOMAIN; the bearer comes from "
-                        + "QITS_PUBLISH_TOKEN_COMMAND, QITS_PUBLISH_TOKEN, or the commissioned pair, as for `qits "
-                        + "artifacts publish`."},
+                        + "QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, as for `qits artifacts publish`."},
         exitCodeListHeading = "%nExit codes:%n",
         exitCodeList = {"0:The message is on stdout.",
                 "1:Refused: an option or QITS_EVENT_PAYLOAD missing or unreadable, no credential in the "
                         + "environment, a changelog that is not published (404) or whose last line is not "
                         + "`associated tickets: ...`, or another 4xx.",
-                "2:Could not ask: the store unreachable, a 5xx, or a token command or idp that failed. A step "
+                "2:Could not ask: the store unreachable, a 5xx, or a token command that failed. A step "
                         + "may retry a 2."})
 public class BumpMessageCommand extends PlatformCommand {
 
@@ -128,7 +127,7 @@ public class BumpMessageCommand extends PlatformCommand {
         Map<String, Set<String>> versions = versions(context.env().get(PAYLOAD), appliedKeys);
 
         String origin = registryOrigin != null ? registryOrigin : Store.publicOrigin(Store.REGISTRY_HOST, context.env());
-        Credential credential = PublishCredential.forCiStep(context.env(), context.err(), context.clock());
+        Credential credential = PublishCredential.forCiStep(context.env(), context.err());
         List<String> sections = new ArrayList<>();
         Set<String> tickets = new TreeSet<>(CommitSubjects.ORDER);
         for (Map.Entry<String, Set<String>> repository : versions.entrySet()) {

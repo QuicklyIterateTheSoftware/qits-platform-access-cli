@@ -38,9 +38,7 @@ Commands:
   harness's sign-in on the target through the API and waits for it to report signed in.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
-  platform, the container's own credential instead.
-- `qits mcp-credential` is Claude's MCP headers helper for the qits MCP server (interim) — see
-  below.
+  platform, the workspace token or the credential the process was handed instead.
 - `qits agents claude hook work-links` is a Claude Code hook that shows work ids such as `qits-111`
   as links to the landing app, and `qits agents claude statusline work-items` a Claude
   Code status line with the session's newest work items and their states — see below.
@@ -170,13 +168,13 @@ it, so no command is delayed and none fails because of it. The background run ha
 failure is kept in `update.json`, and the next command prints it once, as one line on stderr.
 No check is started by `qits update` itself, by `--help` or `-V`, or by the commands whose output or
 timing another program reads: `session-daemon`, `checkout-daemon`, `git-credential`,
-`mcp-credential`, `agents …` (Claude's hook and status line) and `help`.
+`agents …` (Claude's hook and status line) and `help`.
 
 **Turning it off.** `QITS_AUTO_UPDATE=false` (or `0`, `off`, `no`) turns the automatic update off.
 `qits update` still works.
 
-**Never inside the platform.** Inside a container on the platform (the commissioned pair), in a
-workspace with `QITS_TOKEN`, and in the MCP service the image decides which `qits` there is:
+**Never inside the platform.** In-platform (`QITS_PLATFORM=true`), in a workspace with
+`QITS_TOKEN`, and in the MCP service the image decides which `qits` there is:
 nothing is checked automatically there, and `qits update` refuses with exit code 2. Without a
 session file nothing is checked automatically either; `qits update` then says to run `qits login`.
 A build that does not know its version (one built without Maven's resource filtering) never updates.
@@ -351,34 +349,35 @@ command that says neither still appears and still runs.
 
 ## qits from inside the platform
 
-The same binary, in a workspace container on the platform, is a second home and not a second
-program. There is no browser and nobody to sign in; there is the commissioned client the container
-was injected with (`QITS_COMMISSIONED_CLIENT_ID` / `QITS_COMMISSIONED_CLIENT_SECRET`). Both set is
-the signal, decided once at startup:
+The same binary, in a container on the platform, is another home and not another program. There
+is no browser and nobody to sign in, and there are two ways in, decided once at startup:
 
-- the credential is minted at the internal idp with `client_credentials`, **once per process** — the
-  answer's `aud` claim carries every audience the client holds — and kept in memory only. It is
-  never written to `t.json` and never under the agent's config folder;
-- the public vhosts do not resolve inside, so a service is dialled by its wire alias:
-  `http://dev-qits-projects:8080` for a service on an environment's plane, and its own alias for one
-  on the platform plane — `http://qits-platform-idp:8080` for the idp, `http://qits-events:8080` for
-  events. Those aliases are not one pattern, so the CLI holds the two it dials by name rather than
-  spelling them. The tier in an environment name comes from `QITS_ENV`, else from the host of whichever
-  platform URL the container carries — `QITS_WORKSPACE_DAEMON_URL` in a workspace,
-  `QITS_PROJECTS_DAEMON_URL` in a project-agent container, `QITS_PLATFORM_MCP_URL` in both.
-  `QITS_URL_<APP>` overrides any of them;
-- the credential is `qits:agent`. Every read door answers and an operator write answers `403`, which
-  is correct behaviour and is worded as such;
-- **nothing is refused before the call.** The audience a command dials is not this credential's to
-  judge: every qits service accepts `qits-platform` beside its own name
+- **A workspace token** (`QITS_TOKEN`), which every agent container, runner node and admin or
+  editor workspace carries. Set, it wins over everything else: every command sends that token as
+  it is to the public vhosts `https://<app>.qits.<QITS_DOMAIN>`, nothing is minted, nothing is
+  written to `t.json` or under the agent's config folder, and a `401` means the token was deleted
+  with the workspace's container.
+- **In-platform** (`QITS_PLATFORM=true`), which the MCP service sets for every command it runs.
+  A service is dialled by its wire alias, `http://<env>-qits-<app>:8080`, with the tier from
+  `QITS_ENV`, else from the host of whichever platform URL the container carries —
+  `QITS_WORKSPACE_DAEMON_URL` in a workspace, `QITS_PROJECTS_DAEMON_URL` in a project-agent
+  container, `QITS_PLATFORM_MCP_URL` in both. The credential is the caller's own bearer, which the
+  service hands to each command; this home has none of its own, and a call made there without one
+  refuses with exit code 2.
+
+`QITS_URL_<APP>` overrides an address in either. Both behave the same way at the door:
+
+- an agent's token is `qits:agent`. Every read door answers and an operator write answers `403`,
+  which is correct behaviour and is worded as such;
+- **nothing is refused before the call.** The audience a command dials is not the CLI's to judge:
+  every qits service accepts `qits-platform` beside its own name
   (`quarkus.oidc.token.audience=${qits.auth.machine.audience},qits-platform`, in all fourteen
-  services that carry the setting), and the one token this credential mints carries exactly that.
-  A service that really does refuse the token answers `401`, and only then does the CLI add a
-  sentence of its own, naming the audience it asked the idp for.
+  services that carry the setting), and an agent's token carries exactly that. A service that
+  really does refuse the token answers `401`, and only then does the CLI add a sentence of its own.
 
-This used to work the other way round, and it was wrong. The CLI read the minted token's `aud`
-claim and refused any service the claim did not name — a false negative, because the claim names
-each service's own audience and not the fleet-wide one every service also accepts. It cost
+This used to work the other way round, and it was wrong. The CLI read the token's `aud` claim and
+refused any service the claim did not name — a false negative, because the claim names each
+service's own audience and not the fleet-wide one every service also accepts. It cost
 `qits observe` its entire reason for existing in a container: qits-observability grants `qits:agent`
 read access **on purpose** (its `AgentReadAccessTest` asserts that an agent reads the telemetry API
 and opens the live stream), and the CLI was the only thing saying no. Measured from a workspace
@@ -390,8 +389,8 @@ container on 2026-09-14, with the very bearer the CLI would not send:
     $ ... /observability/api/telemetry/errors?limit=3
     200  {"groups":[],"total":0,…}
 
-A workstation is untouched by any of this: without the pair, nothing ever mints with a client
-secret and the session file is the only credential there is.
+A workstation is untouched by any of this: without `QITS_TOKEN` or `QITS_PLATFORM=true` the session
+file is the only credential there is.
 
 The container is also quiet. The workspace image sets `QUARKUS_ANALYTICS_DISABLED=true` for the
 Maven builds the agent runs there, and this binary is a Quarkus application as well, so that
@@ -401,8 +400,9 @@ records the same value, the two agree, and nothing but the command's own answer 
 
 ### The smoke run
 
-Repeat it from any workspace container. Recorded on dev, 2026-09-13, from the released binary
-(`2026.913.220350`) inside a workspace container:
+Recorded on dev, 2026-09-13, from the released binary (`2026.913.220350`) inside a workspace
+container that dialled the wire aliases. With `QITS_TOKEN` the addresses are the public vhosts and
+the answers read the same:
 
     $ qits ci runs --project qits --repository qits-platform-access-cli --limit 3
     ID        STATUS   BRANCH                                        COMMIT    REQUEST   CREATED                  TOOK
@@ -430,7 +430,7 @@ Repeat it from any workspace container. Recorded on dev, 2026-09-13, from the re
     qits tui needs an interactive terminal. (Unable to create a terminal)
     # exit 2 — it says so rather than waiting for a key nobody can press
 
-On a container's own terminal the same command paints, and its header says which home it is in:
+On a terminal in-platform the same command paints, and its header says which home it is in:
 
     qits tui · in platform · dev · agent (qits:agent)
 
@@ -1641,39 +1641,24 @@ On a workstation, the sign-in of `qits git-login` in `git.json` is what answers:
   nothing on stdout.
 
 Inside the platform there is no sign-in and none is needed: `qits git-login` wants a browser and is
-refused there, so `git.json` never exists. The container's own commissioned credential answers
-instead, minted at the internal idp on demand:
+refused there, so `git.json` never exists. In-platform (`QITS_PLATFORM=true`) the credential the
+process was handed answers instead:
 
-- `get`: for the injected git host, prints `username=oauth2` and the container's bearer as
-  `password`. The host is `QITS_GIT_AUTH_HOST` (a bare authority, `githost.dev.internal:8080`), and
-  it is compared as a normalised origin, so an explicit default port on either side still matches.
-- Any other host gets no answer, and nothing is minted for it: the helper is global, and the
-  platform's bearer is not handed to a host someone else wrote into a remote. A missing or
+- `get`: for the injected git host, prints `username=oauth2` and that bearer as `password`. The
+  host is `QITS_GIT_AUTH_HOST` (a bare authority, `githost.dev.internal:8080`), and it is compared
+  as a normalised origin, so an explicit default port on either side still matches.
+- Any other host gets no answer, and the credential is not touched for it: the helper is global,
+  and the platform's bearer is not handed to a host someone else wrote into a remote. A missing or
   unreadable `QITS_GIT_AUTH_HOST` therefore answers nothing at all, rather than answering
   everything.
 - `store` and `erase` do nothing, and nothing is written: neither `git.json` nor `git.json.lock` is
   created. The agent's config folder is becoming a git repository, and a machine credential
   committed to a branch is a leak with a history.
-- An idp that cannot be reached or refuses the client says why on stderr and still exits `0`, so
-  Git carries on with its other helpers.
+- A credential that cannot be had (none was handed) says why on stderr and still exits `0`, so Git
+  carries on with its other helpers.
 
-`git-credential get` is one of the two places `qits` prints a token, because that is how Git's
+`git-credential get` is the one place `qits` prints a token, because that is how Git's
 helper protocol works. stderr never carries one.
-
-### qits mcp-credential
-
-    qits mcp-credential      Claude runs this; a person does not
-
-Claude's MCP configuration names it as the `headersHelper` of the qits MCP server's entry, and
-Claude runs it whenever it connects. It prints `{"Authorization":"Bearer <token>"}` and a newline
-on stdout and exits `0`: inside the platform the container's own credential (audience
-`qits-platform`, minted on demand), on a workstation the session of `qits login`, refreshed first
-when it is about to expire. Any failure is one line on stderr, nothing on stdout and exit `1`, so
-Claude connects without the header and the server answers 401.
-
-It is the other place `qits` prints a token. It is interim: a container's token lasts an hour, so
-a header written once at launch would go stale. Follow-up qits-684 gives every workspace a
-long-lived token of its own, the entry then carries it as a plain header, and this command goes.
 
 ## qits agents
 
@@ -1792,11 +1777,8 @@ environment has:
    after it started, and a token minted at the top of the step would be expired by then. qits-ci
    writes `/tmp/qits-publish-token` and points this at it.
 2. `QITS_PUBLISH_TOKEN` — a token, used verbatim.
-3. `QITS_COMMISSIONED_CLIENT_ID` and `QITS_COMMISSIONED_CLIENT_SECRET` — the commissioned client pair
-   a step container carries, exchanged at the internal idp for the `qits-platform` audience by the
-   same minter every other `qits` command uses.
 
-With none of them the request is still **sent**, without the header, and the store answers `401`.
+With neither of them the request is still **sent**, without the header, and the store answers `401`.
 That is deliberate: the store is the authority on who may write, and refusing here would replace its
 refusal — which names the real reason — with a client-side error naming a variable. No token is ever
 printed, to stdout, to stderr or into an error message.
@@ -1825,7 +1807,7 @@ should call `qits artifacts publish` directly.
 
 What reads the changelogs every release publishes (`qits artifacts publish changelog`, above). Like
 `qits artifacts publish` it runs in a CI step, never signs in, and presents the same bearer chain
-(`QITS_PUBLISH_TOKEN_COMMAND`, `QITS_PUBLISH_TOKEN`, or the commissioned pair).
+(`QITS_PUBLISH_TOKEN_COMMAND`, then `QITS_PUBLISH_TOKEN`).
 
     qits changelog bump-message --group <group> --applied <file> --body <file>
 

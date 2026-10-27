@@ -63,7 +63,7 @@ class McpServiceTest {
             assertThat(page.nextCursor()).as("one page").isNull();
             assertThat(page.tools()).extracting(McpAssured.ToolInfo::name)
                     .contains("projects_list", "work_update", "events_query", "observe_query")
-                    .doesNotContain("login", "mcp-credential", "events");
+                    .doesNotContain("login", "git-credential", "events");
             JsonObject update = page.findByName("work_update").inputSchema();
             assertThat(update.getJsonObject("properties").fieldNames()).contains("entity", "output", "payload")
                     .doesNotContain("projects-url");
@@ -78,7 +78,7 @@ class McpServiceTest {
                 .header("Authorization", "Bearer " + BearerProfile.agentToken("qits-platform")).body(INITIALIZE)
                 .when().post("/mcp").then().statusCode(200).extract().asString();
         assertThat(body).contains("Not served here (").contains("qits login: needs a browser and a person")
-                .contains("qits events: runs until stopped").contains("qits mcp-credential: only means something");
+                .contains("qits events: runs until stopped").contains("qits git-credential: only means something");
     }
 
     @Test

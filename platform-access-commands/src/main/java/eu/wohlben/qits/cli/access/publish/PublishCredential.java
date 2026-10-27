@@ -1,9 +1,7 @@
 package eu.wohlben.qits.cli.access.publish;
 
 import eu.wohlben.qits.cli.access.platform.CliFailure;
-import eu.wohlben.qits.cli.session.AgentCredential;
 import eu.wohlben.qits.cli.session.Credential;
-import eu.wohlben.qits.cli.session.Mode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +9,6 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * from.
  *
  * <p>The store used to answer an anonymous publish; it does not any more. Only a CI run may write a
- * coordinate, so every request this program makes carries a token, and the four sources below are
+ * coordinate, so every request this program makes carries a token, and the three sources below are
  * tried in order — the first that answers wins.
  *
  * <ol>
@@ -33,19 +30,14 @@ import java.util.concurrent.TimeUnit;
  *       this at it.
  *   <li><b>{@code QITS_PUBLISH_TOKEN}</b> — a token, verbatim. For a step that already holds one and
  *       for driving this client by hand.
- *   <li><b>The commissioned pair</b> — {@code QITS_COMMISSIONED_CLIENT_ID} and
- *       {@code QITS_COMMISSIONED_CLIENT_SECRET}, exchanged at the internal idp through
- *       {@link AgentCredential}, which is the same minter every other {@code qits} command uses.
- *       There is deliberately no second minter here.
  *   <li><b>Nothing</b> — no {@code Authorization} header at all, exactly as this client always
  *       behaved. <b>A publish with no credential is still attempted, never refused here.</b> The
  *       store is the authority on who may write; failing locally would turn its 401 — which names
  *       the real reason — into a client-side error that names a variable instead.
  * </ol>
  *
- * <p><b>Nothing here ever prints a token.</b> A refusal names the command or the idp's own status
- * and {@code error}, and never what came back on stdout, because what came back on stdout is the
- * token.
+ * <p><b>Nothing here ever prints a token.</b> A refusal names the command and how it ended, and
+ * never what came back on stdout, because what came back on stdout is the token.
  *
  * <p><b>Other CI-step commands use the same chain</b>, through {@link #forCiStep}, rather than a copy
  * of it: {@code qits ci report submit} runs in the same step container, beside the same variables,
@@ -64,12 +56,10 @@ public final class PublishCredential {
 
     private final Env env;
     private final Console console;
-    private final Clock clock;
 
-    PublishCredential(Env env, Console console, Clock clock) {
+    PublishCredential(Env env, Console console) {
         this.env = env;
         this.console = console;
-        this.clock = clock;
     }
 
     /**
@@ -79,13 +69,13 @@ public final class PublishCredential {
      *
      * <p>Unlike a publish, a call with no credential at all is not sent: the platform client always
      * presents a bearer, so the absence is said here, as a usage error naming the variables, and
-     * nothing goes out. A token command that fails, or an idp that cannot be reached, is a failure
-     * of the call (exit 1); its message never holds a token.
+     * nothing goes out. A token command that fails is a failure of the call (exit 1); its message
+     * never holds a token.
      *
      * @param err where the chain's warnings go (a token command that is not executable)
      */
-    public static Credential forCiStep(Map<String, String> env, PrintStream err, Clock clock) {
-        PublishCredential chain = new PublishCredential(new Env(env), new Console(err, err), clock);
+    public static Credential forCiStep(Map<String, String> env, PrintStream err) {
+        PublishCredential chain = new PublishCredential(new Env(env), new Console(err, err));
         return new Credential() {
             @Override
             public String bearer() throws CliFailure {
@@ -98,8 +88,8 @@ public final class PublishCredential {
                             : new CliFailure(failed.getMessage(), CliFailure.FAILED);
                 }
                 if (token.isEmpty()) {
-                    throw new CliFailure("No CI credential in this environment: set " + TOKEN_COMMAND + ", " + TOKEN
-                            + ", or " + Mode.CLIENT_ID + " and " + Mode.CLIENT_SECRET + ".", CliFailure.USAGE);
+                    throw new CliFailure("No CI credential in this environment: set " + TOKEN_COMMAND + " or "
+                            + TOKEN + ".", CliFailure.USAGE);
                 }
                 return token.get();
             }
@@ -131,9 +121,6 @@ public final class PublishCredential {
         if (told != null) {
             return Optional.of(told.strip());
         }
-        if (env.get(Mode.CLIENT_ID) != null && env.get(Mode.CLIENT_SECRET) != null) {
-            return Optional.of(commissioned());
-        }
         return Optional.empty();
     }
 
@@ -144,8 +131,8 @@ public final class PublishCredential {
      * path with a space in it rather than two words, and nothing in it can become a second command.
      *
      * <p>A value that names a path nothing can execute returns {@code null} — a WARN and the next
-     * source — because a variable pointing at a script a step never wrote is a misconfiguration the
-     * commissioned pair may well cover. A command that <em>does</em> run and then fails is the
+     * source — because a variable pointing at a script a step never wrote is a misconfiguration
+     * {@code QITS_PUBLISH_TOKEN} may well cover. A command that <em>does</em> run and then fails is the
      * opposite case: something was meant to mint and could not, and going on quietly without a
      * credential would report that as a store refusal much later.
      */
@@ -215,24 +202,5 @@ public final class PublishCredential {
                     TOKEN_COMMAND + " (" + command + ") exited 0 but printed nothing on stdout");
         }
         return token;
-    }
-
-    /**
-     * The commissioned pair, through the CLI's one minter. {@link AgentCredential} holds the token
-     * for its hour and mints again inside the last minute of it, so a step that publishes several
-     * coordinates goes to the idp once.
-     */
-    private String commissioned() {
-        try {
-            return AgentCredential.of(env.values(), clock).bearer();
-        } catch (CliFailure refused) {
-            String message = "cannot mint a publish token from " + Mode.CLIENT_ID + "/"
-                    + Mode.CLIENT_SECRET + ": " + refused.getMessage();
-            // Retryable is the idp being unreachable — the question could not be put. Anything else
-            // is the idp answering no, which asking again will not change.
-            throw refused.retryable()
-                    ? CliException.transport(message)
-                    : CliException.policy(message);
-        }
     }
 }

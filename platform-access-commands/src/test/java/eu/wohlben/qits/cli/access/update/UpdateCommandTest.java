@@ -178,8 +178,7 @@ class UpdateCommandTest {
 
     @Test
     void insideThePlatformItRefuses() {
-        env.put(Mode.CLIENT_ID, "id");
-        env.put(Mode.CLIENT_SECRET, "secret");
+        env.put(Mode.OVERRIDE, "true");
 
         Result r = run("update");
 
@@ -235,8 +234,7 @@ class UpdateCommandTest {
 
     @Test
     void theBackgroundRunInsideThePlatformDoesNothing() {
-        env.put(Mode.CLIENT_ID, "id");
-        env.put(Mode.CLIENT_SECRET, "secret");
+        env.put(Mode.OVERRIDE, "true");
 
         assertThat(run("update", "--background")).isEqualTo(new Result(0, "", ""));
         assertThat(store.requests).isEmpty();

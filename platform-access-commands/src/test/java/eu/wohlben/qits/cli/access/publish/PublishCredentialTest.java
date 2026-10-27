@@ -1,6 +1,5 @@
 package eu.wohlben.qits.cli.access.publish;
 
-import eu.wohlben.qits.cli.access.FakeIdp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ class PublishCredentialTest {
         store.close();
     }
 
-    // --- the four sources, in order ------------------------------------------------------------
+    // --- the three sources, in order -----------------------------------------------------------
 
     @Test
     void aTokenCommandIsRunAndItsOutputIsThePutsBearer() throws IOException {
@@ -60,14 +59,12 @@ class PublishCredentialTest {
     }
 
     @Test
-    void aTokenCommandWinsOverATokenAndOverTheCommissionedPair() throws IOException {
+    void aTokenCommandWinsOverAToken() throws IOException {
         Path minter = script("printf 'from-the-command'");
 
         new Harness().store(store)
                 .with(PublishCredential.TOKEN_COMMAND, minter.toString())
                 .with(PublishCredential.TOKEN, "from-the-variable")
-                .with("QITS_COMMISSIONED_CLIENT_ID", "id")
-                .with("QITS_COMMISSIONED_CLIENT_SECRET", "secret")
                 .run(submit());
 
         assertThat(store.lastRequest().header("Authorization")).isEqualTo("Bearer from-the-command");
@@ -82,21 +79,16 @@ class PublishCredentialTest {
         assertThat(store.lastRequest().header("Authorization")).isEqualTo("Bearer a-token-as-given");
     }
 
+    /** The retired commissioned client pair is not a source: nothing is minted from it. */
     @Test
-    void theCommissionedPairIsMintedAtTheIdpWhenNothingElseSaysWhatToSend() throws IOException {
-        try (FakeIdp idp = new FakeIdp()) {
-            Harness.Run run = new Harness().store(store)
-                    .with("QITS_COMMISSIONED_CLIENT_ID", idp.commissionedId)
-                    .with("QITS_COMMISSIONED_CLIENT_SECRET", idp.commissionedSecret)
-                    .with("QITS_GIT_AUTH_TOKEN_URL", idp.url() + "/token")
-                    .run(submit());
+    void theRetiredCommissionedPairIsNotACredential() {
+        Harness.Run run = new Harness().store(store)
+                .with("QITS_COMMISSIONED_CLIENT_ID", "id")
+                .with("QITS_COMMISSIONED_CLIENT_SECRET", "secret")
+                .run(submit());
 
-            assertThat(run.code()).isEqualTo(ExitCode.OK);
-            assertThat(store.lastRequest().header("Authorization")).startsWith("Bearer " + FakeIdp.SECRET);
-            assertThat(idp.grants("client_credentials")).isEqualTo(1);
-            assertThat(idp.requests).allSatisfy(request ->
-                    assertThat(request).containsEntry("audience", "qits-platform"));
-        }
+        assertThat(run.code()).isEqualTo(ExitCode.OK);
+        assertThat(store.lastRequest().header("Authorization")).isNull();
     }
 
     @Test

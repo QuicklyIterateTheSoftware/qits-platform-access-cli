@@ -82,7 +82,7 @@ class AutoUpdateTest {
     void theProtocolCommandsHelpAndVersionNeverStartOne() {
         for (String[] args : List.of(new String[] {"update"}, new String[] {"update", "--background"},
                 new String[] {"session-daemon"}, new String[] {"checkout-daemon", "--path", "/x"},
-                new String[] {"git-credential", "get"}, new String[] {"mcp-credential"},
+                new String[] {"git-credential", "get"},
                 new String[] {"agents", "claude", "hook", "work-links"},
                 new String[] {"agents", "claude", "statusline", "work-items"}, new String[] {"help", "skill"},
                 new String[] {"--help"}, new String[] {"-V"}, new String[] {"--version"},
@@ -95,8 +95,7 @@ class AutoUpdateTest {
 
     @Test
     void outsideAWorkstationNothingStarts() {
-        env.put(Mode.CLIENT_ID, "id");
-        env.put(Mode.CLIENT_SECRET, "secret");
+        env.put(Mode.OVERRIDE, "true");
         before("projects", "list");
         env.clear();
         env.put(Mode.TOKEN, "a workspace token");

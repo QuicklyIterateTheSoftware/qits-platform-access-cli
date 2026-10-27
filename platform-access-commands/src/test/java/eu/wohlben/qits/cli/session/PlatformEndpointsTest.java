@@ -29,14 +29,13 @@ class PlatformEndpointsTest {
     }
 
     /**
-     * The pair and the wire aliases it would read are passed over: the token home resolves none of
-     * them.
+     * The override and the wire aliases it would read are passed over: the token home resolves none
+     * of them.
      */
     @Test
     void theTokenHomeIgnoresWhatAContainerWouldDial() throws CliFailure {
         Map<String, String> both = new HashMap<>(RUNNER);
-        both.put(Mode.CLIENT_ID, "id");
-        both.put(Mode.CLIENT_SECRET, "secret");
+        both.put(Mode.OVERRIDE, "true");
         both.put("QITS_GIT_AUTH_TOKEN_URL", "http://dev-qits-idp:8080/idp/token");
         assertThat(endpoints(both).base("idp")).isEqualTo("https://idp.qits.wohlben.eu");
         assertThat(endpoints(both).base("ci")).isEqualTo("https://ci.qits.wohlben.eu");
@@ -74,7 +73,7 @@ class PlatformEndpointsTest {
      */
     @Test
     void insideTheUntoldIdpIsTheRule() throws CliFailure {
-        Map<String, String> container = Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret", "QITS_ENV", "qa");
+        Map<String, String> container = Map.of(Mode.OVERRIDE, "true", "QITS_ENV", "qa");
         assertThat(endpoints(container).base("idp")).isEqualTo("http://qa-qits-idp:8080");
     }
 
@@ -84,9 +83,9 @@ class PlatformEndpointsTest {
         assertThat(new PlatformEndpoints(Mode.WORKSTATION, Map.of(), "https://idp.qits.wohlben.eu/idp").landing())
                 .isEqualTo("https://qits.wohlben.eu");
         assertThat(endpoints(RUNNER).landing()).isEqualTo("https://qits.wohlben.eu");
-        Map<String, String> container = Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret", "QITS_DOMAIN", "example.org");
+        Map<String, String> container = Map.of(Mode.OVERRIDE, "true", "QITS_DOMAIN", "example.org");
         assertThat(endpoints(container).landing()).isEqualTo("https://qits.example.org");
-        assertThatThrownBy(() -> endpoints(Map.of(Mode.CLIENT_ID, "id", Mode.CLIENT_SECRET, "secret")).landing())
+        assertThatThrownBy(() -> endpoints(Map.of(Mode.OVERRIDE, "true")).landing())
                 .isInstanceOf(CliFailure.class);
         assertThat(endpoints(Map.of("QITS_URL_LANDING", "http://localhost:4200/")).landing())
                 .isEqualTo("http://localhost:4200");

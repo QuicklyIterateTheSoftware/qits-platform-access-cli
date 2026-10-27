@@ -37,8 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * The home that already worked, proven to still work.
  * <p>
  * The risk of in-platform mode is not that it fails; it is that it quietly takes the workstation
- * with it. So this runs the ordinary commands with the commissioned variables <b>absent</b> and
- * asserts what must not have happened: no {@code client_credentials} grant, no client secret in any
+ * with it. So this runs the ordinary commands with nothing that leads inside in the environment
+ * and asserts what must not have happened: no {@code client_credentials} grant, no client secret in any
  * form the idp saw, and no reading of anything but the session file.
  */
 class BothHomesTest {
@@ -101,7 +101,7 @@ class BothHomesTest {
     }
 
     @Test
-    void withoutTheCommissionedPairThisIsAWorkstationAndTheSessionFileIsWhatItUses() {
+    void withNothingThatLeadsInsideThisIsAWorkstationAndTheSessionFileIsWhatItUses() {
         assertThat(Mode.of(env)).isEqualTo(Mode.WORKSTATION);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
