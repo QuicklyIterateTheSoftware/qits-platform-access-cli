@@ -632,6 +632,23 @@ public final class ProjectsContract {
      * recording carries them. A recording without them is a service older than the loop, whose
      * settings the command prints as the defaults; see {@link #DELIVERY}.
      */
+    /** The provider state the guide is recorded in. */
+    static final String GUIDE_SHIPS = "the development guide ships";
+
+    /** {@code qits help guide --for workstation}: the variant and its markdown. */
+    private static final Call GUIDE = (api, params, recorded) -> {
+        JsonNode guide = api.developmentGuide("workstation");
+        assertThat(ProjectsApi.text(guide, "variant")).isEqualTo("workstation");
+        assertThat(ProjectsApi.text(guide, "markdown")).isNotBlank();
+    };
+
+    /** {@code qits help guide --list}: each variant's name and description. */
+    private static final Call GUIDE_VARIANTS = (api, params, recorded) -> {
+        JsonNode variants = api.developmentGuideVariants().path("variants");
+        assertThat(variants.isArray()).isTrue();
+        assertThat(ProjectsApi.text(variants.get(0), "name")).isNotBlank();
+    };
+
     private static final Call DELIVERY_READ = (api, params, recorded) -> {
         JsonNode project = api.project(params.get("projectId"));
         assertThat(ProjectsApi.text(project, "id")).isEqualTo(params.get("projectId"));
@@ -968,6 +985,16 @@ public final class ProjectsContract {
                 .request("GET /projects/api/projects/{projectId}/desk-triggers"));
         REPOSITORY_SCOPED.forEach(c -> rows.add(row(c, ONE_REPOSITORY, "listProjectRepositories", "repositories",
                 FIND_REPOSITORY).consumes(REPOSITORY)));
+
+        // qits help guide (qits-1679): pending until the pinned golden masters carry the guide.
+        rows.add(row("qits help guide", GUIDE_SHIPS, "getDevelopmentGuide", "developmentGuide", GUIDE)
+                .consumes(held(GUIDE_SHIPS, "getDevelopmentGuide", List.of("variant", "markdown")))
+                .request("GET /projects/api/guide?for=workstation"));
+        rows.add(row("qits help guide", GUIDE_SHIPS, "listDevelopmentGuideVariants", "developmentGuideVariants",
+                GUIDE_VARIANTS)
+                .consumes(held(GUIDE_SHIPS, "listDevelopmentGuideVariants",
+                        List.of("variants[].name", "variants[].description")))
+                .request("GET /projects/api/guide/variants"));
 
         // qits repositories
         rows.add(row("qits repositories list", REPOSITORIES_IN_COMPONENTS, "listProjectRepositories", "repositories",

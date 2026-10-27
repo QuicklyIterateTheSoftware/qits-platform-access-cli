@@ -380,7 +380,7 @@ class McpToolCatalogTest {
                 "release-request_list", "ci_runs", "ci_run", "ci_report_show", "maintenance_automations",
                 "maintenance_bump",
                 "events", "events_query", "observe", "observe_query", "observe_sources", "observe_errors",
-                "observe_slow-spans", "observe_metrics", "help_skill", "agents_claude_hook_work-links",
+                "observe_slow-spans", "observe_metrics", "help_skill", "help_guide", "agents_claude_hook_work-links",
                 "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message",
                 "workspaces_list", "workspaces_show", "workspaces_active-process", "workspaces_items",
                 "workspaces_history", "workspaces_log", "workspaces_agents_list", "workspaces_agents_draft_show",

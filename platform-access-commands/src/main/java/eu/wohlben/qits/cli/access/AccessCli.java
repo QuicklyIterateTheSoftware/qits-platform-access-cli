@@ -79,7 +79,9 @@ import picocli.CommandLine;
                         + "password, once).",
                 "- To wait for something on the platform, declare it with `qits wait` and end your turn: you get a "
                         + "new turn when it happens. Never poll for it in a background loop.",
-                "- A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`."},
+                "- A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.",
+                "- For how to develop on the platform, run `qits help guide`: it prints the platform's current "
+                        + "guide for where it runs (a workstation, or an agent, desk or refinement room inside)."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
 public class AccessCli implements Runnable {

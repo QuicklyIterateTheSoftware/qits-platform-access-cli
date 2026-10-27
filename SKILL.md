@@ -18,6 +18,7 @@ A workspace is the token home: on a runner node, or an admin or editor workspace
 - qits never prints a token. The one exception is `qits git-credential get`, which Git runs. Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new password, once).
 - To wait for something on the platform, declare it with `qits wait` and end your turn: you get a new turn when it happens. Never poll for it in a background loop.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
+- For how to develop on the platform, run `qits help guide`: it prints the platform's current guide for where it runs (a workstation, or an agent, desk or refinement room inside).
 
 ## Exit codes
 

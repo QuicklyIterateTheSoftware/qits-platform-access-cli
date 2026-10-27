@@ -599,6 +599,20 @@ public final class ProjectsApi {
         return URI.create(scheme + http.toString().substring(http.getScheme().length()));
     }
 
+    /**
+     * {@code {"variant":…,"detected":…,"markdown":…}}: the development guide (qits-1679). A null
+     * variant asks the service to pick the caller's own from its credential.
+     */
+    public JsonNode developmentGuide(String variant) throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/guide"
+                + (variant == null ? "" : "?for=" + segment(variant))));
+    }
+
+    /** {@code {"variants":[{"name":…,"description":…}]}}: the development guide's variants. */
+    public JsonNode developmentGuideVariants() throws CliFailure, InterruptedException {
+        return client.get(uri("/projects/api/guide/variants"));
+    }
+
     /** The client the doors are called with; a socket opened beside them carries the same credential. */
     public PlatformClient client() {
         return client;
