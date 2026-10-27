@@ -221,6 +221,18 @@ public final class ProjectsApi {
     }
 
     /**
+     * {@code {"request":{…}}}: the request, unchanged. {@code phase} is QA, PUBLISH or DEPLOY, sent
+     * as given; the service answers 400 for anything else. No body: the address names the request
+     * and the phase. The rerun itself is asynchronous (qits-ci for QA and PUBLISH, the deployer for
+     * DEPLOY): nothing in this answer reflects it yet, which is why the request comes back as it was.
+     */
+    public JsonNode rerunReleasePipelinePhase(String repoId, String requestId, String phase)
+            throws CliFailure, InterruptedException {
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/pipeline/" + segment(phase) + "/rerun"));
+    }
+
+    /**
      * Where one work item is addressed: {@code /projects/api/work/{entity}}. {@code entity} is its
      * qualified id ({@code qits-100}) or its id, and goes as it was given: the service resolves
      * either, so the CLI never looks an item up to find its UUID.

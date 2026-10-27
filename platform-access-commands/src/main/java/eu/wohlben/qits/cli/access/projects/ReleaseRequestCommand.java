@@ -31,13 +31,16 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
                 ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class,
                 ReleaseRequestCommand.ApproveCommand.class, ReleaseRequestCommand.DeclineCommand.class,
-                ReleaseRequestCommand.RegenerateCommand.class, ReleaseRequestCommand.OverrideCommand.class},
+                ReleaseRequestCommand.RegenerateCommand.class, ReleaseRequestCommand.OverrideCommand.class,
+                ReleaseRequestCommand.RerunCommand.class},
         description = {"Release requests: the one way to release a repository. list shows them (of the whole project, "
                         + "or of one repository), create "
                         + "asks for a branch to be released, join adds a branch to an open request, withdraw "
                         + "ends a request that must not ship, approve lets the fold a request is on go ahead, "
-                        + "decline sends it back, regenerate runs one release output again, and override lifts the "
-                        + "upstream-in-flight gate for one upstream request that is itself still building.",
+                        + "decline sends it back, regenerate runs one release output again, override lifts the "
+                        + "upstream-in-flight gate for one upstream request that is itself still building, and rerun "
+                        + "fires one pipeline phase again: QA or PUBLISH re-fire that phase's CI run, DEPLOY "
+                        + "redeploys the already-released version.",
                 "A request folds main and its branches into one commit, and the builds of that commit are its gate. "
                         + "States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its "
                         + "remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build "
@@ -845,6 +848,85 @@ public class ReleaseRequestCommand implements Runnable {
                         + "` shows the kind's state. " + refused.getMessage(), CliFailure.FAILED);
                 case 503 -> new CliFailure("qits-maintenance cannot be reached or is not set up, so nothing ran "
                         + "(HTTP 503). Try again later. " + refused.getMessage(), CliFailure.FAILED);
+                default -> refused;
+            };
+        }
+    }
+
+    @CommandLine.Command(name = "rerun", mixinStandardHelpOptions = true,
+            description = {"Rerun one phase of a release request's pipeline.",
+                    "QA and PUBLISH re-fire that phase's CI run. DEPLOY redeploys the request's already-released "
+                            + "version, the remedy for a deployment that got rolled back.",
+                    "The request's own state does not change here: the result of the rerun arrives later, on "
+                            + "the event bus, the same way the first run did. This command only asks for it and "
+                            + "prints the request as it stands now, which still shows the previous run's outcome."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-service rerun --request "
+                            + "qits-ci-service-rr-12 --phase QA",
+                    "  qits release-request --project qits --repository qits-ci-service rerun --request "
+                            + "qits-ci-service-rr-12 --phase deploy",
+                    "",
+                    "- --phase is QA, PUBLISH or DEPLOY, in any case; the platform refuses anything else (HTTP "
+                            + "400).",
+                    "- 404 means the platform knows no such release request.",
+                    "- 409 means the platform, or qits-ci for a QA or PUBLISH rerun, refuses to run that phase "
+                            + "now; the message says why.",
+                    "- 503 means qits-ci cannot be reached, or this repository is not set up with it; nothing ran."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED,
+                    "2:Used wrongly (for example a --request that fits no request, or more than one, or a "
+                            + "--phase that is none of QA, PUBLISH or DEPLOY), not signed in, or the session ended."})
+    public static class RerunCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @Completes(ReleaseRequestSource.class)
+        @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
+                description = "The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the "
+                        + "start of the uuid.")
+        String request;
+
+        @CommandLine.Option(names = "--phase", paramLabel = "<phase>", required = true,
+                description = "The phase to rerun: QA, PUBLISH or DEPLOY, in any case.")
+        String phase;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (request.isBlank() || phase.isBlank()) {
+                throw new CliFailure("--request and --phase must not be empty.", CliFailure.USAGE);
+            }
+            Target target = parent.target(context);
+            JsonNode found = find(target, request.strip());
+            String requestName = ReleaseRequestRefs.name(found);
+            String wantedPhase = phase.strip().toUpperCase(Locale.ROOT);
+            JsonNode answer;
+            try {
+                answer = target.api().rerunReleasePipelinePhase(target.repoId(), text(found, "id"), wantedPhase);
+            } catch (CliFailure refused) {
+                throw explain(refused, requestName);
+            }
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            printRequest(context.out(), answer.path("request"));
+            return 0;
+        }
+
+        /**
+         * 400 and 404 get a sentence of their own. 409 and 503 are qits-ci's or the service's own
+         * words, printed exactly as they came: which of them refused, and why, is not something this
+         * command can say better than the door that decided it.
+         */
+        private static CliFailure explain(CliFailure refused, String requestName) {
+            return switch (refused.status()) {
+                case 400 -> new CliFailure("The phase must be QA, PUBLISH or DEPLOY (HTTP 400). "
+                        + refused.getMessage(), CliFailure.FAILED);
+                case 404 -> new CliFailure("No such release request " + requestName + " (HTTP 404). "
+                        + refused.getMessage(), CliFailure.FAILED);
                 default -> refused;
             };
         }

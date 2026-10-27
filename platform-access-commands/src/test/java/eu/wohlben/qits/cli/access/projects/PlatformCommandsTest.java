@@ -1510,6 +1510,119 @@ class PlatformCommandsTest {
         assertThat(busy.out() + unknown.out() + down.out()).isEmpty();
     }
 
+    // --- rerunning a pipeline phase ---
+
+    private static String rerunOf(String id, String phase) {
+        return REQUESTS + "/" + id + "/pipeline/" + phase + "/rerun";
+    }
+
+    /** The pending request, answered unchanged: the rerun is asynchronous, so nothing here reflects it yet. */
+    private void answerRerun(String phase) {
+        platform.answer("POST", rerunOf(PENDING_ID, phase), """
+                {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"REJECTED","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":null,
+                  "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
+                """.formatted(PENDING_ID, CI));
+    }
+
+    @Test
+    void rerunFindsTheRequestByTheStartOfItsIdAndSendsNoBody() throws Exception {
+        answerRerun("QA");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "rerun",
+                "--request", "1111", "--phase", "QA");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
+        assertThat(platform.requests("POST", rerunOf(PENDING_ID, "QA")).getFirst().body()).isEmpty();
+        assertThat(r.out()).startsWith("Release request " + PENDING_ID + "\n")
+                .contains("  state          REJECTED")
+                .contains("Sources:");
+    }
+
+    @Test
+    void rerunUppercasesThePhaseAndTakesItsOptionsAfterTheSubcommand() throws Exception {
+        answerRerun("DEPLOY");
+
+        Result r = run("release-request", "rerun", "--request", PENDING_ID, "--phase", "deploy",
+                "--project", "qits", "--repository", CI, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("POST", rerunOf(PENDING_ID, "DEPLOY"))).hasSize(1);
+        assertThat(JSON.readTree(r.out()).path("request").path("id").asText()).isEqualTo(PENDING_ID);
+        assertThat(run("release-request", "rerun", "--project", "qits", "--repository", CI, "--phase", "QA").exit())
+                .isEqualTo(2);
+        assertThat(run("release-request", "rerun", "--project", "qits", "--repository", CI, "--request", PENDING_ID)
+                .exit()).isEqualTo(2);
+    }
+
+    @Test
+    void rerunOfAStartThatFitsNoneSendsNothing() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "rerun",
+                "--request", "9999", "--phase", "QA");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("Repository qits-ci-service has no release request '9999'.");
+        assertThat(platform.requests).noneMatch(req -> req.method().equals("POST"));
+    }
+
+    @Test
+    void a400OnRerunSaysThePhaseMustBeOneOfTheThree() {
+        platform.answer("POST", rerunOf(PENDING_ID, "NONSENSE"), 400, "{\"message\":\"Unknown phase: NONSENSE\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "rerun",
+                "--request", "1111", "--phase", "nonsense");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("The phase must be QA, PUBLISH or DEPLOY (HTTP 400).")
+                .contains("Unknown phase: NONSENSE");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void a404OnRerunSaysThereIsNoSuchRequest() {
+        platform.answer("POST", rerunOf(PENDING_ID, "QA"), 404,
+                "{\"message\":\"Release request not found: " + PENDING_ID + "\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "rerun",
+                "--request", "1111", "--phase", "QA");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("No such release request " + PENDING_ID + " (HTTP 404). ")
+                .contains("Release request not found: " + PENDING_ID);
+    }
+
+    /**
+     * 409 is qits-ci's or the service's own sentence (the ticket's own words): the command prints it
+     * verbatim, with no sentence of its own layered on top, the same way it prints a 503.
+     */
+    @Test
+    void a409OnRerunPrintsTheDoorsSentenceVerbatim() {
+        platform.answer("POST", rerunOf(PENDING_ID, "QA"), 409,
+                "{\"message\":\"The QA run for this request is still active\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "rerun",
+                "--request", "1111", "--phase", "QA");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("The QA run for this request is still active");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void a503OnRerunSaysQitsCiCannotBeReached() {
+        platform.answer("POST", rerunOf(PENDING_ID, "PUBLISH"), 503, "{\"message\":\"qits-ci is not configured\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "rerun",
+                "--request", "1111", "--phase", "PUBLISH");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("qits-ci is not configured");
+        assertThat(r.out()).isEmpty();
+    }
+
     // --- dispatching work, and the delivery desk ---
 
     private static final String DISPATCH = "/projects/api/work/qits-100/dispatch";

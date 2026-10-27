@@ -81,6 +81,13 @@ public final class ProjectsContract {
     static final String AWAITING_WHILE_ITS_BUILD_RUNS = "a release request awaiting approval while its build runs";
     static final String HELD_BY_AN_UPSTREAM_RELEASE = "a release request held by an upstream release";
     /**
+     * {@code qits release-request rerun --phase QA}: the provider's recording for a request whose
+     * CI run failed, the usual reason to rerun it.
+     */
+    static final String REJECTED_BY_ITS_BUILD = "a release request rejected by its build";
+    /** {@code qits release-request rerun --phase PUBLISH}: the provider's recording for that phase's rerun. */
+    static final String PUBLISH_FAILED = "a release request whose publish failed";
+    /**
      * The soft feature freeze (epic qits-1580): the active request holds its threshold of counted
      * branches, and a second request waits behind it. The one state that records {@code
      * queuedBehind} set, so the only one whose rows bind it: everywhere else the field is null, and
@@ -916,6 +923,11 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(run, "id")).isNotBlank();
     };
 
+    /** {@code qits release-request rerun}: the phase is the recording's path segment; it prints the request. */
+    private static final Call RERUN_PHASE = (api, params, recorded) -> request(api.rerunReleasePipelinePhase(
+            params.get("repositoryId"), params.get("requestId"), segmentAfter(recorded, "/pipeline/"))
+            .path("request"));
+
     // --- the table ------------------------------------------------------------------------------
 
     /** Every command that looks a project up by its id, slug or name before it calls anything else. */
@@ -924,6 +936,7 @@ public final class ProjectsContract {
             "qits repositories commit-changes", "qits repositories commit-diff", "qits repositories commit-subjects",
             "qits release-request list", "qits release-request create", "qits release-request join",
             "qits release-request withdraw", "qits release-request regenerate", "qits release-request override",
+            "qits release-request rerun",
             "qits release-request approve", "qits release-request decline", "qits ci runs", "qits ci run",
             "qits ci retry", "qits ci report show", "qits maintenance automations", "qits maintenance automation run",
             "qits workspaces list", "qits tui");
@@ -936,8 +949,8 @@ public final class ProjectsContract {
 
     /** Every command that takes a release request and finds it among the repository's requests of every state. */
     static final List<String> REQUEST_SCOPED = List.of("qits release-request join", "qits release-request withdraw",
-            "qits release-request regenerate", "qits release-request override", "qits maintenance automations",
-            "qits maintenance automation run");
+            "qits release-request regenerate", "qits release-request override", "qits release-request rerun",
+            "qits maintenance automations", "qits maintenance automation run");
 
     /** Every command outside {@code qits work} that names a work item by its qualified id and sends its id. */
     static final List<String> WORK_ITEM_SCOPED = List.of("qits workspaces agents list", "qits workspaces agents create",
@@ -1084,6 +1097,18 @@ public final class ProjectsContract {
                 .consumes(held(HELD_BY_AN_UPSTREAM_RELEASE, "overrideReleaseRequestUpstream", prefixed("request.", REQUEST)))
                 .anyLength(openEndedRequest())
                 .header("Authorization", "{authorization}"));
+        rows.add(row("qits release-request rerun", REJECTED_BY_ITS_BUILD, "rerunReleasePipelinePhase",
+                "rerunReleasePipelinePhase", RERUN_PHASE)
+                .consumes(held(REJECTED_BY_ITS_BUILD, "rerunReleasePipelinePhase", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest()));
+        rows.add(row("qits release-request rerun", PUBLISH_FAILED, "rerunReleasePipelinePhase",
+                "rerunReleasePipelinePhase", RERUN_PHASE)
+                .consumes(held(PUBLISH_FAILED, "rerunReleasePipelinePhase", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest()));
+        rows.add(row("qits release-request rerun", RELEASED_REQUEST, "rerunReleasePipelinePhase",
+                "rerunReleasePipelinePhase", RERUN_PHASE)
+                .consumes(held(RELEASED_REQUEST, "rerunReleasePipelinePhase", prefixed("request.", REQUEST)))
+                .anyLength(openEndedRequest()));
 
         // qits tui: the dropdowns
         rows.add(row("qits tui", REPOSITORIES_IN_COMPONENTS, "listProjectRepositories", "repositories",

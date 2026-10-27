@@ -8298,6 +8298,1637 @@
           },
           "qits-trigger": {
             "app": "qits-platform-access-cli",
+            "command": "qits release-request rerun",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request rerun: listProjectRepositories",
+      "key": "36cce360",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with one repository",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/repositories",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/repositories"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "repository": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "name": "contract-00000001-contract-00000001"
+                }
+              },
+              {
+                "repository": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "name": "contract-00000001-contract-00000001"
+                }
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.entries[*].repository.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entries[*].repository.name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listProjects"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request rerun",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request rerun: listProjects",
+      "key": "ff0e1cd1",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project exists",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/projects/api/projects"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entries": [
+              {
+                "project": {
+                  "id": "00000000-0000-4000-8000-000000000001",
+                  "name": "Contract project",
+                  "slug": "contract-00000001"
+                }
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.entries[*].project.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.entries[*].project.name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entries[*].project.slug": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listRepositoryReleaseRequests"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request rerun",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request rerun: listRepositoryReleaseRequests",
+      "key": "a3a910a9",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a repository with a release not merged to main",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests",
+        "query": {
+          "state": [
+            "all"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "requests": [
+              {
+                "id": "00000000-0000-4000-8000-000000000003",
+                "qualifiedId": "contract-service-rr-3",
+                "state": "WITHDRAWN"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000003",
+                "qualifiedId": "contract-service-rr-3",
+                "state": "WITHDRAWN"
+              },
+              {
+                "id": "00000000-0000-4000-8000-000000000003",
+                "qualifiedId": "contract-service-rr-3",
+                "state": "WITHDRAWN"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.requests": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.requests[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.requests[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "rerunReleasePipelinePhase"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request rerun",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request rerun: rerunReleasePipelinePhase",
+      "key": "6b710a28",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request rejected by its build",
+          "params": {
+            "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/pipeline/QA/rerun",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests/00000000-0000-4000-8000-000000000003/pipeline/QA/rerun"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalState": "NOT_REQUIRED",
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": "Run 00000000-0000-4000-8000-000000000004 finished FAILURE for cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "priority": "HIGH",
+              "qualifiedId": "contract-service-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "FAILURE on release/contract-service-rr-1",
+                      "name": "Run 00000000-0000-4000-8000-000000000004",
+                      "state": "FAILED"
+                    }
+                  ],
+                  "detail": "Waiting for the automations to answer",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PENDING"
+                }
+              ],
+              "repoName": "contract-service",
+              "requester": "contract-seeder",
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "REJECTED",
+              "summary": "Release the CSV export and the rounding fix",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": null
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "rerunReleasePipelinePhase"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request rerun",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request rerun: rerunReleasePipelinePhase",
+      "key": "76ba82a7",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a release request whose publish failed",
+          "params": {
+            "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/pipeline/PUBLISH/rerun",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests/00000000-0000-4000-8000-000000000003/pipeline/PUBLISH/rerun"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalState": "NOT_REQUIRED",
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": null,
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "priority": "HIGH",
+              "qualifiedId": "contract-service-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "SUCCESS on release/contract-service-rr-1",
+                      "name": "Run 00000000-0000-4000-8000-000000000006",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000006 passed for cb97768559",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                }
+              ],
+              "repoName": "contract-service",
+              "requester": "contract-seeder",
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "RELEASED",
+              "summary": "Release the CSV export and the rounding fix",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": "2026.101.100500"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "rerunReleasePipelinePhase"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits release-request rerun",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits release-request rerun: rerunReleasePipelinePhase",
+      "key": "8434715c",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a released release request",
+          "params": {
+            "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repositoryId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/repositories/${repositoryId}/release-requests/${requestId}/pipeline/DEPLOY/rerun",
+            "type": "ProviderState"
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/repositories/00000000-0000-4000-8000-000000000002/release-requests/00000000-0000-4000-8000-000000000003/pipeline/DEPLOY/rerun"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "request": {
+              "approvalState": "NOT_REQUIRED",
+              "createdAt": "2026-01-01T00:00:00Z",
+              "detail": null,
+              "featureFreeze": {
+                "features": 0,
+                "frozen": false,
+                "source": "PLATFORM",
+                "threshold": 3
+              },
+              "id": "00000000-0000-4000-8000-000000000003",
+              "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "priority": "HIGH",
+              "qualifiedId": "contract-service-rr-1",
+              "qualityGates": [
+                {
+                  "checks": [
+                    {
+                      "detail": "SUCCESS on release/contract-service-rr-1",
+                      "name": "Run 00000000-0000-4000-8000-000000000007",
+                      "state": "PASSED"
+                    }
+                  ],
+                  "detail": "Run 00000000-0000-4000-8000-000000000007 passed for cb97768559",
+                  "kind": "automations",
+                  "position": "pre-run-qa",
+                  "state": "PASSED"
+                }
+              ],
+              "repoName": "contract-service",
+              "requester": "contract-seeder",
+              "sources": [
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                },
+                {
+                  "addedBy": "contract-seeder",
+                  "explicitJoin": false,
+                  "feature": false,
+                  "implicit": false,
+                  "kind": "BRANCH",
+                  "name": "main",
+                  "priority": "MEDIUM",
+                  "ref": "refs/heads/main"
+                }
+              ],
+              "state": "RELEASED",
+              "summary": "Release the CSV export and the rounding fix",
+              "supersededBy": null,
+              "supersededByQualifiedId": null,
+              "updatedAt": "2026-01-01T00:00:00Z",
+              "version": "2026.101.100500"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.request.approvalState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.featureFreeze.features": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.featureFreeze.frozen": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.source": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.featureFreeze.threshold": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.request.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].detail": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].checks[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].detail": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.qualityGates[*].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.repoName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.requester": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 4,
+                  "min": 4
+                }
+              ]
+            },
+            "$.request.sources[*].addedBy": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.sources[*].explicitJoin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].feature": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].implicit": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.sources[*].priority": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.request.sources[*].ref": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.summary": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.request.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listProjectRepositories"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
             "command": "qits release-request withdraw",
             "kind": "command"
           }

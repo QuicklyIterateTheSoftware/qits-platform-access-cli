@@ -9,7 +9,7 @@ Commands:
 - `qits session-daemon` keeps that session fresh for as long as it runs.
 - `qits projects list`, `qits repositories … list`,
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
-  and `qits release-request … list|create|join|withdraw|approve|decline|regenerate` read from and ask the projects service;
+  and `qits release-request … list|create|join|withdraw|approve|decline|regenerate|rerun` read from and ask the projects service;
   `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in.
 - `qits ci runs|run|retry|cancel` lists a repository's CI runs, shows a run with its steps and their logs,
   runs a finished run again, and stops a queued or running one. `qits ci report show` shows a run's release reports (which tests
@@ -569,6 +569,8 @@ Installing it is not part of this version.
         --request <id> [--sha <merged sha>] [--note <text>]
     qits release-request --project <project> --repository <repository> regenerate \
         --kind <kind> [--request <id>]
+    qits release-request --project <project> --repository <repository> rerun \
+        --request <id> --phase QA|PUBLISH|DEPLOY
     qits ci runs --project <project> --repository <repository> [--branch <branch>] \
         [--status <STATUS>] [--release-request <id>] [--limit <n>]
     qits ci run <run id> [--logs] [--project <project> --repository <repository>]
@@ -945,6 +947,18 @@ it, and QA runs again. It prints the run's id; `qits maintenance bump <run id>` 
   has no fold, or bumping is off. HTTP 404 means no such kind or request. HTTP 503 means
   qits-maintenance cannot be reached and nothing ran. Each is exit code 1, with a sentence.
 
+`rerun` reruns one phase of a request's pipeline. `--request` is found as for `join`; `--phase` is
+`QA`, `PUBLISH` or `DEPLOY`, in any case. QA and PUBLISH re-fire that phase's CI run; DEPLOY
+redeploys the request's already-released version, the remedy for a deployment that got rolled back.
+The request's own state does not change here: the rerun's result arrives later, on the event bus,
+the same way the first run's did. The command prints the request as it stands now, which still
+shows the previous run's outcome.
+
+- HTTP 400 means the phase is none of QA, PUBLISH or DEPLOY. HTTP 404 means no such request. HTTP
+  409 means the platform, or qits-ci for a QA or PUBLISH rerun, refuses to run that phase now; the
+  message says why. HTTP 503 means qits-ci cannot be reached, or this repository is not set up with
+  it, and nothing ran. Each is exit code 1, with a sentence.
+
     qits release-request --project qits list
     qits release-request --project qits list --state all --limit 20
     qits release-request --project qits --repository qits-ci-service list
@@ -961,6 +975,8 @@ it, and QA runs again. It prints the run's id; `qits maintenance bump <run id>` 
         --note "The README promises an approval policy nobody has signed off yet."
     qits release-request --project qits --repository qits-landing-app regenerate \
         --kind screenshot-baselines
+    qits release-request --project qits --repository qits-ci-service rerun \
+        --request qits-ci-service-rr-12 --phase QA
 
 A red gating build that was the platform's fault and not the code's (a flaked container, a registry
 that was down) is retried with `qits ci retry`, not with a new request and not with `withdraw`.

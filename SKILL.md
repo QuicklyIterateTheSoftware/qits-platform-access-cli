@@ -1609,7 +1609,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits release-request
 
-Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, regenerate runs one release output again, and override lifts the upstream-in-flight gate for one upstream request that is itself still building.
+Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, regenerate runs one release output again, override lifts the upstream-in-flight gate for one upstream request that is itself still building, and rerun fires one pipeline phase again: QA or PUBLISH re-fire that phase's CI run, DEPLOY redeploys the already-released version.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
@@ -1928,6 +1928,45 @@ qits release-request --project qits --repository qits-ci-frontend override --req
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
+
+## qits release-request rerun
+
+Rerun one phase of a release request's pipeline.
+
+QA and PUBLISH re-fire that phase's CI run. DEPLOY redeploys the request's already-released version, the remedy for a deployment that got rolled back.
+
+The request's own state does not change here: the result of the rerun arrives later, on the event bus, the same way the first run did. This command only asks for it and prints the request as it stands now, which still shows the previous run's outcome.
+
+```
+qits release-request rerun --phase <phase> --request <id> [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--phase <phase>` | Required. The phase to rerun: QA, PUBLISH or DEPLOY, in any case. |
+| `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits release-request --project qits --repository qits-ci-service rerun --request qits-ci-service-rr-12 --phase QA
+qits release-request --project qits --repository qits-ci-service rerun --request qits-ci-service-rr-12 --phase deploy
+```
+
+- --phase is QA, PUBLISH or DEPLOY, in any case; the platform refuses anything else (HTTP 400).
+- 404 means the platform knows no such release request.
+- 409 means the platform, or qits-ci for a QA or PUBLISH rerun, refuses to run that phase now; the message says why.
+- 503 means qits-ci cannot be reached, or this repository is not set up with it; nothing ran.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example a --request that fits no request, or more than one, or a --phase that is none of QA, PUBLISH or DEPLOY), not signed in, or the session ended.
 
 ## qits ci
 
