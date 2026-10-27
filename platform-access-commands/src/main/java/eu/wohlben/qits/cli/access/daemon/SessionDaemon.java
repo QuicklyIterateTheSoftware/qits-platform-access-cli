@@ -46,12 +46,21 @@ public final class SessionDaemon {
     private final Sleeper sleeper;
     private final Function<String, TokenClient> idpFor;
     private final PrintStream log;
+    private final SessionListener listener;
 
     private volatile boolean stopRequested;
     private Instant announced;
+    /** The access token the listener has; the daemon holds the session's tokens in memory anyway. */
+    private String handedOver;
 
     public SessionDaemon(SessionFile store, Duration margin, Clock clock, Sleeper sleeper,
                          Function<String, TokenClient> idpFor, PrintStream log) {
+        this(store, margin, clock, sleeper, idpFor, log, SessionListener.NONE);
+    }
+
+    public SessionDaemon(SessionFile store, Duration margin, Clock clock, Sleeper sleeper,
+                         Function<String, TokenClient> idpFor, PrintStream log, SessionListener listener) {
+        this.listener = listener;
         this.store = store;
         this.margin = margin;
         this.clock = clock;
@@ -104,7 +113,9 @@ public final class SessionDaemon {
                 waitForChange(seen);
                 continue;
             }
-            Instant due = session.accessExpiresAt().minus(margin);
+            handOver(session);
+            Duration effective = margin();
+            Instant due = session.accessExpiresAt().minus(effective);
             if (!session.accessExpiresAt().equals(announced)) {
                 announced = session.accessExpiresAt();
                 log("access token valid until " + Times.local(session.accessExpiresAt())
@@ -114,14 +125,15 @@ public final class SessionDaemon {
                 return;
             }
 
-            Outcome outcome = SessionRefresh.refreshIfDue(store, margin, clock, idpFor);
+            Outcome outcome = SessionRefresh.refreshIfDue(store, effective, clock, idpFor);
             switch (outcome) {
                 case Outcome.Refreshed r -> {
                     Session next = r.session();
                     announced = next.accessExpiresAt();
                     log("refreshed; access token valid until " + Times.local(next.accessExpiresAt())
                             + ", session ends " + Times.local(next.refreshExpiresAt())
-                            + "; next refresh at " + Times.local(next.accessExpiresAt().minus(margin)));
+                            + "; next refresh at " + Times.local(next.accessExpiresAt().minus(effective)));
+                    handOver(next);
                     backoff = FIRST_BACKOFF;
                 }
                 case Outcome.NotDue r -> {
@@ -147,6 +159,34 @@ public final class SessionDaemon {
                     backoff = backoff.multipliedBy(2).compareTo(MAX_BACKOFF) > 0 ? MAX_BACKOFF : backoff.multipliedBy(2);
                 }
             }
+        }
+    }
+
+    /** The configured margin, or the listener's when that is longer. */
+    private Duration margin() {
+        Duration wanted = listener.minimumMargin();
+        return wanted.compareTo(margin) > 0 ? wanted : margin;
+    }
+
+    /**
+     * Gives the listener a token it has not had yet: after the daemon's own refresh, and when another
+     * process refreshed or a login replaced the file. An expired token is not handed over; the
+     * refresh follows at once. A failure is logged, and the next pass tries again.
+     */
+    private void handOver(Session session) {
+        if (session.accessToken().equals(handedOver) || !clock.instant().isBefore(session.accessExpiresAt())) {
+            return;
+        }
+        try {
+            String said = listener.accessTokenChanged(session);
+            handedOver = session.accessToken();
+            if (said != null) {
+                log(said);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log("cannot update the registry logins: " + e.getMessage());
         }
     }
 

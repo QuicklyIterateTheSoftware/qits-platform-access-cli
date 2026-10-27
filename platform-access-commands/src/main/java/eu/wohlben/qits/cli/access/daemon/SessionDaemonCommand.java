@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.daemon;
 
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.platform.HelpText;
+import eu.wohlben.qits.cli.access.registry.RegistryLogins;
 import eu.wohlben.qits.cli.access.session.SessionFile;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -32,7 +33,9 @@ import java.util.concurrent.Callable;
                 "- When the session ends (revoked or expired), it says so, keeps running, and carries on after the "
                         + "next `qits login`.",
                 "- Without it, a command refreshes an access token that is about to expire before it calls the "
-                        + "platform."},
+                        + "platform.",
+                "- After `qits registry-login --configure` it also writes each new token into the registry blocks "
+                        + "of ~/.npmrc and ~/.m2/settings.xml, and refreshes at least 5 minutes before expiry."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Stopped by SIGTERM or SIGINT.", "1:Another qits session-daemon is running.",
                 "2:--margin is not between 0 and 300."})
@@ -51,8 +54,10 @@ public class SessionDaemonCommand implements Callable<Integer> {
             return 2;
         }
         PrintStream log = new PrintStream(new FileOutputStream(FileDescriptor.err), true, StandardCharsets.UTF_8);
-        SessionDaemon daemon = new SessionDaemon(SessionFile.fromEnvironment(System.getenv()),
-                Duration.ofSeconds(marginSeconds), Clock.systemUTC(), Sleeper.real(), TokenClient::new, log);
+        SessionFile store = SessionFile.fromEnvironment(System.getenv());
+        SessionDaemon daemon = new SessionDaemon(store,
+                Duration.ofSeconds(marginSeconds), Clock.systemUTC(), Sleeper.real(), TokenClient::new, log,
+                new RegistryLogins(store.directory()));
         StopSignals.install(daemon::stop);
         return daemon.run();
     }

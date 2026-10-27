@@ -329,4 +329,101 @@ class SessionDaemonTest {
         running.join();
         assertThat(firstExit[0]).isZero();
     }
+
+    // ---------------------------------------------------------------- the registry hook (qits-1675)
+
+    /** Records each token it is handed, by a short name, never the token in a log line. */
+    private static final class Recorder implements SessionListener {
+        final List<String> tokens = new ArrayList<>();
+        Duration margin = Duration.ofMinutes(5);
+        RuntimeException failure;
+
+        @Override
+        public String accessTokenChanged(Session session) {
+            if (failure != null) {
+                RuntimeException thrown = failure;
+                failure = null;
+                throw thrown;
+            }
+            tokens.add(session.accessToken());
+            return "registry logins updated in /home/x/.npmrc";
+        }
+
+        @Override
+        public Duration minimumMargin() {
+            return margin;
+        }
+    }
+
+    private SessionDaemon daemon(SessionListener listener) {
+        return new SessionDaemon(store, MARGIN, time, time, TokenClient::new,
+                new PrintStream(log, true, StandardCharsets.UTF_8), listener);
+    }
+
+    @Test
+    void theListenerGetsTheTokenAtStartAndAfterEachRefreshAndTheRefreshComesEarlier() throws Exception {
+        seed(T0.plusSeconds(900), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30)));
+        Recorder recorder = new Recorder();
+        SessionDaemon daemon = daemon(recorder);
+        time.afterSleep = () -> {
+            if (idp.grants("refresh_token") > 0) {
+                daemon.stop();
+            }
+        };
+
+        assertThat(daemon.run()).isZero();
+
+        // Five minutes before expiry, not the 30 seconds of --margin.
+        assertThat(refreshedAt).containsExactly(T0.plusSeconds(600));
+        assertThat(recorder.tokens).hasSize(2);
+        assertThat(recorder.tokens.getFirst()).isEqualTo(FakeIdp.SECRET + "old-access");
+        assertThat(recorder.tokens.getLast()).isEqualTo(store.read().orElseThrow().accessToken());
+        assertThat(count(log(), "registry logins updated in /home/x/.npmrc")).isEqualTo(2);
+    }
+
+    @Test
+    void aTokenAnotherProcessWroteIsHandedOverOnce() throws Exception {
+        seed(T0.plusSeconds(900), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30)));
+        Recorder recorder = new Recorder();
+        recorder.margin = Duration.ZERO;
+        SessionDaemon daemon = daemon(recorder);
+        AtomicInteger sleeps = new AtomicInteger();
+        time.afterSleep = () -> {
+            if (sleeps.incrementAndGet() == 3) {
+                try {
+                    store.write(new Session(idp.url(), "qits-cli", FakeIdp.SECRET + "from-login",
+                            T0.plusSeconds(2000), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30))));
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            if (idp.grants("refresh_token") > 0) {
+                daemon.stop();
+            }
+        };
+
+        assertThat(daemon.run()).isZero();
+
+        assertThat(recorder.tokens).startsWith(FakeIdp.SECRET + "old-access", FakeIdp.SECRET + "from-login");
+        assertThat(recorder.tokens.stream().filter((FakeIdp.SECRET + "from-login")::equals)).hasSize(1);
+    }
+
+    @Test
+    void aListenerFailureIsLoggedAndTriedAgain() throws Exception {
+        seed(T0.plusSeconds(900), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30)));
+        Recorder recorder = new Recorder();
+        recorder.failure = new IllegalStateException("disk full");
+        SessionDaemon daemon = daemon(recorder);
+        time.afterSleep = () -> {
+            if (idp.grants("refresh_token") > 0) {
+                daemon.stop();
+            }
+        };
+
+        assertThat(daemon.run()).isZero();
+
+        assertThat(log()).contains("cannot update the registry logins: disk full");
+        assertThat(recorder.tokens).hasSize(1);
+        assertThat(refreshedAt).hasSize(1);
+    }
 }

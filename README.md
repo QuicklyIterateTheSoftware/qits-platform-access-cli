@@ -39,6 +39,9 @@ Commands:
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the workspace token or the credential the process was handed instead.
+- `qits registry-login --configure` gives npm and Maven on this workstation a login for the
+  platform's registries, in blocks of `~/.npmrc` and `~/.m2/settings.xml` that `qits
+  session-daemon` keeps fresh — see below.
 - `qits agents claude hook work-links` is a Claude Code hook that shows work ids such as `qits-111`
   as links to the landing app, and `qits agents claude statusline work-items` a Claude
   Code status line with the session's newest work items and their states — see below.
@@ -1659,6 +1662,37 @@ process was handed answers instead:
 
 `git-credential get` is the one place `qits` prints a token, because that is how Git's
 helper protocol works. stderr never carries one.
+
+## npm and Maven registries on this workstation
+
+    qits registry-login [--configure] [--remove-stale] [--dry-run]
+                        [--npmrc <file>] [--maven-settings <file>]
+                        [--artifacts-url <url>] [--mirror-url <url>]
+
+npm and Maven have no credential helper, so they read a token from a file. `qits registry-login`
+writes the access token of `qits login` into blocks of those files that the CLI owns, and `qits
+session-daemon` replaces it each time it refreshes the session. No long-lived secret sits on disk.
+
+- `--configure` reads the registries the platform lists (qits-artifacts' `GET
+  /artifacts/api/repositories`, type `npm-packages`, and qits-mirror's `GET
+  /mirror/api/repositories`, type `npm-proxy`), writes the blocks, and records the setup in
+  `$XDG_CONFIG_HOME/qits/registries.json` (no token in it). A list it cannot read falls back to
+  `//registry.qits.<domain>/artifacts/npm/npm/` and `//mirror.qits.<domain>/npm/npmjs/`, with a
+  warning.
+- Without `--configure` it writes the current token into the recorded files once.
+- `~/.npmrc` (or `NPM_CONFIG_USERCONFIG`) gets one `//<host>/<path>/:_authToken=<token>` line per
+  registry. `~/.m2/settings.xml` gets the mirror `qits-maven-host` (mirrorOf `qits-maven`, the id
+  the poms declare) at `https://registry.qits.<domain>/artifacts/maven/maven`, and servers
+  `qits-maven-host` and `qits-maven` with an `Authorization: Bearer` header.
+- Only the blocks change. Each file is replaced atomically with mode 0600; a symbolic link is
+  followed. `--remove-stale` also drops the `*.dev.localhost` registries and entries outside the
+  blocks that use the same registries or ids; without it they stay, with a warning.
+- `--dry-run` writes nothing and prints a unified diff per file, every token shown as `<token>`,
+  or `No changes`.
+- While `registries.json` exists, the daemon refreshes at least 5 minutes before expiry (access
+  tokens last 15 minutes), so a build that starts always has 5 minutes of token. Delete the file
+  to stop.
+- A workstation command: inside the platform or with `QITS_TOKEN` it refuses (exit 2).
 
 ## qits agents
 

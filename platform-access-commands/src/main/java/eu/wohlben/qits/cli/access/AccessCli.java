@@ -11,6 +11,7 @@ import eu.wohlben.qits.cli.access.database.DatabaseCommand;
 import eu.wohlben.qits.cli.access.events.EventsCommand;
 import eu.wohlben.qits.cli.access.git.GitCredentialCommand;
 import eu.wohlben.qits.cli.access.git.GitLoginCommand;
+import eu.wohlben.qits.cli.access.registry.RegistryLoginCommand;
 import eu.wohlben.qits.cli.access.help.HelpCommand;
 import eu.wohlben.qits.cli.access.login.LoginCommand;
 import eu.wohlben.qits.cli.access.observe.ObserveCommand;
@@ -46,7 +47,7 @@ import picocli.CommandLine;
                 RepositoriesCommand.class, WorkCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
-                ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class,
+                ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class, RegistryLoginCommand.class,
                 ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, UpdateCommand.class,
                 HelpCommand.class},
         description = {
@@ -71,6 +72,8 @@ import picocli.CommandLine;
                         + "branch to an open one. A push releases nothing.",
                 "- Push only branches under refs/heads/external/, after `qits git-login`. Git gets the token from "
                         + "`qits git-credential`.",
+                "- On a workstation, npm and Maven get the platform's registries from `qits registry-login "
+                        + "--configure`, kept fresh by `qits session-daemon`. Do not write registry tokens by hand.",
                 "- qits never prints a token. The one exception is `qits git-credential get`, which Git runs. "
                         + "Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new "
                         + "password, once).",

@@ -56,6 +56,11 @@ public final class PlatformUrls {
         return resolve("registry", "--artifacts-url", "QITS_ARTIFACTS_URL", flag, env, idpUrl);
     }
 
+    /** qits-mirror, the pull-through caches of npmjs and Maven Central: {@code https://mirror.qits.wohlben.eu}. */
+    public static String mirror(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
+        return resolve("mirror", "--mirror-url", "QITS_MIRROR_URL", flag, env, idpUrl);
+    }
+
     /** The git host's origin, which Git pushes to through the edge. */
     public static String gitHost(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);

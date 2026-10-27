@@ -240,6 +240,8 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                every 30 seconds until PRESENT or --timeout passes
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
+    registry/  qits registry-login: the CLI-owned blocks of ~/.npmrc and ~/.m2/settings.xml,
+               registries.json, the redacted --dry-run diff, and the session daemon's hook
     artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
     changelog/ qits changelog bump-message, and the two grammars a changelog shares with its
                readers: CommitSubjects (the ids a `type(qits-9, qits-10):` subject names, and their
