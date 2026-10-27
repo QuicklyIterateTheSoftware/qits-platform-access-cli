@@ -54,7 +54,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 TargetsCommand.SignInCommand.class, TargetDockerCommand.class},
         description = {"The execution targets qits-system-runner runs on, and their leases: list them with their "
                 + "connection, slots, login and quarantine; read one in full; declare one, or rotate its registration "
-                + "token, and print the line that installs its runner; change its slot minimums or description; "
+                + "token, and print the line that installs its runner; change its slot reservations or description; "
                 + "lift a quarantine; ask for a health check or a login check; delete one; list the leases a "
                 + "target or a slot type holds, show one or end one; sign a target in; and read or handle a "
                 + "target's own docker containers and volumes without a shell on it.",
@@ -178,17 +178,55 @@ public class TargetsCommand implements Runnable {
         return node.path(field).asBoolean(false) ? "yes" : "no";
     }
 
-    /** {@code ci a/min, ws b/min, desk c/min, total u/slots}, as the list column. */
+    /** What {@link #slots} shows: per type used over reserved, then used over the target's slot total. */
+    static final String SLOTS_LEGEND = "used/reserved, total used/total";
+
+    /**
+     * {@code ci a/r, ws b/r, desk c/r, total u/slots}, as the list column. A reservation holds slots
+     * for one type; it is not a limit, so {@code ws 5/1} is valid while shared slots are free. The
+     * total is the target's real slot count.
+     */
     static String slots(JsonNode target) {
-        JsonNode min = target.path("minimums");
+        JsonNode reserved = reservations(target);
         JsonNode used = target.path("used");
         int ci = used.path("ci").asInt(0);
         int ws = used.path("workspace").asInt(0);
         int desk = used.path("desk").asInt(0);
-        return "ci " + ci + "/" + min.path("ci").asInt(0)
-                + ", ws " + ws + "/" + min.path("workspace").asInt(0)
-                + ", desk " + desk + "/" + min.path("desk").asInt(0)
+        return "ci " + ci + "/" + reserved.path("ci").asInt(0)
+                + ", ws " + ws + "/" + reserved.path("workspace").asInt(0)
+                + ", desk " + desk + "/" + reserved.path("desk").asInt(0)
                 + ", total " + (ci + ws + desk) + "/" + target.path("slotsTotal").asInt(0);
+    }
+
+    /**
+     * A target's per-type reservations: {@code reservations}, else the deprecated {@code minimums}
+     * an older qits-system answers (qits-1682). Drop the fallback once every service sends the new name.
+     */
+    static JsonNode reservations(JsonNode target) {
+        JsonNode reserved = target.path("reservations");
+        return reserved.isObject() ? reserved : target.path("minimums");
+    }
+
+    /**
+     * The per-type reservations a create or update sends: {@code reservations}, and the same values
+     * under the deprecated {@code minimums} so an older qits-system still reads them (qits-1682).
+     * Drop {@code minimums} once qits-system reads the new name everywhere.
+     */
+    static void putReservations(ObjectNode body, Integer ci, Integer workspace, Integer desk) {
+        ObjectNode reserved = JsonNodeFactory.instance.objectNode();
+        if (ci != null) {
+            reserved.put("ci", ci);
+        }
+        if (workspace != null) {
+            reserved.put("workspace", workspace);
+        }
+        if (desk != null) {
+            reserved.put("desk", desk);
+        }
+        if (!reserved.isEmpty()) {
+            body.set("reservations", reserved);
+            body.set("minimums", reserved.deepCopy());
+        }
     }
 
     /** {@code claude:<state> kimi:<state>}, as the list column. */
@@ -211,7 +249,7 @@ public class TargetsCommand implements Runnable {
         rows.add(List.of("connected", yesNo(target, "connected")
                 + (text(target, "connectedSince").isEmpty() ? "" : " since " + Table.time(text(target, "connectedSince")))));
         rows.add(List.of("runner version", cell(target, "runnerVersion", 60)));
-        rows.add(List.of("slots", slots(target)));
+        rows.add(List.of("slots (" + SLOTS_LEGEND + ")", slots(target)));
         rows.add(List.of("credential volume", cell(target, "credentialVolume", 120)));
         rows.add(List.of("login claude", loginValue(target, "claude")));
         rows.add(List.of("login kimi", loginValue(target, "kimi")));
@@ -235,8 +273,9 @@ public class TargetsCommand implements Runnable {
     // --- list ---
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"Every target, by name: connected or not, version, slots (ci, workspace and desk, used "
-                    + "over their minimum, and the total used over the total), login and quarantine.",
+            description = {"Every target, by name: connected or not, version, slots, login and quarantine. Slots show "
+                    + "ci, workspace and desk as used over reserved, then all used over the target's slot total. "
+                    + "A reservation is not a limit: a type may use more while shared slots are free.",
                     "GET /system/api/targets. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets list", "  qits targets list -o json"},
@@ -264,7 +303,8 @@ public class TargetsCommand implements Runnable {
                 context.out().println("No targets.");
                 return 0;
             }
-            Table.print(context.out(), "", List.of("NAME", "CONNECTED", "VERSION", "SLOTS", "LOGIN", "QUARANTINED"),
+            Table.print(context.out(), "", List.of("NAME", "CONNECTED", "VERSION", "SLOTS (" + SLOTS_LEGEND + ")", "LOGIN",
+                    "QUARANTINED"),
                     rows);
             return 0;
         }
@@ -273,7 +313,7 @@ public class TargetsCommand implements Runnable {
     // --- show ---
 
     @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
-            description = {"One target in full: its slots and minimums, its login state for claude and kimi, its "
+            description = {"One target in full: its slots and reservations, its login state for claude and kimi, its "
                     + "login command for each (the docker run that signs its credential volume in), its "
                     + "quarantine, and its newest connection.",
                     "GET /system/api/targets/{id}. " + Doors.READ},
@@ -337,16 +377,16 @@ public class TargetsCommand implements Runnable {
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"Declare a target and print the line that installs its runner, with a one-time "
                     + "registration token in it.",
-                    "POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} "
+                    "POST /system/api/targets with {name, description?, reservations?: {ci, workspace, desk}, slots?} "
                             + "(HTTP 201 {target, registrationToken, installLine}). " + Doors.WRITE,
                     "THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run "
                             + "it on the target's own machine. Lost, `qits targets rotate-token` makes a new one."},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets create --name buildbox",
                     "  qits targets create --name buildbox --description 'The build machine under the desk' "
-                            + "--min-ci 2 --min-workspace 2 --min-desk 1",
+                            + "--reserved-ci 2 --reserved-workspace 2 --reserved-desk 1",
                     "",
-                    "- A minimum left out is not sent. HTTP 400: --slots is below the minimums' sum, or outside "
+                    "- A reservation left out is not sent. HTTP 400: --slots is below the reservations' sum, or outside "
                             + "0..1024. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is "
                             + "off, or the runner plane is not configured or pins no runner version.",
                     "- -o json prints the service's answer: the target, the registration token and the install line.",
@@ -366,19 +406,21 @@ public class TargetsCommand implements Runnable {
         @CommandLine.Option(names = "--description", paramLabel = "<text>", description = "Free text.")
         String description;
 
-        @CommandLine.Option(names = "--min-ci", paramLabel = "<n>", description = "Slots reserved for CI.")
-        Integer minCi;
+        @CommandLine.Option(names = {"--reserved-ci", "--min-ci"}, paramLabel = "<n>",
+                description = "Slots reserved for CI. --min-ci is the deprecated name.")
+        Integer reservedCi;
 
-        @CommandLine.Option(names = "--min-workspace", paramLabel = "<n>",
-                description = "Slots reserved for workspaces.")
-        Integer minWorkspace;
+        @CommandLine.Option(names = {"--reserved-workspace", "--min-workspace"}, paramLabel = "<n>",
+                description = "Slots reserved for workspaces. --min-workspace is the deprecated name.")
+        Integer reservedWorkspace;
 
-        @CommandLine.Option(names = "--min-desk", paramLabel = "<n>", description = "Slots reserved for the desk.")
-        Integer minDesk;
+        @CommandLine.Option(names = {"--reserved-desk", "--min-desk"}, paramLabel = "<n>",
+                description = "Slots reserved for the desk. --min-desk is the deprecated name.")
+        Integer reservedDesk;
 
         @CommandLine.Option(names = "--slots", paramLabel = "<n>",
                 description = "The slots total the install line asks the runner for; default: the reported total, "
-                        + "or the minimums' sum.")
+                        + "or the reservations' sum.")
         Integer slots;
 
         @Override
@@ -393,19 +435,7 @@ public class TargetsCommand implements Runnable {
             if (description != null) {
                 body.put("description", description);
             }
-            ObjectNode minimums = JsonNodeFactory.instance.objectNode();
-            if (minCi != null) {
-                minimums.put("ci", minCi);
-            }
-            if (minWorkspace != null) {
-                minimums.put("workspace", minWorkspace);
-            }
-            if (minDesk != null) {
-                minimums.put("desk", minDesk);
-            }
-            if (!minimums.isEmpty()) {
-                body.set("minimums", minimums);
-            }
+            putReservations(body, reservedCi, reservedWorkspace, reservedDesk);
             if (slots != null) {
                 body.put("slots", slots);
             }
@@ -430,7 +460,7 @@ public class TargetsCommand implements Runnable {
                     "  qits targets rotate-token --target buildbox --slots 8",
                     "",
                     "- With no --slots, the request carries no body and the service picks max(reported total, the "
-                            + "minimums' sum). HTTP 400: --slots is below the minimums' sum, or outside 0..1024. "
+                            + "reservations' sum). HTTP 400: --slots is below the reservations' sum, or outside 0..1024. "
                             + "HTTP 503: commissioning is off, or the runner plane is not configured or pins no "
                             + "runner version.",
                     "- -o json prints the service's answer: the target, the registration token and the install line.",
@@ -449,7 +479,7 @@ public class TargetsCommand implements Runnable {
 
         @CommandLine.Option(names = "--slots", paramLabel = "<n>",
                 description = "The slots total the install line asks the runner for; default: the reported total, "
-                        + "or the minimums' sum.")
+                        + "or the reservations' sum.")
         Integer slots;
 
         @Override
@@ -465,15 +495,17 @@ public class TargetsCommand implements Runnable {
     // --- update ---
 
     @CommandLine.Command(name = "update", mixinStandardHelpOptions = true,
-            description = {"Change a target's description or slot minimums. Only what is given is sent; a "
-                    + "minimum left out keeps its value.",
-                    "PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. "
+            description = {"Change a target's description or slot reservations. Only what is given is sent; a "
+                    + "reservation left out keeps its value. A reservation is not a limit: a type may use more "
+                    + "while shared slots are free.",
+                    "PATCH /system/api/targets/{id} with {description?, reservations?: {ci?, workspace?, desk?}}. "
                             + Doors.WRITE},
             footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits targets update --target localhost --min-ci 2 --min-workspace 2 --min-desk 1",
+            footer = {"  qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --reserved-desk 1",
                     "  qits targets update --target localhost --description 'The build machine under the desk'",
                     "",
-                    "- A blank --description clears it. HTTP 409 MINIMUMS_EXCEED_TOTAL: their sum is above the "
+                    "- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL (MINIMUMS_EXCEED_TOTAL "
+                            + "from an older qits-system): their sum is above the "
                             + "target's slots total."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
@@ -486,15 +518,17 @@ public class TargetsCommand implements Runnable {
                 description = "The target's name or id.")
         String target;
 
-        @CommandLine.Option(names = "--min-ci", paramLabel = "<n>", description = "Slots reserved for CI.")
-        Integer minCi;
+        @CommandLine.Option(names = {"--reserved-ci", "--min-ci"}, paramLabel = "<n>",
+                description = "Slots reserved for CI. --min-ci is the deprecated name.")
+        Integer reservedCi;
 
-        @CommandLine.Option(names = "--min-workspace", paramLabel = "<n>",
-                description = "Slots reserved for workspaces.")
-        Integer minWorkspace;
+        @CommandLine.Option(names = {"--reserved-workspace", "--min-workspace"}, paramLabel = "<n>",
+                description = "Slots reserved for workspaces. --min-workspace is the deprecated name.")
+        Integer reservedWorkspace;
 
-        @CommandLine.Option(names = "--min-desk", paramLabel = "<n>", description = "Slots reserved for the desk.")
-        Integer minDesk;
+        @CommandLine.Option(names = {"--reserved-desk", "--min-desk"}, paramLabel = "<n>",
+                description = "Slots reserved for the desk. --min-desk is the deprecated name.")
+        Integer reservedDesk;
 
         @CommandLine.Option(names = "--description", paramLabel = "<text>", description = "Free text.")
         String description;
@@ -507,21 +541,9 @@ public class TargetsCommand implements Runnable {
             if (description != null) {
                 change.put("description", description);
             }
-            ObjectNode minimums = JsonNodeFactory.instance.objectNode();
-            if (minCi != null) {
-                minimums.put("ci", minCi);
-            }
-            if (minWorkspace != null) {
-                minimums.put("workspace", minWorkspace);
-            }
-            if (minDesk != null) {
-                minimums.put("desk", minDesk);
-            }
-            if (!minimums.isEmpty()) {
-                change.set("minimums", minimums);
-            }
+            putReservations(change, reservedCi, reservedWorkspace, reservedDesk);
             if (change.isEmpty()) {
-                throw new CliFailure("Nothing to change: give --min-ci, --min-workspace, --min-desk or "
+                throw new CliFailure("Nothing to change: give --reserved-ci, --reserved-workspace, --reserved-desk or "
                         + "--description.", CliFailure.USAGE);
             }
             JsonNode answer = targets.api(context).patchTarget(id, change);
@@ -529,7 +551,8 @@ public class TargetsCommand implements Runnable {
                 Json.print(context.out(), answer);
                 return 0;
             }
-            context.out().println("Target " + SafeText.line(text(answer, "name")) + ": " + slots(answer) + ", "
+            context.out().println("Target " + SafeText.line(text(answer, "name")) + ": " + slots(answer)
+                    + " (" + SLOTS_LEGEND + "), "
                     + cell(answer, "description", 100) + ".");
             return 0;
         }

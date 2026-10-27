@@ -3889,7 +3889,7 @@ qits workspaces agents plugins install pyright-lsp --workspace 1
 
 ## qits targets
 
-The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot minimums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; sign a target in; and read or handle a target's own docker containers and volumes without a shell on it.
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot reservations or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; sign a target in; and read or handle a target's own docker containers and volumes without a shell on it.
 
 A target is named by its name or its id (`qits targets list` shows both).
 
@@ -3903,7 +3903,7 @@ A target is named by its name or its id (`qits targets list` shows both).
 
 ## qits targets list
 
-Every target, by name: connected or not, version, slots (ci, workspace and desk, used over their minimum, and the total used over the total), login and quarantine.
+Every target, by name: connected or not, version, slots, login and quarantine. Slots show ci, workspace and desk as used over reserved, then all used over the target's slot total. A reservation is not a limit: a type may use more while shared slots are free.
 
 GET /system/api/targets. Any credential may call it, qits:agent included.
 
@@ -3931,7 +3931,7 @@ qits targets list -o json
 
 ## qits targets show
 
-One target in full: its slots and minimums, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, and its newest connection.
+One target in full: its slots and reservations, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, and its newest connection.
 
 GET /system/api/targets/{id}. Any credential may call it, qits:agent included.
 
@@ -3964,33 +3964,33 @@ qits targets show --target localhost -o json
 
 Declare a target and print the line that installs its runner, with a one-time registration token in it.
 
-POST /system/api/targets with {name, description?, minimums?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
+POST /system/api/targets with {name, description?, reservations?: {ci, workspace, desk}, slots?} (HTTP 201 {target, registrationToken, installLine}). It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 THE INSTALL LINE IS SHOWN ONLY THIS ONCE: it is printed alone on stdout and nowhere else. Run it on the target's own machine. Lost, `qits targets rotate-token` makes a new one.
 
 ```
-qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--slots <n>] [--system-url <url>]
+qits targets create --name <name> [--description <text>] [--output table|json] [--reserved-ci <n>] [--reserved-desk <n>] [--reserved-workspace <n>] [--slots <n>] [--system-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--name <name>` | Required. The new target's name. |
 | `--description <text>` | Free text. |
-| `--min-ci <n>` | Slots reserved for CI. |
-| `--min-desk <n>` | Slots reserved for the desk. |
-| `--min-workspace <n>` | Slots reserved for workspaces. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the minimums' sum. |
+| `--reserved-ci, --min-ci <n>` | Slots reserved for CI. --min-ci is the deprecated name. |
+| `--reserved-desk, --min-desk <n>` | Slots reserved for the desk. --min-desk is the deprecated name. |
+| `--reserved-workspace, --min-workspace <n>` | Slots reserved for workspaces. --min-workspace is the deprecated name. |
+| `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the reservations' sum. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
 
 ```
 qits targets create --name buildbox
-qits targets create --name buildbox --description 'The build machine under the desk' --min-ci 2 --min-workspace 2 --min-desk 1
+qits targets create --name buildbox --description 'The build machine under the desk' --reserved-ci 2 --reserved-workspace 2 --reserved-desk 1
 ```
 
-- A minimum left out is not sent. HTTP 400: --slots is below the minimums' sum, or outside 0..1024. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
+- A reservation left out is not sent. HTTP 400: --slots is below the reservations' sum, or outside 0..1024. HTTP 409 TARGET_NAME_TAKEN: the name is in use. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
 - -o json prints the service's answer: the target, the registration token and the install line.
 - Not served by the qits MCP server: the token would land in a transcript.
 
@@ -4016,7 +4016,7 @@ qits targets rotate-token --target <name|id> [--output table|json] [--slots <n>]
 |---|---|
 | `--target <name\|id>` | Required. The target's name or id. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the minimums' sum. |
+| `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the reservations' sum. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
@@ -4027,7 +4027,7 @@ qits targets rotate-token --target buildbox -o json
 qits targets rotate-token --target buildbox --slots 8
 ```
 
-- With no --slots, the request carries no body and the service picks max(reported total, the minimums' sum). HTTP 400: --slots is below the minimums' sum, or outside 0..1024. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
+- With no --slots, the request carries no body and the service picks max(reported total, the reservations' sum). HTTP 400: --slots is below the reservations' sum, or outside 0..1024. HTTP 503: commissioning is off, or the runner plane is not configured or pins no runner version.
 - -o json prints the service's answer: the target, the registration token and the install line.
 - Not served by the qits MCP server: the token would land in a transcript.
 
@@ -4039,32 +4039,32 @@ qits targets rotate-token --target buildbox --slots 8
 
 ## qits targets update
 
-Change a target's description or slot minimums. Only what is given is sent; a minimum left out keeps its value.
+Change a target's description or slot reservations. Only what is given is sent; a reservation left out keeps its value. A reservation is not a limit: a type may use more while shared slots are free.
 
-PATCH /system/api/targets/{id} with {description?, minimums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
+PATCH /system/api/targets/{id} with {description?, reservations?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 ```
-qits targets update --target <name|id> [--description <text>] [--min-ci <n>] [--min-desk <n>] [--min-workspace <n>] [--output table|json] [--system-url <url>]
+qits targets update --target <name|id> [--description <text>] [--output table|json] [--reserved-ci <n>] [--reserved-desk <n>] [--reserved-workspace <n>] [--system-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--target <name\|id>` | Required. The target's name or id. |
 | `--description <text>` | Free text. |
-| `--min-ci <n>` | Slots reserved for CI. |
-| `--min-desk <n>` | Slots reserved for the desk. |
-| `--min-workspace <n>` | Slots reserved for workspaces. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--reserved-ci, --min-ci <n>` | Slots reserved for CI. --min-ci is the deprecated name. |
+| `--reserved-desk, --min-desk <n>` | Slots reserved for the desk. --min-desk is the deprecated name. |
+| `--reserved-workspace, --min-workspace <n>` | Slots reserved for workspaces. --min-workspace is the deprecated name. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
 
 ```
-qits targets update --target localhost --min-ci 2 --min-workspace 2 --min-desk 1
+qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --reserved-desk 1
 qits targets update --target localhost --description 'The build machine under the desk'
 ```
 
-- A blank --description clears it. HTTP 409 MINIMUMS_EXCEED_TOTAL: their sum is above the target's slots total.
+- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL (MINIMUMS_EXCEED_TOTAL from an older qits-system): their sum is above the target's slots total.
 
 ### Exit codes
 

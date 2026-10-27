@@ -33,9 +33,13 @@ Commands:
   on are `qits targets`.
 - `qits targets` lists qits-system's execution targets (connection, slots, login, quarantine),
   reads one in full, declares one or rotates its registration token (printing the install line
-  once), updates its description or slot minimums, lifts a quarantine, asks for a
+  once), updates its description or slot reservations, lifts a quarantine, asks for a
   health check or a login check, deletes one, lists leases, and `qits targets sign-in` runs a
   harness's sign-in on the target through the API and waits for it to report signed in.
+  `qits targets list` shows slots per type as used/reserved and then used/total. A reservation
+  holds slots for one type and is not a limit: `ws 5/1` is valid while shared slots are free. The
+  total is the target's real slot count. It reads `reservations`, or `minimums` from an older
+  qits-system.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the workspace token or the credential the process was handed instead.
@@ -1547,20 +1551,21 @@ end any lease and are audited (`target_audit`, `LEASE_END`), or `qits:system`, w
 lease already ENDING that an operator ends goes ENDED at once (epic qits-1621). Each command's help names its door and
 roles.
 
-`qits targets create` declares a target (`{name, description?, minimums?: {ci, workspace, desk},
-slots?}`; a minimum left out is not sent, and with none given `minimums` is left out) and `qits
+`qits targets create` declares a target (`{name, description?, reservations?: {ci, workspace, desk},
+slots?}`; a reservation left out is not sent, and with none given `reservations` is left out; the
+same values also go as the deprecated `minimums` for an older qits-system, qits-1682) and `qits
 targets rotate-token` mints a new registration token and its install line. On a target whose
 runner has not registered yet this is the first token's replacement; on a REGISTERED target
 running the new install line reinstalls its runner under the same target — the id is kept, and the
 old runner's client is decommissioned once the new one registers. Both commands take an optional
 `--slots <n>`, the install line's `QITS_SYSTEM_RUNNER_SLOTS`; left out, it is max(the reported
-total, the minimums' sum). Both answer `{target, registrationToken, installLine}`, and the install
+total, the reservations' sum). Both answer `{target, registrationToken, installLine}`, and the install
 line embeds the one-time token, so it is handled the way `qits users invite` handles a register
 token: **the install line alone on stdout, shown only this once**, and on stderr which target it is
 for (name and id, never the token) and that it is run on the target's own machine. `-o json` prints
 the service's answer as it is. The line is never written to stderr, a file, a log or an error
 message; an answer without one fails without quoting it. A taken name is HTTP 409
-`TARGET_NAME_TAKEN`, `--slots` below the minimums' sum or outside 0..1024 is HTTP 400, commissioning
+`TARGET_NAME_TAKEN`, `--slots` below the reservations' sum or outside 0..1024 is HTTP 400, commissioning
 off or no runner version pinned HTTP 503. Both are `Interaction.LOCAL`: the qits MCP server does not
 serve them, because a tool's answer lands in an agent's transcript.
 
