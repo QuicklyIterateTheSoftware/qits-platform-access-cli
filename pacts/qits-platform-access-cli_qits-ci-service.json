@@ -155,6 +155,61 @@
         "references": {
           "qits-call": {
             "app": "qits-ci-service",
+            "operationId": "cancelRun"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ci cancel",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ci cancel: cancelRun",
+      "key": "468027e3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a running run",
+          "params": {
+            "authorization": "Bearer qits_tok_contract-ci-run",
+            "repositoryId": "00000000-0000-4000-8000-000000000001",
+            "runId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "reason": "..."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/ci/api/runs/${runId}/cancel",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/ci/api/runs/00000000-0000-4000-8000-000000000002/cancel"
+      },
+      "response": {
+        "status": 202
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-ci-service",
             "operationId": "getRunReport"
           },
           "qits-trigger": {
