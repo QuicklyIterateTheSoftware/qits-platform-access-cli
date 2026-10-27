@@ -92,7 +92,7 @@
              qits-1149): each pact under pacts/ is written from its provider's recordings. Bumped by
              qits-maintenance like the one above. -->
         <qits.workspaces-golden-masters.version>2026.1024.141209</qits.workspaces-golden-masters.version>
-        <qits.workspace-daemon-golden-masters.version>2026.1018.152111</qits.workspace-daemon-golden-masters.version>
+        <qits.workspace-daemon-golden-masters.version>2026.1027.193351</qits.workspace-daemon-golden-masters.version>
         <qits.artifacts-golden-masters.version>2026.1027.103538</qits.artifacts-golden-masters.version>
         <qits.ci-golden-masters.version>2026.1026.163551</qits.ci-golden-masters.version>
         <qits.idp-golden-masters.version>2026.1027.165632</qits.idp-golden-masters.version>
