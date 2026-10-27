@@ -4538,7 +4538,7 @@ qits targets docker rm --target localhost qits-system-runner-work-ws-1-a1b2c3d4
 
 ## qits targets docker volumes
 
-The target runner's own volumes (docker volume ls).
+The target runner's own volumes (docker volume ls): those carrying its owner label, and those a container it owns mounts.
 
 GET /system/api/targets/{id}/docker/volumes. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
 
@@ -4566,7 +4566,7 @@ qits targets docker volumes --target localhost
 
 ## qits targets docker volume
 
-docker volume inspect of one of the runner's volumes, with its size, secrets redacted.
+docker volume inspect of one of the runner's volumes (labelled, or mounted by a container it owns), secrets redacted. No size: docker system df walks every volume.
 
 GET /system/api/targets/{id}/docker/volumes/{name}. It needs qits:admin, qits:admin-agent or qits:desk-admin, which a person's token or the delivery desk's carries. qits:agent alone and qits:system are refused (HTTP 403) by design. Every call is a target_audit row (DOCKER_<op>), written before it answers, refusals and timeouts included; `qits targets docker audit` reads them back. An inspect's environment and label values, and a log's or an exec's output, whose key looks like a secret are ***; the runner redacts its own answer and the service redacts inspect and listing JSON again. The runner only touches its own target's containers and volumes.
 

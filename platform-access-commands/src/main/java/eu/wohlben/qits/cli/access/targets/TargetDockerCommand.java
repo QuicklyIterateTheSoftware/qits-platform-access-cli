@@ -335,7 +335,7 @@ public class TargetDockerCommand implements Runnable {
     // --- volumes ---
 
     @CommandLine.Command(name = "volumes", mixinStandardHelpOptions = true,
-            description = {"The target runner's own volumes (docker volume ls).",
+            description = {"The target runner's own volumes (docker volume ls): those carrying its owner label, and those a container it owns mounts.",
                     "GET /system/api/targets/{id}/docker/volumes. " + Doors.DOCKER},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets docker volumes --target localhost"},
@@ -373,7 +373,7 @@ public class TargetDockerCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "volume", mixinStandardHelpOptions = true,
-            description = {"docker volume inspect of one of the runner's volumes, with its size, secrets redacted.",
+            description = {"docker volume inspect of one of the runner's volumes (labelled, or mounted by a container it owns), secrets redacted. No size: docker system df walks every volume.",
                     "GET /system/api/targets/{id}/docker/volumes/{name}. " + Doors.DOCKER},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets docker volume --target localhost qits-system-runner-work-ws-1-a1b2c3d4",
