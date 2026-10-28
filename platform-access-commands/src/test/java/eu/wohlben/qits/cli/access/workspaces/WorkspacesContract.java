@@ -40,6 +40,8 @@ public final class WorkspacesContract {
     static final String NO_OPEN_WORKSPACE = "no work item has an open workspace";
     static final String NO_WORKSPACES = "a work item with no workspaces";
     static final String AGENTS_BOUND = "a project with agents bound to work items";
+    /** Epic qits-1681: each agent with its open waits' subjects and its attention, for one project. */
+    static final String AGENTS_NEEDING_ATTENTION = "a project with agents needing attention";
     static final String WAITING_FOR_A_SLOT = "an agent waiting for a workspace slot";
     static final String WORKING_ON_A_TICKET = "an agent working on a ticket";
     static final String SAVED_DRAFT = "an agent with a saved prompt draft";
@@ -54,6 +56,11 @@ public final class WorkspacesContract {
     /** An agent as {@code agents list} prints it. */
     static final List<String> AGENT = List.of("agentId", "workspaceRowId", "entityId", "state", "runState", "harness",
             "waitingOn", "entityTitle");
+
+    /** What `agents list --project` reads besides {@link #AGENT}: each wait's subject, and the attention reason. */
+    static final List<String> AGENT_STATUS = java.util.stream.Stream.concat(AGENT.stream(), java.util.stream.Stream.of(
+            "waits[].label", "waits[].subjectKind", "waits[].subjectRef", "waits[].subjectQualifiedId",
+            "waits[].subjectState", "attention.reason")).toList();
 
     @FunctionalInterface
     interface Call {
@@ -213,6 +220,8 @@ public final class WorkspacesContract {
             rows.add(row("qits workspaces agents list", state, "listAgents", "agents", AGENTS)
                     .consumes(held(state, "listAgents", prefixed("agents[].", AGENT))));
         }
+        rows.add(row("qits workspaces agents list", AGENTS_NEEDING_ATTENTION, "listAgents", "agents", AGENTS)
+                .consumes(held(AGENTS_NEEDING_ATTENTION, "listAgents", prefixed("agents[].", AGENT_STATUS))));
         rows.add(row("qits workspaces agents discard", WAITING_FOR_A_SLOT, "discardAgent", "discardAgent", DISCARD)
                 .consumes("state"));
         for (String state : List.of(WORKING_ON_A_TICKET, NO_WORKSPACES)) {

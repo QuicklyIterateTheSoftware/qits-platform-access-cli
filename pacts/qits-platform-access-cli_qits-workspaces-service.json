@@ -1661,6 +1661,684 @@
         }
       },
       "description": "qits workspaces agents list: listAgents",
+      "key": "9ecb5014",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with agents needing attention",
+          "params": {
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "bugTicketQualifiedId": "contract-00000001-10",
+            "epicId": "00000000-0000-4000-8000-000000000006",
+            "featureId": "00000000-0000-4000-8000-000000000007",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
+            "improvementTicketQualifiedId": "contract-00000001-11",
+            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "repositoryId": "00000000-0000-4000-8000-000000000013",
+            "taskId": "00000000-0000-4000-8000-000000000011"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "query": {
+            "projectId": {
+              "dataType": "RAW",
+              "expression": "${projectId}",
+              "type": "ProviderState"
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/agents",
+        "query": {
+          "projectId": [
+            "00000000-0000-4000-8000-00000000000f"
+          ],
+          "state": [
+            "ACTIVE"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "agents": [
+              {
+                "agentId": "00000000-0000-4000-8000-0000000000a6",
+                "attention": {
+                  "reason": "Waits on contract-qits-rr-368 to end; it is FINALIZED since 10:42"
+                },
+                "entityId": "contract-00000001-10",
+                "entityTitle": "Invoice totals are off by one cent",
+                "harness": "CLAUDE",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "release request contract-qits-rr-368 to end",
+                "waits": [
+                  {
+                    "label": "release request contract-qits-rr-368 to end",
+                    "subjectKind": "RELEASE_REQUEST",
+                    "subjectQualifiedId": "contract-qits-rr-368",
+                    "subjectRef": "00000000-0000-4000-8000-0000000000c1",
+                    "subjectState": "FINALIZED"
+                  }
+                ],
+                "workspaceRowId": 1
+              },
+              {
+                "agentId": "00000000-0000-4000-8000-0000000000a7",
+                "attention": {
+                  "reason": "Blocked 50 min by contract-person, no @desk comment since"
+                },
+                "entityId": "contract-00000001-2",
+                "entityTitle": "Export invoices for the accountants",
+                "harness": "CLAUDE",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": null,
+                "waits": [],
+                "workspaceRowId": 1
+              },
+              {
+                "agentId": "00000000-0000-4000-8000-0000000000a8",
+                "attention": {
+                  "reason": "Idle 42 min with no wait and no block"
+                },
+                "entityId": "contract-00000001-6",
+                "entityTitle": "PDF export",
+                "harness": "CLAUDE",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": null,
+                "waits": [],
+                "workspaceRowId": 1
+              },
+              {
+                "agentId": "00000000-0000-4000-8000-0000000000a9",
+                "attention": {
+                  "reason": "Run 00000000 RUNNING for 1 h 40 min, expected about 35 min"
+                },
+                "entityId": "contract-00000001-5",
+                "entityTitle": "Download button on the invoice list",
+                "harness": "CLAUDE",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "CI run 00000000 to end",
+                "waits": [
+                  {
+                    "label": "CI run 00000000 to end",
+                    "subjectKind": "CI_RUN",
+                    "subjectQualifiedId": null,
+                    "subjectRef": "00000000-0000-4000-8000-0000000000c2",
+                    "subjectState": "RUNNING"
+                  }
+                ],
+                "workspaceRowId": 1
+              },
+              {
+                "agentId": "00000000-0000-4000-8000-0000000000aa",
+                "attention": null,
+                "entityId": "contract-00000001-11",
+                "entityTitle": "Remember the last export format",
+                "harness": "CLAUDE",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "work contract-00000001-5 VERIFIED; a comment on contract-00000001-5",
+                "waits": [
+                  {
+                    "label": "work contract-00000001-5 VERIFIED",
+                    "subjectKind": "WORK_ITEM",
+                    "subjectQualifiedId": "contract-00000001-5",
+                    "subjectRef": "00000000-0000-4000-8000-000000000011",
+                    "subjectState": "IMPLEMENTING"
+                  },
+                  {
+                    "label": "work contract-00000001-5 VERIFIED",
+                    "subjectKind": "WORK_ITEM",
+                    "subjectQualifiedId": "contract-00000001-5",
+                    "subjectRef": "00000000-0000-4000-8000-000000000011",
+                    "subjectState": "IMPLEMENTING"
+                  }
+                ],
+                "workspaceRowId": 1
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.agents[0].agentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[0].attention.reason": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].entityTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].runState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].waitingOn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].waits": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.agents[0].waits[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].waits[*].subjectKind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].waits[*].subjectQualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].waits[*].subjectRef": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[0].waits[*].subjectState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[0].workspaceRowId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.agents[1].agentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[1].attention.reason": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[1].entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[1].entityTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[1].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[1].runState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[1].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[1].workspaceRowId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.agents[2].agentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[2].attention.reason": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[2].entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[2].entityTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[2].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[2].runState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[2].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[2].workspaceRowId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.agents[3].agentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[3].attention.reason": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].entityTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].runState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].waitingOn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].waits": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.agents[3].waits[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].waits[*].subjectKind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].waits[*].subjectRef": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[3].waits[*].subjectState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[3].workspaceRowId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.agents[4].agentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[4].entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].entityTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].runState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].waitingOn": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].waits": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.agents[4].waits[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].waits[*].subjectKind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agents[4].waits[*].subjectQualifiedId": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.agents[4].waits[*].subjectRef": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.agents[4].waits[*].subjectState": {
+              "combine": "OR",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "null"
+                }
+              ]
+            },
+            "$.agents[4].workspaceRowId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspaces-service",
+            "operationId": "listAgents"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits workspaces agents list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits workspaces agents list: listAgents",
       "key": "af4f82e4",
       "pending": false,
       "providerStates": [
