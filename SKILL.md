@@ -3346,17 +3346,20 @@ An agent is named by its id (`qits workspaces agents list` shows it); a work ite
 
 ## qits workspaces agents list
 
-Agents, newest first: what each works on, its slot, how it runs and what it waits on. Bare, every agent (the project's Workspaces page); --work, one item's (its agent page); --workspace, one slot's (the slot's page); --state ACTIVE, the In Progress tab's.
+Agents, newest first: what each works on, its slot, how it runs, what it waits on and what it needs a person for. Bare, every agent (the project's Workspaces page); --work, one item's (its agent page); --workspace, one slot's (the slot's page); --state ACTIVE, the In Progress tab's; --project, one project's.
 
-GET /workspaces/api/agents[?workId=&workspaceId=&state=]. Any credential may read it, qits:agent included.
+WAITING ON is built from each open wait's subject: a release request or work item shows its qualified id and state, a CI run the first 8 characters of its id and state, a comments wait "comments on <item>", anything else its label; several are joined with "; ". With no waits array (an older service), it falls back to today's waitingOn. ATTENTION is attention.reason, a dash when there is none.
+
+GET /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]. Any credential may read it, qits:agent included.
 
 ```
-qits workspaces agents list [--output table|json] [--projects-url <url>] [--state <STATE>] [--work <work>] [--workspace <n>] [--workspaces-url <url>]
+qits workspaces agents list [--output table|json] [--project <project>] [--projects-url <url>] [--state <STATE>] [--work <work>] [--workspace <n>] [--workspaces-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | Only the agents whose repository is this project's: its id, slug or name. Sent as projectId. Without it, every project's. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
 | `--state <STATE>` | Only the agents in this state: ACTIVE or REMOVED. Default: all. |
 | `--work <work>` | Only this work item's agents: its qualified id (qits-123) or its id. |
@@ -3368,6 +3371,7 @@ qits workspaces agents list [--output table|json] [--projects-url <url>] [--stat
 ```
 qits workspaces agents list --state ACTIVE
 qits workspaces agents list --work qits-123
+qits workspaces agents list --project qits --state ACTIVE
 qits workspaces agents list --workspace 1 -o json
 ```
 

@@ -597,7 +597,7 @@ Installing it is not part of this version.
     qits workspaces start|stop|recreate <n>
     qits workspaces log <process id>
     qits workspaces attach <command id> --workspace <n>
-    qits workspaces agents list [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
+    qits workspaces agents list [--project <project>] [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
     qits workspaces agents discard <agent> [--force]
     qits workspaces agents prompt <work> <text>
     qits workspaces agents draft show|discard <agent>
@@ -1475,7 +1475,7 @@ by one command, the same way.
     qits workspaces attach <command id>           WS   …/terminal/commands/{id}
     qits workspaces items                         GET  /workspaces/api/work/workspaces
     qits workspaces history <work>                GET  /workspaces/api/work/{work}/workspaces
-    qits workspaces agents list                   GET  /workspaces/api/agents[?workId=&workspaceId=&state=]
+    qits workspaces agents list                   GET  /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]
     qits workspaces agents discard [--force]      POST /workspaces/api/agents/{id}/discard {"force":…}
     qits workspaces agents prompt <work> <text>   POST /workspaces/api/agent-dispatches/delivery
     qits workspaces agents draft show|save|discard     GET|PUT|DELETE /workspaces/api/agents/{id}/prompt-draft
