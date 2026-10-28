@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.complete;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.wohlben.qits.cli.access.projects.ProjectsApi;
+import eu.wohlben.qits.cli.access.projects.ReleaseRequestRefs;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.Set;
  * The versions the chosen repository has released, newest first.
  * <p>
  * Read from its released release requests, which is where a version is stamped: a release request
- * that reached RELEASED carries the version it shipped and the summary it shipped under. There is
+ * that reached RELEASED carries the version it shipped and the items it shipped. There is
  * no other door that lists a repository's versions with the session's own identity.
  */
 @ApplicationScoped
@@ -35,7 +36,7 @@ public class VersionSource extends PlatformSource {
                 .path("requests").forEach(request -> {
                     String version = ProjectsApi.text(request, "version");
                     if (!version.isEmpty()) {
-                        choices.add(new Choice(version, columns(version, ProjectsApi.text(request, "summary"))));
+                        choices.add(new Choice(version, columns(version, ReleaseRequestRefs.items(request))));
                     }
                 });
         return choices;

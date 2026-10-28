@@ -489,7 +489,9 @@ that reads the stack) and compares the committed file byte for byte (rewrite it 
 read through qits-integrations' `qits-pact-consumer` from the jar `eu.wohlben.qits:<app>-golden-masters`
 pinned by `qits.<app>-golden-masters.version` in the root pom and bumped by qits-maintenance, so a
 row names a provider state the provider records. A row binds only what the command reads of the
-answer (`consumes`), and sends exactly the recorded request, body and query included. A row whose
+answer (`consumes`), and sends exactly the recorded request, body and query included, but for the
+top-level body members it names with `sendsWithout`: a field the provider has deprecated and ignores
+but still records its own request with (qits-1673: `create`'s `summary`). A row whose
 state the provider has not recorded yet stays in the table, skipped with the state it needs and
 its door, and out of the file until a newer pin records it. Every interaction carries `qits-call`
 and a `qits-trigger` of kind `command` naming the command (`qits work details`).

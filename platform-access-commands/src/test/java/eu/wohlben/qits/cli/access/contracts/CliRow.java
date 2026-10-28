@@ -29,9 +29,11 @@ import java.util.Objects;
  *     null otherwise, where the recording says it
  * @param fieldsMatching form fields of the request body held to a regex rather than to the recorded
  *     value, each with the regex: see {@link #fieldMatches}
+ * @param unsent top-level members of a recorded JSON request body the command does not send: see
+ *     {@link #sendsWithout}
  */
 public record CliRow(GoldenInteraction interaction, String reaches, String request, Call call,
-        Map<String, String> fieldsMatching) {
+        Map<String, String> fieldsMatching, java.util.List<String> unsent) {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -42,11 +44,12 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
     }
 
     public CliRow(GoldenInteraction interaction, String reaches, String request, Call call) {
-        this(interaction, reaches, request, call, Map.of());
+        this(interaction, reaches, request, call, Map.of(), java.util.List.of());
     }
 
     public CliRow {
         fieldsMatching = Map.copyOf(fieldsMatching);
+        unsent = java.util.List.copyOf(unsent);
         Objects.requireNonNull(interaction, "interaction");
         Objects.requireNonNull(reaches, "reaches");
         Objects.requireNonNull(call, "call");
@@ -65,37 +68,37 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
 
     /** The same row, reading {@code paths} of the answer: see {@link GoldenInteraction#consumes}. */
     public CliRow consumes(String... paths) {
-        return new CliRow(interaction.consumes(paths), reaches, request, call, fieldsMatching);
+        return new CliRow(interaction.consumes(paths), reaches, request, call, fieldsMatching, unsent);
     }
 
     /** {@link #consumes(String...)} over a list. */
     public CliRow consumes(java.util.List<String> paths) {
-        return new CliRow(interaction.consumes(paths), reaches, request, call, fieldsMatching);
+        return new CliRow(interaction.consumes(paths), reaches, request, call, fieldsMatching, unsent);
     }
 
     /** The same row, not pinning the length of the arrays at {@code patterns}. */
     public CliRow anyLength(String... patterns) {
-        return new CliRow(interaction.anyLength(patterns), reaches, request, call, fieldsMatching);
+        return new CliRow(interaction.anyLength(patterns), reaches, request, call, fieldsMatching, unsent);
     }
 
     /** The same row, binding the recorded values at {@code paths} exactly. */
     public CliRow exact(String... paths) {
-        return new CliRow(interaction.exact(paths), reaches, request, call, fieldsMatching);
+        return new CliRow(interaction.exact(paths), reaches, request, call, fieldsMatching, unsent);
     }
 
     /** The same row, sending {@code name: value}; a {@code {param}} in the value comes from the state. */
     public CliRow header(String name, String value) {
-        return new CliRow(interaction.header(name, value), reaches, request, call, fieldsMatching);
+        return new CliRow(interaction.header(name, value), reaches, request, call, fieldsMatching, unsent);
     }
 
     /** The same row, reading the response headers {@code names}. */
     public CliRow readsHeader(String... names) {
-        return new CliRow(interaction.readsHeader(names), reaches, request, call, fieldsMatching);
+        return new CliRow(interaction.readsHeader(names), reaches, request, call, fieldsMatching, unsent);
     }
 
     /** The same row, naming its door: {@code GET /ci/api/runs/{runId}}. Required while it is not recorded. */
     public CliRow request(String door) {
-        return new CliRow(interaction, reaches, door, call, fieldsMatching);
+        return new CliRow(interaction, reaches, door, call, fieldsMatching, unsent);
     }
 
     /**
@@ -107,7 +110,28 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
     public CliRow fieldMatches(String name, String regex) {
         java.util.LinkedHashMap<String, String> all = new java.util.LinkedHashMap<>(fieldsMatching);
         all.put(name, regex);
-        return new CliRow(interaction, reaches, request, call, all);
+        return new CliRow(interaction, reaches, request, call, all, unsent);
+    }
+
+    /**
+     * The same row, sending the recorded JSON request body without its top-level members {@code
+     * names}: a field the provider still records its own request with, but has deprecated and
+     * ignores (qits-1673: {@code summary} on create). The pact then holds the body without them,
+     * so the provider may drop them, and the mock refuses a command that still sends one.
+     */
+    public CliRow sendsWithout(String... names) {
+        java.util.List<String> all = new java.util.ArrayList<>(unsent);
+        all.addAll(java.util.List.of(names));
+        return new CliRow(interaction, reaches, request, call, fieldsMatching, all);
+    }
+
+    /** {@link #exampleBody}, without the members {@link #sendsWithout} names: what the command sends. */
+    public JsonNode sentBody(Operation recorded) {
+        JsonNode body = exampleBody(recorded);
+        if (body != null && body.isObject() && !unsent.isEmpty()) {
+            ((com.fasterxml.jackson.databind.node.ObjectNode) body).remove(unsent);
+        }
+        return body;
     }
 
     public String state() {

@@ -232,7 +232,7 @@ public class ReleaseRequestCommand implements Runnable {
             }
             if (wholeProject) {
                 Table.print(context.out(), "", List.of("ID", "REPOSITORY", "STATE", "FREEZE", "APPROVAL", "PRIORITY",
-                                "SUMMARY", "VERSION", "UPDATED"),
+                                "ITEMS", "VERSION", "UPDATED"),
                         requests.stream().map(r -> List.of(
                                 Table.cell(ReleaseRequestRefs.label(r), 60),
                                 Table.cell(text(r, "repoName"), 40),
@@ -240,18 +240,18 @@ public class ReleaseRequestCommand implements Runnable {
                                 Table.cell(freezeCell(r), 12),
                                 Table.cell(text(r, "approvalState"), 12),
                                 Table.cell(text(r, "priority"), 10),
-                                Table.cell(text(r, "summary"), 60),
+                                Table.cell(ReleaseRequestRefs.items(r), 60),
                                 Table.cell(text(r, "version"), 24),
                                 Table.time(text(r, "updatedAt")))).toList());
                 return 0;
             }
-            Table.print(context.out(), "", List.of("ID", "STATE", "FREEZE", "PRIORITY", "SUMMARY", "VERSION", "UPDATED"),
+            Table.print(context.out(), "", List.of("ID", "STATE", "FREEZE", "PRIORITY", "ITEMS", "VERSION", "UPDATED"),
                     requests.stream().map(r -> List.of(
                             Table.cell(ReleaseRequestRefs.label(r), 60),
                             Table.cell(text(r, "state"), 12),
                             Table.cell(freezeCell(r), 12),
                             Table.cell(text(r, "priority"), 10),
-                            Table.cell(text(r, "summary"), 60),
+                            Table.cell(ReleaseRequestRefs.items(r), 60),
                             Table.cell(text(r, "version"), 24),
                             Table.time(text(r, "updatedAt")))).toList());
             return 0;
@@ -297,9 +297,9 @@ public class ReleaseRequestCommand implements Runnable {
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits release-request --project qits --repository qits-ci-service create --branch "
-                            + "feature/log-view --summary \"Show the build log live\"",
+                            + "feature/log-view",
                     "  qits release-request --project qits --repository qits-ci-service create --branch main "
-                            + "--summary \"Release main\" --priority HIGH",
+                            + "--priority HIGH",
                     "",
                     "- While the active request is frozen, ANY new branch (a feature, a bug fix, a maintenance "
                             + "bump) goes into the request queued behind it, opened if there is none. The queued "
@@ -308,8 +308,10 @@ public class ReleaseRequestCommand implements Runnable {
                     "- To put a branch into the frozen request anyway, name it: `join --request <its id>`.",
                     "- A branch that is already on a request that has not released answers that request; it "
                             + "opens no second one. Check the id that comes back.",
-                    "- On a project wrapper the answer can be a request somebody else opened. Its summary stands, "
-                            + "and a red gate holds every branch on it.",
+                    "- On a project wrapper the answer can be a request somebody else opened. A red gate holds "
+                            + "every branch on it.",
+                    "- There is no summary to give: the request lists its items, one per branch somebody named, "
+                            + "with the work item the branch names, and the people who asked for it.",
                     "- To add another branch to a request you have, use `join`."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
@@ -322,10 +324,6 @@ public class ReleaseRequestCommand implements Runnable {
                 description = "The branch to release.")
         String branch;
 
-        @CommandLine.Option(names = "--summary", paramLabel = "<text>", required = true,
-                description = "What the release is for, in a sentence.")
-        String summary;
-
         @CommandLine.Option(names = "--priority", paramLabel = "<priority>",
                 description = "LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: the platform's (MEDIUM).")
         String priority;
@@ -333,11 +331,11 @@ public class ReleaseRequestCommand implements Runnable {
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = json(parent.options.output);
-            if (branch.isBlank() || summary.isBlank()) {
-                throw new CliFailure("--branch and --summary must not be empty.", CliFailure.USAGE);
+            if (branch.isBlank()) {
+                throw new CliFailure("--branch must not be empty.", CliFailure.USAGE);
             }
             Target target = parent.target(context);
-            JsonNode answer = target.api().createReleaseRequest(target.repoId(), branch.strip(), summary.strip(), priority);
+            JsonNode answer = target.api().createReleaseRequest(target.repoId(), branch.strip(), priority);
             if (json) {
                 SafeJson.print(context.out(), answer);
                 return 0;
@@ -955,8 +953,7 @@ public class ReleaseRequestCommand implements Runnable {
         rows.addAll(List.of(
                 List.of("superseded by", Table.cell(supersededBy(request), 200)),
                 List.of("priority", Table.cell(text(request, "priority"), 200)),
-                List.of("summary", Table.cell(text(request, "summary"), 200)),
-                List.of("requester", Table.cell(text(request, "requester"), 200)),
+                List.of("participants", Table.cell(participants(request), 200)),
                 List.of("approval", Table.cell(text(request, "approvalState"), 200)),
                 List.of("merged sha", Table.cell(text(request, "mergedSha"), 200)),
                 List.of("version", Table.cell(text(request, "version"), 200)),
@@ -964,6 +961,7 @@ public class ReleaseRequestCommand implements Runnable {
                 List.of("created", Table.time(text(request, "createdAt"))),
                 List.of("updated", Table.time(text(request, "updatedAt")))));
         Table.print(out, "  ", null, rows);
+        printItems(out, request);
         printGates(out, request);
         List<List<String>> sources = new ArrayList<>();
         boolean counted = false;
@@ -989,6 +987,40 @@ public class ReleaseRequestCommand implements Runnable {
             Table.print(out, "  ", freezeColumn
                     ? List.of("KIND", "NAME", "REF", "HOW", "FREEZE", "PRIORITY", "ADDED BY")
                     : List.of("KIND", "NAME", "REF", "HOW", "PRIORITY", "ADDED BY"), sources);
+        }
+    }
+
+    /** Everyone who asked for the request, comma-joined; blank (a dash) from an older platform. */
+    static String participants(JsonNode request) {
+        List<String> names = new ArrayList<>();
+        request.path("participants").forEach(p -> {
+            if (!p.asText("").isBlank()) {
+                names.add(p.asText());
+            }
+        });
+        return String.join(", ", names);
+    }
+
+    /**
+     * What the request releases (qits-1673): one line per item, the work item's id and title where
+     * the branch names one, else the item's label. An older platform sends no items; nothing is
+     * printed for them then, and the sources below still say which branches are on it.
+     */
+    static void printItems(PrintStream out, JsonNode request) {
+        List<List<String>> rows = new ArrayList<>();
+        request.path("items").forEach(item -> {
+            JsonNode work = item.path("workItem");
+            String line = work.isObject() && !text(work, "qualifiedId").isBlank()
+                    ? (text(work, "qualifiedId") + " " + text(work, "title")).strip()
+                    : text(item, "label");
+            if (line.isBlank()) {
+                line = text(item, "source");
+            }
+            rows.add(List.of(Table.cell(line, 200)));
+        });
+        if (!rows.isEmpty()) {
+            out.println("Items:");
+            Table.print(out, "  ", null, rows);
         }
     }
 

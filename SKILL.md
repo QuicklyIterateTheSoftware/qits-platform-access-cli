@@ -1675,13 +1675,12 @@ The platform puts the branch where it belongs: in the repository's active reques
 The soft feature freeze: an active request is frozen once it holds as many counted branches as the threshold. Counted are branches that name a work item (epics, tasks, tickets of any type, bug fixes included); main, maintenance/* and release/* never count. The threshold is the repository's .config/qits/release-requests.yml feature_freeze, else the project's .config/qits/project.yml release_requests.feature_freeze, else 3; 0 turns the freeze off.
 
 ```
-qits release-request create --branch <branch> --summary <text> [--output table|json] [--priority <priority>] [--project <project>] [--projects-url <url>] [--repository <repository>]
+qits release-request create --branch <branch> [--output table|json] [--priority <priority>] [--project <project>] [--projects-url <url>] [--repository <repository>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--branch <branch>` | Required. The branch to release. |
-| `--summary <text>` | Required. What the release is for, in a sentence. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--priority <priority>` | LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: the platform's (MEDIUM). |
 | `--project <project>` | The project: its id, slug or name. |
@@ -1691,14 +1690,15 @@ qits release-request create --branch <branch> --summary <text> [--output table|j
 ### Examples
 
 ```
-qits release-request --project qits --repository qits-ci-service create --branch feature/log-view --summary "Show the build log live"
-qits release-request --project qits --repository qits-ci-service create --branch main --summary "Release main" --priority HIGH
+qits release-request --project qits --repository qits-ci-service create --branch feature/log-view
+qits release-request --project qits --repository qits-ci-service create --branch main --priority HIGH
 ```
 
 - While the active request is frozen, ANY new branch (a feature, a bug fix, a maintenance bump) goes into the request queued behind it, opened if there is none. The queued request folds nothing and runs no gate until the active one has released or been withdrawn.
 - To put a branch into the frozen request anyway, name it: `join --request <its id>`.
 - A branch that is already on a request that has not released answers that request; it opens no second one. Check the id that comes back.
-- On a project wrapper the answer can be a request somebody else opened. Its summary stands, and a red gate holds every branch on it.
+- On a project wrapper the answer can be a request somebody else opened. A red gate holds every branch on it.
+- There is no summary to give: the request lists its items, one per branch somebody named, with the work item the branch names, and the people who asked for it.
 - To add another branch to a request you have, use `join`.
 
 ### Exit codes

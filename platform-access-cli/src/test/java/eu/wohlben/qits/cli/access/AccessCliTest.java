@@ -81,8 +81,10 @@ class AccessCliTest {
     @Test
     @Launch({"release-request", "create", "--help"})
     void createHasItsOptionsAndTheInheritedOnes(LaunchResult result) {
-        assertThat(result.getOutput()).contains("--branch").contains("--summary").contains("--priority")
+        assertThat(result.getOutput()).contains("--branch").contains("--priority")
                 .contains("--project").contains("--repository").contains("--output");
+        assertThat(result.getOutput()).as("the platform names a request by its items (qits-1673)")
+                .doesNotContain("--summary");
     }
 
     @Test

@@ -559,7 +559,7 @@ Installing it is not part of this version.
     qits release-request --project <project> [--repository <repository>] list \
         [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
-        --branch <branch> --summary <text> [--priority <priority>]
+        --branch <branch> [--priority <priority>]
     qits release-request --project <project> --repository <repository> join \
         --request <id> --branch <branch> [--priority <priority>]
     qits release-request --project <project> --repository <repository> withdraw \
@@ -867,13 +867,19 @@ pipeline.
 
 `list` without `--repository` shows the requests of every repository of the project, as the landing
 app does: the service's default answer, which is the open requests and the last 10 finalized ones,
-most recently moved first. Columns: id, repository, state, approval, priority, summary, version,
+most recently moved first. Columns: id, repository, state, approval, priority, items, version,
 updated.
 
 `list --repository <repository>` shows that repository's open requests: every state but FINALIZED,
 WITHDRAWN and OBSOLETE. The service's default answer holds the open requests and the last 10
-finalized ones; the command drops the finalized. Columns: id, state, priority, summary, version,
+finalized ones; the command drops the finalized. Columns: id, state, priority, items, version,
 updated.
+
+The items column is what the request releases: its items' labels, joined with `; `. The platform
+makes one item per branch somebody named (main never is one), labelled with the work item the
+branch names where it names one. A request has no summary any more: the platform derives what used
+to be one from the items, and the CLI no longer reads it (qits-1673). A request that holds only
+main, or one from a qits-projects older than items, shows its branches instead.
 
 In both forms `--state all` shows every request, and `--state PENDING` (or READY, RELEASED,
 FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE) shows one state. `--limit <n>` shows
@@ -885,11 +891,14 @@ uuid, its internal key, which `-o json` shows as `id` beside `qualifiedId`. Ever
 a request takes either, and the start of a uuid too. A request from a qits-projects older than this
 has no logical id; the commands then show the uuid's first 8 characters, as before.
 
-`create` asks for a branch to be released once its builds are green. `--branch` and `--summary`
-are required; `--priority` is LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING (the platform's
-default is MEDIUM). The platform may answer with a new request, with the open request that already
-holds the branch, or (on a project wrapper) with the open request the branch joined. The command
-prints the request that came back, with its sources.
+`create` asks for a branch to be released once its builds are green. `--branch` is required;
+`--priority` is LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING (the platform's default is MEDIUM).
+There is no `--summary`: the platform names a request by its items, and a `--summary` given is
+refused as an unknown option (exit code 2). The platform may answer with a new request, with the
+open request that already holds the branch, or (on a project wrapper) with the open request the
+branch joined. The command prints the request that came back: its participants (everyone who has
+asked for it, never fewer as it goes), its items (one line each: the work item's id and title where
+the branch names one, else the item's label), its gates and its sources.
 
 `join` adds a branch to an open request. `--request` is the request's id as `list` shows it (any
 case), its uuid, or enough of the uuid's start to name one. The command looks among all the
@@ -961,7 +970,7 @@ shows the previous run's outcome.
     qits release-request --project qits --repository qits-ci-service list
     qits release-request --project qits --repository qits-ci-service list --state all -o json
     qits release-request --project qits --repository qits-ci-service create \
-        --branch feature/log-view --summary "Show the build log live" --priority HIGH
+        --branch feature/log-view --priority HIGH
     qits release-request --project qits --repository qits-ci-service join \
         --request qits-ci-service-rr-12 --branch feature/log-search
     qits release-request --project qits --repository qits-ci-service withdraw \

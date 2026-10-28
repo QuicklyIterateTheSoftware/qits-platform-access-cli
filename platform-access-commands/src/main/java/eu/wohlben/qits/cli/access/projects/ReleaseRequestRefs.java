@@ -94,6 +94,36 @@ public final class ReleaseRequestRefs {
         return matches.getFirst();
     }
 
+    /**
+     * What a request releases, on one line: its items' labels joined with "; " (qits-1673), one item
+     * per branch somebody named. The platform no longer writes a summary. An older platform sends no
+     * items, and a request that holds only main has none: the line is then the branches, main left
+     * out while there is another.
+     */
+    public static String items(JsonNode request) {
+        List<String> labels = new ArrayList<>();
+        request.path("items").forEach(item -> {
+            String label = text(item, "label");
+            if (!label.isBlank()) {
+                labels.add(label);
+            }
+        });
+        if (!labels.isEmpty()) {
+            return String.join("; ", labels);
+        }
+        java.util.LinkedHashSet<String> branches = new java.util.LinkedHashSet<>();
+        request.path("sources").forEach(source -> {
+            String name = text(source, "name");
+            if (!name.isBlank()) {
+                branches.add(name);
+            }
+        });
+        if (branches.size() > 1) {
+            branches.remove("main");
+        }
+        return String.join("; ", branches);
+    }
+
     /** {@code <qualified id> <uuid> (<state>)}, or without the logical id when the service sent none. */
     private static String describe(JsonNode r) {
         String qualifiedId = text(r, "qualifiedId");

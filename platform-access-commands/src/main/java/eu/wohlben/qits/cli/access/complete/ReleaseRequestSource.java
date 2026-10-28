@@ -41,7 +41,7 @@ public class ReleaseRequestSource extends PlatformSource {
             }
             // Every command that takes a request takes its logical id, and it is what a person reads.
             choices.add(new Choice(ReleaseRequestRefs.name(request),
-                    columns(ReleaseRequestRefs.label(request), state + "  " + ProjectsApi.text(request, "summary"))));
+                    columns(ReleaseRequestRefs.label(request), state + "  " + ReleaseRequestRefs.items(request))));
         });
         return choices;
     }

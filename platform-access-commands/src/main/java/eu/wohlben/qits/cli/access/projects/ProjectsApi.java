@@ -118,12 +118,15 @@ public final class ProjectsApi {
                 + segment(requestId) + "/commits"));
     }
 
-    /** {@code {"request":{…}}}: new, or the open request that already holds or joined the branch. */
-    public JsonNode createReleaseRequest(String repoId, String branch, String summary, String priority)
+    /**
+     * {@code {"request":{…}}}: new, or the open request that already holds or joined the branch. No
+     * summary and no requester: the service derives the one from the request's items and takes the
+     * other from the token (qits-1673).
+     */
+    public JsonNode createReleaseRequest(String repoId, String branch, String priority)
             throws CliFailure, InterruptedException {
         ObjectNode body = JSON.createObjectNode();
         body.put("branch", branch);
-        body.put("summary", summary);
         putPriority(body, priority);
         return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests"), body);
     }

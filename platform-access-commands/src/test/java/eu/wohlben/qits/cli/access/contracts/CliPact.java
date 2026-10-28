@@ -144,6 +144,9 @@ public record CliPact(
      *       the recorded value stays the example. Where the recording names that value as a state
      *       param ({@code redirect_uri={redirectUri}}), the field is also generated from it, so the
      *       provider is sent its own value rather than the example.</li>
+     *   <li>A member of a JSON request body the row does not send ({@link CliRow#sendsWithout}) is
+     *       left out of the body, with any rule or generator of its own: the provider still records
+     *       its request with a field it has deprecated, and the pact must not demand it.</li>
      * </ul>
      */
     public V4Pact pact(List<CliRow> selected) {
@@ -153,7 +156,7 @@ public record CliPact(
             var op = masters.operation(row.state(), row.operationId());
             boolean jsonString = op.binaryBody() == null && op.body() != null && op.body().isTextual()
                     && op.contentType() != null && isJson(op.contentType()) && !parses(op.body().asText());
-            if (type == null && !jsonString && row.fieldsMatching().isEmpty()) {
+            if (type == null && !jsonString && row.fieldsMatching().isEmpty() && row.unsent().isEmpty()) {
                 continue;
             }
             for (var interaction : pact.getInteractions()) {
@@ -161,6 +164,9 @@ public record CliPact(
                         && http.getDescription().equals(row.description())
                         && http.getProviderStates().getFirst().getName().equals(row.state())) {
                     var request = http.getRequest();
+                    if (!row.unsent().isEmpty()) {
+                        withoutMembers(request, row.unsent());
+                    }
                     if (jsonString) {
                         request.setBody(OptionalBody.body(
                                 quoted(op.example(op.body().asText())).getBytes(StandardCharsets.UTF_8),
@@ -189,6 +195,34 @@ public record CliPact(
             }
         }
         return pact;
+    }
+
+    /** {@code request}'s JSON body without the top-level members {@code names}, nor their rules and generators. */
+    private static void withoutMembers(au.com.dius.pact.core.model.HttpRequest request, List<String> names) {
+        OptionalBody body = request.getBody();
+        if (!body.isPresent()) {
+            throw new IllegalStateException("sendsWithout " + names + ", but the recorded request has no body");
+        }
+        try {
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            var json = mapper.readTree(body.unwrap());
+            if (!(json instanceof com.fasterxml.jackson.databind.node.ObjectNode object)) {
+                throw new IllegalStateException("sendsWithout " + names + ", but the recorded body is no object");
+            }
+            object.remove(names);
+            request.setBody(OptionalBody.body(mapper.writeValueAsBytes(object), body.getContentType()));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        var rules = request.getMatchingRules().rulesForCategory("body");
+        var generators = request.getGenerators().getCategories()
+                .get(au.com.dius.pact.core.model.generators.Category.BODY);
+        for (String name : names) {
+            rules.getMatchingRules().remove("$." + name);
+            if (generators != null) {
+                generators.remove("$." + name);
+            }
+        }
     }
 
     /** The recorded value of form field {@code name}, a {@code {param}} as recorded; null without one. */

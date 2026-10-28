@@ -177,10 +177,18 @@ public final class ProjectsContract {
      * ids, which the table prints too: they are null in every state a write door is recorded in, and
      * a pact must not demand a null the field exists to replace. {@link #FROZEN_WITH_A_QUEUED_NEXT}'s
      * list rows bind {@code queuedBehind}; no recorded answer the CLI reads sets {@code queuedNext}.
+     * <p>
+     * Nor are {@code summary} and {@code requester} (qits-1673): the service has deprecated both and
+     * will drop them, so the CLI reads {@code participants} and {@code items} instead, and the pact
+     * must not demand either. Those two are bound only where the pinned recording holds them, with no
+     * length ({@link #REQUEST_OPEN_ENDED}). An item's {@code workItem} is not bound: it is null for a
+     * branch that names no work item, which every recording holds today, and a pact must not demand
+     * that null, nor an object shape no recording has shown; the CLI prints the label without it.
      */
     static final List<String> REQUEST = List.of("id", "qualifiedId", "repoName", "state", "featureFreeze.features",
             "featureFreeze.threshold", "featureFreeze.frozen", "featureFreeze.source", "supersededBy",
-            "supersededByQualifiedId", "priority", "summary", "requester", "approvalState", "mergedSha", "version",
+            "supersededByQualifiedId", "priority", "participants", "items[].label", "approvalState", "mergedSha",
+            "version",
             "detail", "createdAt", "updatedAt", "qualityGates[].kind", "qualityGates[].position",
             "qualityGates[].state", "qualityGates[].detail", "qualityGates[].checks[].name",
             "qualityGates[].checks[].state", "qualityGates[].checks[].detail", "sources[].kind",
@@ -207,7 +215,17 @@ public final class ProjectsContract {
      * templated from every element the recording holds (see {@code GoldenInteraction#anyLength}'s
      * javadoc for the path spelling: the array's own path, with no trailing {@code []}).
      */
-    static final List<String> REQUEST_OPEN_ENDED = List.of("qualityGates", "qualityGates[].checks");
+    static final List<String> REQUEST_OPEN_ENDED = List.of("qualityGates", "qualityGates[].checks", "participants",
+            "items");
+
+    /**
+     * The list's ITEMS column (qits-1673), of each request: the items' labels, else the branches
+     * ({@code ReleaseRequestRefs.items}). Neither array may pin a length: {@link #LIST_OPEN_ENDED}.
+     */
+    static final List<String> ITEMS = List.of("requests[].items[].label", "requests[].sources[].name");
+
+    /** {@link #ITEMS}' arrays, matched with no length: a request grows items and sources as branches join. */
+    static final String[] LIST_OPEN_ENDED = {"requests[].items", "requests[].sources"};
 
     /** Every command that takes a release request finds it by its logical id or its uuid's start. */
     static final List<String> FIND_REQUEST = List.of("requests[].id", "requests[].qualifiedId", "requests[].state");
@@ -331,8 +349,9 @@ public final class ProjectsContract {
         assertThat(request.path("sources")).isNotEmpty();
     }
 
+    /** {@code qits release-request create}: the branch and the priority, never the summary the provider still records. */
     private static final Call CREATE_REQUEST = (api, params, recorded) -> request(api.createReleaseRequest(
-            params.get("repositoryId"), body(recorded).path("branch").asText(), body(recorded).path("summary").asText(),
+            params.get("repositoryId"), body(recorded).path("branch").asText(),
             body(recorded).path("priority").asText()).path("request"));
 
     private static final Call JOIN_REQUEST = (api, params, recorded) -> request(api.joinReleaseRequest(
@@ -873,7 +892,8 @@ public final class ProjectsContract {
             assertThat(ProjectsApi.text(r, "id")).isNotBlank();
             assertThat(ProjectsApi.text(r, "repoName")).isNotBlank();
             assertThat(ProjectsApi.text(r, "state")).isNotBlank();
-            assertThat(ProjectsApi.text(r, "summary")).isNotBlank();
+            // ITEMS: the labels, else the branches; a recording older than items may hold neither.
+            assertThat(ReleaseRequestRefs.items(r)).isNotNull();
             assertThat(ProjectsApi.text(r, "updatedAt")).isNotBlank();
         });
     };
@@ -1045,12 +1065,13 @@ public final class ProjectsContract {
                 "projectReleaseRequests", PROJECT_RELEASE_REQUESTS).consumes(held(PENDING_REQUESTS,
                 "listProjectReleaseRequests", concat(List.of("requests[].id", "requests[].qualifiedId",
                         "requests[].repoName", "requests[].state", "requests[].approvalState", "requests[].priority",
-                        "requests[].summary", "requests[].version", "requests[].updatedAt"), FREEZE))));
+                        "requests[].version", "requests[].updatedAt"), ITEMS, FREEZE)))
+                .anyLength(LIST_OPEN_ENDED));
         rows.add(row("qits release-request list", AWAITING_REQUEST, "listRepositoryReleaseRequests", "releaseRequests",
                 OPEN_REQUESTS).consumes(held(AWAITING_REQUEST, "listRepositoryReleaseRequests",
                 concat(List.of("requests[].id", "requests[].qualifiedId", "requests[].state",
-                        "requests[].priority", "requests[].summary", "requests[].version", "requests[].updatedAt"),
-                        FREEZE))));
+                        "requests[].priority", "requests[].version", "requests[].updatedAt"), ITEMS, FREEZE)))
+                .anyLength(LIST_OPEN_ENDED));
         rows.add(row("qits release-request list", FROZEN_WITH_A_QUEUED_NEXT, "listProjectReleaseRequests",
                 "projectReleaseRequests", FROZEN_AND_QUEUED).consumes(held(FROZEN_WITH_A_QUEUED_NEXT,
                 "listProjectReleaseRequests", concat(List.of("requests[].id", "requests[].qualifiedId",
@@ -1064,7 +1085,8 @@ public final class ProjectsContract {
         rows.add(row("qits release-request create", A_BRANCH_TO_RELEASE, "createReleaseRequest",
                 "createReleaseRequest", CREATE_REQUEST)
                 .consumes(held(A_BRANCH_TO_RELEASE, "createReleaseRequest", withPlacement()))
-                .anyLength(openEndedRequest()));
+                .anyLength(openEndedRequest())
+                .sendsWithout("summary"));
         rows.add(row("qits release-request join", OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource",
                 "joinReleaseRequest", JOIN_REQUEST)
                 .consumes(held(OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource", withPlacement()))
@@ -1114,10 +1136,13 @@ public final class ProjectsContract {
         rows.add(row("qits tui", REPOSITORIES_IN_COMPONENTS, "listProjectRepositories", "repositories",
                 REPOSITORY_CHOICES).consumes("entries[].repository.name", "entries[].repository.archetype"));
         rows.add(row("qits tui", AWAITING_REQUEST, "listRepositoryReleaseRequests", "releaseRequests", OPEN_REQUESTS)
-                .consumes(held(AWAITING_REQUEST, "listRepositoryReleaseRequests", List.of("requests[].id",
-                        "requests[].qualifiedId", "requests[].state", "requests[].summary"))));
+                .consumes(held(AWAITING_REQUEST, "listRepositoryReleaseRequests", concat(List.of("requests[].id",
+                        "requests[].qualifiedId", "requests[].state"), ITEMS)))
+                .anyLength(LIST_OPEN_ENDED));
         rows.add(row("qits tui", RELEASED_REQUESTS, "listRepositoryReleaseRequests", "releaseRequests",
-                RELEASED_VERSIONS).consumes("requests[].version", "requests[].summary"));
+                RELEASED_VERSIONS).consumes(held(RELEASED_REQUESTS, "listRepositoryReleaseRequests",
+                concat(List.of("requests[].version"), ITEMS)))
+                .anyLength(LIST_OPEN_ENDED));
 
         // qits work
         rows.add(row("qits work list", WORK_IN_EVERY_STATUS, "listProjectWork", "projectWork", LIST)

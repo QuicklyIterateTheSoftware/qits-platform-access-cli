@@ -106,11 +106,11 @@ class PlatformSourcesTest {
     void onlyTheReleaseRequestsThatAreStillOpenAreOffered() {
         platform.answer("GET", REQUESTS, """
                 {"requests":[
-                  {"id":"4f2a91c0-0000-4000-8000-000000000001","state":"PENDING","summary":"a change","version":null},
-                  {"id":"4f2a91c0-0000-4000-8000-000000000002","state":"RELEASED","summary":"shipped","version":"2026.913.1"},
-                  {"id":"4f2a91c0-0000-4000-8000-000000000003","state":"WITHDRAWN","summary":"dropped","version":null},
-                  {"id":"4f2a91c0-0000-4000-8000-000000000005","state":"FINALIZED","summary":"done","version":"2026.912.1"},
-                  {"id":"4f2a91c0-0000-4000-8000-000000000006","state":"OBSOLETE","summary":"superseded","version":null}]}
+                  {"id":"4f2a91c0-0000-4000-8000-000000000001","state":"PENDING","items":[{"source":"feature/x","label":"a change","workItem":null}],"version":null},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000002","state":"RELEASED","items":[{"source":"feature/x","label":"shipped","workItem":null}],"version":"2026.913.1"},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000003","state":"WITHDRAWN","items":[{"source":"feature/x","label":"dropped","workItem":null}],"version":null},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000005","state":"FINALIZED","items":[{"source":"feature/x","label":"done","workItem":null}],"version":"2026.912.1"},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000006","state":"OBSOLETE","items":[{"source":"feature/x","label":"superseded","workItem":null}],"version":null}]}
                 """);
         ReleaseRequestSource source = source(new ReleaseRequestSource());
         assertThat(source.dependsOn()).containsExactlyInAnyOrder("project", "repository");
@@ -125,7 +125,7 @@ class PlatformSourcesTest {
     void aRequestWithALogicalIdIsOfferedByIt() {
         platform.answer("GET", REQUESTS, """
                 {"requests":[{"id":"4f2a91c0-0000-4000-8000-000000000001","qualifiedId":"qits-ci-service-rr-12",
-                  "state":"PENDING","summary":"a change","version":null}]}
+                  "state":"PENDING","items":[{"source":"feature/x","label":"a change","workItem":null}],"version":null}]}
                 """);
         assertThat(source(new ReleaseRequestSource()).choices(Map.of("project", "qits", "repository", "qits-ci-service")))
                 .singleElement().satisfies(choice -> {
@@ -138,10 +138,11 @@ class PlatformSourcesTest {
     void versionsComeFromTheRequestsThatReleased() {
         platform.answer("GET", REQUESTS, """
                 {"requests":[
-                  {"id":"4f2a91c0-0000-4000-8000-000000000002","state":"RELEASED","summary":"shipped","version":"2026.913.1"},
-                  {"id":"4f2a91c0-0000-4000-8000-000000000004","state":"RELEASED","summary":"earlier","version":"2026.912.9"}]}
+                  {"id":"4f2a91c0-0000-4000-8000-000000000002","state":"RELEASED","items":[{"source":"feature/x","label":"shipped","workItem":null}],"version":"2026.913.1"},
+                  {"id":"4f2a91c0-0000-4000-8000-000000000004","state":"RELEASED","items":[{"source":"feature/x","label":"earlier","workItem":null}],"version":"2026.912.9"}]}
                 """);
         assertThat(source(new VersionSource()).choices(Map.of("project", "qits", "repository", "qits-ci-service")))
+                .satisfies(choices -> assertThat(choices.getFirst().label()).contains("shipped"))
                 .extracting(CompletionSource.Choice::value)
                 .containsExactly("2026.913.1", "2026.912.9");
     }

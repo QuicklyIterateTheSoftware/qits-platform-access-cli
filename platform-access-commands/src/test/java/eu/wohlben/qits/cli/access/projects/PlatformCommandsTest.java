@@ -85,29 +85,29 @@ class PlatformCommandsTest {
         platform.answer("GET", REQUESTS, """
                 {"requests":[
                   {"id":"11111111-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"PENDING","priority":"HIGH",
-                   "summary":"Ship the\\nnew log view","version":null,"updatedAt":"2026-09-12T09:00:00Z"},
+                   "items":[{"source":"feature/x","label":"Ship the\\nnew log view","workItem":null}],"version":null,"updatedAt":"2026-09-12T09:00:00Z"},
                   {"id":"22222222-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"RELEASED","priority":"MEDIUM",
-                   "summary":"Cut, still gating","version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"},
+                   "items":[{"source":"feature/x","label":"Cut, still gating","workItem":null}],"version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"},
                   {"id":"33333333-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"REJECTED","priority":"MEDIUM",
-                   "summary":"Red build","version":null,"updatedAt":"2026-09-12T08:00:00Z"},
+                   "items":[{"source":"feature/x","label":"Red build","workItem":null}],"version":null,"updatedAt":"2026-09-12T08:00:00Z"},
                   {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED","priority":"MEDIUM",
-                   "summary":"Old release","version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
+                   "items":[{"source":"feature/x","label":"Old release","workItem":null}],"version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
                 """);
         platform.answer("GET", PROJECT_REQUESTS, """
                 {"requests":[
                   {"id":"55555555-2222-3333-4444-555555555555","repoName":"qits-ci-frontend","state":"PENDING",
-                   "approvalState":"WAITING","priority":"BLOCKING","summary":"Dark theme","version":null,
+                   "approvalState":"WAITING","priority":"BLOCKING","items":[{"source":"feature/x","label":"Dark theme","workItem":null}],"version":null,
                    "updatedAt":"2026-09-12T09:30:00Z"},
                   {"id":"11111111-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"PENDING",
-                   "approvalState":"NOT_REQUIRED","priority":"HIGH","summary":"Ship the log view","version":null,
+                   "approvalState":"NOT_REQUIRED","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"version":null,
                    "updatedAt":"2026-09-12T09:00:00Z"},
                   {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED",
-                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Old release","version":"2026.910.1",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","items":[{"source":"feature/x","label":"Old release","workItem":null}],"version":"2026.910.1",
                    "updatedAt":"2026-09-10T09:00:00Z"}]}
                 """);
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
                   "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null},
@@ -369,7 +369,7 @@ class PlatformCommandsTest {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).contains("ID        STATE     FREEZE  PRIORITY  SUMMARY")
+        assertThat(r.out()).contains("ID        STATE     FREEZE  PRIORITY  ITEMS")
                 .contains("11111111  PENDING   -       HIGH      Ship the new log view")
                 .contains("22222222  RELEASED").contains("Cut, still gating")
                 .contains("33333333  REJECTED").doesNotContain("FINALIZED").doesNotContain("Old release");
@@ -400,7 +400,7 @@ class PlatformCommandsTest {
         assertThat(r.exit()).isEqualTo(2);
         assertThat(r.err()).contains("Project qits has no repository with the id or name 'qits-cd'.")
                 .contains("`qits repositories --project qits list`");
-        assertThat(run("release-request", "--project", "qits", "create", "--branch", "b", "--summary", "s").err())
+        assertThat(run("release-request", "--project", "qits", "create", "--branch", "b").err())
                 .contains("Name the repository: --repository <id or name>.");
     }
 
@@ -410,7 +410,7 @@ class PlatformCommandsTest {
 
         assertThat(r.exit()).isZero();
         assertThat(r.out())
-                .contains("ID        REPOSITORY        STATE      FREEZE  APPROVAL      PRIORITY  SUMMARY")
+                .contains("ID        REPOSITORY        STATE      FREEZE  APPROVAL      PRIORITY  ITEMS")
                 .contains("55555555  qits-ci-frontend  PENDING    -       WAITING       BLOCKING  Dark theme")
                 .contains("11111111  qits-ci-service   PENDING")
                 // The landing app's default: the last finalized stay, nothing is dropped.
@@ -454,27 +454,94 @@ class PlatformCommandsTest {
     }
 
     @Test
-    void createSendsTheBranchSummaryAndPriorityAndPrintsTheAnswer() throws Exception {
+    void createSendsTheBranchAndPriorityOnlyAndPrintsTheAnswer() throws Exception {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view", "--priority", "high");
+                "--branch", "feature/logs", "--priority", "high");
 
         assertThat(r.exit()).isZero();
         JsonNode sent = JSON.readTree(platform.requests("POST", REQUESTS).getFirst().body());
-        assertThat(sent).isEqualTo(JSON.readTree(
-                "{\"branch\":\"feature/logs\",\"summary\":\"Ship the log view\",\"priority\":\"HIGH\"}"));
+        assertThat(sent).isEqualTo(JSON.readTree("{\"branch\":\"feature/logs\",\"priority\":\"HIGH\"}"));
         assertThat(r.out()).startsWith("Release request 44444444-2222-3333-4444-555555555555\n")
                 .contains("  state          PENDING")
+                .contains("  participants   wohlben")
                 .contains("  approval       NOT_REQUIRED")
                 .contains("  version        -")
+                .contains("Items:\n  Ship the log view\n")
                 .contains("Sources:")
-                .contains("BRANCH  feature/logs  refs/heads/feature/logs  named  HIGH      wohlben");
+                .contains("BRANCH  feature/logs  refs/heads/feature/logs  named  HIGH      wohlben")
+                .doesNotContain("summary").doesNotContain("requester");
+    }
+
+    @Test
+    void createRefusesASummary() {
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/logs", "--summary", "Ship the log view");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("--summary");
+        assertThat(platform.requests("POST", REQUESTS)).isEmpty();
+    }
+
+    @Test
+    void showNamesEachItemsWorkItemAndEveryParticipant() {
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","qualifiedId":"qits-ci-service-rr-4",
+                  "repoName":"qits-ci-service","state":"PENDING","priority":"HIGH",
+                  "summary":"ignored","requester":"ignored-too",
+                  "participants":["agent-7","wohlben"],
+                  "items":[{"source":"ticket/qits-9","label":"qits-9 Search the log","workItem":{"qualifiedId":"qits-9","title":"Search the log"}},
+                           {"source":"external/fix","label":"external/fix","workItem":null}],
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null},
+                             {"kind":"BRANCH","name":"ticket/qits-9","ref":"refs/heads/ticket/qits-9","implicit":false,"priority":"HIGH","addedBy":"wohlben"},
+                             {"kind":"BRANCH","name":"external/fix","ref":"refs/heads/external/fix","implicit":false,"priority":"HIGH","addedBy":"agent-7"}]}}
+                """);
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "external/fix");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out()).contains("  participants   agent-7, wohlben")
+                .contains("Items:\n  qits-9 Search the log\n  external/fix\n")
+                .doesNotContain("ignored");
+    }
+
+    @Test
+    void anOlderPlatformsRequestShowsItsBranchesForItems() {
+        platform.answer("GET", REQUESTS, """
+                {"requests":[
+                  {"id":"11111111-2222-3333-4444-555555555555","state":"PENDING","priority":"HIGH",
+                   "summary":"never read","version":null,"updatedAt":"2026-09-12T09:00:00Z",
+                   "sources":[{"kind":"BRANCH","name":"main"},{"kind":"BRANCH","name":"feature/a"},{"kind":"BRANCH","name":"feature/b"}]},
+                  {"id":"22222222-2222-3333-4444-555555555555","state":"PENDING","priority":"HIGH",
+                   "items":[],"version":null,"updatedAt":"2026-09-12T09:00:00Z",
+                   "sources":[{"kind":"BRANCH","name":"main"}]},
+                  {"id":"33333333-2222-3333-4444-555555555555","state":"PENDING","priority":"HIGH",
+                   "items":[{"source":"ticket/qits-9","label":"qits-9 Search the log"},
+                            {"source":"ticket/qits-10","label":"qits-10 Keep the log view open across every reload"}],
+                   "version":null,"updatedAt":"2026-09-12T09:00:00Z","sources":[{"kind":"BRANCH","name":"main"}]}]}
+                """);
+        platform.answer("POST", REQUESTS, """
+                {"request":{"id":"44444444-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"PENDING",
+                  "summary":"never read","requester":"never read",
+                  "sources":[{"kind":"BRANCH","name":"feature/a","ref":"refs/heads/feature/a","implicit":false}]}}
+                """);
+
+        Result list = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
+        assertThat(list.out()).contains("11111111  PENDING  -       HIGH      feature/a; feature/b ")
+                .contains("22222222  PENDING  -       HIGH      main ")
+                .contains("33333333  PENDING  -       HIGH      qits-9 Search the log; qits-10 Keep the log view open acros…")
+                .doesNotContain("never read");
+
+        Result shown = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
+                "--branch", "feature/a");
+        assertThat(shown.out()).contains("  participants   -").doesNotContain("Items:").doesNotContain("never read");
     }
 
     @Test
     void printsTheGatesAndWhatSupersededTheRequestWhenTheServiceSendsThem() throws Exception {
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"OBSOLETE","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"OBSOLETE","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":"99999999-2222-3333-4444-555555555555",
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -484,7 +551,7 @@ class PlatformCommandsTest {
                 """.formatted(CI));
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view");
+                "--branch", "feature/logs");
 
         assertThat(r.exit()).isZero();
         assertThat(r.out()).contains("  state          OBSOLETE")
@@ -499,7 +566,7 @@ class PlatformCommandsTest {
     void leavesTheGatesReasonBlankWhenAnOlderServiceOmitsIt() throws Exception {
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -508,7 +575,7 @@ class PlatformCommandsTest {
                 """.formatted(CI));
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view");
+                "--branch", "feature/logs");
 
         assertThat(r.exit()).isZero();
         assertThat(r.out()).contains("Gates:")
@@ -520,7 +587,7 @@ class PlatformCommandsTest {
     void printsTheQualityGatesWithAnIndentedCheckPerThingTheGateIsWaitingFor() throws Exception {
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -532,7 +599,7 @@ class PlatformCommandsTest {
                 """.formatted(CI));
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view");
+                "--branch", "feature/logs");
 
         assertThat(r.exit()).isZero();
         assertThat(r.out()).contains("Quality gates:")
@@ -553,7 +620,7 @@ class PlatformCommandsTest {
     void printsEachGatesChecksDirectlyUnderThatGateRatherThanAfterEveryGate() throws Exception {
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -568,7 +635,7 @@ class PlatformCommandsTest {
                 """.formatted(CI));
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view");
+                "--branch", "feature/logs");
 
         assertThat(r.exit()).isZero();
         assertThat(r.out())
@@ -581,7 +648,7 @@ class PlatformCommandsTest {
     void fallsBackToTheDeprecatedGatesTableWhenTheAnswerHasNoQualityGates() throws Exception {
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":null,
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -590,7 +657,7 @@ class PlatformCommandsTest {
                 """.formatted(CI));
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view");
+                "--branch", "feature/logs");
 
         assertThat(r.exit()).isZero();
         assertThat(r.out()).contains("Gates:")
@@ -602,7 +669,7 @@ class PlatformCommandsTest {
     @Test
     void createWithoutAPriorityLeavesItToThePlatform() throws Exception {
         Result r = run("release-request", "create", "--project", "qits", "--repository", CI,
-                "--branch", "main", "--summary", "Release main", "-o", "json");
+                "--branch", "main", "-o", "json");
 
         assertThat(r.exit()).isZero();
         assertThat(JSON.readTree(platform.requests("POST", REQUESTS).getFirst().body()).has("priority")).isFalse();
@@ -618,7 +685,7 @@ class PlatformCommandsTest {
     void createPrintsWhereTheBranchWentFirstThenTheQueuedRequestBehindTheFrozenOne() {
         platform.answer("POST", REQUESTS, """
                 {"request":{"id":"%s","qualifiedId":"qits-ci-service-rr-14","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"MEDIUM","summary":"Ship the log search","requester":"wohlben",
+                  "state":"PENDING","priority":"MEDIUM","items":[{"source":"feature/x","label":"Ship the log search","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,
                   "detail":"Queued behind qits-ci-service-rr-13: it folds once that request has released",
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -634,7 +701,7 @@ class PlatformCommandsTest {
                 """.formatted(QUEUED_ID, CI, PENDING_ID));
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "ticket/qits-9", "--summary", "Ship the log search");
+                "--branch", "ticket/qits-9");
 
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(r.out()).startsWith("ticket/qits-9 is queued in qits-ci-service-rr-14, behind the frozen "
@@ -653,7 +720,7 @@ class PlatformCommandsTest {
     void joinPrintsWhereTheBranchWentAndMarksTheExplicitJoinOnTheFrozenRequest() {
         platform.answer("POST", sourcesOf(PENDING_ID), """
                 {"request":{"id":"%s","qualifiedId":"qits-ci-service-rr-13","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":null,
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
                   "queuedBehind":null,"queuedBehindQualifiedId":null,
@@ -684,7 +751,7 @@ class PlatformCommandsTest {
     void aFreezeTurnedOffSaysWhichLevelTurnedItOffAndJsonIsTheServicesAnswer() throws Exception {
         String answer = """
                 {"request":{"id":"44444444-2222-3333-4444-555555555555","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "createdAt":"2026-09-12T10:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
                   "featureFreeze":{"features":5,"threshold":0,"frozen":false,"source":"REPOSITORY"},
                   "sources":[]},
@@ -693,12 +760,12 @@ class PlatformCommandsTest {
         platform.answer("POST", REQUESTS, answer);
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view");
+                "--branch", "feature/logs");
         assertThat(r.out()).startsWith("feature/logs is already on 44444444\n")
                 .contains("  freeze         off (repository)\n");
 
         Result json = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "feature/logs", "--summary", "Ship the log view", "-o", "json");
+                "--branch", "feature/logs", "-o", "json");
         assertThat(JSON.readTree(json.out())).isEqualTo(JSON.readTree(answer));
     }
 
@@ -707,19 +774,19 @@ class PlatformCommandsTest {
         String requests = """
                 {"requests":[
                   {"id":"%1$s","qualifiedId":"qits-ci-service-rr-13","repoName":"qits-ci-service","state":"PENDING",
-                   "approvalState":"NOT_REQUIRED","priority":"HIGH","summary":"Ship the log view",
+                   "approvalState":"NOT_REQUIRED","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],
                    "updatedAt":"2026-09-12T10:00:00Z","queuedNextQualifiedId":"qits-ci-service-rr-14",
                    "featureFreeze":{"features":3,"threshold":3,"frozen":true,"source":"PLATFORM"}},
                   {"id":"%2$s","qualifiedId":"qits-ci-service-rr-14","repoName":"qits-ci-service","state":"PENDING",
-                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Ship the log search",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","items":[{"source":"feature/x","label":"Ship the log search","workItem":null}],
                    "updatedAt":"2026-09-12T10:00:00Z","queuedBehind":"%1$s","queuedBehindQualifiedId":"qits-ci-service-rr-13",
                    "featureFreeze":{"features":1,"threshold":3,"frozen":false,"source":"PLATFORM"}},
                   {"id":"%3$s","qualifiedId":"qits-ci-frontend-rr-2","repoName":"qits-ci-frontend","state":"READY",
-                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Dark theme",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","items":[{"source":"feature/x","label":"Dark theme","workItem":null}],
                    "updatedAt":"2026-09-12T10:00:00Z",
                    "featureFreeze":{"features":1,"threshold":3,"frozen":false,"source":"PROJECT"}},
                   {"id":"%4$s","qualifiedId":"qits-ci-frontend-rr-3","repoName":"qits-ci-frontend","state":"PENDING",
-                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","summary":"Light theme",
+                   "approvalState":"NOT_REQUIRED","priority":"MEDIUM","items":[{"source":"feature/x","label":"Light theme","workItem":null}],
                    "updatedAt":"2026-09-12T10:00:00Z",
                    "featureFreeze":{"features":4,"threshold":0,"frozen":false,"source":"REPOSITORY"}}]}
                 """.formatted(PENDING_ID, QUEUED_ID, RELEASED_ID, "77777777-2222-3333-4444-555555555555");
@@ -742,7 +809,7 @@ class PlatformCommandsTest {
         Result repository = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
         assertThat(repository.exit()).as(repository.err()).isZero();
         assertThat(repository.out().lines().toList()).anySatisfy(l -> assertThat(l)
-                        .startsWith("ID                     STATE    FREEZE      PRIORITY  SUMMARY"))
+                        .startsWith("ID                     STATE    FREEZE      PRIORITY  ITEMS"))
                 .anySatisfy(l -> assertThat(l)
                         .startsWith("qits-ci-service-rr-13  PENDING  3/3 frozen  HIGH      Ship the log view"))
                 .anySatisfy(l -> assertThat(l)
@@ -762,7 +829,7 @@ class PlatformCommandsTest {
     private void answerJoin() {
         platform.answer("POST", sourcesOf(PENDING_ID), """
                 {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGHER","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGHER","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":null,
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
                   "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null},
@@ -876,9 +943,9 @@ class PlatformCommandsTest {
         platform.answer("GET", REQUESTS, """
                 {"requests":[
                   {"id":"%s","qualifiedId":"qits-ci-service-rr-12","repoName":"qits-ci-service","state":"PENDING",
-                   "priority":"HIGH","summary":"Ship the log view","version":null,"updatedAt":"2026-09-12T09:00:00Z"},
+                   "priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"version":null,"updatedAt":"2026-09-12T09:00:00Z"},
                   {"id":"%s","qualifiedId":"qits-ci-service-rr-1","repoName":"qits-ci-service","state":"RELEASED",
-                   "priority":"MEDIUM","summary":"Cut, still gating","version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"}]}
+                   "priority":"MEDIUM","items":[{"source":"feature/x","label":"Cut, still gating","workItem":null}],"version":"2026.911.1","updatedAt":"2026-09-11T09:00:00Z"}]}
                 """.formatted(PENDING_ID, RELEASED_ID));
     }
 
@@ -889,7 +956,7 @@ class PlatformCommandsTest {
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "list");
 
         assertThat(r.exit()).isZero();
-        assertThat(r.out()).startsWith("ID                     STATE     FREEZE  PRIORITY  SUMMARY            VERSION     UPDATED\n"
+        assertThat(r.out()).startsWith("ID                     STATE     FREEZE  PRIORITY  ITEMS              VERSION     UPDATED\n"
                 + "qits-ci-service-rr-12  PENDING   -       HIGH      Ship the log view  -           2026-09-12 ");
         assertThat(r.out()).doesNotContain("11111111");
     }
@@ -899,7 +966,7 @@ class PlatformCommandsTest {
         answerQualified();
         platform.answer("POST", sourcesOf(PENDING_ID), """
                 {"request":{"id":"%s","qualifiedId":"qits-ci-service-rr-12","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"OBSOLETE","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"OBSOLETE","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":null,"version":null,"detail":null,
                   "supersededBy":"99999999-2222-3333-4444-555555555555","supersededByQualifiedId":"qits-ci-service-rr-13",
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","sources":[]}}
@@ -941,7 +1008,7 @@ class PlatformCommandsTest {
     private void answerWithdraw(String detail) {
         platform.answer("POST", withdrawOf(PENDING_ID), """
                 {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"WITHDRAWN","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"WITHDRAWN","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":"%s",
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
                   "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
@@ -1029,7 +1096,7 @@ class PlatformCommandsTest {
     private void answerOverride() {
         platform.answer("POST", overrideOf(PENDING_ID), """
                 {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"PENDING","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,
                   "detail":"Overridden: qits-ci-service-rr-7 (wohlben)",
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
@@ -1151,7 +1218,7 @@ class PlatformCommandsTest {
     private void answerProjectRequest(String ref, String mergedSha) {
         platform.answer("GET", PROJECT_REQUESTS + "/" + ref, """
                 {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","approvalState":"WAITING","mergedSha":%s,"summary":"Bump the estate"}}
+                  "state":"PENDING","approvalState":"WAITING","mergedSha":%s,"items":[{"source":"feature/x","label":"Bump the estate","workItem":null}]}}
                 """.formatted(DECIDED_ID, DECIDED, CI, mergedSha == null ? "null" : "\"" + mergedSha + "\""));
     }
 
@@ -1159,7 +1226,7 @@ class PlatformCommandsTest {
     private static String decided(String state, String approval, String sha) {
         return """
                 {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"%s","priority":"MEDIUM","summary":"Bump the estate","requester":"maintenance",
+                  "state":"%s","priority":"MEDIUM","items":[{"source":"feature/x","label":"Bump the estate","workItem":null}],"participants":["maintenance"],
                   "approvalState":"%s","mergedSha":"%s","version":null,"detail":null,
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","sources":[]}}
                 """.formatted(DECIDED_ID, DECIDED, CI, state, approval, sha);
@@ -1279,7 +1346,7 @@ class PlatformCommandsTest {
     private void answerProjectRequestAwaitingApproval() {
         platform.answer("GET", PROJECT_REQUESTS + "/" + DECIDED, """
                 {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","approvalState":"WAITING","mergedSha":"%s","summary":"Bump the estate",
+                  "state":"PENDING","approvalState":"WAITING","mergedSha":"%s","items":[{"source":"feature/x","label":"Bump the estate","workItem":null}],
                   "approvalRequirements":[
                     {"id":"manual-review","reason":"configured by manual-review","admits":["person"],
                      "excludesAuthors":false,"detail":null,"satisfied":false,"satisfiedBy":null}]}}
@@ -1290,7 +1357,7 @@ class PlatformCommandsTest {
     private static String approvedWithRequirement() {
         return """
                 {"request":{"id":"%s","qualifiedId":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"PENDING","priority":"MEDIUM","summary":"Bump the estate","requester":"maintenance",
+                  "state":"PENDING","priority":"MEDIUM","items":[{"source":"feature/x","label":"Bump the estate","workItem":null}],"participants":["maintenance"],
                   "approvalState":"APPROVED","mergedSha":"%s","version":null,"detail":null,
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z","sources":[],
                   "approvalRequirements":[
@@ -1419,9 +1486,9 @@ class PlatformCommandsTest {
         platform.answer("GET", REQUESTS, """
                 {"requests":[
                   {"id":"%s","repoName":"qits-ci-service","state":"REJECTED","priority":"MEDIUM",
-                   "summary":"Red build","version":null,"updatedAt":"2026-09-12T08:00:00Z"},
+                   "items":[{"source":"feature/x","label":"Red build","workItem":null}],"version":null,"updatedAt":"2026-09-12T08:00:00Z"},
                   {"id":"77777777-2222-3333-4444-555555555555","repoName":"qits-ci-service","state":"FINALIZED","priority":"MEDIUM",
-                   "summary":"Old release","version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
+                   "items":[{"source":"feature/x","label":"Old release","workItem":null}],"version":"2026.910.1","updatedAt":"2026-09-10T09:00:00Z"}]}
                 """.formatted(REJECTED_ID));
     }
 
@@ -1520,7 +1587,7 @@ class PlatformCommandsTest {
     private void answerRerun(String phase) {
         platform.answer("POST", rerunOf(PENDING_ID, phase), """
                 {"request":{"id":"%s","repoId":"%s","repoName":"qits-ci-service",
-                  "state":"REJECTED","priority":"HIGH","summary":"Ship the log view","requester":"wohlben",
+                  "state":"REJECTED","priority":"HIGH","items":[{"source":"feature/x","label":"Ship the log view","workItem":null}],"participants":["wohlben"],
                   "approvalState":"NOT_REQUIRED","mergedSha":"abc123","version":null,"detail":null,
                   "createdAt":"2026-09-12T09:00:00Z","updatedAt":"2026-09-12T10:00:00Z",
                   "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null}]}}
@@ -1930,7 +1997,7 @@ class PlatformCommandsTest {
         platform.answer("POST", REQUESTS, 409, "{\"message\":\"the request is already released\"}");
 
         Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "create",
-                "--branch", "x", "--summary", "y");
+                "--branch", "x");
 
         assertThat(r.exit()).isEqualTo(1);
         assertThat(r.err()).contains("POST " + platform.url() + REQUESTS + " answered HTTP 409: the request is already released");

@@ -3270,7 +3270,6 @@
                 }
               ],
               "repoName": "contract-suite-app",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -3304,7 +3303,6 @@
                 }
               ],
               "state": "PENDING",
-              "summary": "Release the export across the suite",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -3496,14 +3494,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -3579,14 +3569,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -3863,8 +3845,7 @@
         "body": {
           "content": {
             "branch": "feature/export",
-            "priority": "LOWEST",
-            "summary": "Release the CSV export"
+            "priority": "LOWEST"
           },
           "contentType": "application/json",
           "encoded": false
@@ -3915,7 +3896,6 @@
                 }
               ],
               "repoName": "contract-service",
-              "requester": "dev",
               "sources": [
                 {
                   "addedBy": "dev",
@@ -3939,7 +3919,6 @@
                 }
               ],
               "state": "PENDING",
-              "summary": "Release the CSV export",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -4122,14 +4101,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -4208,14 +4179,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -4575,7 +4538,6 @@
                 }
               ],
               "repoName": "contract-suite-app",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -4609,7 +4571,6 @@
                 }
               ],
               "state": "REJECTED",
-              "summary": "Release the export across the suite",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -4801,14 +4762,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -4884,14 +4837,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -5220,7 +5165,6 @@
                 }
               ],
               "repoName": "contract-service",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -5254,7 +5198,6 @@
                 }
               ],
               "state": "PENDING",
-              "summary": "Release the CSV export",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -5437,14 +5380,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -5523,14 +5458,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -6142,7 +6069,6 @@
                 "qualifiedId": "contract-service-rr-3",
                 "repoName": "contract-service",
                 "state": "PENDING",
-                "summary": "Waiting on its gates",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": "2026.101.100005"
               },
@@ -6159,7 +6085,6 @@
                 "qualifiedId": "contract-service-rr-3",
                 "repoName": "contract-service",
                 "state": "PENDING",
-                "summary": "Waiting on its gates",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": "2026.101.100005"
               },
@@ -6176,7 +6101,6 @@
                 "qualifiedId": "contract-service-rr-3",
                 "repoName": "contract-service",
                 "state": "PENDING",
-                "summary": "Waiting on its gates",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": "2026.101.100005"
               },
@@ -6193,7 +6117,6 @@
                 "qualifiedId": "contract-service-rr-3",
                 "repoName": "contract-service",
                 "state": "PENDING",
-                "summary": "Waiting on its gates",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": "2026.101.100005"
               },
@@ -6210,7 +6133,6 @@
                 "qualifiedId": "contract-service-rr-3",
                 "repoName": "contract-service",
                 "state": "PENDING",
-                "summary": "Waiting on its gates",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": "2026.101.100005"
               },
@@ -6227,7 +6149,6 @@
                 "qualifiedId": "contract-service-rr-3",
                 "repoName": "contract-service",
                 "state": "PENDING",
-                "summary": "Waiting on its gates",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": "2026.101.100005"
               }
@@ -6327,14 +6248,6 @@
               ]
             },
             "$.requests[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.requests[*].summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -6833,8 +6746,12 @@
                 "id": "00000000-0000-4000-8000-000000000003",
                 "priority": "HIGH",
                 "qualifiedId": "contract-suite-app-rr-1",
+                "sources": [
+                  {
+                    "name": "main"
+                  }
+                ],
                 "state": "PENDING",
-                "summary": "Release the export across the suite",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "version": null
               }
@@ -6917,7 +6834,16 @@
                 }
               ]
             },
-            "$.requests[*].state": {
+            "$.requests[*].sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.requests[*].sources[*].name": {
               "combine": "AND",
               "matchers": [
                 {
@@ -6925,7 +6851,7 @@
                 }
               ]
             },
-            "$.requests[*].summary": {
+            "$.requests[*].state": {
               "combine": "AND",
               "matchers": [
                 {
@@ -7411,7 +7337,6 @@
                 }
               ],
               "repoName": "contract-suite-app",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -7445,7 +7370,6 @@
                 }
               ],
               "state": "PENDING",
-              "summary": "Release the export across the suite",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -7637,14 +7561,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -7720,14 +7636,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -8697,7 +8605,6 @@
                 }
               ],
               "repoName": "contract-service",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -8731,7 +8638,6 @@
                 }
               ],
               "state": "REJECTED",
-              "summary": "Release the CSV export and the rounding fix",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -8920,14 +8826,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -9003,14 +8901,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -9116,7 +9006,6 @@
                 }
               ],
               "repoName": "contract-service",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -9160,7 +9049,6 @@
                 }
               ],
               "state": "RELEASED",
-              "summary": "Release the CSV export and the rounding fix",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -9344,14 +9232,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -9433,14 +9313,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -9554,7 +9426,6 @@
                 }
               ],
               "repoName": "contract-service",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -9598,7 +9469,6 @@
                 }
               ],
               "state": "RELEASED",
-              "summary": "Release the CSV export and the rounding fix",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -9782,14 +9652,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -9871,14 +9733,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -10341,7 +10195,6 @@
                 }
               ],
               "repoName": "contract-suite-app",
-              "requester": "contract-seeder",
               "sources": [
                 {
                   "addedBy": "contract-seeder",
@@ -10375,7 +10228,6 @@
                 }
               ],
               "state": "WITHDRAWN",
-              "summary": "Release the export across the suite",
               "supersededBy": null,
               "supersededByQualifiedId": null,
               "updatedAt": "2026-01-01T00:00:00Z",
@@ -10564,14 +10416,6 @@
                 }
               ]
             },
-            "$.request.requester": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.request.sources": {
               "combine": "AND",
               "matchers": [
@@ -10647,14 +10491,6 @@
               ]
             },
             "$.request.state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.request.summary": {
               "combine": "AND",
               "matchers": [
                 {
@@ -13897,8 +13733,12 @@
               {
                 "id": "00000000-0000-4000-8000-000000000003",
                 "qualifiedId": "contract-suite-app-rr-1",
-                "state": "PENDING",
-                "summary": "Release the export across the suite"
+                "sources": [
+                  {
+                    "name": "main"
+                  }
+                ],
+                "state": "PENDING"
               }
             ]
           },
@@ -13939,7 +13779,16 @@
                 }
               ]
             },
-            "$.requests[*].state": {
+            "$.requests[*].sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.requests[*].sources[*].name": {
               "combine": "AND",
               "matchers": [
                 {
@@ -13947,7 +13796,7 @@
                 }
               ]
             },
-            "$.requests[*].summary": {
+            "$.requests[*].state": {
               "combine": "AND",
               "matchers": [
                 {
@@ -14019,7 +13868,11 @@
           "content": {
             "requests": [
               {
-                "summary": "Release the rounding fix",
+                "sources": [
+                  {
+                    "name": "2026.101.100400"
+                  }
+                ],
                 "version": "2026.101.100400"
               }
             ]
@@ -14044,7 +13897,16 @@
                 }
               ]
             },
-            "$.requests[*].summary": {
+            "$.requests[*].sources": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.requests[*].sources[*].name": {
               "combine": "AND",
               "matchers": [
                 {
