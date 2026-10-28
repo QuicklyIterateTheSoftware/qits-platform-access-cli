@@ -198,20 +198,12 @@ public class TargetsCommand implements Runnable {
                 + ", total " + (ci + ws + desk) + "/" + target.path("slotsTotal").asInt(0);
     }
 
-    /**
-     * A target's per-type reservations: {@code reservations}, else the deprecated {@code minimums}
-     * an older qits-system answers (qits-1682). Drop the fallback once every service sends the new name.
-     */
+    /** A target's per-type reservations. */
     static JsonNode reservations(JsonNode target) {
-        JsonNode reserved = target.path("reservations");
-        return reserved.isObject() ? reserved : target.path("minimums");
+        return target.path("reservations");
     }
 
-    /**
-     * The per-type reservations a create or update sends: {@code reservations}, and the same values
-     * under the deprecated {@code minimums} so an older qits-system still reads them (qits-1682).
-     * Drop {@code minimums} once qits-system reads the new name everywhere.
-     */
+    /** The per-type reservations a create or update sends. */
     static void putReservations(ObjectNode body, Integer ci, Integer workspace, Integer desk) {
         ObjectNode reserved = JsonNodeFactory.instance.objectNode();
         if (ci != null) {
@@ -225,7 +217,6 @@ public class TargetsCommand implements Runnable {
         }
         if (!reserved.isEmpty()) {
             body.set("reservations", reserved);
-            body.set("minimums", reserved.deepCopy());
         }
     }
 
@@ -406,16 +397,16 @@ public class TargetsCommand implements Runnable {
         @CommandLine.Option(names = "--description", paramLabel = "<text>", description = "Free text.")
         String description;
 
-        @CommandLine.Option(names = {"--reserved-ci", "--min-ci"}, paramLabel = "<n>",
-                description = "Slots reserved for CI. --min-ci is the deprecated name.")
+        @CommandLine.Option(names = "--reserved-ci", paramLabel = "<n>",
+                description = "Slots reserved for CI.")
         Integer reservedCi;
 
-        @CommandLine.Option(names = {"--reserved-workspace", "--min-workspace"}, paramLabel = "<n>",
-                description = "Slots reserved for workspaces. --min-workspace is the deprecated name.")
+        @CommandLine.Option(names = "--reserved-workspace", paramLabel = "<n>",
+                description = "Slots reserved for workspaces.")
         Integer reservedWorkspace;
 
-        @CommandLine.Option(names = {"--reserved-desk", "--min-desk"}, paramLabel = "<n>",
-                description = "Slots reserved for the desk. --min-desk is the deprecated name.")
+        @CommandLine.Option(names = "--reserved-desk", paramLabel = "<n>",
+                description = "Slots reserved for the desk.")
         Integer reservedDesk;
 
         @CommandLine.Option(names = "--slots", paramLabel = "<n>",
@@ -504,8 +495,7 @@ public class TargetsCommand implements Runnable {
             footer = {"  qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --reserved-desk 1",
                     "  qits targets update --target localhost --description 'The build machine under the desk'",
                     "",
-                    "- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL (MINIMUMS_EXCEED_TOTAL "
-                            + "from an older qits-system): their sum is above the "
+                    "- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL: their sum is above the "
                             + "target's slots total."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
@@ -518,16 +508,16 @@ public class TargetsCommand implements Runnable {
                 description = "The target's name or id.")
         String target;
 
-        @CommandLine.Option(names = {"--reserved-ci", "--min-ci"}, paramLabel = "<n>",
-                description = "Slots reserved for CI. --min-ci is the deprecated name.")
+        @CommandLine.Option(names = "--reserved-ci", paramLabel = "<n>",
+                description = "Slots reserved for CI.")
         Integer reservedCi;
 
-        @CommandLine.Option(names = {"--reserved-workspace", "--min-workspace"}, paramLabel = "<n>",
-                description = "Slots reserved for workspaces. --min-workspace is the deprecated name.")
+        @CommandLine.Option(names = "--reserved-workspace", paramLabel = "<n>",
+                description = "Slots reserved for workspaces.")
         Integer reservedWorkspace;
 
-        @CommandLine.Option(names = {"--reserved-desk", "--min-desk"}, paramLabel = "<n>",
-                description = "Slots reserved for the desk. --min-desk is the deprecated name.")
+        @CommandLine.Option(names = "--reserved-desk", paramLabel = "<n>",
+                description = "Slots reserved for the desk.")
         Integer reservedDesk;
 
         @CommandLine.Option(names = "--description", paramLabel = "<text>", description = "Free text.")

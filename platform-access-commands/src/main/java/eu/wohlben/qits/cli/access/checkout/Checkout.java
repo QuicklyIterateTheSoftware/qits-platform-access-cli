@@ -96,22 +96,13 @@ public final class Checkout {
      * A local path or a {@code file://} origin has no host and needs no helper, so it is left
      * alone.
      */
-    public static void requireCredentialHelper(Path path, Map<String, String> env, Origin origin, boolean inPlatform)
+    public static void requireCredentialHelper(Path path, Map<String, String> env, Origin origin)
             throws CliFailure, InterruptedException {
         String host;
         try {
             host = GitOrigin.normalize(origin.url());
         } catch (IllegalArgumentException noHost) {
             return;
-        }
-        if (inPlatform) {
-            String injected = env.get("QITS_GIT_AUTH_HOST");
-            if (injected != null && !injected.isBlank() && normalized(injected, host).equals(host)) {
-                return;
-            }
-            throw new CliFailure("Git has no credential for " + host + " in this container: QITS_GIT_AUTH_HOST names "
-                    + (injected == null || injected.isBlank() ? "no host" : "another host")
-                    + ". The checkout cannot be fetched.", CliFailure.USAGE);
         }
         String helper = new Git(path, env).ask("config", "--get-urlmatch", "credential.helper", origin.url());
         if (helper == null || helper.isBlank()) {
@@ -239,16 +230,6 @@ public final class Checkout {
         }
         int slash = rest.lastIndexOf('/');
         return slash <= 0 ? rest : rest.substring(0, slash);
-    }
-
-    /** A bare authority is read against the origin's own scheme, the way Git's helper reads it. */
-    private static String normalized(String told, String fallback) {
-        try {
-            String scheme = fallback.substring(0, fallback.indexOf("://"));
-            return GitOrigin.normalize(told.contains("://") ? told : scheme + "://" + told.strip());
-        } catch (IllegalArgumentException | IndexOutOfBoundsException notAHost) {
-            return "";
-        }
     }
 
     /**

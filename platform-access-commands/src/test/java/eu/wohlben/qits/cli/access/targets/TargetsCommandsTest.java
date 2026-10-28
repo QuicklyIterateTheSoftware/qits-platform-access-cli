@@ -122,16 +122,15 @@ class TargetsCommandsTest {
     }
 
     @Test
-    void aReservationIsNotALimitAndAnOlderServiceIsReadThroughTheDeprecatedMinimums() {
-        // qits-1682: workspace uses 5 over 1 reserved while shared slots are free; an older
-        // qits-system answers only `minimums`.
-        String older = target("PRESENT", null)
+    void aReservationIsNotALimit() {
+        // workspace uses 5 over 1 reserved while shared slots are free.
+        String target = target("PRESENT", null)
                 .replace("\"reservations\":{\"ci\":2,\"workspace\":2,\"desk\":1}",
-                        "\"minimums\":{\"ci\":0,\"workspace\":1,\"desk\":1}")
+                        "\"reservations\":{\"ci\":0,\"workspace\":1,\"desk\":1}")
                 .replace("\"used\":{\"ci\":1,\"workspace\":0,\"desk\":0}",
                         "\"used\":{\"ci\":0,\"workspace\":5,\"desk\":0}")
                 .replace("\"slotsTotal\":6", "\"slotsTotal\":8");
-        platform.answer("GET", "/system/api/targets", "[" + older + "]");
+        platform.answer("GET", "/system/api/targets", "[" + target + "]");
 
         Result table = run("targets", "list");
 
@@ -192,20 +191,7 @@ class TargetsCommandsTest {
         assertThat(sent.path("description").asText()).isEqualTo("new text");
         assertThat(sent.path("reservations").path("ci").asInt()).isEqualTo(3);
         assertThat(sent.path("reservations").has("workspace")).isFalse();
-        // The deprecated duplicate, so an older qits-system still reads it (qits-1682).
-        assertThat(sent.path("minimums")).isEqualTo(sent.path("reservations"));
         assertThat(updated.out()).contains("(used/reserved, total used/total)");
-    }
-
-    @Test
-    void theDeprecatedMinOptionsStillWork() throws Exception {
-        platform.answer("PATCH", "/system/api/targets/" + TARGET, target("PRESENT", null));
-
-        Result updated = run("targets", "update", "--target", TARGET, "--min-workspace", "2");
-
-        assertThat(updated.exit()).as(updated.err()).isZero();
-        JsonNode sent = JSON.readTree(platform.requests("PATCH", "/system/api/targets/" + TARGET).getFirst().body());
-        assertThat(sent.path("reservations").path("workspace").asInt()).isEqualTo(2);
     }
 
     @Test
@@ -551,7 +537,6 @@ class TargetsCommandsTest {
         assertThat(sent.path("reservations").path("ci").asInt()).isEqualTo(2);
         assertThat(sent.path("reservations").path("desk").asInt()).isEqualTo(1);
         assertThat(sent.path("reservations").has("workspace")).isFalse();
-        assertThat(sent.path("minimums")).isEqualTo(sent.path("reservations"));
     }
 
     @Test
@@ -574,7 +559,6 @@ class TargetsCommandsTest {
         assertThat(created.exit()).as(created.err()).isZero();
         JsonNode sent = JSON.readTree(platform.requests("POST", "/system/api/targets").getFirst().body());
         assertThat(sent.has("reservations")).isFalse();
-        assertThat(sent.has("minimums")).isFalse();
         assertThat(sent.has("description")).isFalse();
         assertThat(sent.path("name").asText()).isEqualTo("localhost");
     }

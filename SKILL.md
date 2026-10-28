@@ -116,14 +116,15 @@ qits checkout-daemon --path /srv/qits --repository qits-qits --no-submodules
 ```
 
 - A checkout with local changes is never touched: it is somebody's work. It says so and keeps watching; with --once that is exit code 1. It never stashes, resets or merges.
-- Git authentication stays the credential helper's: run `qits git-login` on a workstation, and in a container the injected host (QITS_GIT_AUTH_HOST) answers. No token is ever put in a URL.
+- Git authentication stays the credential helper's: run `qits git-login` on a workstation; in a container the image's helper answers. No token is ever put in a URL.
+- With QITS_PLATFORM set and no QITS_TOKEN it refuses at the start, before any git work.
 - --repository is needed when the origin addresses the repository by its id (/git/<repository id>), which is the git host's internal storage scheme and names nothing.
 
 ### Exit codes
 
 - `0` Stopped by SIGINT or SIGTERM, --once is done, or stdout was closed.
 - `1` The platform refused the stream (401, 403 or another 4xx), or with --once the checkout has local changes or a git command failed.
-- `2` Used wrongly (the origin names no repository and --repository was not given), Git has no credential for the origin's host, not signed in, or the session ended.
+- `2` Used wrongly (the origin names no repository and --repository was not given), Git has no credential for the origin's host, not signed in, the session ended, or QITS_PLATFORM is set without QITS_TOKEN.
 
 ## qits projects
 
@@ -4016,9 +4017,9 @@ qits targets create --name <name> [--description <text>] [--output table|json] [
 | `--name <name>` | Required. The new target's name. |
 | `--description <text>` | Free text. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--reserved-ci, --min-ci <n>` | Slots reserved for CI. --min-ci is the deprecated name. |
-| `--reserved-desk, --min-desk <n>` | Slots reserved for the desk. --min-desk is the deprecated name. |
-| `--reserved-workspace, --min-workspace <n>` | Slots reserved for workspaces. --min-workspace is the deprecated name. |
+| `--reserved-ci <n>` | Slots reserved for CI. |
+| `--reserved-desk <n>` | Slots reserved for the desk. |
+| `--reserved-workspace <n>` | Slots reserved for workspaces. |
 | `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the reservations' sum. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
@@ -4091,9 +4092,9 @@ qits targets update --target <name|id> [--description <text>] [--output table|js
 | `--target <name\|id>` | Required. The target's name or id. |
 | `--description <text>` | Free text. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--reserved-ci, --min-ci <n>` | Slots reserved for CI. --min-ci is the deprecated name. |
-| `--reserved-desk, --min-desk <n>` | Slots reserved for the desk. --min-desk is the deprecated name. |
-| `--reserved-workspace, --min-workspace <n>` | Slots reserved for workspaces. --min-workspace is the deprecated name. |
+| `--reserved-ci <n>` | Slots reserved for CI. |
+| `--reserved-desk <n>` | Slots reserved for the desk. |
+| `--reserved-workspace <n>` | Slots reserved for workspaces. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
@@ -4103,7 +4104,7 @@ qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --
 qits targets update --target localhost --description 'The build machine under the desk'
 ```
 
-- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL (MINIMUMS_EXCEED_TOTAL from an older qits-system): their sum is above the target's slots total.
+- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL: their sum is above the target's slots total.
 
 ### Exit codes
 
@@ -4707,9 +4708,9 @@ Git's credential helper for the platform's git host. Git runs it; a person does 
 
 On a workstation `qits git-login` sets it up: get prints that sign-in's access token, refreshing it first when needed. store is ignored. erase drops the cached access token and keeps the sign-in.
 
-Inside the platform there is no sign-in and none is needed: get answers the injected git host (QITS_GIT_AUTH_HOST) with the credential the process was handed, and answers no other host. store and erase do nothing there, and no file is written.
-
 With a workspace token (QITS_TOKEN) get answers https://githost.qits.<QITS_DOMAIN> with that token, and answers no other host; store and erase do nothing and no file is written.
+
+With QITS_PLATFORM set and no QITS_TOKEN it answers nothing: every action prints nothing, writes no file and exits 0, so Git asks its other helpers.
 
 ```
 qits git-credential <get|store|erase>
@@ -4726,11 +4727,10 @@ git config --global --get-all credential.https://githost.qits.wohlben.eu.helper
 ```
 
 The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, because that is Git's helper protocol.
-Inside the platform Git is set up for every host at once, so the injected host is checked before the credential is touched: the platform's bearer is never handed to a host someone else named.
 
 ### Exit codes
 
-- `0` Done. For a host without a sign-in, and inside the platform for any host but the injected one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why on stderr and still exits 0, so Git carries on.
+- `0` Done. For a host without a sign-in, and with a workspace token for any host but the public git host, it prints nothing and Git asks its other helpers. A credential that cannot be had says why on stderr and still exits 0, so Git carries on.
 - `1` The sign-in file cannot be read or written.
 - `2` No action named.
 
