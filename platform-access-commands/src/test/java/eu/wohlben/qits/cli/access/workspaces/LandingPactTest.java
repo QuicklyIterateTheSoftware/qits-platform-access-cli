@@ -60,11 +60,12 @@ class LandingPactTest {
      * {@code rotateRunnerRegistrationToken} each answer a one-time registration token; the other
      * runner calls are retired by qits-1534, ahead of the epic qits-1481 feature that drops the
      * landing app's own Runners page and this fixture's copy of its pact (`qits targets` replaces
-     * the group).
+     * the group). {@code createAgent} is retired by qits-1705, the owner's ruling to delete
+     * {@code qits workspaces agents create} outright, with no replacement command.
      */
     static final Set<String> NOT_OFFERED = Set.of("createRunner", "rotateRunnerRegistrationToken", "listRunners",
             "getRunnerHealth", "patchRunner", "greenlightRunner", "requestRunnerHealthcheck",
-            "requestRunnerLoginCheck", "deleteRunner");
+            "requestRunnerLoginCheck", "deleteRunner", "createAgent");
 
     /** The command that makes each call, built from the request the landing app recorded. */
     static final Map<String, Function<JsonNode, List<String>>> ROWS = new HashMap<>();
@@ -90,22 +91,6 @@ class LandingPactTest {
             }
             if (query(r, "state") != null) {
                 argv.addAll(List.of("--state", query(r, "state")));
-            }
-            return argv;
-        });
-        ROWS.put("createAgent", r -> {
-            JsonNode body = body(r);
-            List<String> argv = new ArrayList<>(List.of("workspaces", "agents", "create",
-                    "--repository", body.path("repositoryId").asText(), "--work", body.path("workId").asText(),
-                    "--entity", body.path("entityId").asText(), "--kind", body.path("kind").asText()));
-            if (body.path("admin").asBoolean()) {
-                argv.add("--admin");
-            }
-            if (body.has("harness")) {
-                argv.addAll(List.of("--harness", body.path("harness").asText()));
-            }
-            if (body.has("instruction")) {
-                argv.addAll(List.of("--instruction", body.path("instruction").asText()));
             }
             return argv;
         });

@@ -953,7 +953,7 @@ public final class ProjectsContract {
             "qits maintenance automations", "qits maintenance automation run");
 
     /** Every command outside {@code qits work} that names a work item by its qualified id and sends its id. */
-    static final List<String> WORK_ITEM_SCOPED = List.of("qits workspaces agents list", "qits workspaces agents create",
+    static final List<String> WORK_ITEM_SCOPED = List.of("qits workspaces agents list",
             "qits workspaces agents prompt", "qits wait work");
 
     static final List<CliRow> ROWS = rows();

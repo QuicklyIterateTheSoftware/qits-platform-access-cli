@@ -83,11 +83,6 @@ final class WorkspacesApi {
         return client.get(uri(API + "/agents" + (query.isEmpty() ? "" : "?" + String.join("&", query))));
     }
 
-    /** {@code createAgent}. */
-    JsonNode createAgent(JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri(API + "/agents"), body);
-    }
-
     /** {@code discardAgent}: {@code {"force": …}}, sent either way. */
     JsonNode discardAgent(String agentId, boolean force) throws CliFailure, InterruptedException {
         ObjectNode body = JsonNodeFactory.instance.objectNode();

@@ -40,7 +40,6 @@ public final class WorkspacesContract {
     static final String NO_OPEN_WORKSPACE = "no work item has an open workspace";
     static final String NO_WORKSPACES = "a work item with no workspaces";
     static final String AGENTS_BOUND = "a project with agents bound to work items";
-    static final String TICKET_TO_DISPATCH = "a wrapper repository and a ticket to dispatch";
     static final String WAITING_FOR_A_SLOT = "an agent waiting for a workspace slot";
     static final String WORKING_ON_A_TICKET = "an agent working on a ticket";
     static final String SAVED_DRAFT = "an agent with a saved prompt draft";
@@ -138,9 +137,6 @@ public final class WorkspacesContract {
         assertThat(agents).isNotEmpty().allSatisfy(a -> assertThat(a.path("agentId").asText()).isNotBlank());
     };
 
-    private static final Call CREATE_AGENT = (api, params, recorded) ->
-            assertThat(api.createAgent(body(recorded)).path("agent").path("agentId").asText()).isNotBlank();
-
     private static final Call DISCARD = (api, params, recorded) ->
             assertThat(api.discardAgent(params.get("agentId"), body(recorded).path("force").asBoolean())
                     .path("state").asText()).isNotBlank();
@@ -215,10 +211,6 @@ public final class WorkspacesContract {
         for (String state : List.of(SLOTS_HOSTING_AGENTS, AGENTS_BOUND, WORKSPACE_STARTING, SLOT_HOSTING_AGENTS)) {
             rows.add(row("qits workspaces agents list", state, "listAgents", "agents", AGENTS)
                     .consumes(held(state, "listAgents", prefixed("agents[].", AGENT))));
-        }
-        for (String state : List.of(SLOT_HOSTING_AGENTS, TICKET_TO_DISPATCH)) {
-            rows.add(row("qits workspaces agents create", state, "createAgent", "createAgent", CREATE_AGENT)
-                    .consumes(held(state, "createAgent", List.of("agent.agentId", "fresh"))));
         }
         rows.add(row("qits workspaces agents discard", WAITING_FOR_A_SLOT, "discardAgent", "discardAgent", DISCARD)
                 .consumes("state"));
