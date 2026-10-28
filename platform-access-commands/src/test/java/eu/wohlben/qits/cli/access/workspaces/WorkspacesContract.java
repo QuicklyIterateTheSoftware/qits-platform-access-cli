@@ -133,7 +133,8 @@ public final class WorkspacesContract {
     private static final Call AGENTS = (api, params, recorded) -> {
         String slot = query(recorded, "workspaceId");
         List<JsonNode> agents = WorkspacesCommand.entries(api.agents(query(recorded, "workId"),
-                slot == null ? null : Long.valueOf(slot), query(recorded, "state")), "agents", null);
+                slot == null ? null : Long.valueOf(slot), query(recorded, "state"), query(recorded, "projectId")),
+                "agents", null);
         assertThat(agents).isNotEmpty().allSatisfy(a -> assertThat(a.path("agentId").asText()).isNotBlank());
     };
 

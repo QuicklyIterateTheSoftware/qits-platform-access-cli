@@ -3,6 +3,7 @@ package eu.wohlben.qits.cli.access.workspaces;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import eu.wohlben.qits.cli.access.complete.ProjectSource;
 import eu.wohlben.qits.cli.access.observe.SafeText;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -11,6 +12,7 @@ import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.terminal.LocalTerminal;
 import eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.Json;
+import eu.wohlben.qits.cli.tui.api.Completes;
 import eu.wohlben.qits.cli.tui.api.Effect;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
@@ -98,13 +100,20 @@ public class WorkspaceAgentsCommand implements Runnable {
     // --- the agents ---
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"Agents, newest first: what each works on, its slot, how it runs and what it waits on. "
-                    + "Bare, every agent (the project's Workspaces page); --work, one item's (its agent page); "
-                    + "--workspace, one slot's (the slot's page); --state ACTIVE, the In Progress tab's.",
-                    "GET /workspaces/api/agents[?workId=&workspaceId=&state=]. " + Doors.READ},
+            description = {"Agents, newest first: what each works on, its slot, how it runs, what it waits on and "
+                    + "what it needs a person for. Bare, every agent (the project's Workspaces page); --work, one "
+                    + "item's (its agent page); --workspace, one slot's (the slot's page); --state ACTIVE, the In "
+                    + "Progress tab's; --project, one project's.",
+                    "WAITING ON is built from each open wait's subject: a release request or work item shows its "
+                            + "qualified id and state, a CI run the first 8 characters of its id and state, a "
+                            + "comments wait \"comments on <item>\", anything else its label; several are joined "
+                            + "with \"; \". With no waits array (an older service), it falls back to today's "
+                            + "waitingOn. ATTENTION is attention.reason, a dash when there is none.",
+                    "GET /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits workspaces agents list --state ACTIVE",
                     "  qits workspaces agents list --work qits-123",
+                    "  qits workspaces agents list --project qits --state ACTIVE",
                     "  qits workspaces agents list --workspace 1 -o json"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
@@ -113,6 +122,12 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @CommandLine.ParentCommand
         WorkspaceAgentsCommand agents;
+
+        @Completes(ProjectSource.class)
+        @CommandLine.Option(names = "--project", paramLabel = "<project>",
+                description = "Only the agents whose repository is this project's: its id, slug or name. Sent as "
+                        + "projectId. Without it, every project's.")
+        String project;
 
         @CommandLine.Option(names = "--work", paramLabel = "<work>",
                 description = "Only this work item's agents: its qualified id (qits-123) or its id.")
@@ -136,7 +151,8 @@ public class WorkspaceAgentsCommand implements Runnable {
             }
             Long slot = workspace == null ? null : slot(workspace);
             String workId = work == null || work.isBlank() ? null : root.workId(context, work);
-            JsonNode answer = root.api(context).agents(workId, slot, wanted);
+            String projectId = project == null || project.isBlank() ? null : root.projectId(context, project);
+            JsonNode answer = root.api(context).agents(workId, slot, wanted, projectId);
             if (json) {
                 Json.print(context.out(), answer);
                 return 0;
@@ -150,12 +166,56 @@ public class WorkspaceAgentsCommand implements Runnable {
             for (JsonNode agent : list) {
                 rows.add(List.of(cell(agent, "agentId", 40), cell(agent, "workspaceRowId", 8),
                         cell(agent, "entityId", 30), cell(agent, "state", 10), cell(agent, "runState", 12),
-                        cell(agent, "harness", 8), cell(agent, "waitingOn", 40), cell(agent, "entityTitle", 50)));
+                        cell(agent, "harness", 8), Table.cell(waitingOn(agent), 40), cell(agent, "entityTitle", 50),
+                        Table.cell(attentionReason(agent), 80)));
             }
             Table.print(context.out(), "", List.of("AGENT", "SLOT", "ITEM", "STATE", "RUN", "HARNESS", "WAITING ON",
-                    "TITLE"), rows);
+                    "TITLE", "ATTENTION"), rows);
             return 0;
         }
+    }
+
+    /**
+     * The WAITING ON column: {@code waits[]} joined with {@code "; "}, each in its kind's own words
+     * ({@link #waitLabel}); with no {@code waits} array at all (an older service), today's
+     * {@code waitingOn} sentence.
+     */
+    static String waitingOn(JsonNode agent) {
+        if (!agent.has("waits")) {
+            return text(agent, "waitingOn");
+        }
+        List<String> labels = new ArrayList<>();
+        for (JsonNode wait : agent.path("waits")) {
+            labels.add(waitLabel(wait));
+        }
+        return String.join("; ", labels);
+    }
+
+    /**
+     * One wait of {@code waits[]}: a release request or work item by its qualified id (its
+     * {@code subjectRef} when unresolved) and state, a CI run by the first 8 characters of its id
+     * and state, a comments wait as "comments on <item>", else (OTHER, or a kind this CLI does not
+     * know yet) the wait's own label. A state the service has not resolved yet prints {@code "?"}.
+     */
+    static String waitLabel(JsonNode wait) {
+        String kind = text(wait, "subjectKind");
+        String ref = text(wait, "subjectRef");
+        String qualifiedId = text(wait, "subjectQualifiedId");
+        String name = qualifiedId.isEmpty() ? ref : qualifiedId;
+        String state = text(wait, "subjectState");
+        String known = state.isEmpty() ? "?" : state;
+        return switch (kind) {
+            case "RELEASE_REQUEST", "WORK_ITEM" -> name + " " + known;
+            case "CI_RUN" -> "run " + (ref.length() > 8 ? ref.substring(0, 8) : ref) + " " + known;
+            case "COMMENTS" -> "comments on " + name;
+            default -> text(wait, "label");
+        };
+    }
+
+    /** The ATTENTION column: {@code attention.reason}, empty (a dash) when the agent needs nobody. */
+    static String attentionReason(JsonNode agent) {
+        JsonNode attention = agent.path("attention");
+        return attention.isObject() ? text(attention, "reason") : "";
     }
 
     @CommandLine.Command(name = "discard", mixinStandardHelpOptions = true,

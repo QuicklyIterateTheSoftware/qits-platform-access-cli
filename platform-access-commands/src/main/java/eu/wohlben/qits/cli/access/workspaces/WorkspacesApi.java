@@ -75,11 +75,12 @@ final class WorkspacesApi {
     // --- agents ---
 
     /** {@code listAgents}: newest first; each filter is left out when it is null. */
-    JsonNode agents(String workId, Long slot, String state) throws CliFailure, InterruptedException {
+    JsonNode agents(String workId, Long slot, String state, String projectId) throws CliFailure, InterruptedException {
         List<String> query = new ArrayList<>();
         add(query, "workId", workId);
         add(query, "workspaceId", slot == null ? null : String.valueOf(slot));
         add(query, "state", state);
+        add(query, "projectId", projectId);
         return client.get(uri(API + "/agents" + (query.isEmpty() ? "" : "?" + String.join("&", query))));
     }
 

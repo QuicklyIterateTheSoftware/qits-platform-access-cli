@@ -138,6 +138,147 @@ class WorkspacesCommandsTest {
     }
 
     @Test
+    void aReleaseRequestWaitShowsItsQualifiedIdAndState() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Invoice totals",
+                 "waits":[{"subjectKind":"RELEASE_REQUEST","subjectRef":"00000000-0000-4000-8000-0000000000c1",
+                  "subjectQualifiedId":"qits-projects-service-rr-368","subjectState":"FINALIZED"}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("WAITING ON").contains("ATTENTION")
+                .contains("qits-projects-service-rr-368 FINALIZED");
+    }
+
+    @Test
+    void aCiRunWaitShowsTheRunsFirstEightCharactersAndState() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Download button",
+                 "waits":[{"subjectKind":"CI_RUN","subjectRef":"9677c59a-0000-4000-8000-0000000000c2",
+                  "subjectQualifiedId":null,"subjectState":"RUNNING"}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("run 9677c59a RUNNING");
+    }
+
+    @Test
+    void aWorkItemWaitShowsItsQualifiedIdAndStateOrAQuestionMarkWhenItIsUnknown() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Remember the format",
+                 "waits":[{"subjectKind":"WORK_ITEM","subjectRef":"00000000-0000-4000-8000-000000000011",
+                  "subjectQualifiedId":"contract-00000001-5","subjectState":null}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("contract-00000001-5 ?");
+    }
+
+    @Test
+    void aCommentsWaitShowsCommentsOnTheItem() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Remember the format",
+                 "waits":[{"subjectKind":"COMMENTS","subjectRef":"00000000-0000-4000-8000-000000000011",
+                  "subjectQualifiedId":"qits-5","subjectState":null},
+                 {"subjectKind":"WORK_ITEM","subjectRef":"00000000-0000-4000-8000-000000000011",
+                  "subjectQualifiedId":"qits-5","subjectState":"IMPLEMENTING"}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("comments on qits-5; qits-5 IMPLEMENTING");
+    }
+
+    @Test
+    void anOtherOrUnrecognisedWaitKindShowsItsLabel() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Remember the format",
+                 "waits":[{"subjectKind":"OTHER","label":"something else","subjectRef":null,
+                  "subjectQualifiedId":null,"subjectState":null},
+                 {"subjectKind":"A_FUTURE_KIND","label":"a future kind","subjectRef":null,
+                  "subjectQualifiedId":null,"subjectState":null}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("something else; a future kind");
+    }
+
+    @Test
+    void waitsAbsentFallsBackToTodaysWaitingOn() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"PDF export",
+                 "waitingOn":"CI run 00000000 to end"}]}
+                """.formatted(AGENT));
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("CI run 00000000 to end");
+    }
+
+    @Test
+    void theAttentionColumnShowsTheReasonOrADash() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[
+                 {"agentId":"00000000-0000-4000-8000-0000000000a6","workspaceRowId":1,"entityId":"contract-1",
+                  "state":"ACTIVE","runState":"RUNNING","harness":"CLAUDE","entityTitle":"Export invoices",
+                  "waits":[],"attention":{"code":"BLOCKED_NO_DESK",
+                   "reason":"Blocked 50 min by contract-person, no @desk comment since","since":null,"waitId":null}},
+                 {"agentId":"00000000-0000-4000-8000-0000000000a7","workspaceRowId":1,"entityId":"contract-2",
+                  "state":"ACTIVE","runState":"RUNNING","harness":"CLAUDE","entityTitle":"PDF export",
+                  "waits":[],"attention":null}]}
+                """);
+
+        Result table = run("workspaces", "agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("Blocked 50 min by contract-person, no @desk comment since");
+        List<String> lines = table.out().lines().toList();
+        String noAttention = lines.stream().filter(l -> l.contains("0000000000a7")).findFirst().orElseThrow();
+        assertThat(noAttention).endsWith("-");
+    }
+
+    @Test
+    void listSendsTheProjectsUuidWhenGivenAndResolvesASlugFirst() throws Exception {
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"11111111-1111-4111-8111-111111111111","slug":"qits","name":"qits"}}]}
+                """);
+        platform.answer("GET", "/workspaces/api/agents", "{\"agents\":[]}");
+
+        Result named = run("workspaces", "agents", "list", "--project", "qits", "--state", "ACTIVE");
+
+        assertThat(named.exit()).as(named.err()).isZero();
+        assertThat(platform.requests("GET", "/workspaces/api/agents").getFirst().query())
+                .isEqualTo("state=ACTIVE&projectId=11111111-1111-4111-8111-111111111111");
+
+        Result byUuid = run("workspaces", "agents", "list", "--project",
+                "11111111-1111-4111-8111-111111111111");
+        assertThat(byUuid.exit()).as(byUuid.err()).isZero();
+        assertThat(platform.requests("GET", "/workspaces/api/agents").getLast().query())
+                .isEqualTo("projectId=11111111-1111-4111-8111-111111111111");
+    }
+
+    @Test
     void aStartNamesTheProcessAndTheLogFollowsItUntilItEnds() {
         platform.answer("POST", "/workspaces/api/workspaces/1/ensure-container",
                 "{\"technicalProcessId\":\"" + PROCESS + "\"}");

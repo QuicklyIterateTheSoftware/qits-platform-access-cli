@@ -136,6 +136,19 @@ public class WorkspacesCommand implements Runnable {
     }
 
     /**
+     * {@code --project}'s value resolved to the project's uuid, the way other commands resolve
+     * their own {@code --project} (over {@link ProjectsApi#project}).
+     */
+    String projectId(CliContext context, String given) throws CliFailure, InterruptedException {
+        String wanted = given == null ? "" : given.strip();
+        if (wanted.isEmpty()) {
+            throw new CliFailure("Name the project: --project <id, slug or name>.", CliFailure.USAGE);
+        }
+        JsonNode found = ProjectsApi.connect(context, projectsUrl).project(wanted);
+        return text(found, "id");
+    }
+
+    /**
      * The wrapper repository's id, as the workspaces service wants it: a uuid is sent as it is, and
      * anything else is looked up in the projects service with {@code --project}, the same lookup
      * {@code qits ci runs} and {@code qits release-request} do (their {@code --project} and
