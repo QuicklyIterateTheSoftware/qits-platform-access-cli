@@ -39,7 +39,6 @@ class WorkspacesCommandsTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
     private static final String COMMAND = "00000000-0000-4000-8000-000000000100";
-    private static final String EPIC = "45a14f8e-f550-45bb-a117-6b34d8c472e3";
     private static final String PROCESS = "00000000-0000-4000-8000-000000000100";
     private static final String REPOSITORY = "0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a";
 
@@ -192,24 +191,6 @@ class WorkspacesCommandsTest {
     }
 
     @Test
-    void createLooksTheItemUpAndAnEpicIsCreatedAsOne() throws Exception {
-        platform.answer("GET", "/projects/api/work/qits-120",
-                "{\"id\":\"" + EPIC + "\",\"qualifiedId\":\"qits-120\",\"archetype\":\"EPIC\"}");
-        platform.answer("POST", "/workspaces/api/agents", "{\"agent\":{\"agentId\":\"" + AGENT + "\"},\"fresh\":true}");
-
-        Result created = run("workspaces", "agents", "create", "--repository", "repo-1", "--work", "qits-120",
-                "--harness", "kimi");
-
-        assertThat(created.exit()).as(created.err()).isZero();
-        assertThat(created.out()).contains("Created agent " + AGENT);
-        assertThat(JSON.readTree(platform.requests("POST", "/workspaces/api/agents").getFirst().body()))
-                .isEqualTo(JSON.readTree("""
-                        {"repositoryId":"repo-1","workId":"%s","entityId":"qits-120","kind":"EPIC","admin":false,
-                         "harness":"KIMI"}
-                        """.formatted(EPIC)));
-    }
-
-    @Test
     void anAgentWithNoDraftSaysSo() {
         platform.answer("GET", "/workspaces/api/agents/" + AGENT + "/prompt-draft", 404, "");
 
@@ -255,8 +236,6 @@ class WorkspacesCommandsTest {
     @Test
     void whatCannotBeSentIsRefusedBeforeAnythingGoesOut() {
         assertThat(run("workspaces", "agents", "chat", AGENT).exit()).isEqualTo(2);
-        assertThat(run("workspaces", "agents", "create", "--repository", "r", "--work", EPIC, "--kind", "STORY")
-                .exit()).isEqualTo(2);
         assertThat(run("workspaces", "agents", "sign-in", "open", "--workspace", "1", "--harness", "GPT").exit())
                 .isEqualTo(2);
         assertThat(run("workspaces", "show", "0").exit()).isEqualTo(2);

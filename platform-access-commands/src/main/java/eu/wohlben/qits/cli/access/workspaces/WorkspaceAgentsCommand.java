@@ -34,20 +34,20 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.slot;
  * through the container proxy, so those commands take the slot with --workspace, as the page does.
  */
 @CommandLine.Command(name = "agents", mixinStandardHelpOptions = true,
-        subcommands = {WorkspaceAgentsCommand.ListCommand.class, WorkspaceAgentsCommand.CreateCommand.class,
+        subcommands = {WorkspaceAgentsCommand.ListCommand.class,
                 WorkspaceAgentsCommand.DiscardCommand.class, WorkspaceAgentsCommand.PromptCommand.class,
                 WorkspaceAgentsCommand.DraftCommand.class, WorkspaceAgentsCommand.ChatCommand.class,
                 WorkspaceAgentsCommand.TerminateCommand.class, WorkspaceAgentsCommand.RefineCommand.class,
                 WorkspaceAgentsCommand.HarnessCommand.class, WorkspaceAgentsCommand.FilesCommand.class,
                 WorkspaceAgentsCommand.SignInCommand.class, WorkspaceAgentsCommand.PluginsCommand.class},
-        description = {"The agents in the workspace slots: list, create and discard them, send one a prompt, keep its "
+        description = {"The agents in the workspace slots: list and discard them, send one a prompt, keep its "
                         + "prompt draft, read its chat, and what its tabs show of its container (files, harness, "
                         + "sign-in, plugins).",
                 "An agent is named by its id (`qits workspaces agents list` shows it); a work item by its qualified "
                         + "id (qits-123) or its id. The commands that read the agent's container take its slot "
                         + "with --workspace."},
         footerHeading = "%nNotes:%n",
-        footer = {"- create, discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or "
+        footer = {"- discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or "
                 + "qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent "
                 + "alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that "
                 + "goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins)."})
@@ -154,96 +154,6 @@ public class WorkspaceAgentsCommand implements Runnable {
             }
             Table.print(context.out(), "", List.of("AGENT", "SLOT", "ITEM", "STATE", "RUN", "HARNESS", "WAITING ON",
                     "TITLE"), rows);
-            return 0;
-        }
-    }
-
-    @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
-            description = {"Start an agent on a ticket or an epic, in a harness and posture of your choosing. An item "
-                    + "that already has an ACTIVE agent answers that one (fresh: false). Create agent on the "
-                    + "Workspaces page.",
-                    "POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, "
-                            + "instruction?}. " + Doors.WRITE},
-            footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits workspaces agents create --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a --work qits-123",
-                    "  qits workspaces agents create --repository <id> --work qits-120 --kind EPIC --harness CLAUDE "
-                            + "--instruction 'Plan the epic first.'",
-                    "",
-                    "- A qualified id is looked up in the projects service for the item's id; it is sent as entityId, "
-                            + "and an EPIC item makes --kind EPIC unless --kind says otherwise."},
-            exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
-    public static class CreateCommand extends PlatformCommand {
-
-        @CommandLine.ParentCommand
-        WorkspaceAgentsCommand agents;
-
-        @CommandLine.Option(names = "--repository", paramLabel = "<id>", required = true,
-                description = "The wrapper repository the agent works in: its id.")
-        String repository;
-
-        @CommandLine.Option(names = "--work", paramLabel = "<work>", required = true,
-                description = "The work item: its qualified id (qits-123) or its id.")
-        String work;
-
-        @CommandLine.Option(names = "--entity", paramLabel = "<qualified id>",
-                description = "The item's qualified id, sent as entityId. Default: the one the lookup of --work found.")
-        String entity;
-
-        @CommandLine.Option(names = "--kind", paramLabel = "TICKET|EPIC",
-                description = "What the item is. Default: EPIC for an epic the lookup found, else TICKET.")
-        String kind;
-
-        @CommandLine.Option(names = "--admin",
-                description = "Admin mode: the agent runs in a slot that holds the host's docker socket.")
-        boolean admin;
-
-        @CommandLine.Option(names = "--harness", paramLabel = "CLAUDE|KIMI",
-                description = "The harness the agent runs in. Default: the service's.")
-        String harness;
-
-        @CommandLine.Option(names = "--instruction", paramLabel = "<text>", description = "The agent's first turn.")
-        String instruction;
-
-        @Override
-        protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            WorkspacesCommand root = agents.parent;
-            boolean json = root.json();
-            String repositoryId = required(repository, "Name the wrapper repository: --repository <id>.");
-            String chosenHarness = harness(harness);
-            String chosenKind = kind == null || kind.isBlank() ? null : kind.strip().toUpperCase(Locale.ROOT);
-            if (chosenKind != null && !chosenKind.equals("TICKET") && !chosenKind.equals("EPIC")) {
-                throw new CliFailure("--kind must be TICKET or EPIC, not '" + kind.strip() + "'.", CliFailure.USAGE);
-            }
-            JsonNode item = root.workItem(context, work);
-            String workId = item == null ? work.strip() : text(item, "id");
-            String entityId = entity != null && !entity.isBlank() ? entity.strip()
-                    : item == null ? null : text(item, "qualifiedId");
-            if (chosenKind == null) {
-                chosenKind = item != null && "EPIC".equals(text(item, "archetype")) ? "EPIC" : "TICKET";
-            }
-            ObjectNode body = JsonNodeFactory.instance.objectNode();
-            body.put("repositoryId", repositoryId);
-            body.put("workId", workId);
-            if (entityId != null && !entityId.isEmpty()) {
-                body.put("entityId", entityId);
-            }
-            body.put("kind", chosenKind);
-            body.put("admin", admin);
-            if (chosenHarness != null) {
-                body.put("harness", chosenHarness);
-            }
-            if (instruction != null && !instruction.isBlank()) {
-                body.put("instruction", instruction);
-            }
-            JsonNode answer = root.api(context).createAgent(body);
-            if (json) {
-                Json.print(context.out(), answer);
-                return 0;
-            }
-            String agentId = SafeText.line(text(answer.path("agent"), "agentId"));
-            context.out().println(answer.path("fresh").asBoolean(true) ? "Created agent " + agentId + "."
-                    : "The item already has an active agent: " + agentId + ".");
             return 0;
         }
     }

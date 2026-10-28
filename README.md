@@ -598,8 +598,6 @@ Installing it is not part of this version.
     qits workspaces log <process id>
     qits workspaces attach <command id> --workspace <n>
     qits workspaces agents list [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
-    qits workspaces agents create --repository <id> --work <work> [--entity <qualified id>] \
-        [--kind TICKET|EPIC] [--admin] [--harness CLAUDE|KIMI] [--instruction <text>]
     qits workspaces agents discard <agent> [--force]
     qits workspaces agents prompt <work> <text>
     qits workspaces agents draft show|discard <agent>
@@ -1478,7 +1476,6 @@ by one command, the same way.
     qits workspaces items                         GET  /workspaces/api/work/workspaces
     qits workspaces history <work>                GET  /workspaces/api/work/{work}/workspaces
     qits workspaces agents list                   GET  /workspaces/api/agents[?workId=&workspaceId=&state=]
-    qits workspaces agents create                 POST /workspaces/api/agents
     qits workspaces agents discard [--force]      POST /workspaces/api/agents/{id}/discard {"force":…}
     qits workspaces agents prompt <work> <text>   POST /workspaces/api/agent-dispatches/delivery
     qits workspaces agents draft show|save|discard     GET|PUT|DELETE /workspaces/api/agents/{id}/prompt-draft
@@ -1498,7 +1495,7 @@ qualified id (`qits-123`), looked up in the projects service, or its id; `histor
 is, since the service takes both.
 
 Who may: every read is open to every credential, `qits:agent` included. The JSON API's writes (start,
-stop, recreate, agents create/discard/prompt, draft save/discard) need `qits:admin` or
+stop, recreate, agents discard/prompt, draft save/discard) need `qits:admin` or
 `qits:admin-agent`, which a person's token carries; `qits:agent` is refused with 403 by design. The
 container proxy checks the caller instead: a person, `qits:system`, `qits:admin` or `qits:admin-agent`
 may reach any slot; `qits:agent` only its own workspace's.

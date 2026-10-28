@@ -3336,13 +3336,13 @@ qits workspaces history qits-123
 
 ## qits workspaces agents
 
-The agents in the workspace slots: list, create and discard them, send one a prompt, keep its prompt draft, read its chat, and what its tabs show of its container (files, harness, sign-in, plugins).
+The agents in the workspace slots: list and discard them, send one a prompt, keep its prompt draft, read its chat, and what its tabs show of its container (files, harness, sign-in, plugins).
 
 An agent is named by its id (`qits workspaces agents list` shows it); a work item by its qualified id (qits-123) or its id. The commands that read the agent's container take its slot with --workspace.
 
 ### Notes
 
-- create, discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
+- discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
 
 ## qits workspaces agents list
 
@@ -3370,44 +3370,6 @@ qits workspaces agents list --state ACTIVE
 qits workspaces agents list --work qits-123
 qits workspaces agents list --workspace 1 -o json
 ```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents create
-
-Start an agent on a ticket or an epic, in a harness and posture of your choosing. An item that already has an ACTIVE agent answers that one (fresh: false). Create agent on the Workspaces page.
-
-POST /workspaces/api/agents with {repositoryId, workId, entityId, kind, admin, harness?, instruction?}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
-
-```
-qits workspaces agents create --repository <id> --work <work> [--admin] [--entity <qualified id>] [--harness CLAUDE|KIMI] [--instruction <text>] [--kind TICKET|EPIC] [--output table|json] [--projects-url <url>] [--workspaces-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--repository <id>` | Required. The wrapper repository the agent works in: its id. |
-| `--work <work>` | Required. The work item: its qualified id (qits-123) or its id. |
-| `--admin` | Admin mode: the agent runs in a slot that holds the host's docker socket. |
-| `--entity <qualified id>` | The item's qualified id, sent as entityId. Default: the one the lookup of --work found. |
-| `--harness CLAUDE\|KIMI` | The harness the agent runs in. Default: the service's. |
-| `--instruction <text>` | The agent's first turn. |
-| `--kind TICKET\|EPIC` | What the item is. Default: EPIC for an epic the lookup found, else TICKET. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents create --repository 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a --work qits-123
-qits workspaces agents create --repository <id> --work qits-120 --kind EPIC --harness CLAUDE --instruction 'Plan the epic first.'
-```
-
-- A qualified id is looked up in the projects service for the item's id; it is sent as entityId, and an EPIC item makes --kind EPIC unless --kind says otherwise.
 
 ### Exit codes
 
