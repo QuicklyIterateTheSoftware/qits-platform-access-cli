@@ -35,13 +35,14 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
  * W8's, and nothing here knows more of an event than the path a preset names.
  */
 @CommandLine.Command(name = "wait", mixinStandardHelpOptions = true,
-        subcommands = {WaitCommand.ReleaseRequestWait.class, WaitCommand.WorkWait.class, WaitCommand.CiRunWait.class,
-                WaitCommand.ListCommand.class, WaitCommand.CancelCommand.class},
+        subcommands = {BranchWait.class, WaitCommand.ReleaseRequestWait.class, WaitCommand.WorkWait.class,
+                WaitCommand.CiRunWait.class, WaitCommand.ListCommand.class, WaitCommand.CancelCommand.class},
         description = {"Declare what this holder waits on: a domain event that fits a selection. The platform "
                         + "gives the holder a turn when one arrives, or when the timeout passes. The command "
                         + "returns at once; it never blocks.",
-                "Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets "
-                        + "for the usual waits; list shows the holder's waits and cancel ends one.",
+                "Bare, it takes the event's name and its conditions. branch, release-request, work and ci-run are "
+                        + "presets for the usual waits; list shows the holder's waits and cancel ends one.",
+                "Prefer `wait branch` for your own work: a request id goes stale when it refolds or is superseded.",
                 "Each --when is one group of conditions, separated by spaces, that must all hold. An event that fits "
                         + "any group matches; with no --when, every event of the name does. Conditions: path=value "
                         + "equal, path^=value starts with, path? present, !path absent. A path is the payload's fields "
@@ -68,6 +69,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "qits:desk-admin acts on the agents of its own project and names one with --agent; "
                         + "qits:admin and qits:system act on any agent.",
                 "",
+                "  qits wait branch ticket/qits-123 --until released",
                 "  qits wait release-request qits-ci-service-rr-12",
                 "  qits wait work qits-123 --status VERIFIED --timeout 2h",
                 "  qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a",
@@ -144,8 +146,8 @@ public class WaitCommand extends PlatformCommand {
         boolean json = json(output);
         if (event == null || event.isBlank()) {
             throw new CliFailure("Name the event: --event <Name> with --when <conditions>, or a preset: "
-                    + "`qits wait release-request <id>`, `qits wait work <qits-123> --status <STATUS>`, "
-                    + "`qits wait ci-run <id>`.", CliFailure.USAGE);
+                    + "`qits wait branch <branch> --until released`, `qits wait release-request <id>`, "
+                    + "`qits wait work <qits-123> --status <STATUS>`, `qits wait ci-run <id>`.", CliFailure.USAGE);
         }
         String name = event.strip();
         if (name.length() > WhenGrammar.MAX_EVENT_LENGTH || !EVENT.matcher(name).matches()) {
@@ -314,7 +316,9 @@ public class WaitCommand extends PlatformCommand {
             description = {"Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.",
                     "The same as --event ReleaseRequestStateChanged with one group per final state: "
                             + "releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> "
-                            + "state=<STATE> for a uuid."},
+                            + "state=<STATE> for a uuid.",
+                    "Prefer `wait branch` for your own work: a request id goes stale when it refolds or is "
+                            + "superseded."},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits wait release-request qits-ci-service-rr-12",
                     "  qits wait release-request qits-ci-service-rr-12 --timeout 3h",

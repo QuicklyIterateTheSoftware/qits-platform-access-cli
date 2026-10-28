@@ -588,6 +588,8 @@ Installing it is not part of this version.
         [--since <time>] [--until <time>] [--limit <n>] [-o json]
     qits checkout-daemon [--path <dir>] [--repository <name>] [--once] [--no-submodules]
     qits wait --event <Name> [--when <conditions> …] [--timeout <duration>] [--label <text>]
+    qits wait branch <branch> --until joined|released|live|failed [--repository <name>] \
+        [--project <project>] [--timeout <duration>] [--label <text>]
     qits wait release-request <id> [--timeout <duration>] [--label <text>]
     qits wait work <qualified id> --status <STATUS> [--timeout <duration>] [--label <text>]
     qits wait ci-run <run id> [--timeout <duration>] [--label <text>]
@@ -1453,6 +1455,42 @@ one would make a wait that never fires. `release-request` takes the request's id
 release-request list` shows it (`qits-ci-service-rr-12`, in that case) or its whole uuid. Each
 preset gives a label of its own (`release request qits-ci-service-rr-12 to end`); `--label`
 replaces it.
+
+#### qits wait branch
+
+    qits wait branch <branch> --until joined|released|live|failed [--repository <name>] \
+        [--project <project>] [--timeout <duration>] [--label <text>] [--agent <id> | --desk <project>]
+
+Waits on your own work by its branch, not by the release request that carries it now (epic
+qits-1676). Prefer it to `wait release-request` for your own work: a request id goes stale when the
+request refolds or is superseded, and the branch carries on into the next request (MOVED). The event
+is `BranchDeliveryChanged`, which qits-projects publishes for every step a branch takes. Every group
+carries `branch=<branch>`, plus `repository=<name>` with `--repository` and `projectId=<uuid>` with
+`--project` (an id, slug or name, looked up in the projects service). The groups are ORed:
+
+    --until    with --repository (step)   without (everywhere)        early (step)
+    joined     JOINED, MOVED              JOINED, RELEASED, LIVE      FAILED, CONFLICTED, WITHDRAWN
+    released   RELEASED, LIVE             RELEASED, LIVE              FAILED, CONFLICTED, WITHDRAWN
+    live       LIVE                       LIVE                        FAILED, CONFLICTED, WITHDRAWN
+    failed     FAILED, CONFLICTED         FAILED, CONFLICTED (step)   none
+
+`everywhere` is the least advanced step of the branch across the repositories of its project that
+know it, so `--until released` without a repository fires when the last of them released. An early
+step fires the wait as well, so a broken delivery wakes you instead of leaving you waiting. LIVE is a
+request FINALIZED: deployed for a service, released for a library. The default label is `branch
+<branch> <until> in <repository>`, or `branch <branch> <until> everywhere`.
+
+Before declaring it reads `GET /projects/api/branch-deliveries?branch=…[&repository=…][&project=…]`
+once:
+
+- When the target or an early step already holds, it prints `branch <branch> already <STEP> in
+  <repository> (<request id>)` or `branch <branch> already <STEP> everywhere`, declares nothing and
+  exits 0. With `-o json` it prints what it read.
+- When no repository knows the branch yet, it warns `no repository knows <branch> yet; waiting
+  anyway` on stderr and declares.
+- When the read fails, it declares anyway.
+
+An event that lands between the read and the declaration is caught by qits-workspaces' look-back.
 
 `qits wait list [--state <STATE>]` shows the holder's waits, and `qits wait cancel <wait id>` ends
 one.

@@ -211,7 +211,7 @@ class McpToolCatalogTest {
         assertThat(catalog.tool("update")).as("it replaces a file on the caller's machine").isEmpty();
         assertThat(catalog.tools()).extracting(Tool::name)
                 .contains("projects_list", "projects_delivery", "work_update", "work_dispatch", "work_comment_create",
-                        "release-request_join", "ci_runs", "repositories_create");
+                        "release-request_join", "ci_runs", "repositories_create", "wait_branch");
     }
 
     @Test
