@@ -60,8 +60,8 @@ class LandingPactTest {
      * {@code rotateRunnerRegistrationToken} each answer a one-time registration token; the other
      * runner calls are retired by qits-1534, ahead of the epic qits-1481 feature that drops the
      * landing app's own Runners page and this fixture's copy of its pact (`qits targets` replaces
-     * the group). {@code createAgent} is retired by qits-1705, the owner's ruling to delete
-     * {@code qits workspaces agents create} outright, with no replacement command.
+     * the group). {@code createAgent} is retired by qits-1705: the CLI offers no command for it,
+     * by the owner's ruling.
      */
     static final Set<String> NOT_OFFERED = Set.of("createRunner", "rotateRunnerRegistrationToken", "listRunners",
             "getRunnerHealth", "patchRunner", "greenlightRunner", "requestRunnerHealthcheck",
