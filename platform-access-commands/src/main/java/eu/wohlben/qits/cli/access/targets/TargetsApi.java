@@ -47,7 +47,7 @@ final class TargetsApi {
     }
 
     /**
-     * {@code createTarget}: {@code {name, description?, reservations?, minimums? (deprecated), slots?}}, a 201 {@code {target,
+     * {@code createTarget}: {@code {name, description?, reservations?, slots?}}, a 201 {@code {target,
      * registrationToken, installLine}}. {@code slots} is the install line's QITS_SYSTEM_RUNNER_SLOTS;
      * left out, the service picks max(reported total, the reservations' sum).
      */

@@ -38,8 +38,7 @@ Commands:
   harness's sign-in on the target through the API and waits for it to report signed in.
   `qits targets list` shows slots per type as used/reserved and then used/total. A reservation
   holds slots for one type and is not a limit: `ws 5/1` is valid while shared slots are free. The
-  total is the target's real slot count. It reads `reservations`, or `minimums` from an older
-  qits-system.
+  total is the target's real slot count. It reads `reservations`.
 - `qits git-login` signs this workstation in for Git pushes to the platform's git host, and
   `qits git-credential` is the Git credential helper that uses that sign-in — and, inside the
   platform, the workspace token or the credential the process was handed instead.
@@ -616,10 +615,10 @@ Installing it is not part of this version.
     qits workspaces agents plugins list --workspace <n>
     qits workspaces agents plugins install <plugin> --workspace <n>
     qits targets list | show --target <name|id>
-    qits targets create --name <name> [--description <text>] [--min-ci <n>] [--min-workspace <n>] \
-        [--min-desk <n>]
+    qits targets create --name <name> [--description <text>] [--reserved-ci <n>] [--reserved-workspace <n>] \
+        [--reserved-desk <n>]
     qits targets rotate-token --target <name|id>
-    qits targets update --target <name|id> [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] \
+    qits targets update --target <name|id> [--reserved-ci <n>] [--reserved-workspace <n>] [--reserved-desk <n>] \
         [--description <text>]
     qits targets greenlight|healthcheck|login-check|delete --target <name|id>
     qits targets leases [--target <name|id>] [--type ci|workspace|desk] [--state <state>]
@@ -1539,11 +1538,11 @@ targets list` shows both); `--target` resolves a name by reading `listTargets`.
     qits targets list                             GET  /system/api/targets
     qits targets show --target <name|id>          GET  /system/api/targets/{id}
     qits targets create --name <name>             POST /system/api/targets
-      [--description <text>] [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] [--slots <n>]
+      [--description <text>] [--reserved-ci <n>] [--reserved-workspace <n>] [--reserved-desk <n>] [--slots <n>]
     qits targets rotate-token --target <name|id>  POST /system/api/targets/{id}/registration-token
       [--slots <n>]
     qits targets update --target <name|id>        PATCH /system/api/targets/{id}
-      [--min-ci <n>] [--min-workspace <n>] [--min-desk <n>] [--description <text>]
+      [--reserved-ci <n>] [--reserved-workspace <n>] [--reserved-desk <n>] [--description <text>]
     qits targets greenlight|healthcheck|login-check
                                                    POST /system/api/targets/{id}/<verb> (no body)
     qits targets delete --target <name|id>        DELETE /system/api/targets/{id}
@@ -1568,9 +1567,8 @@ lease already ENDING that an operator ends goes ENDED at once (epic qits-1621). 
 roles.
 
 `qits targets create` declares a target (`{name, description?, reservations?: {ci, workspace, desk},
-slots?}`; a reservation left out is not sent, and with none given `reservations` is left out; the
-same values also go as the deprecated `minimums` for an older qits-system, qits-1682) and `qits
-targets rotate-token` mints a new registration token and its install line. On a target whose
+slots?}`; a reservation left out is not sent, and with none given `reservations` is left out) and
+`qits targets rotate-token` mints a new registration token and its install line. On a target whose
 runner has not registered yet this is the first token's replacement; on a REGISTERED target
 running the new install line reinstalls its runner under the same target — the id is kept, and the
 old runner's client is decommissioned once the new one registers. Both commands take an optional

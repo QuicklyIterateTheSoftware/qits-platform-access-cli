@@ -4016,9 +4016,9 @@ qits targets create --name <name> [--description <text>] [--output table|json] [
 | `--name <name>` | Required. The new target's name. |
 | `--description <text>` | Free text. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--reserved-ci, --min-ci <n>` | Slots reserved for CI. --min-ci is the deprecated name. |
-| `--reserved-desk, --min-desk <n>` | Slots reserved for the desk. --min-desk is the deprecated name. |
-| `--reserved-workspace, --min-workspace <n>` | Slots reserved for workspaces. --min-workspace is the deprecated name. |
+| `--reserved-ci <n>` | Slots reserved for CI. |
+| `--reserved-desk <n>` | Slots reserved for the desk. |
+| `--reserved-workspace <n>` | Slots reserved for workspaces. |
 | `--slots <n>` | The slots total the install line asks the runner for; default: the reported total, or the reservations' sum. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
@@ -4091,9 +4091,9 @@ qits targets update --target <name|id> [--description <text>] [--output table|js
 | `--target <name\|id>` | Required. The target's name or id. |
 | `--description <text>` | Free text. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--reserved-ci, --min-ci <n>` | Slots reserved for CI. --min-ci is the deprecated name. |
-| `--reserved-desk, --min-desk <n>` | Slots reserved for the desk. --min-desk is the deprecated name. |
-| `--reserved-workspace, --min-workspace <n>` | Slots reserved for workspaces. --min-workspace is the deprecated name. |
+| `--reserved-ci <n>` | Slots reserved for CI. |
+| `--reserved-desk <n>` | Slots reserved for the desk. |
+| `--reserved-workspace <n>` | Slots reserved for workspaces. |
 | `--system-url <url>` | qits-system-service's base URL, without /system. Default: QITS_SYSTEM_URL, else derived from the idp address, like the other services. |
 
 ### Examples
@@ -4103,7 +4103,7 @@ qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --
 qits targets update --target localhost --description 'The build machine under the desk'
 ```
 
-- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL (MINIMUMS_EXCEED_TOTAL from an older qits-system): their sum is above the target's slots total.
+- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL: their sum is above the target's slots total.
 
 ### Exit codes
 
