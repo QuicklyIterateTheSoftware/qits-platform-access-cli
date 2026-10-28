@@ -1300,10 +1300,12 @@ than at the commit the release recorded. `--no-submodules` holds the root alone.
   tries again.
 - **Git authentication stays the credential helper's.** No token is put in a URL or an
   `http.extraHeader`: the helper is pinned to one host on purpose, and a machine credential handed
-  to a submodule remote somebody else authored is a way out for it. At the start it checks there is
-  one — `qits git-login` on a workstation, the injected `QITS_GIT_AUTH_HOST` in a container — and
-  refuses with exit code 2 rather than hanging on a password prompt at the first release. An origin
-  that is a local path has no host and needs none.
+  to a submodule remote somebody else authored is a way out for it. At the start it checks Git has
+  a `credential.helper` for the origin — `qits git-login` on a workstation, the image's helper in a
+  container — and refuses with exit code 2 rather than hanging on a password prompt at the first
+  release. An origin that is a local path has no host and needs none.
+- With `QITS_PLATFORM=true` and no `QITS_TOKEN` it refuses at the start with exit code 2, naming
+  `QITS_TOKEN`, before any git work.
 - Every note is one line on stderr with a time. Every release the checkout is moved to is one line
   on stdout, so `qits checkout-daemon --path . | while read v; do ...; done` works.
 - A dropped connection or a 5xx is followed by a reconnect, waiting 1, 2, 4 … up to 30 seconds; a
@@ -1641,15 +1643,14 @@ the helper list for this host:
 `qits git-login` prints these two lines with the git host and its own path. `--configure` runs them.
 Running them again changes nothing.
 
-Inside the platform the setup is not per host: the workspace image points a *global*
-`credential.helper` at `qits git-credential`, so Git runs it for every http remote a checked-out
-repository names, submodule remotes included. Which host it will answer is settled by the
-environment instead — see below.
+An agent container does not run this command at all: its image points a *global*
+`credential.helper` at its own shell helper, which answers the one host in `QITS_GIT_AUTH_HOST`
+with the container's `QITS_TOKEN`.
 
 ### qits git-credential
 
 Git sends the token as HTTP Basic `oauth2:<access token>`; the edge checks it and forwards it to the
-git host. The command has the CLI's two homes.
+git host. It answers differently in each of the CLI's homes.
 
 On a workstation, the sign-in of `qits git-login` in `git.json` is what answers:
 
@@ -1664,22 +1665,12 @@ On a workstation, the sign-in of `qits git-login` in `git.json` is what answers:
 - A refresh the idp refuses prints `Git sign-in ended — run `qits git-login`.` on stderr and
   nothing on stdout.
 
-Inside the platform there is no sign-in and none is needed: `qits git-login` wants a browser and is
-refused there, so `git.json` never exists. In-platform (`QITS_PLATFORM=true`) the credential the
-process was handed answers instead:
+With a workspace token (`QITS_TOKEN`), `get` answers the public git host
+`githost.qits.<QITS_DOMAIN>` with that token and no other host; `store` and `erase` do nothing and
+no file is written.
 
-- `get`: for the injected git host, prints `username=oauth2` and that bearer as `password`. The
-  host is `QITS_GIT_AUTH_HOST` (a bare authority, `githost.dev.internal:8080`), and it is compared
-  as a normalised origin, so an explicit default port on either side still matches.
-- Any other host gets no answer, and the credential is not touched for it: the helper is global,
-  and the platform's bearer is not handed to a host someone else wrote into a remote. A missing or
-  unreadable `QITS_GIT_AUTH_HOST` therefore answers nothing at all, rather than answering
-  everything.
-- `store` and `erase` do nothing, and nothing is written: neither `git.json` nor `git.json.lock` is
-  created. The agent's config folder is becoming a git repository, and a machine credential
-  committed to a branch is a leak with a history.
-- A credential that cannot be had (none was handed) says why on stderr and still exits `0`, so Git
-  carries on with its other helpers.
+With `QITS_PLATFORM=true` and no `QITS_TOKEN`, every action prints nothing, reads and writes no
+file and exits `0`, so Git asks its other helpers.
 
 `git-credential get` is the one place `qits` prints a token, because that is how Git's
 helper protocol works. stderr never carries one.

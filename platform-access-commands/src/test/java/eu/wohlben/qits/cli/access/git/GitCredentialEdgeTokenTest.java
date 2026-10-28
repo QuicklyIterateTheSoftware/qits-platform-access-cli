@@ -78,7 +78,7 @@ class GitCredentialEdgeTokenTest {
         assertThat(credential("get", request("https", "githost.qits.example.org"))).isEqualTo(nothing);
         assertThat(credential("get", request("https", "githost.qits.wohlben.eu:8443"))).isEqualTo(nothing);
         assertThat(credential("get", request("http", "githost.qits.wohlben.eu"))).isEqualTo(nothing);
-        // The injected host of the other home means nothing here.
+        // The image shell helper's QITS_GIT_AUTH_HOST means nothing to this command.
         env.put("QITS_GIT_AUTH_HOST", "githost.dev.internal:8080");
         assertThat(credential("get", request("http", "githost.dev.internal:8080"))).isEqualTo(nothing);
     }

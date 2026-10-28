@@ -10,6 +10,7 @@ import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.session.Session;
 import eu.wohlben.qits.cli.access.session.SessionFile;
+import eu.wohlben.qits.cli.session.Mode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -487,6 +488,22 @@ class CheckoutDaemonTest {
         assertThat(run("--once")).isEqualTo(2);
 
         assertThat(err()).contains("qits git-login").contains("githost.dev.invalid");
+        assertThat(platform.requests("GET", "/events/api/events")).isEmpty();
+    }
+
+    /**
+     * {@code QITS_PLATFORM} by hand and no {@code QITS_TOKEN}: refused before any git work. The
+     * origin names no repository and has no helper, so reaching Git at all would fail differently.
+     */
+    @Test
+    void inThePlatformItRefusesAtTheStartNamingTheToken() throws Exception {
+        git(work, "remote", "set-url", "origin", "https://githost.dev.invalid/git/" + PROJECT);
+        env.put(Mode.OVERRIDE, "true");
+
+        assertThat(run("--once")).isEqualTo(2);
+
+        assertThat(err()).contains(Mode.TOKEN).doesNotContain("--repository").doesNotContain("credential helper");
+        assertThat(out()).isEmpty();
         assertThat(platform.requests("GET", "/events/api/events")).isEmpty();
     }
 

@@ -7,6 +7,7 @@ import eu.wohlben.qits.cli.access.platform.PlatformClient;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.PlatformUrls;
 import eu.wohlben.qits.cli.session.Credential;
+import eu.wohlben.qits.cli.session.Mode;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
 import picocli.CommandLine;
@@ -38,8 +39,9 @@ import java.util.Locale;
                 "",
                 "- A checkout with local changes is never touched: it is somebody's work. It says so and keeps "
                         + "watching; with --once that is exit code 1. It never stashes, resets or merges.",
-                "- Git authentication stays the credential helper's: run `qits git-login` on a workstation, and in a "
-                        + "container the injected host (QITS_GIT_AUTH_HOST) answers. No token is ever put in a URL.",
+                "- Git authentication stays the credential helper's: run `qits git-login` on a workstation; in a "
+                        + "container the image's helper answers. No token is ever put in a URL.",
+                "- With QITS_PLATFORM set and no QITS_TOKEN it refuses at the start, before any git work.",
                 "- --repository is needed when the origin addresses the repository by its id (/git/<repository id>), "
                         + "which is the git host's internal storage scheme and names nothing."},
         exitCodeListHeading = HelpText.EXIT_CODES,
@@ -47,8 +49,13 @@ import java.util.Locale;
                 "1:The platform refused the stream (401, 403 or another 4xx), or with --once the checkout has local "
                         + "changes or a git command failed.",
                 "2:Used wrongly (the origin names no repository and --repository was not given), Git has no "
-                        + "credential for the origin's host, not signed in, or the session ended."})
+                        + "credential for the origin's host, not signed in, the session ended, or QITS_PLATFORM is "
+                        + "set without QITS_TOKEN."})
 public class CheckoutDaemonCommand extends PlatformCommand {
+
+    static final String IN_PLATFORM = "checkout-daemon does not run in the platform (" + Mode.OVERRIDE + "): "
+            + "it follows releases with a workspace token, so give it " + Mode.TOKEN + ", or run it on a workstation "
+            + "after `qits git-login`.";
 
     @CommandLine.Option(names = "--path", paramLabel = "<dir>", defaultValue = ".",
             description = "The checkout to hold. Default: the directory the command runs in.")
@@ -74,11 +81,16 @@ public class CheckoutDaemonCommand extends PlatformCommand {
 
     @Override
     protected int execute(CliContext context) throws CliFailure, InterruptedException {
+        if (context.mode() == Mode.IN_PLATFORM) {
+            // Before any git work: nothing that sets QITS_PLATFORM runs this command, and the
+            // checkout's fetches need a credential Git can be handed.
+            throw new CliFailure(IN_PLATFORM, CliFailure.USAGE);
+        }
         Path dir = Path.of(path == null || path.isBlank() ? "." : path.strip());
         Notes notes = new Notes(context.err(), context.clock());
         Checkout.Origin origin = Checkout.origin(dir, context.env(), repository);
         // Both of these refuse now rather than at the first release, which can be days away.
-        Checkout.requireCredentialHelper(dir, context.env(), origin, context.mode().inPlatform());
+        Checkout.requireCredentialHelper(dir, context.env(), origin);
         Credential credential = context.credential();
         credential.bearer();
 

@@ -6,6 +6,7 @@ import eu.wohlben.qits.cli.access.TestCli;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.session.ExclusiveLock;
+import eu.wohlben.qits.cli.session.Mode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,9 +64,18 @@ class GitCredentialCommandTest {
     }
 
     private Result credential(String action, String stdin) {
+        return credential(Map.of("XDG_CONFIG_HOME", home.toString()), action, stdin);
+    }
+
+    /** {@code QITS_PLATFORM} set by hand, no {@code QITS_TOKEN}: the in-platform home. */
+    private Result platformSet(String action, String stdin) {
+        return credential(Map.of("XDG_CONFIG_HOME", home.toString(), Mode.OVERRIDE, "true"), action, stdin);
+    }
+
+    private Result credential(Map<String, String> env, String action, String stdin) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-        CliContext context = new CliContext(Map.of("XDG_CONFIG_HOME", home.toString()),
+        CliContext context = new CliContext(env,
                 new ByteArrayInputStream(stdin.getBytes(StandardCharsets.UTF_8)),
                 new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
                 time, time, TokenClient::new, stop -> { });
@@ -85,6 +95,33 @@ class GitCredentialCommandTest {
 
     private static String answer(String token) {
         return "username=oauth2\npassword=" + token + "\n\n";
+    }
+
+    /**
+     * In-platform mode has no credential for Git: nothing that sets {@code QITS_PLATFORM} runs this
+     * command. A sign-in file that happens to sit there is a workstation's, never read here — a
+     * fresh one would be printed and a stale one refreshed if it were.
+     */
+    @Test
+    void inThePlatformGetAnswersNothingAndNeverReadsTheSignInFile() throws Exception {
+        seed(Duration.ofSeconds(10), idp.issueRefreshToken(), Duration.ofDays(30));
+        byte[] before = Files.readAllBytes(store.path());
+
+        assertThat(platformSet("get", REQUEST)).isEqualTo(new Result(0, "", ""));
+
+        assertThat(idp.requests).isEmpty();
+        assertThat(Files.readAllBytes(store.path())).isEqualTo(before);
+    }
+
+    @Test
+    void inThePlatformNoActionWritesAFile() {
+        String withPassword = REQUEST.replace("\n\n", "\nusername=oauth2\npassword=something\n\n");
+        for (String action : new String[] {"get", "store", "erase"}) {
+            assertThat(platformSet(action, withPassword)).as(action).isEqualTo(new Result(0, "", ""));
+        }
+
+        assertThat(store.path()).doesNotExist();
+        assertThat(store.lockPath()).doesNotExist();
     }
 
     @Test

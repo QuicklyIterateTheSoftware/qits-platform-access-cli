@@ -4,6 +4,7 @@ import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
+import eu.wohlben.qits.cli.session.Mode;
 import eu.wohlben.qits.cli.session.PlatformEndpoints;
 import eu.wohlben.qits.cli.tui.api.Interaction;
 import eu.wohlben.qits.cli.tui.api.TuiCommand;
@@ -25,12 +26,15 @@ import java.util.Optional;
  * <b>{@code get} is the one place {@code qits} prints a token</b>, because the protocol is exactly
  * that. stderr never carries one.
  * <p>
- * It has the CLI's two homes like every other command. On a workstation the sign-in of
- * {@code qits git-login} answers, from {@code git.json}. Inside the platform there is no sign-in to
- * read — {@code qits git-login} needs a browser and is refused there — so the credential the
- * process was handed answers instead, for the injected git host and no other. In the token home
- * — a runner node, or an admin or editor workspace placed directly on qits-containers — the
- * workspace token answers, for the public git host {@code githost.qits.<QITS_DOMAIN>} and no other.
+ * On a workstation the sign-in of {@code qits git-login} answers, from {@code git.json}. In the
+ * token home — every agent container, a runner node, or an admin or editor workspace placed
+ * directly on qits-containers — the workspace token answers, for the public git host
+ * {@code githost.qits.<QITS_DOMAIN>} and no other.
+ * <p>
+ * In-platform mode ({@code QITS_PLATFORM} without {@code QITS_TOKEN}) answers nothing: no process
+ * that sets it runs this command, so there is no credential here worth handing to Git, and a
+ * workstation's sign-in file is not this home's to read. Every action prints nothing and exits 0,
+ * so Git asks its next helper.
  */
 @TuiCommand(interaction = Interaction.LOCAL)
 @CommandLine.Command(name = "git-credential", mixinStandardHelpOptions = true,
@@ -39,29 +43,23 @@ import java.util.Optional;
                 "On a workstation `qits git-login` sets it up: get prints that sign-in's access token, "
                         + "refreshing it first when needed. store is ignored. erase drops the cached access token "
                         + "and keeps the sign-in.",
-                "Inside the platform there is no sign-in and none is needed: get answers the injected git host "
-                        + "(QITS_GIT_AUTH_HOST) with the credential the process was handed, and answers no other host. "
-                        + "store and erase do nothing there, and no file is written.",
                 "With a workspace token (QITS_TOKEN) get answers https://githost.qits.<QITS_DOMAIN> with that "
-                        + "token, and answers no other host; store and erase do nothing and no file is written."},
+                        + "token, and answers no other host; store and erase do nothing and no file is written.",
+                "With QITS_PLATFORM set and no QITS_TOKEN it answers nothing: every action prints nothing, "
+                        + "writes no file and exits 0, so Git asks its other helpers."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
                 "  git config --global --get-all credential.https://githost.qits.wohlben.eu.helper",
                 "",
                 "The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, "
-                        + "because that is Git's helper protocol.",
-                "Inside the platform Git is set up for every host at once, so the injected host is checked before "
-                        + "the credential is touched: the platform's bearer is never handed to a host someone else named."},
+                        + "because that is Git's helper protocol."},
         exitCodeListHeading = HelpText.EXIT_CODES,
-        exitCodeList = {"0:Done. For a host without a sign-in, and inside the platform for any host but the injected "
-                + "one, it prints nothing and Git asks its other helpers. A credential that cannot be had says why "
-                + "on stderr and still exits 0, so Git carries on.",
+        exitCodeList = {"0:Done. For a host without a sign-in, and with a workspace token for any host but the "
+                + "public git host, it prints nothing and Git asks its other helpers. A credential that cannot be "
+                + "had says why on stderr and still exits 0, so Git carries on.",
                 "1:The sign-in file cannot be read or written.",
                 "2:No action named."})
 public class GitCredentialCommand extends PlatformCommand {
-
-    /** The one git host a container may be handed its bearer for. A bare authority, port included. */
-    static final String GIT_HOST = "QITS_GIT_AUTH_HOST";
 
     @CommandLine.Parameters(index = "0", paramLabel = "<get|store|erase>", description = "What Git asks for.")
     String action;
@@ -84,8 +82,9 @@ public class GitCredentialCommand extends PlatformCommand {
         if (context.mode().edgeToken()) {
             return withToken(context, origin);
         }
-        if (context.mode().inPlatform()) {
-            return insidePlatform(context, protocol, origin);
+        if (context.mode() == Mode.IN_PLATFORM) {
+            // Nothing here is Git's to have, and git.json is a workstation's file, not this home's.
+            return 0;
         }
         GitAccess access = new GitAccess(GitCredentialFile.fromEnvironment(context.env()), context.clock());
         try {
@@ -104,31 +103,6 @@ public class GitCredentialCommand extends PlatformCommand {
             }
         } catch (IOException e) {
             throw new CliFailure(e.getMessage(), CliFailure.FAILED);
-        }
-        return 0;
-    }
-
-    /**
-     * The in-platform answer. No store, no lock, nothing on disk: the credential is the one the
-     * process was handed and lives in memory, and the agent's config folder is becoming a git
-     * repository — a machine credential committed to a branch is a leak with a history.
-     * <p>
-     * {@code store} and {@code erase} therefore have nothing to do. They must not even reach
-     * {@link GitCredentialFile}, which would leave {@code git.json.lock} behind.
-     */
-    private int insidePlatform(CliContext context, String protocol, String origin) throws InterruptedException {
-        if (!"get".equals(action) || !injectedHost(context.env(), protocol).filter(origin::equals).isPresent()) {
-            return 0;
-        }
-        try {
-            context.out().print("username=oauth2\npassword=" + context.credential().bearer() + "\n\n");
-            context.out().flush();
-        } catch (CliFailure noCredential) {
-            // Git's helper protocol is silence, so a credential that cannot be had is not this
-            // command's failure: it says why on stderr, prints nothing, and exits 0 so Git is free
-            // to ask its other helpers. A refusal never holds the token.
-            context.err().println(noCredential.getMessage());
-            context.err().flush();
         }
         return 0;
     }
@@ -156,29 +130,6 @@ public class GitCredentialCommand extends PlatformCommand {
             context.err().flush();
         }
         return 0;
-    }
-
-    /**
-     * The one host this credential may be handed to, in the same normal form the request is read
-     * into, so a git host configured with an explicit default port still matches Git's bare
-     * {@code host} line.
-     * <p>
-     * <b>It fails closed.</b> The agent image sets a <i>global</i> {@code credential.helper}, so
-     * Git runs this for every http remote a checked-out repository names, submodule remotes that
-     * somebody else authored included. With no variable to compare against, "any host" would hand
-     * the platform's bearer to whoever wrote the remote, so a missing or unreadable value answers
-     * nothing at all.
-     */
-    private static Optional<String> injectedHost(Map<String, String> env, String protocol) {
-        String told = env.get(GIT_HOST);
-        if (told == null || told.isBlank()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(GitOrigin.normalize(told.contains("://") ? told : protocol + "://" + told.strip()));
-        } catch (IllegalArgumentException notAnHttpHost) {
-            return Optional.empty();
-        }
     }
 
     static Map<String, String> readRequest(InputStream in) throws IOException {
