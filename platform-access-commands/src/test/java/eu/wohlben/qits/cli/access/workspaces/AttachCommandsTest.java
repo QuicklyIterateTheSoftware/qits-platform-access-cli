@@ -92,6 +92,7 @@ class AttachCommandsTest {
                     LocalTerminal.Factory fake = given -> terminal;
                     switch (made) {
                         case WorkspacesCommand.AttachCommand attach -> attach.terminals = fake;
+                        case AgentCommands.AttachCommand attach -> attach.terminals = fake;
                         case WorkspaceAgentsCommand.SignInOpenCommand open -> open.terminals = fake;
                         case WorkspaceAgentsCommand.HarnessCommand harness -> harness.terminals = fake;
                         default -> {
@@ -131,6 +132,38 @@ class AttachCommandsTest {
             assertThat(upgrade.authorization()).isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
         });
         assertThat(server.connections.getFirst().texts).as("stdin is no terminal: nothing is sent").isEmpty();
+    }
+
+    @Test
+    void agentsAttachOpensTheAgentsTerminalThroughTheAgentProxy() throws Exception {
+        terminal = new FakeTerminal();
+        server.scripts.add(c -> {
+            c.accept();
+            c.awaitText();
+            c.send("> ");
+            c.close(1000, "");
+        });
+
+        Result attached = run("agents", "attach", AGENT);
+
+        assertThat(attached.exit()).as(attached.err()).isZero();
+        assertThat(server.upgrades).singleElement().satisfies(upgrade -> {
+            assertThat(upgrade.path()).isEqualTo("/workspaces/agent/" + AGENT + "/terminal");
+            assertThat(upgrade.authorization()).isEqualTo("Bearer " + FakeIdp.SECRET + "access-0");
+        });
+        assertThat(server.connections.getFirst().texts.getFirst()).contains("\"type\":\"resize\"");
+        assertThat(attached.out()).isEqualTo("> ");
+        assertThat(attached.err()).contains("attached to agent " + AGENT).contains("the harness");
+        assertThat(((FakeTerminal) terminal).restored()).isTrue();
+    }
+
+    @Test
+    void agentsAttachNamesTheAgent() {
+        Result none = run("agents", "attach");
+
+        assertThat(none.exit()).isEqualTo(2);
+        assertThat(none.err()).contains("Name the agent");
+        assertThat(server.upgrades).isEmpty();
     }
 
     @Test
@@ -232,8 +265,9 @@ class AttachCommandsTest {
             Result open = run("workspaces", "agents", "sign-in", "open", "--workspace", "1", "--attach");
             Result harness = run("workspaces", "agents", "harness", AGENT, "--workspace", "1", "--attach");
             Result attach = run("workspaces", "attach", COMMAND, "--workspace", "1");
+            Result agent = run("agents", "attach", AGENT);
 
-            for (Result refused : new Result[] {open, harness, attach}) {
+            for (Result refused : new Result[] {open, harness, attach, agent}) {
                 assertThat(refused.exit()).isEqualTo(2);
                 assertThat(refused.err()).contains("needs a terminal");
             }

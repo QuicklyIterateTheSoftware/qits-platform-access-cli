@@ -224,6 +224,11 @@ class McpToolCatalogTest {
         assertThat(byCommand.get("qits workspaces attach").reason())
                 .isEqualTo("needs a terminal; runs until the command it attaches to ends");
         assertThat(catalog.instructions()).contains(byCommand.get("qits workspaces attach").line());
+        assertThat(catalog.tool("agents_attach")).isEmpty();
+        assertThat(byCommand.get("qits agents attach").interaction()).isEqualTo(Interaction.TERMINAL);
+        // qits agents itself is no longer LOCAL (epic qits-1667): its verbs are tools, its claude group is not.
+        assertThat(catalog.tool("agents_stop")).isPresent();
+        assertThat(catalog.tool("agents_claude_hook_work-links")).isEmpty();
         assertThat(catalog.tool("repositories_remote-login")).isEmpty();
         assertThat(byCommand.get("qits repositories remote-login").interaction()).isEqualTo(Interaction.TERMINAL);
         assertThat(catalog.instructions()).contains(byCommand.get("qits repositories remote-login").line());
@@ -386,7 +391,8 @@ class McpToolCatalogTest {
                 "workspaces_history", "workspaces_log", "workspaces_agents_list", "workspaces_agents_draft_show",
                 "workspaces_agents_chat", "workspaces_agents_harness", "workspaces_agents_files_list",
                 "workspaces_agents_files_read", "workspaces_agents_files_detect", "workspaces_agents_sign-in_status",
-                "workspaces_agents_plugins_list");
+                "workspaces_agents_plugins_list", "agents_list", "agents_show", "agents_sessions", "agents_transcript",
+                "agents_chat", "agents_files_list", "agents_files_read", "agents_files_detect", "agents_draft_show");
         // The default is what keeps a new command out: no marker, or a marker without an effect, is a write.
         assertThat(TuiCommands.effectOf(new Object())).isEqualTo(Effect.WRITE);
         assertThat(TuiCommands.effectOf(new eu.wohlben.qits.cli.access.projects.WorkCommand.CreateCommand()))
