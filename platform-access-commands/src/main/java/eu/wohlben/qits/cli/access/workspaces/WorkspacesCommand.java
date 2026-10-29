@@ -40,7 +40,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
  * here; the agents are {@link WorkspaceAgentsCommand}. The nodes slots are placed on are
  * {@code qits targets} (epic qits-1481, qits-1534): {@code qits workspaces runners} is retired.
  * <p>
- * Not {@code qits agents}: that name is the local Claude Code harness group.
+ * The agents' own verbs are {@code qits agents} ({@link AgentCommands}, epic qits-1667); most of
+ * {@code qits workspaces agents} is their deprecated alias for one release.
  */
 @CommandLine.Command(name = "workspaces", mixinStandardHelpOptions = true,
         subcommands = {WorkspacesCommand.ListCommand.class, WorkspacesCommand.ShowCommand.class,
@@ -69,7 +70,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads "
                         + "the chat's transcript and sends prompts.",
                 "- --workspaces-url, --projects-url and --output may come before or after the command."})
-public class WorkspacesCommand implements Runnable {
+public class WorkspacesCommand implements Runnable, WorkspacesAccess {
 
     private static final Pattern UUID =
             Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
@@ -97,20 +98,36 @@ public class WorkspacesCommand implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Name a command.");
     }
 
-    WorkspacesApi api(CliContext context) throws CliFailure, InterruptedException {
-        return new WorkspacesApi(new PlatformClient(context.credential()),
-                PlatformUrls.workspaces(workspacesUrl, context.env(), context.idpUrl()));
+    @Override
+    public WorkspacesApi api(CliContext context) throws CliFailure, InterruptedException {
+        return api(context, workspacesUrl);
     }
 
-    boolean json() throws CliFailure {
+    @Override
+    public boolean json() throws CliFailure {
         return Json.wanted(output);
+    }
+
+    JsonNode workItem(CliContext context, String given) throws CliFailure, InterruptedException {
+        return workItem(context, projectsUrl, given);
+    }
+
+    @Override
+    public String workId(CliContext context, String given) throws CliFailure, InterruptedException {
+        return workId(context, projectsUrl, given);
+    }
+
+    static WorkspacesApi api(CliContext context, String workspacesUrl) throws CliFailure, InterruptedException {
+        return new WorkspacesApi(new PlatformClient(context.credential()),
+                PlatformUrls.workspaces(workspacesUrl, context.env(), context.idpUrl()));
     }
 
     /**
      * A work item's id, as qits-workspaces keys agents by it: a uuid is taken as it is, anything else
      * (qits-123) is looked up in the projects service. The item is answered whole, or null for a uuid.
      */
-    JsonNode workItem(CliContext context, String given) throws CliFailure, InterruptedException {
+    static JsonNode workItem(CliContext context, String projectsUrl, String given)
+            throws CliFailure, InterruptedException {
         String wanted = given == null ? "" : given.strip();
         if (wanted.isEmpty()) {
             throw new CliFailure("Name the work item: its qualified id (qits-123) or its id.", CliFailure.USAGE);
@@ -126,8 +143,8 @@ public class WorkspacesCommand implements Runnable {
         return item;
     }
 
-    String workId(CliContext context, String given) throws CliFailure, InterruptedException {
-        JsonNode item = workItem(context, given);
+    static String workId(CliContext context, String projectsUrl, String given) throws CliFailure, InterruptedException {
+        JsonNode item = workItem(context, projectsUrl, given);
         return item == null ? given.strip() : text(item, "id");
     }
 
@@ -135,11 +152,17 @@ public class WorkspacesCommand implements Runnable {
         return value != null && UUID.matcher(value.strip()).matches();
     }
 
+    @Override
+    public String projectId(CliContext context, String given) throws CliFailure, InterruptedException {
+        return projectId(context, projectsUrl, given);
+    }
+
     /**
      * {@code --project}'s value resolved to the project's uuid, the way other commands resolve
      * their own {@code --project} (over {@link ProjectsApi#project}).
      */
-    String projectId(CliContext context, String given) throws CliFailure, InterruptedException {
+    static String projectId(CliContext context, String projectsUrl, String given)
+            throws CliFailure, InterruptedException {
         String wanted = given == null ? "" : given.strip();
         if (wanted.isEmpty()) {
             throw new CliFailure("Name the project: --project <id, slug or name>.", CliFailure.USAGE);
@@ -319,9 +342,12 @@ public class WorkspacesCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
-            description = {"One workspace slot: its container (and its error), placement and daemon. The "
-                    + "status strip of a slot's page.",
-                    "GET /workspaces/api/workspaces/{id}. " + Doors.READ},
+            description = {"One workspace slot: its container (and its error), placement and daemon, then the live "
+                    + "agents placed in it, as `qits agents list` prints them. The status strip of a slot's page.",
+                    "GET /workspaces/api/workspaces/{id}, then GET /workspaces/api/workspaces/{id}/agents. With -o "
+                            + "json, only the first answer, as it always was; the agents' own JSON is `qits agents "
+                            + "list --workspace <n> -o json`. A service too old to list a slot's agents (HTTP 404) "
+                            + "leaves them out. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits workspaces show 1", "  qits workspaces show 1 -o json"},
             exitCodeListHeading = HelpText.EXIT_CODES,
@@ -347,6 +373,18 @@ public class WorkspacesCommand implements Runnable {
             JsonNode slot = answer.path("workspace").isObject() ? answer.get("workspace") : answer;
             context.out().println("Workspace slot " + id);
             printSlot(context.out(), slot);
+            JsonNode agents;
+            try {
+                agents = parent.api(context).workspaceAgents(id);
+            } catch (CliFailure failure) {
+                if (failure.status() != 404) {
+                    throw failure;
+                }
+                // The slot answered a moment ago, so a 404 here is a service without the door yet.
+                return 0;
+            }
+            context.out().println();
+            AgentViews.printAgents(context.out(), entries(agents, "agents", null), "No agents are placed in it.");
             return 0;
         }
     }
@@ -650,10 +688,20 @@ public class WorkspacesCommand implements Runnable {
     static int attach(CliContext context, WorkspacesApi api, long slot, String commandId,
                       LocalTerminal.Factory terminals) throws CliFailure, InterruptedException {
         refuseWithoutATerminal();
-        URI uri = api.terminalSocket(slot, commandId);
+        return attach(context, api, api.terminalSocket(slot, commandId), TerminalAttach.Subject.command(commandId),
+                terminals);
+    }
+
+    /**
+     * Attaches to the terminal socket at {@code uri}, named {@code subject} in the log lines: the
+     * container proxy's command terminal above, or {@code qits agents attach}'s agent proxy terminal.
+     */
+    static int attach(CliContext context, WorkspacesApi api, URI uri, TerminalAttach.Subject subject,
+                      LocalTerminal.Factory terminals) throws CliFailure, InterruptedException {
+        refuseWithoutATerminal();
         // Fails at once without a credential, rather than in the reconnect loop.
         context.credential().bearer();
-        TerminalAttach attachment = new TerminalAttach(api.client(), uri, TerminalAttach.Subject.command(commandId), terminals.open(context),
+        TerminalAttach attachment = new TerminalAttach(api.client(), uri, subject, terminals.open(context),
                 context.out(), context.err(), context.sleeper(), TerminalAttach.BACKOFF, TerminalAttach.SIZE_POLL);
         context.onStop().accept(attachment::stop);
         return attachment.run();
@@ -662,8 +710,8 @@ public class WorkspacesCommand implements Runnable {
     /** A tool call in the MCP service would wait for as long as the terminal lives, with nobody typing. */
     static void refuseWithoutATerminal() throws CliFailure {
         if (CliContext.inMcpService()) {
-            throw new CliFailure("Attaching needs a terminal, and the MCP service has none: run `qits workspaces "
-                    + "attach` in a terminal.", CliFailure.USAGE);
+            throw new CliFailure("Attaching needs a terminal, and the MCP service has none: run `qits agents attach` "
+                    + "or `qits workspaces attach` in a terminal.", CliFailure.USAGE);
         }
     }
 

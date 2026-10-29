@@ -78,6 +78,11 @@ public final class TerminalAttach {
         public static Subject command(String commandId) {
             return new Subject("command " + SafeText.line(commandId), "the command");
         }
+
+        /** An agent's harness, through the agent proxy: "attached to agent {id}", "the harness keeps running". */
+        public static Subject agent(String agentId) {
+            return new Subject("agent " + SafeText.line(agentId), "the harness");
+        }
     }
 
     /** What the socket, the keyboard and the window hand to the loop. */

@@ -34,6 +34,10 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.slot;
  * page and tabs (Chat, Files, Terminal), one command per action (qits-1261). The agents themselves
  * are qits-workspaces' JSON API; what a tab shows of the agent's container is the slot's daemon,
  * through the container proxy, so those commands take the slot with --workspace, as the page does.
+ * <p>
+ * Since epic qits-1667 most of these are deprecated aliases of {@code qits agents} ({@link AgentCommands}),
+ * kept for one release: each says so on stderr and prints what it always did on stdout. sign-in,
+ * plugins and refine stay for good; they are the container's harness install.
  */
 @CommandLine.Command(name = "agents", mixinStandardHelpOptions = true,
         subcommands = {WorkspaceAgentsCommand.ListCommand.class,
@@ -45,6 +49,9 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.slot;
         description = {"The agents in the workspace slots: list and discard them, send one a prompt, keep its "
                         + "prompt draft, read its chat, and what its tabs show of its container (files, harness, "
                         + "sign-in, plugins).",
+                "Deprecated, all but sign-in, plugins and refine: the agents' verbs are `qits agents` now (epic "
+                        + "qits-1667). list, discard, prompt, draft, chat, terminate, harness and files stay for one "
+                        + "release and say so on stderr.",
                 "An agent is named by its id (`qits workspaces agents list` shows it); a work item by its qualified "
                         + "id (qits-123) or its id. The commands that read the agent's container take its slot "
                         + "with --workspace."},
@@ -55,7 +62,6 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.slot;
                 + "goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins)."})
 public class WorkspaceAgentsCommand implements Runnable {
 
-    static final Set<String> STATES = Set.of("ACTIVE", "REMOVED");
     static final Set<String> HARNESSES = Set.of("CLAUDE", "KIMI");
 
     @CommandLine.ParentCommand
@@ -70,20 +76,11 @@ public class WorkspaceAgentsCommand implements Runnable {
     }
 
     static String agentId(String given) throws CliFailure {
-        String id = given == null ? "" : given.strip();
-        if (id.isEmpty()) {
-            throw new CliFailure("Name the agent: its id, as `qits workspaces agents list` shows it.",
-                    CliFailure.USAGE);
-        }
-        return id;
+        return AgentViews.agentId(given);
     }
 
     static String required(String given, String what) throws CliFailure {
-        String value = given == null ? "" : given.strip();
-        if (value.isEmpty()) {
-            throw new CliFailure(what, CliFailure.USAGE);
-        }
-        return value;
+        return AgentViews.required(given, what);
     }
 
     static String harness(String given) throws CliFailure {
@@ -100,7 +97,9 @@ public class WorkspaceAgentsCommand implements Runnable {
     // --- the agents ---
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"Agents, newest first: what each works on, its slot, how it runs, what it waits on and "
+            description = {"Deprecated: use `qits agents list` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "Agents, newest first: what each works on, its slot, how it runs, what it waits on and "
                     + "what it needs a person for. Bare, every agent (the project's Workspaces page); --work, one "
                     + "item's (its agent page); --workspace, one slot's (the slot's page); --state ACTIVE, the In "
                     + "Progress tab's; --project, one project's.",
@@ -142,84 +141,15 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            WorkspacesCommand root = agents.parent;
-            boolean json = root.json();
-            String wanted = state == null || state.isBlank() ? null : state.strip().toUpperCase(Locale.ROOT);
-            if (wanted != null && !STATES.contains(wanted)) {
-                throw new CliFailure("--state must be ACTIVE or REMOVED, not '" + state.strip() + "'.",
-                        CliFailure.USAGE);
-            }
-            Long slot = workspace == null ? null : slot(workspace);
-            String workId = work == null || work.isBlank() ? null : root.workId(context, work);
-            String projectId = project == null || project.isBlank() ? null : root.projectId(context, project);
-            JsonNode answer = root.api(context).agents(workId, slot, wanted, projectId);
-            if (json) {
-                Json.print(context.out(), answer);
-                return 0;
-            }
-            List<JsonNode> list = entries(answer, "agents", null);
-            if (list.isEmpty()) {
-                context.out().println("No agents.");
-                return 0;
-            }
-            List<List<String>> rows = new ArrayList<>();
-            for (JsonNode agent : list) {
-                rows.add(List.of(cell(agent, "agentId", 40), cell(agent, "workspaceRowId", 8),
-                        cell(agent, "entityId", 30), cell(agent, "state", 10), cell(agent, "runState", 12),
-                        cell(agent, "harness", 8), Table.cell(waitingOn(agent), 40), cell(agent, "entityTitle", 50),
-                        Table.cell(attentionReason(agent), 80)));
-            }
-            Table.print(context.out(), "", List.of("AGENT", "SLOT", "ITEM", "STATE", "RUN", "HARNESS", "WAITING ON",
-                    "TITLE", "ATTENTION"), rows);
-            return 0;
+            AgentViews.deprecated(context, "list");
+            return AgentViews.list(context, agents.parent, project, work, workspace, state);
         }
-    }
-
-    /**
-     * The WAITING ON column: {@code waits[]} joined with {@code "; "}, each in its kind's own words
-     * ({@link #waitLabel}); with no {@code waits} array at all (an older service), today's
-     * {@code waitingOn} sentence.
-     */
-    static String waitingOn(JsonNode agent) {
-        if (!agent.has("waits")) {
-            return text(agent, "waitingOn");
-        }
-        List<String> labels = new ArrayList<>();
-        for (JsonNode wait : agent.path("waits")) {
-            labels.add(waitLabel(wait));
-        }
-        return String.join("; ", labels);
-    }
-
-    /**
-     * One wait of {@code waits[]}: a release request or work item by its qualified id (its
-     * {@code subjectRef} when unresolved) and state, a CI run by the first 8 characters of its id
-     * and state, a comments wait as "comments on <item>", else (OTHER, or a kind this CLI does not
-     * know yet) the wait's own label. A state the service has not resolved yet prints {@code "?"}.
-     */
-    static String waitLabel(JsonNode wait) {
-        String kind = text(wait, "subjectKind");
-        String ref = text(wait, "subjectRef");
-        String qualifiedId = text(wait, "subjectQualifiedId");
-        String name = qualifiedId.isEmpty() ? ref : qualifiedId;
-        String state = text(wait, "subjectState");
-        String known = state.isEmpty() ? "?" : state;
-        return switch (kind) {
-            case "RELEASE_REQUEST", "WORK_ITEM" -> name + " " + known;
-            case "CI_RUN" -> "run " + (ref.length() > 8 ? ref.substring(0, 8) : ref) + " " + known;
-            case "COMMENTS" -> "comments on " + name;
-            default -> text(wait, "label");
-        };
-    }
-
-    /** The ATTENTION column: {@code attention.reason}, empty (a dash) when the agent needs nobody. */
-    static String attentionReason(JsonNode agent) {
-        JsonNode attention = agent.path("attention");
-        return attention.isObject() ? text(attention, "reason") : "";
     }
 
     @CommandLine.Command(name = "discard", mixinStandardHelpOptions = true,
-            description = {"Remove an agent: its worktrees, credential and draft go. Discard on a slot's or an item's "
+            description = {"Deprecated: use `qits agents discard` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "Remove an agent: its worktrees, credential and draft go. Discard on a slot's or an item's "
                     + "agent page; --force is Discard anyway.",
                     "POST /workspaces/api/agents/{id}/discard with {\"force\": false|true}. " + Doors.WRITE},
             footerHeading = HelpText.EXAMPLES,
@@ -246,21 +176,15 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            WorkspacesCommand root = agents.parent;
-            boolean json = root.json();
-            String id = agentId(agent);
-            JsonNode answer = root.api(context).discardAgent(id, force);
-            if (json) {
-                Json.print(context.out(), answer);
-                return 0;
-            }
-            context.out().println("Agent " + SafeText.line(id) + ": " + cell(answer, "state", 20) + ".");
-            return 0;
+            AgentViews.deprecated(context, "discard");
+            return AgentViews.discard(context, agents.parent, agentId(agent), force);
         }
     }
 
     @CommandLine.Command(name = "prompt", mixinStandardHelpOptions = true,
-            description = {"Send a prompt to a work item's agent: said when its current turn ends (at once if it "
+            description = {"Deprecated: use `qits agents prompt --work <work> <text>` (epic qits-1667). This alias "
+                    + "stays for one release and says so on stderr.",
+                    "Send a prompt to a work item's agent: said when its current turn ends (at once if it "
                     + "is idle), as its first turn, or to a yielded agent that resumes to hear it. An item with no "
                     + "agent is told so, and nothing is created. Send on an agent's Chat tab.",
                     "POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. "
@@ -283,6 +207,7 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, "prompt");
             WorkspacesCommand root = agents.parent;
             boolean json = root.json();
             String prompt = required(text, "The prompt is empty. Say something.");
@@ -292,18 +217,7 @@ public class WorkspaceAgentsCommand implements Runnable {
                 Json.print(context.out(), answer);
                 return 0;
             }
-            String agentId = text(answer, "agentId");
-            String outcome = agentId.isEmpty() ? "No agent works on the item; nothing was said."
-                    : answer.path("delivered").asBoolean() ? "Queued for agent " + SafeText.line(agentId)
-                    + ": said when its current turn ends."
-                    : answer.path("launched").asBoolean() ? "Agent " + SafeText.line(agentId)
-                    + " hears it as its first turn, once it starts."
-                    : answer.path("resumed").asBoolean() ? "Agent " + SafeText.line(agentId) + " resumes to hear it."
-                    : "Agent " + SafeText.line(agentId) + " was not told.";
-            context.out().println(outcome);
-            if (!text(answer, "detail").isEmpty()) {
-                context.out().println(SafeText.line(text(answer, "detail")));
-            }
+            AgentViews.printDelivery(context.out(), answer, "No agent works on the item; nothing was said.");
             return 0;
         }
     }
@@ -312,7 +226,9 @@ public class WorkspaceAgentsCommand implements Runnable {
 
     @CommandLine.Command(name = "draft", mixinStandardHelpOptions = true,
             subcommands = {DraftShowCommand.class, DraftSaveCommand.class, DraftDiscardCommand.class},
-            description = {"An agent's saved prompt draft: what the prompt box on its Chat tab holds, kept on the "
+            description = {"Deprecated: use `qits agents draft` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "An agent's saved prompt draft: what the prompt box on its Chat tab holds, kept on the "
                     + "service so it survives a reload and another device."})
     public static class DraftCommand implements Runnable {
 
@@ -329,7 +245,9 @@ public class WorkspaceAgentsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
-            description = {"The agent's saved prompt draft: its text and when it was written. An agent with none "
+            description = {"Deprecated: use `qits agents draft show` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "The agent's saved prompt draft: its text and when it was written. An agent with none "
                     + "says so.",
                     "GET /workspaces/api/agents/{id}/prompt-draft (HTTP 404: nothing was composed). " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
@@ -347,41 +265,15 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            WorkspacesCommand root = draft.agents.parent;
-            boolean json = root.json();
-            String id = agentId(agent);
-            JsonNode answer;
-            try {
-                answer = root.api(context).draft(id);
-            } catch (CliFailure failure) {
-                if (failure.status() != 404) {
-                    throw failure;
-                }
-                if (json) {
-                    Json.print(context.out(), JsonNodeFactory.instance.objectNode().putNull("draft"));
-                } else {
-                    context.out().println("Agent " + SafeText.line(id) + " has no saved draft.");
-                }
-                return 0;
-            }
-            if (json) {
-                Json.print(context.out(), answer);
-                return 0;
-            }
-            JsonNode saved = answer.path("draft");
-            JsonNode content = Json.parse(text(saved, "content"));
-            String written = content == null ? "" : text(content, "text");
-            context.out().println("Draft of agent " + SafeText.line(id) + ", written "
-                    + Table.time(text(saved, "updatedAt")) + ":");
-            for (String line : written.split("\n", -1)) {
-                context.out().println("  " + SafeText.line(line));
-            }
-            return 0;
+            AgentViews.deprecated(context, "draft show");
+            return AgentViews.draftShow(context, draft.agents.parent, agentId(agent));
         }
     }
 
     @CommandLine.Command(name = "save", mixinStandardHelpOptions = true,
-            description = {"Save the agent's prompt draft, as typing in its prompt box does. The draft holds the text "
+            description = {"Deprecated: use `qits agents draft save` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "Save the agent's prompt draft, as typing in its prompt box does. The draft holds the text "
                     + "and no picked file ranges.",
                     "PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{\"text\":<text>,\"picked\":[]}', "
                             + "serializedPrompt: <text, trimmed>}. " + Doors.WRITE},
@@ -402,34 +294,20 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            WorkspacesCommand root = draft.agents.parent;
-            boolean json = root.json();
-            String id = agentId(agent);
-            String written = text == null ? "" : text;
-            JsonNode answer = root.api(context).saveDraft(id, body(written));
-            if (json) {
-                Json.print(context.out(), answer);
-                return 0;
-            }
-            context.out().println("Saved the draft of agent " + SafeText.line(id) + ", "
-                    + Table.time(text(answer.path("draft"), "updatedAt")) + ".");
-            return 0;
+            AgentViews.deprecated(context, "draft save");
+            return AgentViews.draftSave(context, draft.agents.parent, agentId(agent), text);
         }
 
         /** The landing app's draft: its own JSON, {@code {text, picked}}, and the prompt it serializes to. */
         static ObjectNode body(String text) {
-            ObjectNode content = JsonNodeFactory.instance.objectNode();
-            content.put("text", text);
-            content.putArray("picked");
-            ObjectNode body = JsonNodeFactory.instance.objectNode();
-            body.put("content", content.toString());
-            body.put("serializedPrompt", text.strip());
-            return body;
+            return AgentViews.draftBody(text);
         }
     }
 
     @CommandLine.Command(name = "discard", mixinStandardHelpOptions = true,
-            description = {"Delete the agent's saved prompt draft: Discard on a restored draft.",
+            description = {"Deprecated: use `qits agents draft discard` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "Delete the agent's saved prompt draft: Discard on a restored draft.",
                     "DELETE /workspaces/api/agents/{id}/prompt-draft. " + Doors.WRITE},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits workspaces agents draft discard 00000000-0000-4000-8000-0000000000a1"},
@@ -445,14 +323,8 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            WorkspacesCommand root = draft.agents.parent;
-            boolean json = root.json();
-            String id = agentId(agent);
-            root.api(context).deleteDraft(id);
-            if (!json) {
-                context.out().println("Discarded the draft of agent " + SafeText.line(id) + ".");
-            }
-            return 0;
+            AgentViews.deprecated(context, "draft discard");
+            return AgentViews.draftDiscard(context, draft.agents.parent, agentId(agent));
         }
     }
 
@@ -496,7 +368,9 @@ public class WorkspaceAgentsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "chat", mixinStandardHelpOptions = true,
-            description = {"Read the agent's conversation: its harness command's transcript, in order. The agent's "
+            description = {"Deprecated: use `qits agents chat` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "Read the agent's conversation: its harness command's transcript, in order. The agent's "
                     + "Chat tab, without the live socket.",
                     "The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/"
                             + "{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/"
@@ -528,6 +402,7 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, "chat");
             boolean json = root().json();
             String id = agentId(agent);
             long slot = slot(workspace);
@@ -538,56 +413,20 @@ public class WorkspaceAgentsCommand implements Runnable {
                 Json.print(context.out(), answer);
                 return 0;
             }
-            List<JsonNode> lines = new ArrayList<>(entries(answer, "lines", null));
-            lines.sort(Comparator.comparingLong(line -> line.path("sequence").asLong()));
-            if (lines.isEmpty()) {
-                context.out().println("The conversation is empty.");
-                return 0;
-            }
-            for (JsonNode line : lines) {
-                String said = turn(text(line, "content"));
-                if (!said.isEmpty()) {
-                    context.out().println(said);
-                }
-            }
+            AgentViews.printChat(context.out(), answer);
             return 0;
         }
 
-        /**
-         * One transcript line for a person: who said it and its text, the tools it used named. A line
-         * that is not the harness's JSON is shown as it is; a line with nothing to say gives nothing.
-         */
+        /** One transcript line for a person: {@link AgentViews#turn}. */
         static String turn(String content) {
-            JsonNode line = Json.parse(content);
-            if (line == null || !line.isObject()) {
-                return SafeText.line(content);
-            }
-            String type = text(line, "type");
-            if (!type.equals("user") && !type.equals("assistant")) {
-                return type.equals("result") ? "result: " + SafeText.line(text(line, "result")) : "";
-            }
-            JsonNode said = line.path("message").path("content");
-            List<String> parts = new ArrayList<>();
-            if (said.isTextual()) {
-                parts.add(said.asText());
-            }
-            for (JsonNode part : said.isArray() ? said : JsonNodeFactory.instance.arrayNode()) {
-                switch (text(part, "type")) {
-                    case "text" -> parts.add(text(part, "text"));
-                    case "tool_use" -> parts.add("[tool " + text(part, "name") + "]");
-                    case "tool_result" -> parts.add("[tool result]");
-                    default -> {
-                        // Thinking and the kinds a newer harness invents stay out of the summary.
-                    }
-                }
-            }
-            String text = SafeText.line(String.join(" ", parts)).strip();
-            return text.isEmpty() ? "" : type + ": " + text;
+            return AgentViews.turn(content);
         }
     }
 
     @CommandLine.Command(name = "terminate", mixinStandardHelpOptions = true,
-            description = {"End the agent's running harness command: Terminate on a live chat.",
+            description = {"Deprecated: use `qits agents stop` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "End the agent's running harness command: Terminate on a live chat.",
                     "The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/"
                             + "{agentId}), unless --command names one; then POST /workspaces/container/{slot}/"
                             + "commands/{commandId}/terminate with {}. " + Doors.PROXY},
@@ -615,6 +454,7 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, "stop");
             boolean json = root().json();
             String id = agentId(agent);
             long slot = slot(workspace);
@@ -675,7 +515,9 @@ public class WorkspaceAgentsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "harness", mixinStandardHelpOptions = true,
-            description = {"The agent's harness on its slot's daemon: its last command, whether it still runs, and as "
+            description = {"Deprecated: use `qits agents show`, or `qits agents attach` for --attach (epic qits-1667). This alias stays "
+                    + "for one release and says so on stderr.",
+                    "The agent's harness on its slot's daemon: its last command, whether it still runs, and as "
                     + "a terminal or a chat. What the Terminal and Chat tabs attach to.",
                     "With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces "
                             + "attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since "
@@ -717,6 +559,7 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, attach ? "attach" : "show");
             boolean json = root().json();
             String id = agentId(agent);
             long slot = slot(workspace);
@@ -788,7 +631,9 @@ public class WorkspaceAgentsCommand implements Runnable {
 
     @CommandLine.Command(name = "files", mixinStandardHelpOptions = true,
             subcommands = {FilesListCommand.class, FilesReadCommand.class, FilesDetectCommand.class},
-            description = {"The agent's worktree, as its Files tab shows it: the tree, one file, and the frameworks "
+            description = {"Deprecated: use `qits agents files` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "The agent's worktree, as its Files tab shows it: the tree, one file, and the frameworks "
                     + "and test links the tab draws."})
     public static class FilesCommand implements Runnable {
 
@@ -805,7 +650,9 @@ public class WorkspaceAgentsCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"The agent's worktree: without --path the whole tree, every gitignored directory a stub "
+            description = {"Deprecated: use `qits agents files list` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "The agent's worktree: without --path the whole tree, every gitignored directory a stub "
                     + "with its entry count; with --path that directory, one level deep.",
                     "GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. " + Doors.PROXY},
             footerHeading = HelpText.EXAMPLES,
@@ -834,6 +681,7 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, "files list");
             boolean json = root().json();
             String id = agentId(agent);
             long slot = slot(workspace);
@@ -843,19 +691,15 @@ public class WorkspaceAgentsCommand implements Runnable {
                 Json.print(context.out(), answer);
                 return 0;
             }
-            for (JsonNode file : answer.path("paths")) {
-                context.out().println(SafeText.line(file.asText()));
-            }
-            for (JsonNode lazy : answer.path("lazyDirs")) {
-                context.out().println(SafeText.line(text(lazy, "path")) + "/  (" + lazy.path("childCount").asInt()
-                        + " entries, not listed: --path " + SafeText.line(text(lazy, "path")) + ")");
-            }
+            AgentViews.printFiles(context.out(), answer);
             return 0;
         }
     }
 
     @CommandLine.Command(name = "read", mixinStandardHelpOptions = true,
-            description = {"One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB "
+            description = {"Deprecated: use `qits agents files read` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB "
                     + "cap, is not shown.",
                     "GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form "
                             + "each line is made safe for a terminal (a tab becomes a space); -o json keeps the text "
@@ -886,6 +730,7 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, "files read");
             boolean json = root().json();
             String id = agentId(agent);
             long slot = slot(workspace);
@@ -895,19 +740,15 @@ public class WorkspaceAgentsCommand implements Runnable {
                 Json.print(context.out(), answer);
                 return 0;
             }
-            if (answer.path("binary").asBoolean(false)) {
-                context.out().println(SafeText.line(file) + " is binary, or over the daemon's 2 MB cap: not shown.");
-                return 0;
-            }
-            for (String line : text(answer, "content").split("\n", -1)) {
-                context.out().println(SafeText.line(line));
-            }
+            AgentViews.printFile(context.out(), file, answer);
             return 0;
         }
     }
 
     @CommandLine.Command(name = "detect", mixinStandardHelpOptions = true,
-            description = {"The frameworks the agent's worktree holds (each with its member paths) and which tests "
+            description = {"Deprecated: use `qits agents files detect` (epic qits-1667). This alias stays for one release "
+                    + "and says so on stderr.",
+                    "The frameworks the agent's worktree holds (each with its member paths) and which tests "
                     + "reach each source file: the Files tab's footer and its test links.",
                     "GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. " + Doors.PROXY},
             footerHeading = HelpText.EXAMPLES,
@@ -930,29 +771,14 @@ public class WorkspaceAgentsCommand implements Runnable {
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            AgentViews.deprecated(context, "files detect");
             boolean json = root().json();
             JsonNode answer = root().api(context).detect(slot(workspace), agentId(agent));
             if (json) {
                 Json.print(context.out(), answer);
                 return 0;
             }
-            List<List<String>> rows = new ArrayList<>();
-            for (JsonNode framework : answer.path("frameworks")) {
-                rows.add(List.of(cell(framework, "frameworkId", 30), cell(framework, "root", 60),
-                        cell(framework, "label", 40), String.valueOf(framework.path("memberPaths").size())));
-            }
-            if (rows.isEmpty()) {
-                context.out().println("No frameworks.");
-            } else {
-                Table.print(context.out(), "", List.of("FRAMEWORK", "ROOT", "LABEL", "FILES"), rows);
-            }
-            for (JsonNode link : answer.path("links")) {
-                List<String> tests = new ArrayList<>();
-                for (JsonNode test : link.path("tests")) {
-                    tests.add(SafeText.line(text(test, "path")));
-                }
-                context.out().println(SafeText.line(text(link, "path")) + "  <-  " + String.join(", ", tests));
-            }
+            AgentViews.printDetection(context.out(), answer);
             return 0;
         }
     }
