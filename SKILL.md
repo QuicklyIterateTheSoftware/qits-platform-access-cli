@@ -1610,7 +1610,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits release-request
 
-Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, regenerate runs one release output again, override lifts the upstream-in-flight gate for one upstream request that is itself still building, and rerun fires one pipeline phase again: QA or PUBLISH re-fire that phase's CI run, DEPLOY redeploys the already-released version.
+Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, move takes one branch off it onto the request queued after it, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, regenerate runs one release output again, override lifts the upstream-in-flight gate for one upstream request that is itself still building, and rerun fires one pipeline phase again: QA or PUBLISH re-fire that phase's CI run, DEPLOY redeploys the already-released version.
 
 A request folds main and its branches into one commit, and the builds of that commit are its gate. States: PENDING (waiting for its builds), READY, RELEASED (the tag is cut, waiting on its remaining gates), FINALIZED (the tag is merged into main, done), REJECTED (a gating build was red), FAILED (the release itself failed), CONFLICTED (the branches do not merge), WITHDRAWN, OBSOLETE (a later request for the repository superseded this one before it finished).
 
@@ -1620,6 +1620,7 @@ create, join, withdraw, approve and decline print the request's quality gates as
 
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.
 - When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request, and do not withdraw this one.
+- When one branch alone holds a shared request back (it conflicts, its check is red, it is not ready), move it with `move`: do not force-push it back to main, and do not hold the others. An agent whose own branch blocks a shared request moves it itself.
 - `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any more. WITHDRAWN is final.
 - approve and decline judge one fold: the request's merged sha. A push that folds the request again leaves the decision behind, and the new fold waits for a decision of its own.
 - decline is not withdraw. A declined request goes REJECTED and comes back with the next push to one of its branches; WITHDRAWN is final.
@@ -1744,6 +1745,46 @@ qits release-request --project qits --repository qits-ci-service join --request 
 - `0` Done.
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (for example a --request that fits no request, or more than one), not signed in, or the session ended.
+
+## qits release-request move
+
+Move one branch off an open release request, onto the request queued after it.
+
+For a source that alone holds a shared request back: it conflicts with the others, its check is red, or it is not ready. The request folds again without it and goes back to PENDING; the branch joins the request queued after this one (opened queued behind it if there is none), keeping its priority, author and feature stamp, and releases from there once this request has released or been withdrawn.
+
+This replaces force-pushing the branch back to main, withdrawing every other branch with it, or holding them all. The branch's owner is told, and both requests list the move with who made it and why.
+
+The first line printed says where the branch went; the request that now holds it follows. -o json prints both requests (from, to).
+
+```
+qits release-request move --branch <branch> --reason <text> --request <id> [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `--branch <branch>` | Required. The branch to move. |
+| `--reason <text>` | Required. Why it moves, in a sentence: both requests list it, and the branch's owner reads it. |
+| `--request <id>` | Required. The request the branch is on: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--repository <repository>` | The repository: its id or name. |
+
+### Examples
+
+```
+qits release-request --project qits --repository qits-ci-service move --request qits-ci-service-rr-12 --branch ticket/qits-1660 --reason "It conflicts with ticket/qits-1658."
+```
+
+- Who may: qits:admin and qits:admin-agent, and the project's delivery desk, any branch; an agent only its own branch, one its token may push (HTTP 403 for another's).
+- Refused (HTTP 409): a request that is RELEASED, FINALIZED, WITHDRAWN or OBSOLETE; a request that is itself queued; the default branch and a released tag, which every request folds; and the request's only branch, which `withdraw` is for.
+- A branch that is not on the request is HTTP 404.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (for example a --request that fits no request, or more than one, or an empty --reason), not signed in, or the session ended.
 
 ## qits release-request withdraw
 

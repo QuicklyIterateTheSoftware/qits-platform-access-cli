@@ -160,6 +160,21 @@ public final class ProjectsApi {
     }
 
     /**
+     * {@code {"from":{…},"to":{…}}} (qits-1665): one source taken off an open request and put on the
+     * request queued after it, minted when there is none. {@code from} is the request it left,
+     * folding again without it; {@code to} the one that now holds it. Both the branch and the reason
+     * are required; the branch goes in the body, as on the priority door, because it has slashes.
+     */
+    public JsonNode moveReleaseRequestSource(String repoId, String requestId, String branch, String reason)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("branch", branch);
+        body.put("reason", reason);
+        return client.post(uri("/projects/api/repositories/" + segment(repoId) + "/release-requests/"
+                + segment(requestId) + "/sources/move"), body);
+    }
+
+    /**
      * {@code {"request":{…}}}: the request, with the upstream-in-flight gate lifted for one
      * upstream request (epic qits-897, qits-916). {@code upstreamRequestId} is the upstream
      * request's uuid or qualified id, sent as given; a note only when one is given.

@@ -9,7 +9,7 @@ Commands:
 - `qits session-daemon` keeps that session fresh for as long as it runs.
 - `qits projects list`, `qits repositories … list`,
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
-  and `qits release-request … list|create|join|withdraw|approve|decline|regenerate|rerun` read from and ask the projects service;
+  and `qits release-request … list|create|join|move|withdraw|approve|decline|regenerate|rerun` read from and ask the projects service;
   `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in.
 - `qits ci runs|run|retry|cancel` lists a repository's CI runs, shows a run with its steps and their logs,
   runs a finished run again, and stops a queued or running one. `qits ci report show` shows a run's release reports (which tests
@@ -562,6 +562,8 @@ Installing it is not part of this version.
         --branch <branch> [--priority <priority>]
     qits release-request --project <project> --repository <repository> join \
         --request <id> --branch <branch> [--priority <priority>]
+    qits release-request --project <project> --repository <repository> move \
+        --request <id> --branch <branch> --reason <text>
     qits release-request --project <project> --repository <repository> withdraw \
         --request <id> [--reason <text>]
     qits release-request --project <project> approve|decline \
@@ -915,6 +917,24 @@ command prints the request that came back, with its sources, like `create`.
   1). Open a new one with `create`.
 - HTTP 404 means the platform has no such request (exit code 1). A branch the git host does not
   have is not a 404: the fold fails, and the request's detail says why.
+
+`move` takes one branch off an open request and puts it on the request queued after it, opened
+queued behind it if there is none (qits-1665). It is for a branch that alone holds a shared request
+back: it conflicts with the others, its check is red, or it is not ready. Use it instead of
+force-pushing the branch back to main or holding the other branches. `--request` is found as for
+`join`; `--branch` and `--reason` are required, and both requests list the move with who made it
+and why. The request folds again without the branch and goes back to PENDING; the branch keeps its
+priority, author and feature stamp, and releases from the queued request once this one has released
+or been withdrawn. The table form prints `<branch> moved from <id> to <id>` and then the request
+that now holds the branch, like `create`; `-o json` prints both (`from`, `to`). A request's table
+lists the moves into or out of it under `Moves:`.
+
+- qits:admin, qits:admin-agent and the project's delivery desk may move any branch; an agent only
+  its own (one its token may push). Another's is HTTP 403, exit code 1.
+- HTTP 409 (exit code 1): the request is RELEASED, FINALIZED, WITHDRAWN or OBSOLETE, or itself
+  queued; the branch is the default branch or a released tag; or it is the request's only branch,
+  which `withdraw` is for. HTTP 404: no such request, or the branch is not on it. A blank reason is
+  HTTP 400, exit code 2.
 
 `withdraw` withdraws an open request, so it does not ship. `--request` is found as for `join`.
 `--reason` is a sentence the request then shows as its detail; without it, the platform writes who
