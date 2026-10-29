@@ -18,7 +18,7 @@ A workspace is the token home: on a runner node, or an admin or editor workspace
 - qits never prints a token. The one exception is `qits git-credential get`, which Git runs. Two commands print a secret meant for one person: `qits users invite` (a register token) and `qits users register` (the new password, once).
 - To wait for something on the platform, declare it with `qits wait` and end your turn: you get a new turn when it happens. Never poll for it in a background loop.
 - A command that says `Not signed in` or `Session ended` exits with 2: run `qits login`.
-- For how to develop on the platform, run `qits help guide`: it prints the platform's current guide for where it runs (a workstation, or an agent, desk or refinement room inside).
+- For how to develop on the platform, run `qits help guide`: it prints the platform's current guide for where it runs (a workstation, or an agent, desk or refinement room inside). It leads with `guide-hash: <hash>` when the service sends one; `--hash-only` prints just that line, to check cheaply whether the guide changed.
 
 ## Exit codes
 
@@ -219,7 +219,7 @@ qits projects desk prompt [--output table|json] [--project <project>] [--project
 ```
 qits projects desk prompt --project qits What is in flight right now?
 qits projects desk prompt --project qits -o json Summarise the open release requests
-qits projects desk prompt --project qits Run one pass of the delivery loop: read /tmp/qits-delivery-brief.md and follow it.
+qits projects desk prompt --project qits Run one pass of the delivery loop.
 ```
 
 - Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is refused (HTTP 403).

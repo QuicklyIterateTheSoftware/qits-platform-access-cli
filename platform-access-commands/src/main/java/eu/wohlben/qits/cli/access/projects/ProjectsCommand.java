@@ -187,8 +187,7 @@ public class ProjectsCommand implements Runnable {
                 footerHeading = HelpText.EXAMPLES,
                 footer = {"  qits projects desk prompt --project qits What is in flight right now?",
                         "  qits projects desk prompt --project qits -o json Summarise the open release requests",
-                        "  qits projects desk prompt --project qits Run one pass of the delivery loop: read "
-                                + "/tmp/qits-delivery-brief.md and follow it.",
+                        "  qits projects desk prompt --project qits Run one pass of the delivery loop.",
                         "",
                         "- Takes qits:admin, qits:admin-agent or qits:desk-admin; an agent with qits:agent alone is "
                                 + "refused (HTTP 403).",

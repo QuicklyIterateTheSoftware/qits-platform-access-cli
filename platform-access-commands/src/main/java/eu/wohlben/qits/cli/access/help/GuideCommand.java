@@ -25,6 +25,13 @@ import java.util.Locale;
  * picks the variant from the token's roles and claims (the desk's {@code qits:desk}, a refinement
  * room's {@code entity} claim, else an agent). The CLI does not read the token itself: a workspace
  * token is opaque, and only the service sees what it carries.
+ * <p>
+ * <b>The hash.</b> qits-1734: the answer may carry a {@code hash}, the first 16 hex characters of
+ * the SHA-256 of the markdown's UTF-8 bytes. When it does, the normal output leads with a
+ * {@code guide-hash: <hash>} line before the markdown, and {@code --hash-only} prints that line
+ * alone — a cheap way to notice the guide changed without paying for the markdown every time. An
+ * older service sends no {@code hash}: the normal output is then markdown alone, as before, and
+ * {@code --hash-only} refuses.
  */
 @TuiCommand(effect = Effect.READ)
 @CommandLine.Command(name = "guide", mixinStandardHelpOptions = true,
@@ -33,16 +40,24 @@ import java.util.Locale;
                         + "where it runs: on a workstation signed in with `qits login`, the workstation guide (sign-in, "
                         + "Git, registries, builds, releases); inside the platform (QITS_TOKEN, or in-platform mode), "
                         + "the brief of the agent, desk or refinement room the token belongs to, with the development "
-                        + "flow."},
+                        + "flow.",
+                "When the service sends a guide-hash, the output leads with a `guide-hash: <hash>` line before the "
+                        + "markdown; an older service that sends none prints the markdown alone. --hash-only prints "
+                        + "just that line, to check cheaply whether the guide changed."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits help guide", "  qits help guide --list", "  qits help guide --for agent",
+                "  qits help guide --hash-only",
                 "",
                 "- Variants: workstation, agent, desk, refinement. --for picks one, to read what another holder reads.",
                 "- Reads GET /projects/api/guide (with ?for=<variant>), and GET /projects/api/guide/variants for "
-                        + "--list."},
+                        + "--list.",
+                "- --hash-only prints `guide-hash: <hash>` alone and nothing else; it fails when the service sends "
+                        + "no hash. --list and --hash-only do not mix."},
         exitCodeListHeading = HelpText.EXIT_CODES,
-        exitCodeList = {HelpText.DONE, HelpText.REFUSED,
-                "2:Used wrongly (for example an unknown --for), not signed in, or the session ended."})
+        exitCodeList = {HelpText.DONE,
+                "1:The platform refused, or (with --hash-only) the service sends no guide-hash.",
+                "2:Used wrongly (for example an unknown --for, or --list with --hash-only), not signed in, or the "
+                        + "session ended."})
 public class GuideCommand extends PlatformCommand {
 
     static final List<String> VARIANTS = List.of("workstation", "agent", "desk", "refinement");
@@ -55,6 +70,11 @@ public class GuideCommand extends PlatformCommand {
     @CommandLine.Option(names = "--list", description = "List the variants instead.")
     boolean list;
 
+    @CommandLine.Option(names = "--hash-only",
+            description = "Print only the guide-hash line (`guide-hash: <hash>`), not the guide: compare it with "
+                    + "the hash you last read and re-read the guide only when it differs.")
+    boolean hashOnly;
+
     @CommandLine.Option(names = "--projects-url", paramLabel = "<url>",
             description = "The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the "
                     + "session's idp address with `idp` swapped for `projects`.")
@@ -64,6 +84,9 @@ public class GuideCommand extends PlatformCommand {
     protected int execute(CliContext context) throws CliFailure, InterruptedException {
         if (list && variant != null) {
             throw new CliFailure("Give --list or --for, not both.", CliFailure.USAGE);
+        }
+        if (list && hashOnly) {
+            throw new CliFailure("Give --list or --hash-only, not both.", CliFailure.USAGE);
         }
         ProjectsApi api = ProjectsApi.connect(context, projectsUrl);
         if (list) {
@@ -75,6 +98,17 @@ public class GuideCommand extends PlatformCommand {
             return 0;
         }
         JsonNode answer = api.developmentGuide(wanted(context.mode()));
+        String hash = ProjectsApi.text(answer, "hash");
+        if (hashOnly) {
+            if (hash.isBlank()) {
+                throw new CliFailure("The service sends no guide-hash: it predates qits-1734.", CliFailure.FAILED);
+            }
+            context.out().println("guide-hash: " + hash);
+            return 0;
+        }
+        if (!hash.isBlank()) {
+            context.out().println("guide-hash: " + hash);
+        }
         String markdown = ProjectsApi.text(answer, "markdown");
         context.out().print(markdown.endsWith("\n") ? markdown : markdown + "\n");
         return 0;

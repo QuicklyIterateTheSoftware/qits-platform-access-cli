@@ -168,4 +168,70 @@ class GuideCommandTest {
                 .contains("agent").contains("A workspace agent.");
         assertThat(platform.requests("GET", GUIDE)).isEmpty();
     }
+
+    @Test
+    void aHashLeadsTheOutputBeforeTheMarkdown() {
+        env.put("QITS_TOKEN", "SECRET-agent-token");
+        platform.route("GET", GUIDE, request -> new FakePlatform.Answer(200,
+                "{\"variant\":\"agent\",\"detected\":true,\"markdown\":\"# Guide\\n\\nText.\","
+                        + "\"hash\":\"abcdef0123456789\"}",
+                Map.of()));
+
+        Result r = run("help", "guide");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).isEqualTo("guide-hash: abcdef0123456789\n# Guide\n\nText.\n");
+    }
+
+    @Test
+    void hashOnlyPrintsOnlyTheHashLineAndItMatchesTheNormalOutputsFirstLine() {
+        env.put("QITS_TOKEN", "SECRET-agent-token");
+        platform.route("GET", GUIDE, request -> new FakePlatform.Answer(200,
+                "{\"variant\":\"agent\",\"detected\":true,\"markdown\":\"# Guide\\n\\nText.\","
+                        + "\"hash\":\"abcdef0123456789\"}",
+                Map.of()));
+
+        Result normal = run("help", "guide");
+        Result hashOnly = run("help", "guide", "--hash-only");
+
+        assertThat(hashOnly.exit()).as(hashOnly.err()).isZero();
+        assertThat(hashOnly.out()).isEqualTo("guide-hash: abcdef0123456789\n");
+        assertThat(normal.out().lines().findFirst()).contains(hashOnly.out().strip());
+    }
+
+    @Test
+    void withNoHashTheOutputIsMarkdownAlone() {
+        env.put("QITS_TOKEN", "SECRET-agent-token");
+        platform.route("GET", GUIDE, request -> new FakePlatform.Answer(200,
+                "{\"variant\":\"agent\",\"detected\":true,\"markdown\":\"# Guide\\n\\nText.\"}", Map.of()));
+
+        Result r = run("help", "guide");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).isEqualTo("# Guide\n\nText.\n");
+    }
+
+    @Test
+    void hashOnlyWithNoHashRefuses() {
+        env.put("QITS_TOKEN", "SECRET-agent-token");
+        platform.route("GET", GUIDE, request -> new FakePlatform.Answer(200,
+                "{\"variant\":\"agent\",\"detected\":true,\"markdown\":\"# Guide\\n\\nText.\"}", Map.of()));
+
+        Result r = run("help", "guide", "--hash-only");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("no guide-hash");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void hashOnlyWithListIsAUsageError() {
+        env.put("QITS_TOKEN", "SECRET-agent-token");
+
+        Result r = run("help", "guide", "--hash-only", "--list");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("--list or --hash-only");
+        assertThat(platform.requests("GET", GUIDE)).isEmpty();
+    }
 }
