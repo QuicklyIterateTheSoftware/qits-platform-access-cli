@@ -339,7 +339,7 @@ class McpToolCatalogTest {
         for (String leaf : List.of("ci_runs", "ci_run", "ci_retry")) {
             assertThat(properties(tool(leaf))).as(leaf).containsKeys("project", "repository", "output");
         }
-        for (String leaf : List.of("release-request_list", "release-request_create", "release-request_join",
+        for (String leaf : List.of("release-request_list", "release-request_create", "release-request_join", "release-request_move",
                 "release-request_withdraw", "release-request_approve", "release-request_decline")) {
             assertThat(properties(tool(leaf))).as(leaf).containsKeys("project", "repository", "output");
         }
