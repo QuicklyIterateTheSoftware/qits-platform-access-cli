@@ -1417,7 +1417,7 @@
       "response": {
         "body": {
           "content": {
-            "markdown": "# Development guide: workstation\n\nHow to develop on the qits platform from your own machine. Inside the platform, run\n`qits help guide` there: agents get their own variant.\n\n## Sign in\n\n1. `qits login` signs you in through the browser. The session is stored in\n   `~/.config/qits/t.json`.\n2. Keep `qits session-daemon` running (the CLI's README has a systemd user unit). It keeps\n   the session fresh, and the registry logins below.\n3. `qits git-login` lets Git push to the platform's git host. Git gets its token from\n   `qits git-credential`; do not store one by hand.\n\n## Registries for npm and Maven\n\n`qits registry-login --configure` writes a login for the platform's registries into blocks of\n`~/.npmrc` and `~/.m2/settings.xml` that the CLI owns. The rest of each file stays as it is.\n\n- Run it with `--dry-run` first: it prints the changes as a redacted diff and writes nothing.\n- `--remove-stale` also drops old `*.dev.localhost` registries and duplicate entries.\n- From then on `qits session-daemon` writes each new token into the blocks.\n- Never write a registry token by hand.\n\n## Build\n\n- Maven resolves through the mirror `qits-maven-host` for the repository `qits-maven`\n  (`https://registry.qits.<domain>/artifacts/maven/maven`). With the blocks in place,\n  `./mvnw verify` resolves what CI resolves.\n- npm reads its registries from `~/.npmrc`: `npm ci` needs nothing else.\n- Run the tests your change affects, not the whole suite: the release request runs it.\n- Quarkus tests: pass `-Dquarkus.http.test-port=0`, so a test does not take a fixed port.\n\n## Ask the delivery desk\n\nEach project has a delivery desk, an agent that keeps its work moving. To ask it for\nsomething (an approval, an action your credential cannot do, a decision), comment on the work\nitem with a comment that starts with `@desk` and says exactly what you need. This works from a\nworkstation too, for example from your own Claude Code session. Then wait for the outcome:\nthe request's or the item's final state, not a fold or an intermediate state.\n\nA person or an admin can also talk to the desk directly:\n`qits projects desk prompt --project <project> \"<text>\"`, then\n`qits projects desk answer --project <project>` for its answer.\n\n## Ship a change\n\n1. Commit on a branch. Name the work in the subject: `term(<project>-<n>): message`, for\n   example `feat(qits-1337): refuse malformed commit subjects`.\n2. Push it to the platform's git host, under `refs/heads/external/`:\n   `git push https://githost.qits.<domain>/git/<project>/<repository> HEAD:refs/heads/external/<name>`.\n   Never push to `main`, and never to a mirror such as GitHub: deploys come from the\n   platform's git host only. A push releases nothing.\n3. Ask for a release: `qits release-request create --project <project> --repository\n   <repository> --branch external/<name> --summary '<what this release is>'`. When a request\n   is open for the repository, `create` joins it.\n4. Follow it: `qits release-request list --project <project>`. For a red build:\n   `qits ci runs --project <project> --repository <repository> --release-request <id>`, then\n   `qits ci report show <run id> --project <project> --repository <repository>`.\n5. A request is done at FINALIZED: the tag is merged into `main`, and a service is deployed.\n   Fix a REJECTED or CONFLICTED request with a new push to its branch; do not open a second.\n6. Check the change on the running platform before you call it done.\n\nName everything by its full id: `qits-1178`, `qits-workspaces-service-rr-165`.\n",
+            "markdown": "# Development guide: workstation\n\nHow to develop on the qits platform from your own machine. Inside the platform, run\n`qits help guide` there: agents get their own variant.\n\n## Sign in\n\n1. `qits login` signs you in through the browser. The session is stored in\n   `~/.config/qits/t.json`.\n2. Keep `qits session-daemon` running (the CLI's README has a systemd user unit). It keeps\n   the session fresh, and the registry logins below.\n3. `qits git-login` lets Git push to the platform's git host. Git gets its token from\n   `qits git-credential`; do not store one by hand.\n\n## Registries for npm and Maven\n\n`qits registry-login --configure` writes a login for the platform's registries into blocks of\n`~/.npmrc` and `~/.m2/settings.xml` that the CLI owns. The rest of each file stays as it is.\n\n- Run it with `--dry-run` first: it prints the changes as a redacted diff and writes nothing.\n- `--remove-stale` also drops old `*.dev.localhost` registries and duplicate entries.\n- From then on `qits session-daemon` writes each new token into the blocks.\n- Never write a registry token by hand.\n\n## Build\n\n- Maven resolves through the mirror `qits-maven-host` for the repository `qits-maven`\n  (`https://registry.qits.<domain>/artifacts/maven/maven`). With the blocks in place,\n  `./mvnw verify` resolves what CI resolves.\n- npm reads its registries from `~/.npmrc`: `npm ci` needs nothing else.\n- Run the tests your change affects, not the whole suite: the release request runs it.\n- Quarkus tests: pass `-Dquarkus.http.test-port=0`, so a test does not take a fixed port.\n\n## Ask the delivery desk\n\nEach project has a delivery desk, an agent that keeps its work moving. To ask it for\nsomething (an approval, an action your credential cannot do, a decision), comment on the work\nitem with a comment that starts with `@desk` and says exactly what you need. This works from a\nworkstation too, for example from your own Claude Code session. Then wait for the outcome:\nthe request's or the item's final state, not a fold or an intermediate state.\n\nA person or an admin can also talk to the desk directly:\n`qits projects desk prompt --project <project> \"<text>\"`, then\n`qits projects desk answer --project <project>` for its answer.\n\n## Ship a change\n\n1. Commit on a branch. Name the work in the subject: `term(<project>-<n>): message`, for\n   example `feat(qits-1337): refuse malformed commit subjects`.\n2. Push it to the platform's git host, under `refs/heads/external/`:\n   `git push https://githost.qits.<domain>/git/<project>/<repository> HEAD:refs/heads/external/<name>`.\n   Never push to `main`, and never to a mirror such as GitHub: deploys come from the\n   platform's git host only. A push releases nothing.\n3. Ask for a release: `qits release-request create --project <project> --repository\n   <repository> --branch external/<name>`. What it carries comes from the work item your\n   branch names; when a request is open for the repository, `create` joins it. An older CLI\n   that still asks for `--summary` takes any text and ignores it.\n4. Follow it: `qits release-request list --project <project>`. For a red build:\n   `qits ci runs --project <project> --repository <repository> --release-request <id>`, then\n   `qits ci report show <run id> --project <project> --repository <repository>`.\n5. A request is done at FINALIZED: the tag is merged into `main`, and a service is deployed.\n   Fix a REJECTED or CONFLICTED request with a new push to its branch; do not open a second.\n6. Check the change on the running platform before you call it done.\n\nName everything by its full id: `qits-1178`, `qits-workspaces-service-rr-165`.\n",
             "variant": "workstation"
           },
           "contentType": "application/json",
@@ -3251,7 +3251,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "bump/contract-service"
+                }
+              ],
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
               "qualityGates": [
@@ -3385,7 +3393,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -3884,7 +3926,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "feature/export"
+                }
+              ],
               "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0001",
+              "participants": [
+                "dev"
+              ],
               "priority": "MEDIUM",
               "qualifiedId": "contract-service-rr-1",
               "qualityGates": [
@@ -4025,7 +4075,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -4519,7 +4603,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "bump/contract-service"
+                }
+              ],
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
               "qualityGates": [
@@ -4653,7 +4745,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -5153,7 +5279,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "feature/export"
+                }
+              ],
               "mergedSha": "5eed5eed5eed5eed5eed5eed5eed5eed5eed0002",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "MEDIUM",
               "qualifiedId": "contract-service-rr-1",
               "qualityGates": [
@@ -5304,7 +5438,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -6744,6 +6912,11 @@
                   "threshold": 3
                 },
                 "id": "00000000-0000-4000-8000-000000000003",
+                "items": [
+                  {
+                    "label": "bump/contract-service"
+                  }
+                ],
                 "priority": "HIGH",
                 "qualifiedId": "contract-suite-app-rr-1",
                 "sources": [
@@ -6815,6 +6988,23 @@
                 {
                   "match": "regex",
                   "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.requests[*].items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
                 }
               ]
             },
@@ -7318,7 +7508,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "bump/contract-service"
+                }
+              ],
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
               "qualityGates": [
@@ -7452,7 +7650,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -8586,7 +8818,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "feature/export"
+                }
+              ],
               "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-service-rr-1",
               "qualityGates": [
@@ -8720,7 +8960,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -8987,7 +9261,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "feature/export"
+                }
+              ],
               "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-service-rr-1",
               "qualityGates": [
@@ -9123,7 +9405,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -9407,7 +9723,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "feature/export"
+                }
+              ],
               "mergedSha": "cb9776855921387be1951de5bbbf0914aa54b1bf",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-service-rr-1",
               "qualityGates": [
@@ -9543,7 +9867,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -10176,7 +10534,15 @@
                 "threshold": 3
               },
               "id": "00000000-0000-4000-8000-000000000003",
+              "items": [
+                {
+                  "label": "bump/contract-service"
+                }
+              ],
               "mergedSha": "bd6360a2c6b42a991c62e3418b7f6d4ac5d89f14",
+              "participants": [
+                "contract-seeder"
+              ],
               "priority": "HIGH",
               "qualifiedId": "contract-suite-app-rr-1",
               "qualityGates": [
@@ -10310,7 +10676,41 @@
                 }
               ]
             },
+            "$.request.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.request.mergedSha": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.request.participants": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.request.participants[*]": {
               "combine": "AND",
               "matchers": [
                 {
@@ -13732,6 +14132,11 @@
             "requests": [
               {
                 "id": "00000000-0000-4000-8000-000000000003",
+                "items": [
+                  {
+                    "label": "bump/contract-service"
+                  }
+                ],
                 "qualifiedId": "contract-suite-app-rr-1",
                 "sources": [
                   {
@@ -13768,6 +14173,23 @@
                 {
                   "match": "regex",
                   "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.requests[*].items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.requests[*].items[*].label": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
                 }
               ]
             },
@@ -13915,6 +14337,132 @@
               ]
             },
             "$.requests[*].version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getBranchDeliveries"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits wait branch",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits wait branch: getBranchDeliveries",
+      "key": "b9abb30f",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "branch ticket/qits-9001 is RELEASED in qits-demo-service",
+          "params": {
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "repoId": "00000000-0000-4000-8000-000000000002",
+            "requestId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/projects/api/branch-deliveries",
+        "query": {
+          "branch": [
+            "ticket/qits-9001"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "deliveries": [
+              {
+                "qualifiedId": "qits-demo-service-rr-3",
+                "repoId": "00000000-0000-4000-8000-000000000002",
+                "repository": "qits-demo-service",
+                "step": "RELEASED"
+              }
+            ],
+            "everywhere": "RELEASED"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.deliveries": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.deliveries[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.deliveries[*].repoId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.deliveries[*].repository": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.deliveries[*].step": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.everywhere": {
               "combine": "AND",
               "matchers": [
                 {
