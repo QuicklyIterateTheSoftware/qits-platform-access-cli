@@ -314,6 +314,9 @@ public class WaitCommand extends PlatformCommand {
 
     @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
             description = {"Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.",
+                    "A request already in one of these states fires the wait at once; after a rejection, wait on "
+                            + "--event ReleaseRequestStateChanged --when 'releaseRequestQualifiedId=<id> "
+                            + "state=PENDING', or on your branch, to see it re-armed.",
                     "The same as --event ReleaseRequestStateChanged with one group per final state: "
                             + "releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> "
                             + "state=<STATE> for a uuid.",

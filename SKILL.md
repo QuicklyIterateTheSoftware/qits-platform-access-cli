@@ -2898,6 +2898,8 @@ qits wait branch ticket/qits-123 --until failed --repository qits-ci-service
 
 Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.
 
+A request already in one of these states fires the wait at once; after a rejection, wait on --event ReleaseRequestStateChanged --when 'releaseRequestQualifiedId=<id> state=PENDING', or on your branch, to see it re-armed.
+
 The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> state=<STATE> for a uuid.
 
 Prefer `wait branch` for your own work: a request id goes stale when it refolds or is superseded.
