@@ -193,7 +193,8 @@ public final class ProjectsContract {
             "qualityGates[].state", "qualityGates[].detail", "qualityGates[].checks[].name",
             "qualityGates[].checks[].state", "qualityGates[].checks[].detail", "sources[].kind",
             "sources[].name", "sources[].ref", "sources[].implicit", "sources[].feature", "sources[].explicitJoin",
-            "sources[].priority", "sources[].addedBy");
+            "sources[].priority", "sources[].addedBy", "sourceMoves[].branch", "sourceMoves[].fromQualifiedId",
+            "sourceMoves[].toQualifiedId", "sourceMoves[].movedBy", "sourceMoves[].reason", "sourceMoves[].movedAt");
 
     /** Where create and join put the branch: the first line of the table form (epic qits-1580). */
     static final List<String> PLACEMENT = List.of("placement.outcome", "placement.queued", "placement.detail");
@@ -217,6 +218,27 @@ public final class ProjectsContract {
      */
     static final List<String> REQUEST_OPEN_ENDED = List.of("qualityGates", "qualityGates[].checks", "participants",
             "items");
+
+    /**
+     * {@code qits release-request move} (qits-1665): the provider records it in {@link
+     * #FROZEN_WITH_A_QUEUED_NEXT}. Pending on the provider until qits-maintenance bumps {@code
+     * qits.projects-golden-masters.version} past the qits-projects-service release that records it;
+     * the row is skipped until then and stays out of the pact file. Write the pact again with {@code
+     * -Dgolden.update=true} on that bump.
+     * <p>
+     * {@code sourceMoves} is in {@link #REQUEST}: {@code printRequest} lists the moves. Every other
+     * recording holds it empty, which binds nothing; here both requests hold the one move, and its
+     * length is left open on both sides, as a request gathers moves.
+     */
+    static final String MOVE_OPERATION = "moveReleaseRequestSource";
+
+    /** The move's two requests, with no length pinned on what grows. */
+    private static String[] openEndedMove() {
+        return Stream.of("from.", "to.")
+                .flatMap(side -> Stream.concat(REQUEST_OPEN_ENDED.stream(), Stream.of("sourceMoves"))
+                        .map(p -> side + p))
+                .toArray(String[]::new);
+    }
 
     /**
      * The list's ITEMS column (qits-1673), of each request: the items' labels, else the branches
@@ -361,6 +383,15 @@ public final class ProjectsContract {
     private static final Call WITHDRAW = (api, params, recorded) -> request(api.withdrawReleaseRequest(
             params.get("repositoryId"), params.get("requestId"), body(recorded).path("reason").asText())
             .path("request"));
+
+    /** {@code qits release-request move}: the branch and the reason; the first line names both requests. */
+    private static final Call MOVE = (api, params, recorded) -> {
+        JsonNode moved = api.moveReleaseRequestSource(params.get("repositoryId"), params.get("requestId"),
+                body(recorded).path("branch").asText(), body(recorded).path("reason").asText());
+        request(moved.path("from"));
+        request(moved.path("to"));
+        assertThat(moved.path("to").path("sourceMoves")).isNotEmpty();
+    };
 
     /** {@code qits work list}: the table reads every entity's qualified id, archetype and status. */
     private static final Call LIST = (api, params, recorded) -> {
@@ -982,7 +1013,7 @@ public final class ProjectsContract {
             "qits repositories remote-login", "qits repositories branches", "qits repositories commits",
             "qits repositories commit-changes", "qits repositories commit-diff", "qits repositories commit-subjects",
             "qits release-request list", "qits release-request create", "qits release-request join",
-            "qits release-request withdraw", "qits release-request regenerate", "qits release-request override",
+            "qits release-request move", "qits release-request withdraw", "qits release-request regenerate", "qits release-request override",
             "qits release-request rerun",
             "qits release-request approve", "qits release-request decline", "qits ci runs", "qits ci run",
             "qits ci retry", "qits ci report show", "qits maintenance automations", "qits maintenance automation run",
@@ -996,7 +1027,8 @@ public final class ProjectsContract {
             .toList();
 
     /** Every command that takes a release request and finds it among the repository's requests of every state. */
-    static final List<String> REQUEST_SCOPED = List.of("qits release-request join", "qits release-request withdraw",
+    static final List<String> REQUEST_SCOPED = List.of("qits release-request join", "qits release-request move",
+            "qits release-request withdraw",
             "qits release-request regenerate", "qits release-request override", "qits release-request rerun",
             "qits maintenance automations", "qits maintenance automation run");
 
@@ -1126,6 +1158,12 @@ public final class ProjectsContract {
                 "joinReleaseRequest", JOIN_REQUEST)
                 .consumes(held(OPEN_TO_ANOTHER_BRANCH, "addReleaseRequestSource", withPlacement()))
                 .anyLength(openEndedRequest()));
+        rows.add(row("qits release-request move", FROZEN_WITH_A_QUEUED_NEXT, MOVE_OPERATION,
+                "moveReleaseRequestSource", MOVE)
+                .consumes(held(FROZEN_WITH_A_QUEUED_NEXT, MOVE_OPERATION,
+                        concat(prefixed("from.", REQUEST), prefixed("to.", REQUEST))))
+                .anyLength(openEndedMove())
+                .request("POST /projects/api/repositories/{repositoryId}/release-requests/{requestId}/sources/move"));
         rows.add(row("qits release-request withdraw", AWAITING_REQUEST, "withdrawReleaseRequest",
                 "withdrawReleaseRequest", WITHDRAW)
                 .consumes(held(AWAITING_REQUEST, "withdrawReleaseRequest", prefixed("request.", REQUEST)))

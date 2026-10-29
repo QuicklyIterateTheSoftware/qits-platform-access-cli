@@ -29,13 +29,15 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "release-request", mixinStandardHelpOptions = true,
         subcommands = {ReleaseRequestCommand.ListCommand.class, ReleaseRequestCommand.CreateCommand.class,
-                ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.WithdrawCommand.class,
+                ReleaseRequestCommand.JoinCommand.class, ReleaseRequestCommand.MoveCommand.class,
+                ReleaseRequestCommand.WithdrawCommand.class,
                 ReleaseRequestCommand.ApproveCommand.class, ReleaseRequestCommand.DeclineCommand.class,
                 ReleaseRequestCommand.RegenerateCommand.class, ReleaseRequestCommand.OverrideCommand.class,
                 ReleaseRequestCommand.RerunCommand.class},
         description = {"Release requests: the one way to release a repository. list shows them (of the whole project, "
                         + "or of one repository), create "
-                        + "asks for a branch to be released, join adds a branch to an open request, withdraw "
+                        + "asks for a branch to be released, join adds a branch to an open request, move "
+                        + "takes one branch off it onto the request queued after it, withdraw "
                         + "ends a request that must not ship, approve lets the fold a request is on go ahead, "
                         + "decline sends it back, regenerate runs one release output again, override lifts the "
                         + "upstream-in-flight gate for one upstream request that is itself still building, and rerun "
@@ -60,6 +62,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "that was down), retry that run with `qits ci retry <run id>`: it builds the same commit "
                         + "again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new "
                         + "request, and do not withdraw this one.",
+                "- When one branch alone holds a shared request back (it conflicts, its check is red, it is not "
+                        + "ready), move it with `move`: do not force-push it back to main, and do not hold the "
+                        + "others. An agent whose own branch blocks a shared request moves it itself.",
                 "- `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any "
                         + "more. WITHDRAWN is final.",
                 "- approve and decline judge one fold: the request's merged sha. A push that folds the request "
@@ -493,6 +498,94 @@ public class ReleaseRequestCommand implements Runnable {
                 return new CliFailure("No such request. " + refused.getMessage(), CliFailure.FAILED);
             }
             return refused;
+        }
+    }
+
+    @CommandLine.Command(name = "move", mixinStandardHelpOptions = true,
+            description = {"Move one branch off an open release request, onto the request queued after it.",
+                    "For a source that alone holds a shared request back: it conflicts with the others, its "
+                            + "check is red, or it is not ready. The request folds again without it and goes back "
+                            + "to PENDING; the branch joins the request queued after this one (opened queued "
+                            + "behind it if there is none), keeping its priority, author and feature stamp, and "
+                            + "releases from there once this request has released or been withdrawn.",
+                    "This replaces force-pushing the branch back to main, withdrawing every other branch with "
+                            + "it, or holding them all. The branch's owner is told, and both requests list the "
+                            + "move with who made it and why.",
+                    "The first line printed says where the branch went; the request that now holds it follows. "
+                            + "-o json prints both requests (from, to)."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits release-request --project qits --repository qits-ci-service move --request qits-ci-service-rr-12 "
+                            + "--branch ticket/qits-1660 --reason \"It conflicts with ticket/qits-1658.\"",
+                    "",
+                    "- Who may: qits:admin and qits:admin-agent, and the project's delivery desk, any branch; an "
+                            + "agent only its own branch, one its token may push (HTTP 403 for another's).",
+                    "- Refused (HTTP 409): a request that is RELEASED, FINALIZED, WITHDRAWN or OBSOLETE; a "
+                            + "request that is itself queued; the default branch and a released tag, which every "
+                            + "request folds; and the request's only branch, which `withdraw` is for.",
+                    "- A branch that is not on the request is HTTP 404."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {HelpText.DONE, HelpText.REFUSED,
+                    "2:Used wrongly (for example a --request that fits no request, or more than one, or an "
+                            + "empty --reason), not signed in, or the session ended."})
+    public static class MoveCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        ReleaseRequestCommand parent;
+
+        @CommandLine.Option(names = "--request", paramLabel = "<id>", required = true,
+                description = "The request the branch is on: its id as list shows it (qits-ci-service-rr-12), its "
+                        + "uuid, or the start of the uuid.")
+        String request;
+
+        @CommandLine.Option(names = "--branch", paramLabel = "<branch>", required = true,
+                description = "The branch to move.")
+        String branch;
+
+        @CommandLine.Option(names = "--reason", paramLabel = "<text>", required = true,
+                description = "Why it moves, in a sentence: both requests list it, and the branch's owner reads it.")
+        String reason;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            if (request.isBlank() || branch.isBlank() || reason.isBlank()) {
+                throw new CliFailure("--request, --branch and --reason must not be empty.", CliFailure.USAGE);
+            }
+            Target target = parent.target(context);
+            JsonNode found = find(target, request.strip());
+            JsonNode answer;
+            try {
+                answer = target.api().moveReleaseRequestSource(target.repoId(), text(found, "id"), branch.strip(),
+                        reason.strip());
+            } catch (CliFailure refused) {
+                throw explain(refused, found, branch.strip());
+            }
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            context.out().println(branch.strip() + " moved from " + ReleaseRequestRefs.name(answer.path("from"))
+                    + " to " + ReleaseRequestRefs.name(answer.path("to")));
+            printRequest(context.out(), answer.path("to"));
+            return 0;
+        }
+
+        /** The refusals a move can expect, each with what to do instead. */
+        private static CliFailure explain(CliFailure refused, JsonNode found, String branch) {
+            String name = ReleaseRequestRefs.name(found);
+            return switch (refused.status()) {
+                case 400 -> new CliFailure("A move says why: give --reason a sentence (HTTP 400). "
+                        + refused.getMessage(), CliFailure.USAGE);
+                case 403 -> new CliFailure("You may not move " + branch + " (HTTP 403): an agent moves only its own "
+                        + "branch. Ask the branch's own agent or the delivery desk. " + refused.getMessage(),
+                        CliFailure.FAILED);
+                case 404 -> new CliFailure("No such request, or " + branch + " is not a source of " + name
+                        + " (HTTP 404). " + refused.getMessage(), CliFailure.FAILED);
+                case 409 -> new CliFailure("Release request " + name + " cannot give up " + branch + " (HTTP 409). "
+                        + refused.getMessage(), CliFailure.FAILED);
+                default -> refused;
+            };
         }
     }
 
@@ -987,6 +1080,27 @@ public class ReleaseRequestCommand implements Runnable {
             Table.print(out, "  ", freezeColumn
                     ? List.of("KIND", "NAME", "REF", "HOW", "FREEZE", "PRIORITY", "ADDED BY")
                     : List.of("KIND", "NAME", "REF", "HOW", "PRIORITY", "ADDED BY"), sources);
+        }
+        printMoves(out, request);
+    }
+
+    /**
+     * The branches moved into or out of the request (qits-1665): one row per move, with who moved
+     * it and why. An older platform sends no sourceMoves, and a request nothing moved through has
+     * none; nothing is printed then.
+     */
+    static void printMoves(PrintStream out, JsonNode request) {
+        List<List<String>> rows = new ArrayList<>();
+        request.path("sourceMoves").forEach(m -> rows.add(List.of(
+                Table.cell(text(m, "branch"), 60),
+                Table.cell(text(m, "fromQualifiedId"), 40),
+                Table.cell(text(m, "toQualifiedId"), 40),
+                Table.cell(text(m, "movedBy"), 40),
+                Table.time(text(m, "movedAt")),
+                Table.cell(text(m, "reason"), 120))));
+        if (!rows.isEmpty()) {
+            out.println("Moves:");
+            Table.print(out, "  ", List.of("BRANCH", "FROM", "TO", "BY", "AT", "REASON"), rows);
         }
     }
 

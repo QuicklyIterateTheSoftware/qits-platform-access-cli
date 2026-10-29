@@ -1084,6 +1084,128 @@ class PlatformCommandsTest {
                 + " answered HTTP 404: Release request not found: " + PENDING_ID);
     }
 
+    // --- moving one source to the queued request (qits-1665) ---
+
+    private static final String MOVED_TO_ID = "33333333-2222-3333-4444-555555555555";
+
+    private static String moveOf(String id) {
+        return REQUESTS + "/" + id + "/sources/move";
+    }
+
+    /** The pending request gives up feature/search to the request queued after it. */
+    private void answerMove() {
+        String move = """
+                {"branch":"feature/search","fromQualifiedId":"qits-ci-service-rr-12",
+                 "toQualifiedId":"qits-ci-service-rr-13","movedBy":"wohlben",
+                 "reason":"It conflicts with feature/x.","movedAt":"2026-09-12T10:00:00Z"}""";
+        platform.answer("POST", moveOf(PENDING_ID), """
+                {"from":{"id":"%s","qualifiedId":"qits-ci-service-rr-12","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGH","queuedNext":"%s","queuedNextQualifiedId":"qits-ci-service-rr-13",
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null},
+                             {"kind":"BRANCH","name":"feature/x","ref":"refs/heads/feature/x","implicit":false,"priority":"HIGH","addedBy":"wohlben"}],
+                  "sourceMoves":[%s]},
+                 "to":{"id":"%s","qualifiedId":"qits-ci-service-rr-13","repoId":"%s","repoName":"qits-ci-service",
+                  "state":"PENDING","priority":"HIGHER","queuedBehind":"%s","queuedBehindQualifiedId":"qits-ci-service-rr-12",
+                  "detail":"Queued behind qits-ci-service-rr-12: it folds once that request has released",
+                  "sources":[{"kind":"BRANCH","name":"main","ref":"refs/heads/main","implicit":false,"priority":"MEDIUM","addedBy":null},
+                             {"kind":"BRANCH","name":"feature/search","ref":"refs/heads/feature/search","implicit":false,"priority":"HIGHER","addedBy":"wohlben"}],
+                  "sourceMoves":[%s]}}
+                """.formatted(PENDING_ID, CI, MOVED_TO_ID, move, MOVED_TO_ID, CI, PENDING_ID, move));
+    }
+
+    @Test
+    void moveSendsTheBranchAndReasonAndPrintsWhereItWentAndTheRequestThatHoldsIt() throws Exception {
+        answerMove();
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "move",
+                "--request", "1111", "--branch", " feature/search ", "--reason", "It conflicts with feature/x.");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", REQUESTS).getFirst().query()).isEqualTo("state=all");
+        assertThat(JSON.readTree(platform.requests("POST", moveOf(PENDING_ID)).getFirst().body())).isEqualTo(
+                JSON.readTree("{\"branch\":\"feature/search\",\"reason\":\"It conflicts with feature/x.\"}"));
+        assertThat(r.out()).startsWith("feature/search moved from qits-ci-service-rr-12 to qits-ci-service-rr-13\n"
+                        + "Release request qits-ci-service-rr-13\n")
+                .contains("  queued         behind qits-ci-service-rr-12")
+                .contains("Moves:");
+        assertThat(r.out().lines().toList()).contains(
+                "  BRANCH  feature/search  refs/heads/feature/search  named  HIGHER    wohlben")
+                .anySatisfy(l -> assertThat(l).startsWith(
+                        "  BRANCH          FROM                   TO                     BY       AT ").endsWith("REASON"))
+                .anySatisfy(l -> assertThat(l).startsWith(
+                        "  feature/search  qits-ci-service-rr-12  qits-ci-service-rr-13  wohlben  2026-09-12 ")
+                        .endsWith("It conflicts with feature/x."));
+    }
+
+    @Test
+    void moveWithJsonPrintsBothRequestsAndNeedsABranchAndAReason() throws Exception {
+        answerMove();
+
+        Result r = run("release-request", "move", "--request", PENDING_ID, "--branch", "feature/search",
+                "--reason", "Not ready.", "--project", "qits", "--repository", CI, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        JsonNode out = JSON.readTree(r.out());
+        assertThat(out.path("from").path("qualifiedId").asText()).isEqualTo("qits-ci-service-rr-12");
+        assertThat(out.path("to").path("qualifiedId").asText()).isEqualTo("qits-ci-service-rr-13");
+        assertThat(run("release-request", "move", "--project", "qits", "--repository", CI, "--request", "1111",
+                "--branch", "feature/search").exit()).isEqualTo(2);
+        assertThat(run("release-request", "move", "--project", "qits", "--repository", CI, "--request", "1111",
+                "--reason", "Not ready.").exit()).isEqualTo(2);
+        Result blank = run("release-request", "move", "--project", "qits", "--repository", CI, "--request", "1111",
+                "--branch", "feature/search", "--reason", "  ");
+        assertThat(blank.exit()).isEqualTo(2);
+        assertThat(blank.err()).contains("--request, --branch and --reason must not be empty.");
+        assertThat(platform.requests("POST", moveOf(PENDING_ID))).hasSize(1);
+    }
+
+    @Test
+    void aRefusedMoveSaysWhy() {
+        platform.answer("POST", moveOf(PENDING_ID), 409, "{\"message\":\"Branch feature/search is the only branch "
+                + "of release request qits-ci-service-rr-12 besides main: moving it would leave nothing to release. "
+                + "Withdraw the request instead (qits release-request withdraw)\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "move",
+                "--request", "1111", "--branch", "feature/search", "--reason", "Not ready.");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("Release request " + PENDING_ID + " cannot give up feature/search (HTTP 409). ")
+                .contains("Withdraw the request instead");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void aForeignBranchIsAnotherAgentsToMove() {
+        platform.answer("POST", moveOf(PENDING_ID), 403,
+                "{\"message\":\"An agent may move only a branch in its git_refs, its own work's\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "move",
+                "--request", "1111", "--branch", "feature/search", "--reason", "Not ready.");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("You may not move feature/search (HTTP 403): an agent moves only its own branch. "
+                + "Ask the branch's own agent or the delivery desk.");
+    }
+
+    @Test
+    void aMoveOfABranchNotOnTheRequestIsA404AndABlankReasonA400() {
+        platform.answer("POST", moveOf(PENDING_ID), 404,
+                "{\"message\":\"Release request " + PENDING_ID + " has no named source feature/nope\"}");
+
+        Result r = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "move",
+                "--request", "1111", "--branch", "feature/nope", "--reason", "Not ready.");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("No such request, or feature/nope is not a source of " + PENDING_ID
+                + " (HTTP 404). POST " + platform.url() + moveOf(PENDING_ID) + " answered HTTP 404");
+
+        platform.answer("POST", moveOf(PENDING_ID), 400, "{\"message\":\"A move says why\"}");
+        Result blank = run("release-request", "--project", "qits", "--repository", "qits-ci-service", "move",
+                "--request", "1111", "--branch", "feature/search", "--reason", "x");
+        assertThat(blank.exit()).isEqualTo(2);
+        assertThat(blank.err()).contains("A move says why: give --reason a sentence (HTTP 400).");
+    }
+
     // --- overriding an upstream gate (epic qits-897, qits-916) ---
 
     private static final String UPSTREAM_ID = "88888888-2222-3333-4444-555555555555";
