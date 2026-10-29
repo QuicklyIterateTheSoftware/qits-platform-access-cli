@@ -583,6 +583,26 @@ public final class ProjectsApi {
         return client.get(uri(deskTriggersPath(projectId) + query(query)));
     }
 
+    // --- branch deliveries ---
+
+    /**
+     * {@code {"branch", "everywhere", "deliveries":[{projectId, repoId, repository, step, requestId,
+     * qualifiedId, foldSha, runId, version, changedAt}]}}: how far a branch has come in each
+     * repository that knows it (epic qits-1676). {@code everywhere} is the least advanced step across
+     * the branch's repositories in the project, even when {@code repository} narrows the list; an
+     * unknown branch answers no deliveries and a null {@code everywhere}. {@code repository} is a
+     * name or an id, {@code project} an id or a slug; each is left out when null. The service 400s a
+     * branch that several projects know when no project is named.
+     */
+    public JsonNode branchDeliveries(String branch, String repository, String project)
+            throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "branch", branch);
+        addQuery(query, "repository", repository);
+        addQuery(query, "project", project);
+        return client.get(uri("/projects/api/branch-deliveries" + query(query)));
+    }
+
     private static String deskTriggersPath(String projectId) {
         return "/projects/api/projects/" + segment(projectId) + "/desk-triggers";
     }

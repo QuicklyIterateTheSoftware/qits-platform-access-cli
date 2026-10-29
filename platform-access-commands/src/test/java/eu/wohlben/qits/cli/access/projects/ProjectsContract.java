@@ -654,6 +654,33 @@ public final class ProjectsContract {
     };
 
     /**
+     * The branch deliveries read of {@code qits wait branch} (epic qits-1676, task qits-1723): the
+     * look before a wait is declared. Pending until qits-maintenance bumps {@code
+     * qits.projects-golden-masters.version} to a release that records this state (qits-projects-service
+     * 2026.1028.230057 does); on that bump write the pact again with {@code -Dgolden.update=true}.
+     */
+    static final String BRANCH_RELEASED = "branch ticket/qits-9001 is RELEASED in qits-demo-service";
+    static final String BRANCH_DELIVERIES_OPERATION = "getBranchDeliveries";
+    /**
+     * What the look reads: everywhere, and each delivery's repository, step and request. The
+     * deliveries are open-ended: a branch is in as many repositories as it was pushed to, and a
+     * pinned length would break the provider the day its recording grows one.
+     */
+    static final List<String> BRANCH_DELIVERIES_FIELDS = List.of("everywhere", "deliveries[].repository",
+            "deliveries[].repoId", "deliveries[].step", "deliveries[].qualifiedId");
+
+    /** {@code qits wait branch <branch> --until released}: the recorded branch, no repository, no project. */
+    private static final Call BRANCH_DELIVERIES = (api, params, recorded) -> {
+        JsonNode answer = api.branchDeliveries(query(recorded, "branch"), null, null);
+        assertThat(ProjectsApi.text(answer, "everywhere")).isNotBlank();
+        assertThat(answer.path("deliveries")).isNotEmpty().allSatisfy(d -> {
+            assertThat(ProjectsApi.text(d, "repository")).isNotBlank();
+            assertThat(ProjectsApi.text(d, "step")).isNotBlank();
+            assertThat(ProjectsApi.text(d, "qualifiedId")).isNotBlank();
+        });
+    };
+
+    /**
      * {@code qits projects delivery}: the project by id, and its delivery settings where the
      * recording carries them. A recording without them is a service older than the loop, whose
      * settings the command prints as the defaults; see {@link #DELIVERY}.
@@ -959,12 +986,13 @@ public final class ProjectsContract {
             "qits release-request rerun",
             "qits release-request approve", "qits release-request decline", "qits ci runs", "qits ci run",
             "qits ci retry", "qits ci report show", "qits maintenance automations", "qits maintenance automation run",
-            "qits workspaces list", "qits tui");
+            "qits workspaces list", "qits tui", "qits wait branch");
 
     /** Of those, every command that then looks a repository up by its id or name. */
     static final List<String> REPOSITORY_SCOPED = PROJECT_SCOPED.stream()
             .filter(c -> !c.equals("qits repositories list") && !c.equals("qits repositories create")
-                    && !c.equals("qits release-request approve") && !c.equals("qits release-request decline"))
+                    && !c.equals("qits release-request approve") && !c.equals("qits release-request decline")
+                    && !c.equals("qits wait branch"))
             .toList();
 
     /** Every command that takes a release request and finds it among the repository's requests of every state. */
@@ -1018,6 +1046,13 @@ public final class ProjectsContract {
                 .request("GET /projects/api/projects/{projectId}/desk-triggers"));
         REPOSITORY_SCOPED.forEach(c -> rows.add(row(c, ONE_REPOSITORY, "listProjectRepositories", "repositories",
                 FIND_REPOSITORY).consumes(REPOSITORY)));
+
+        // qits wait branch (qits-1723): pending until the pinned golden masters carry the deliveries.
+        rows.add(row("qits wait branch", BRANCH_RELEASED, BRANCH_DELIVERIES_OPERATION, "branchDeliveries",
+                BRANCH_DELIVERIES)
+                .consumes(held(BRANCH_RELEASED, BRANCH_DELIVERIES_OPERATION, BRANCH_DELIVERIES_FIELDS))
+                .anyLength("deliveries")
+                .request("GET /projects/api/branch-deliveries?branch=ticket/qits-9001"));
 
         // qits help guide (qits-1679): pending until the pinned golden masters carry the guide.
         rows.add(row("qits help guide", GUIDE_SHIPS, "getDevelopmentGuide", "developmentGuide", GUIDE)

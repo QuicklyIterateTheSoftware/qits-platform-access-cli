@@ -2800,7 +2800,9 @@ qits observe metrics --source _service/qits-ci --name http.server.active_request
 
 Declare what this holder waits on: a domain event that fits a selection. The platform gives the holder a turn when one arrives, or when the timeout passes. The command returns at once; it never blocks.
 
-Bare, it takes the event's name and its conditions. release-request, work and ci-run are presets for the usual waits; list shows the holder's waits and cancel ends one.
+Bare, it takes the event's name and its conditions. branch, release-request, work and ci-run are presets for the usual waits; list shows the holder's waits and cancel ends one.
+
+Prefer `wait branch` for your own work: a request id goes stale when it refolds or is superseded.
 
 Each --when is one group of conditions, separated by spaces, that must all hold. An event that fits any group matches; with no --when, every event of the name does. Conditions: path=value equal, path^=value starts with, path? present, !path absent. A path is the payload's fields joined by dots; [] after a field means some element of that array, and the conditions of one group that go through the same name[] must hold on the same element (entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or is empty: label="two words", note="". At most 8 groups of 8 conditions.
 
@@ -2830,6 +2832,7 @@ qits wait [--agent <id>] [--desk <project>] [--event <Name>] [--label <text>] [-
 - Waits take qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Every agent, admin-agent included, declares, lists and cancels its own waits only; qits:desk-admin acts on the agents of its own project and names one with --agent; qits:admin and qits:system act on any agent.
 
 ```
+qits wait branch ticket/qits-123 --until released
 qits wait release-request qits-ci-service-rr-12
 qits wait work qits-123 --status VERIFIED --timeout 2h
 qits wait ci-run 0d9e8f7a-6b5c-4d3e-8f2a-1b0c9d8e7f6a
@@ -2846,11 +2849,58 @@ qits wait release-request qits-ci-service-rr-12 --desk qits-ci
 - `1` The platform refused (the message names the status), or cannot be reached.
 - `2` Used wrongly (no holder, both --agent and --desk, no --event, a --when or --timeout that cannot be read or is over a limit), not signed in, or the session ended.
 
+## qits wait branch
+
+Wait until a branch is joined, released or live, or fails, in one repository or in every repository that knows it. Prefer this to `wait release-request` for your own work: a request id goes stale when the request refolds or is superseded, the branch does not.
+
+The same as --event BranchDeliveryChanged with branch=<branch> in every group, repository=<name> with --repository and projectId=<uuid> with --project. With --repository the target is the repository's step: joined is JOINED or MOVED, released is RELEASED or LIVE, live is LIVE. Without it the target is everywhere, the least advanced step across the branch's repositories: joined is JOINED, RELEASED or LIVE, released is RELEASED or LIVE, live is LIVE. Every target also fires early on a step FAILED, CONFLICTED or WITHDRAWN, so a broken delivery wakes you. failed waits for a step FAILED or CONFLICTED.
+
+It reads the branch's deliveries first. When the target or an early step already holds it says so, declares nothing and exits 0; with -o json it prints what it read. When no repository knows the branch yet it warns and declares anyway, and so it does when the read fails.
+
+```
+qits wait branch --until joined|released|live|failed [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <name>] [--timeout <duration>] [--workspaces-url <url>] <branch>
+```
+
+| Name | What it does |
+|---|---|
+| `<branch>` | The branch, by its whole name: ticket/qits-123. |
+| `--until joined\|released\|live\|failed` | Required. What to wait for: joined (in a release request), released (tagged), live (deployed, or released for a library) or failed (a red fold or a conflict). |
+| `--agent <id>` | The agent whose waits these are. Mutually exclusive with --desk. Default: QITS_AGENT_ID (on the MCP server, from the caller's token's agent claim). |
+| `--desk <project>` | The project whose desk's waits these are: its id, slug or name. Mutually exclusive with --agent. Default: QITS_DESK_PROJECT (on the MCP server, from the caller's token's project claim, when the token names no agent and is a desk's). |
+| `--label <text>` | What the agent waits on, in a few words. The platform shows the agent as `waiting on <label>`. A preset gives one of its own. |
+| `-o, --output table\|json` | table (the default): the wait for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
+| `--project <project>` | Only this project's deliveries: its id, slug or name. Needed when several projects know the branch. |
+| `--projects-url <url>` | The projects service's base URL, without /projects, where the deliveries and the project are read. Default: QITS_PROJECTS_URL, else derived from the idp address. |
+| `--repository <name>` | Only this repository's delivery, by name. Default: every repository that knows the branch, by their least advanced step. |
+| `--timeout <duration>` | Close the wait and wake the agent after this long, if nothing fitted: 30m, 2h, 1h30m, 1d or ISO-8601 (PT2H). Default: no timeout. |
+| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
+
+### Examples
+
+```
+qits wait branch ticket/qits-123 --until released
+qits wait branch ticket/qits-123 --until joined --repository qits-ci-service
+qits wait branch ticket/qits-123 --until live --project qits --timeout 1d
+qits wait branch ticket/qits-123 --until failed --repository qits-ci-service
+```
+
+- Give the branch's whole name, as you pushed it: the wait matches it exactly.
+- --repository takes the repository's name, as the event carries it.
+- A branch can carry on into a new request when its request releases without it or is superseded (MOVED): the wait does not care which request it is on.
+
+### Exit codes
+
+- `0` The wait is declared and printed, or the branch already reached the step; it says which.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly (no holder, no branch, an --until that is not joined, released, live or failed, a project qits does not know), not signed in, or the session ended.
+
 ## qits wait release-request
 
 Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN or OBSOLETE.
 
 The same as --event ReleaseRequestStateChanged with one group per final state: releaseRequestQualifiedId=<id> state=<STATE>, or releaseRequestId=<uuid> state=<STATE> for a uuid.
+
+Prefer `wait branch` for your own work: a request id goes stale when it refolds or is superseded.
 
 ```
 qits wait release-request [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--timeout <duration>] [--workspaces-url <url>] <id>
