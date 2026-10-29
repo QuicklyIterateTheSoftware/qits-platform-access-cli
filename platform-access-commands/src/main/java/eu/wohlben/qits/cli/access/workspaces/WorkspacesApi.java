@@ -26,6 +26,8 @@ final class WorkspacesApi {
 
     static final String API = "/workspaces/api";
     static final String CONTAINER = "/workspaces/container/";
+    /** The agent proxy (epic qits-1667): the daemon of whatever slot the agent is placed in now. */
+    static final String AGENT_PROXY = "/workspaces/agent/";
 
     private final PlatformClient client;
     private final String base;
@@ -50,6 +52,11 @@ final class WorkspacesApi {
     /** {@code getWorkspaceActiveProcess}: the start running against the slot, if one is live. */
     JsonNode activeProcess(long slot) throws CliFailure, InterruptedException {
         return client.get(uri(API + "/workspaces/" + slot + "/active-process"));
+    }
+
+    /** {@code listWorkspaceAgents}: the live agents placed in the slot, oldest first (epic qits-1667). */
+    JsonNode workspaceAgents(long slot) throws CliFailure, InterruptedException {
+        return client.get(uri(API + "/workspaces/" + slot + "/agents"));
     }
 
     /** {@code ensureWorkspaceContainer}, {@code stopWorkspaceContainer}, {@code recreateWorkspaceContainer}: no body. */
@@ -82,6 +89,44 @@ final class WorkspacesApi {
         add(query, "state", state);
         add(query, "projectId", projectId);
         return client.get(uri(API + "/agents" + (query.isEmpty() ? "" : "?" + String.join("&", query))));
+    }
+
+    /** {@code getAgent}: one agent, in any state. */
+    JsonNode agent(String agentId) throws CliFailure, InterruptedException {
+        return client.get(uri(agentPath(agentId)));
+    }
+
+    /**
+     * {@code promptAgent}: {@code {text, compactFirst}}, said to this one agent (epic qits-1667). A
+     * stopped agent starts again with it.
+     */
+    JsonNode promptAgent(String agentId, String text, boolean compactFirst) throws CliFailure, InterruptedException {
+        ObjectNode body = JsonNodeFactory.instance.objectNode();
+        body.put("text", text);
+        body.put("compactFirst", compactFirst);
+        return client.post(uri(agentPath(agentId) + "/prompt"), body);
+    }
+
+    /**
+     * {@code interruptAgent}, {@code stopAgent}, {@code restartAgent}, {@code yieldAgent}: no body,
+     * as the provider records each (epic qits-1667).
+     */
+    JsonNode agentVerb(String agentId, String verb) throws CliFailure, InterruptedException {
+        return client.post(uri(agentPath(agentId) + "/" + verb));
+    }
+
+    /** {@code listAgentSessions}: the agent's harness sessions, oldest first; a removed agent's too. */
+    JsonNode agentSessions(String agentId) throws CliFailure, InterruptedException {
+        return client.get(uri(agentPath(agentId) + "/sessions"));
+    }
+
+    /** {@code getAgentTranscript}: one session's raw JSONL lines. */
+    JsonNode agentTranscript(String agentId, String sessionId) throws CliFailure, InterruptedException {
+        return client.get(uri(agentPath(agentId) + "/sessions/" + segment(sessionId) + "/transcript"));
+    }
+
+    private static String agentPath(String agentId) {
+        return API + "/agents/" + segment(agentId);
     }
 
     /** {@code discardAgent}: {@code {"force": …}}, sent either way. */
@@ -199,7 +244,12 @@ final class WorkspacesApi {
      * app's {@code terminalSocketUrl}, {@code ws} for an http base and {@code wss} for https.
      */
     URI terminalSocket(long slot, String commandId) throws CliFailure {
-        URI http = uri(container(slot) + "/terminal/commands/" + segment(commandId));
+        return socket(container(slot) + "/terminal/commands/" + segment(commandId));
+    }
+
+    /** {@code path} as a socket address: {@code ws} for an http base and {@code wss} for https. */
+    private URI socket(String path) throws CliFailure {
+        URI http = uri(path);
         String scheme = switch (http.getScheme().toLowerCase(Locale.ROOT)) {
             case "https", "wss" -> "wss";
             case "http", "ws" -> "ws";
@@ -207,6 +257,36 @@ final class WorkspacesApi {
                     + "https base URL.", CliFailure.USAGE);
         };
         return URI.create(scheme + http.toString().substring(http.getScheme().length()));
+    }
+
+    // --- an agent's daemon, through the agent proxy (epic qits-1667) ---
+
+    /**
+     * The agent's harness log with {@code channel=TRANSCRIPT}: the daemon's {@code getCommandLog} of
+     * the agent's last command, found by the proxy rather than by the caller.
+     */
+    JsonNode agentLog(String agentId) throws CliFailure, InterruptedException {
+        return client.get(uri(AGENT_PROXY + segment(agentId) + "/log?channel=TRANSCRIPT"));
+    }
+
+    /** The agent's worktree: the daemon's {@code listFiles}, whole without a path, one directory with one. */
+    JsonNode agentFiles(String agentId, String path) throws CliFailure, InterruptedException {
+        return client.get(uri(AGENT_PROXY + segment(agentId) + "/files" + query("path", path)));
+    }
+
+    /** One file of the agent's worktree: the daemon's {@code readFile}. */
+    JsonNode agentFile(String agentId, String path) throws CliFailure, InterruptedException {
+        return client.get(uri(AGENT_PROXY + segment(agentId) + "/files/content" + query("path", path)));
+    }
+
+    /** The frameworks and test links of the agent's worktree: the daemon's {@code detect}. */
+    JsonNode agentDetection(String agentId) throws CliFailure, InterruptedException {
+        return client.get(uri(AGENT_PROXY + segment(agentId) + "/detection"));
+    }
+
+    /** The agent's harness terminal, {@code WS /workspaces/agent/{id}/terminal}: RUNNING agents only. */
+    URI agentTerminalSocket(String agentId) throws CliFailure {
+        return socket(AGENT_PROXY + segment(agentId) + "/terminal");
     }
 
     /** The client the doors are called with; a socket opened beside them carries the same credential. */

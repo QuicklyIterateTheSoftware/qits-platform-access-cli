@@ -30,6 +30,25 @@ final class Doors {
             + "qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. "
             + "qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.";
 
+    /**
+     * The agent control doors of epic qits-1667 (prompt, interrupt, stop, restart): the desk roles are
+     * held to their own project there, and qits:system may call them too.
+     */
+    static final String CONTROL = "It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:desk (a desk, "
+            + "within its own project), or qits:system. qits:agent alone is refused (HTTP 403) by design.";
+
+    /** {@code yieldAgent}: the control roles, and an agent for itself. */
+    static final String YIELD = "It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:desk (a desk, "
+            + "within its own project), or qits:system; qits:agent may yield only its own agent.";
+
+    /**
+     * The agent proxy, {@code /workspaces/agent/{id}/…} (epic qits-1667): checked against the agent,
+     * not the slot. The desk roles read every agent's daemon there but open no socket.
+     */
+    static final String AGENT_PROXY = "It goes through qits-workspaces' agent proxy to the daemon of the slot the "
+            + "agent is placed in now. qits:system, qits:admin and qits:admin-agent reach every agent; qits:agent "
+            + "only its own; qits:desk and qits:desk-admin read every agent's and open no terminal.";
+
     private Doors() {
     }
 }
