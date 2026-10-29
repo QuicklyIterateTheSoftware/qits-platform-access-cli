@@ -45,6 +45,8 @@ Commands:
 - `qits registry-login --configure` gives npm and Maven on this workstation a login for the
   platform's registries, in blocks of `~/.npmrc` and `~/.m2/settings.xml` that `qits
   session-daemon` keeps fresh — see below.
+- `qits agents list|show|prompt|interrupt|stop|restart|yield|sessions|transcript|chat|attach|files|
+  discard|draft` are the platform's agents, each named by its id or by `--work qits-123` — see below.
 - `qits agents claude hook work-links` is a Claude Code hook that shows work ids such as `qits-111`
   as links to the landing app, and `qits agents claude statusline work-items` a Claude
   Code status line with the session's newest work items and their states — see below.
@@ -1426,6 +1428,11 @@ looked up in the projects service the way the other commands with a `--project` 
 variable is always a project uuid already. Without any of the four the command exits with 2. An
 agent may declare and cancel waits for itself only; a project's desk, for its own project's only.
 
+`--agent` takes the agent's id as `qits agents list` shows it; `qits agents show --work qits-123` names
+the one active agent on an item. A wait that fires for a STOPPED agent (`qits agents stop`) does not
+start it: its turn is kept and heard once the agent is restarted (`qits agents restart`) or prompted
+(`qits agents prompt`). One that fires for a YIELDED agent brings it back, as any turn does.
+
 Each `--when` is one group of conditions that must all hold; an event that fits any group matches,
 and with no `--when` every event of the name does. The conditions are those of `qits observe`, on
 the event's payload:
@@ -1514,7 +1521,7 @@ by one command, the same way.
 
     qits workspaces list --repository <id|name>   GET  /workspaces/api/workspaces?repositoryId=
       [--project <project>]
-    qits workspaces show <n>                      GET  /workspaces/api/workspaces/{n}
+    qits workspaces show <n>                      GET  /workspaces/api/workspaces/{n}, then …/{n}/agents
     qits workspaces active-process <n>            GET  /workspaces/api/workspaces/{n}/active-process
     qits workspaces start|stop|recreate <n>       POST /workspaces/api/workspaces/{n}/ensure-container,
                                                        stop-container, recreate-container (no body)
@@ -1522,7 +1529,7 @@ by one command, the same way.
     qits workspaces attach <command id>           WS   …/terminal/commands/{id}
     qits workspaces items                         GET  /workspaces/api/work/workspaces
     qits workspaces history <work>                GET  /workspaces/api/work/{work}/workspaces
-    qits workspaces agents list                   GET  /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]
+    qits workspaces agents list (deprecated)      GET  /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]
     qits workspaces agents discard [--force]      POST /workspaces/api/agents/{id}/discard {"force":…}
     qits workspaces agents prompt <work> <text>   POST /workspaces/api/agent-dispatches/delivery
     qits workspaces agents draft show|save|discard     GET|PUT|DELETE /workspaces/api/agents/{id}/prompt-draft
@@ -1537,7 +1544,17 @@ by one command, the same way.
     qits workspaces agents plugins list|install   GET  …/agent-plugins, POST …/agent-plugins/{id}/install {}
 
 `…` is `/workspaces/container/{n}`: qits-workspaces' container proxy to the slot's daemon, so those
-commands take the slot with `--workspace <n>`, as the page's base URL does. A work item is its
+commands take the slot with `--workspace <n>`, as the page's base URL does.
+
+**`qits workspaces agents list|discard|prompt|draft|chat|terminate|harness|files` are deprecated**
+(epic qits-1667): the agents' verbs are `qits agents` now (below), which names an agent by its id or
+`--work` and never needs the slot. For one release each alias still works as it did and prints
+`deprecated: use 'qits agents <verb>'` on stderr, never on stdout, so `-o json` stays parseable:
+`terminate` points at `stop`, `harness` at `show` (or `attach` with `--attach`), `prompt <qits-123>`
+at `prompt --work qits-123`. `sign-in`, `plugins` and `refine` are the container's harness install
+and stay. `qits workspaces show <n>` lists the agents placed in the slot after its status, from `GET
+/workspaces/api/workspaces/{n}/agents`, as `qits agents list` prints them; its `-o json` is the slot's
+answer alone, as before, and a service without that door (404) leaves the agents out. A work item is its
 qualified id (`qits-123`), looked up in the projects service, or its id; `history` sends either as it
 is, since the service takes both.
 
@@ -1753,8 +1770,61 @@ session-daemon` replaces it each time it refreshes the session. No long-lived se
 
 ## qits agents
 
-What an agent harness runs on this machine: `qits agents <harness> …`. Claude Code is the one
-harness today.
+The platform's agents, one verb per thing that can be done to one (epic qits-1667), and what an
+agent harness runs on this machine (`qits agents claude …`, below).
+
+    qits agents list [--project] [--state] [--work] [--workspace]
+                                                  GET  /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]
+    qits agents show <agent>                      GET  /workspaces/api/agents/{id}
+    qits agents prompt <agent> <text> [--compact-first]
+                                                  POST /workspaces/api/agents/{id}/prompt {text, compactFirst}
+    qits agents interrupt <agent>                 POST /workspaces/api/agents/{id}/interrupt (no body)
+    qits agents stop|restart|yield <agent>        POST /workspaces/api/agents/{id}/stop, restart, yield (no body)
+    qits agents sessions <agent>                  GET  /workspaces/api/agents/{id}/sessions
+    qits agents transcript <agent> <session>      GET  /workspaces/api/agents/{id}/sessions/{sid}/transcript
+    qits agents chat <agent>                      GET  /workspaces/agent/{id}/log?channel=TRANSCRIPT
+    qits agents attach <agent>                    WS   /workspaces/agent/{id}/terminal
+    qits agents files list|read|detect <agent>    GET  /workspaces/agent/{id}/files[?path=], files/content?path=,
+                                                       detection
+    qits agents discard <agent> [--force]         POST /workspaces/api/agents/{id}/discard {"force":…}
+    qits agents draft show|save|discard <agent>   GET|PUT|DELETE /workspaces/api/agents/{id}/prompt-draft
+
+**Naming the agent.** Every verb but `list` takes `<agent>`, the agent's id, **or** `--work
+<qits-123|uuid>`, never both. `--work` looks a qualified id up in the projects service, then asks
+`GET /workspaces/api/agents?workId=<uuid>&state=ACTIVE`: no active agent is exit 1, `No active agent
+works on qits-123.`; more than one is exit 1 too, listing each with its slot and run state, and the
+CLI never picks one (`AgentRef`). With `--work`, a verb's second positional moves up: `qits agents
+prompt --work qits-123 'Go on.'`, `qits agents transcript --work qits-123 <session>`.
+
+**Run states.** `list` and `show` print how each agent runs: QUEUED, RUNNING, YIELDED, and now STOPPED,
+which `stop` puts it in. Nothing places, resumes or drives a stopped agent; `restart` hands it back to
+the scheduler as YIELDED (a running agent's harness is restarted on its session instead), and
+`prompt` starts it again with that turn. `yield` frees the slot of a running agent and keeps its
+harness. `interrupt` presses ESC in a running harness and changes no state.
+
+**Which doors.** The JSON API's agent doors for the agent itself; for what its daemon holds (`chat`,
+`attach`, `files`), the agent proxy `/workspaces/agent/{id}/…`, which finds the slot the agent is
+placed in now, so none of these takes `--workspace`. An agent waiting for a slot has no daemon: the
+proxy answers 409. `attach` is the agent's Terminal tab: `qits workspaces attach`'s terminal code
+(Ctrl-] detaches, the backoff, read-only without a terminal) on the agent proxy's socket; it is
+`Interaction.TERMINAL`, so not an MCP tool. Every other verb is one, `agents_<verb>`, once the MCP
+service carries this CLI.
+
+Who may: every read is open to every credential, `qits:agent` included. `prompt`, `interrupt`, `stop`
+and `restart` need `qits:admin`, `qits:admin-agent`, `qits:desk-admin`, `qits:desk` (a desk within
+its own project) or `qits:system`; `yield` takes those and `qits:agent` for its own agent; `discard`
+and `draft save|discard` need `qits:admin`, `qits:admin-agent` or `qits:desk-admin`. The agent proxy
+admits `qits:system`, `qits:admin` and `qits:admin-agent` to every agent, `qits:agent` to its own,
+and the desk roles to every agent's reads and no socket. `-o json` prints the service's answer, as
+every `qits workspaces` command does; `--workspaces-url`, `--projects-url` and `-o` come after the
+verb.
+
+The consumer pact holds the JSON API's doors (`WorkspacesContract`); the agent proxy is forwarded raw
+to the daemon and, like the container proxy, is no row of qits-workspaces' contract.
+
+`qits agents claude …` is what an agent harness runs on this machine: `qits agents <harness> …`.
+Claude Code is the one harness today. It alone is `Interaction.LOCAL`, so the MCP service does not
+serve it.
 
 ### qits agents claude hook work-links
 
