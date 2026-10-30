@@ -550,6 +550,25 @@ provider's epic branch and pending until a pin carries them; `--work`'s lookup (
 `workId` and `state=ACTIVE`) is recorded in no state yet and waits in `an agent working on a
 ticket`. The agent proxy's routes are exclusions, not rows.
 
+**The tapes** (epic qits-881). `tapes/<integration>-cli.tape` and `-tui.tape` are VHS tapes that
+play the released static binary in a real terminal against a fake platform; README, "The tapes",
+says what each shows and how to play one by hand. `./mvnw verify` never plays them: QA does, in the
+third `release-request:` step of `.config/qits/release.yml` (`check-outputs: [cli-tapes]`), which
+runs qits-ci's cli-tapes generator and fails when a golden under `tapes/golden/` moved. Goldens and
+GIFs come from `qits release-request regenerate --kind cli-tapes`, never by hand.
+`TapesCoverageTest` (platform-access-cli) walks the binary's command tree: a top-level command with
+no tapes fails it, unless `NOT_AN_INTEGRATION` or `CLI_ONLY` names it with the reason.
+`tapes/prepare.sh` is SOURCED by the generator (bash, `set -eu`, no `exit`, background output to a
+file): it builds the Dockerfile's `tapes-kit` target with the QA build's own arguments
+(`docker/buildctl-args.sh`, which release.yml's build steps source too, so the native compile is a
+cache hit), starts `FakePlatformMain` (commands module, test classes: `FakePlatform` on port 47080,
+`FakeSocketServer` on 47081, answers from the golden masters and `src/test/resources/tapes/`,
+every write a 403) and exports the `QITS_URL_<APP>` addresses and a fake token home. A tape shows
+nothing that moves between plays: no clock, no random port, no temporary path, no version of this
+build. Each command or key is typed while hidden and shown once its screen is finished, because vhs
+writes a text frame after every command and a frame taken mid-output would make the golden flaky.
+A golden-master state the fake names that a newer pin drops fails `prepare.sh`, not a tape.
+
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.
 

@@ -293,6 +293,72 @@ qits-deployments deploys that image because `.config/qits/deployments.yml` exist
 The recipes need no toolchain image in the registry: `docker/Dockerfile` builds the musl toolchain
 as a stage, from two tarballs in the platform's Maven store, which the bootstrap seeds.
 
+## The tapes
+
+`tapes/` holds a [VHS](https://github.com/charmbracelet/vhs) tape for every integration (epic
+qits-881): `tapes/<integration>-cli.tape` types the integration's commands — its main read as a
+table and with `-o json`, and one write the platform refuses, with `echo $?` — and
+`tapes/<integration>-tui.tape` drives `qits tui` down to the same command, picks its values from
+the lists the platform fills in, runs it with Ctrl+R and quits. `login`, `git-login`,
+`registry-login`, `artifacts` and `changelog` have a CLI tape only; each tape's header says what it
+shows, and where a run cannot be shown as it is (a stream's notes carry a wall-clock stamp, a
+checkout needs a repository), what it shows instead and why. They are the one place the built
+binary runs end to end: the static `qits` the release ships, in a real terminal, against a fake
+platform. `TapesCoverageTest` reads the command tree and fails when a top-level command has no
+tapes, or a tape no command.
+
+    tapes/prepare.sh             the hook: builds the binary and the fake platform's class path,
+                                 starts the fake, exports what the tapes read
+    tapes/scenes/<name>.sh       what a tape needs on disk (a repository to hold, a binary to
+                                 replace), sourced while the tape is hidden
+    tapes/<name>.tape            the tapes
+    tapes/golden/<name>.txt      each tape's text: the terminal after every command, written by vhs
+    tapes/recordings/<name>.gif  each tape as a GIF
+
+**The goldens and the GIFs are never written by hand.** QA plays every tape and fails when a golden
+moved (a step in `.config/qits/release.yml` with `check-outputs: [cli-tapes]`); new ones come from
+the platform's `cli-tapes` automation, which commits them to the release request:
+
+    qits release-request --project qits --repository qits-platform-access-cli regenerate --kind cli-tapes
+
+The generator is qits-ci's (`platform-pipelines/automations/cli-tapes.yml` in qits-ci-service): it
+sources `tapes/prepare.sh`, plays each tape into its golden, and renders a GIF only for a golden that
+changed or a GIF that is missing.
+
+**The fake platform** is `FakePlatformMain`, in the commands module's test classes: `FakePlatform`
+on `127.0.0.1:47080` for every service and `FakeSocketServer` on `127.0.0.1:47081` for
+qits-observability's stream and search. Its answers are the providers' golden masters — the jars
+the consumer pacts read — and, where no provider records one, fixtures under
+`platform-access-commands/src/test/resources/tapes/`; a write answers `403`, as the platform answers
+a `qits:agent` token. `tapes/prepare.sh` exports `QITS_URL_<APP>` at it for every service, a
+token home with a token that is no token (`QITS_TOKEN=qits-tapes-not-a-token`,
+`QITS_TOKEN_SUBJECT=tapes`, `QITS_DOMAIN=example.test`), `QITS_AGENT_ID`, `TZ=UTC` and its own
+`XDG_CONFIG_HOME`, after dropping every `QITS_*` variable the shell had. Nothing a tape shows
+depends on the clock, a random port or a temporary path, because a golden must be the same on
+every play: each command is typed while the tape is hidden and shown once its prompt is back.
+
+**Playing a tape by hand.** `tapes/prepare.sh` builds the Dockerfile's `tapes-kit` target with
+`buildctl`, the way QA does; off the platform, export the kit yourself and name it:
+
+    docker build --target tapes-kit --output type=local,dest=out/tapes-kit -f docker/Dockerfile \
+      --build-arg TOOLCHAIN_BASE=quay.io/quarkus/ubi10-quarkus-graalvmce-builder-image:jdk-25 \
+      --build-arg MUSL_URL=https://more.musl.cc/11.2.1/x86_64-linux-musl/x86_64-linux-musl-native.tgz \
+      --build-arg ZLIB_URL=https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz .
+
+Then play it with `qits/build-images/vhs-base` (vhs, ttyd, ffmpeg, a chromium and a JRE):
+
+    docker run --rm -v "$PWD:/work" -w /work qits/build-images/vhs-base:latest bash -c \
+      'set -eu; QITS_TAPES_KIT=out/tapes-kit . ./tapes/prepare.sh; vhs -o out/projects-cli.txt tapes/projects-cli.tape'
+
+or with a local vhs the same way, in a bash of its own (the hook changes the shell it is sourced
+into). `QITS_TAPES_BINARY=<path>` plays a `qits` of your own instead of the kit's (a host build, say),
+and with `QITS_TAPES_CLASSPATH=<class path>` beside it no kit is needed at all: the class path is
+`platform-access-commands/target/test-classes`, `target/classes` and the module's test-scope jars
+(`./mvnw -pl platform-access-commands dependency:build-classpath -DincludeScope=test`). Write the
+output anywhere but `tapes/golden/`. The tapes are written for the native binary: `qits tui` runs a
+command by starting its own binary again (`/proc/self/exe`), which on a JVM is `java`, and `qits
+update` replaces a binary, never a JVM.
+
 ## Using qits from an agent
 
 `qits help skill` prints the help of every command as a SKILL.md: when to use qits, the platform
