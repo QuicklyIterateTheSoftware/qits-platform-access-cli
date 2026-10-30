@@ -104,6 +104,13 @@ public class TuiCommand extends PlatformCommand {
      */
     private void loop(Terminal terminal, TuiApp app) throws IOException {
         Attributes saved = terminal.enterRawMode();
+        // JLine's raw mode leaves ISIG on, so Ctrl+C was SIGINT to the whole process group — the
+        // screen included — and never the key that stops a running command and stays (Key's 3).
+        // Off, Ctrl+C (and Ctrl+Z, Ctrl+\) reach the screen as keys. Found by the TUI tapes (epic
+        // qits-881), which stop a stream with Ctrl+C.
+        Attributes keys = terminal.getAttributes();
+        keys.setLocalFlag(Attributes.LocalFlag.ISIG, false);
+        terminal.setAttributes(keys);
         Thread restore = new Thread(() -> restore(terminal, saved), "qits-tui-restore");
         Runtime.getRuntime().addShutdownHook(restore);
         terminal.puts(InfoCmp.Capability.enter_ca_mode);
