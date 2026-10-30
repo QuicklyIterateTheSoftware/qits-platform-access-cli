@@ -4830,7 +4830,7 @@ qits registry-login
 
 ## qits artifacts
 
-The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: a maven module, an npm package, a contract package, an sbom, a docs bundle or a daemon binary.
+The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: a maven module, an npm package, a contract package, an sbom, a docs bundle or a daemon binary. `qits artifacts fetch` writes published artifacts to a local directory: the consumer pacts a provider's deployed consumers were built against.
 
 ## qits artifacts publish
 
@@ -5240,6 +5240,46 @@ qits artifacts publish exists npm @qits/ui-components 2026.906.1
 - `0` Published.
 - `1` Not published, or the arguments are wrong.
 - `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
+
+## qits artifacts fetch
+
+Write published artifacts to a local directory. deployed-pacts: the consumer pacts a provider has to keep honouring, one per consumer version that is deployed or kept for a rollback.
+
+## qits artifacts fetch deployed-pacts
+
+Download the consumer pacts a provider has to keep honouring: for each consumer version that is deployed or kept as a rollback target, the pact package it was built against.
+
+qits-maintenance names the packages (GET /maintenance/api/deployed-pacts); each one's jar comes from qits-artifacts' hosted maven repository, and its pacts/*_<provider>.json files are written to <out>/<consumer repository>/<pact version>/. One line per pact: `fetched <consumer> pact <version> for deployed <v1>, <v2>`, then the count.
+
+```
+qits artifacts fetch deployed-pacts --out <dir> --provider <repository> [--artifacts-url <url>] [--maintenance-url <url>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--out <dir>` | Required. Where the pacts are written, created when missing. |
+| `--provider <repository>` | Required. The provider's repository name, as its pact packages name it: qits-projects-service. |
+| `--artifacts-url <url>` | qits-artifacts' base URL, without /artifacts. Default: QITS_ARTIFACTS_URL, else https://registry.qits.<domain>. |
+| `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else derived from the idp address or QITS_DOMAIN. |
+| `-o, --output table\|json` | table (the default): one line per pact and a count. json: the service's answer with the files written. |
+
+### Examples
+
+```
+qits artifacts fetch deployed-pacts --provider qits-projects-service --out target/deployed-pacts
+qits artifacts fetch deployed-pacts --provider qits-projects-service --out /tmp/pacts -o json
+```
+
+- --out is created when it is missing. A consumer version's directory is replaced as a whole; one the platform no longer names is left as it is, so give a fresh --out to get exactly what serves now.
+- No deployed consumer is not an error: --out is created and the command says so.
+- In a CI step the run's token (QITS_TOKEN) reads both services; elsewhere the session or the workspace's token does.
+- -o json prints qits-maintenance's answer with `files` (the paths written) on each pact and `out`.
+
+### Exit codes
+
+- `0` Every named pact was written, or no consumer of the provider is deployed.
+- `1` qits-maintenance refused (503: qits-deployments cannot say what serves), a jar could not be downloaded, a jar holds no pacts/*_<provider>.json, or --out could not be written.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits changelog
 

@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.publish;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.wohlben.qits.cli.access.artifacts.FetchRows;
 import eu.wohlben.qits.cli.access.changelog.BumpMessageRows;
 import eu.wohlben.qits.cli.access.contracts.CliPact;
 import eu.wohlben.qits.cli.access.contracts.CliRow;
@@ -27,8 +28,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * <b>What the commands ask qits-artifacts, and why</b> (ticket qits-1149): the publish commands'
  * store doors (sboms, daemon binaries, docs bundles, content hashes, the hosted Maven repository
- * and npm registry), {@code qits update}'s daemon reads ({@link UpdateRows}) and {@code qits
- * changelog bump-message}'s changelog read ({@link BumpMessageRows}), written to {@code
+ * and npm registry), {@code qits update}'s daemon reads ({@link UpdateRows}), {@code qits
+ * changelog bump-message}'s changelog read ({@link BumpMessageRows}) and {@code qits artifacts fetch
+ * deployed-pacts}' pact jar ({@link FetchRows}), written to {@code
  * pacts/qits-platform-access-cli_qits-artifacts-service.json}.
  * <p>
  * <b>One row per (command, request).</b> A row runs the client method the command calls, over the
@@ -310,9 +312,11 @@ public final class ArtifactsContract {
             .client(NpmPublisher.class, "publish")
             .client(UpdateRows.CLIENT, UpdateRows.DOORS)
             .client(BumpMessageRows.CLIENT, BumpMessageRows.DOORS)
+            .client(FetchRows.CLIENT, FetchRows.DOORS)
             .rows(ROWS)
             .rows(UpdateRows.ROWS)
-            .rows(BumpMessageRows.ROWS);
+            .rows(BumpMessageRows.ROWS)
+            .rows(FetchRows.ROWS);
 
     private static List<CliRow> rows() {
         List<CliRow> rows = new ArrayList<>();

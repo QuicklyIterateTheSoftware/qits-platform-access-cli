@@ -262,7 +262,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                every 30 seconds until PRESENT or --timeout passes
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
-    artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
+    artifacts/ qits artifacts: the group, with publish (in publish/ below) and fetch. `fetch
+               deployed-pacts` (qits-1765, Interaction.LOCAL: it writes files) asks qits-maintenance's
+               MaintenanceApi.deployedPacts which pact package each deployed consumer version was
+               built against and unpacks each jar's pacts/*_<provider>.json through PactJars (the
+               hosted maven repository over PlatformClient, the command's own credential). Its rows:
+               listDeployedPacts in MaintenanceContract, pending until a pinned
+               qits-maintenance-golden-masters records `a provider whose deployed consumers publish
+               pacts`; the jar GET in ArtifactsContract (FetchRows)
     changelog/ qits changelog bump-message, and the two grammars a changelog shares with its
                readers: CommitSubjects (the ids a `type(qits-9, qits-10):` subject names, and their
                order) and AssociatedTickets (the changelog's last line, written and read back).

@@ -45,7 +45,7 @@ public final class Store {
   static final String NPM_HOSTED_PATH = "/artifacts/npm/npm";
 
   /** qits-artifacts' hosted maven repository. */
-  static final String MAVEN_HOSTED_PATH = "/artifacts/maven/maven";
+  public static final String MAVEN_HOSTED_PATH = "/artifacts/maven/maven";
 
   /** qits-mirror's Maven Central pull-through, where an external parent or BOM is read. */
   static final String MAVEN_CENTRAL_MIRROR_PATH = "/mirror/maven/central";

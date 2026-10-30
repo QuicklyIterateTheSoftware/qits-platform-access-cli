@@ -186,6 +186,19 @@ class McpToolCatalogTest {
         assertThat(instructions).contains("Not served here (" + catalog.excluded().size() + ")");
     }
 
+    /** qits-1765: it writes pacts to a local directory, which in this service nobody would read. */
+    @Test
+    void fetchingDeployedPactsIsLocalAndNoTool() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(byCommand.get("qits artifacts fetch deployed-pacts")).isNotNull();
+        assertThat(byCommand.get("qits artifacts fetch deployed-pacts").reason())
+                .isEqualTo("only means something on the caller's machine");
+        assertThat(catalog.tool("artifacts_fetch_deployed-pacts")).isEmpty();
+        assertThat(catalog.tool("artifacts_fetch")).isEmpty();
+    }
+
     @Test
     void theReportSubmitIsCiOnlyAndTheReportShowIsATool() {
         Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
@@ -387,7 +400,8 @@ class McpToolCatalogTest {
                 "agent-mcp_credentials_list",
                 "events", "events_query", "observe", "observe_query", "observe_sources", "observe_errors",
                 "observe_slow-spans", "observe_metrics", "help_skill", "help_guide", "agents_claude_hook_work-links",
-                "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message",
+                "agents_claude_statusline_work-items", "artifacts_publish_exists", "artifacts_fetch_deployed-pacts",
+                "changelog_bump-message",
                 "workspaces_list", "workspaces_show", "workspaces_active-process", "workspaces_items",
                 "workspaces_history", "workspaces_log", "workspaces_agents_sign-in_status",
                 "workspaces_agents_plugins_list", "agents_list", "agents_show", "agents_sessions", "agents_transcript",

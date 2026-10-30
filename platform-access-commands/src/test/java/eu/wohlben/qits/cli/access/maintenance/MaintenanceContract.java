@@ -17,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * <b>What the commands ask qits-maintenance, and why</b> (ticket qits-1149): {@code qits maintenance
- * automations}, {@code automation run} and {@code bump}, through {@link MaintenanceApi}, written to
+ * automations}, {@code automation run} and {@code bump}, and {@code qits artifacts fetch
+ * deployed-pacts}'s one read (qits-1765), through {@link MaintenanceApi}, written to
  * {@code pacts/qits-platform-access-cli_qits-maintenance-service.json}.
  * <p>
  * qits-maintenance records the automations of a request at a named fold, and a re-run with no body
@@ -35,6 +36,8 @@ public final class MaintenanceContract {
     static final String AT_NEWEST_FOLD = "a release request with automations at its newest fold";
     /** runReleaseRequestAutomation with {"workItem": "<id>"}. */
     static final String FOR_A_WORK_ITEM = "a release request with an automation to re-run for a work item";
+    /** listDeployedPacts for {@code qits artifacts fetch deployed-pacts} (qits-1765). */
+    static final String DEPLOYED_PACTS = "a provider whose deployed consumers publish pacts";
 
     private static final CliPact BASE = CliPact.of("qits-maintenance-service", "qits-maintenance");
 
@@ -82,6 +85,21 @@ public final class MaintenanceContract {
         assertThat(bytes.toString(StandardCharsets.UTF_8)).contains("status");
     };
 
+    /** What {@code qits artifacts fetch deployed-pacts} reads of each pact: the coordinate, where it goes, the line. */
+    static final List<String> DEPLOYED = List.of("pacts[].consumerRepository", "pacts[].groupId",
+            "pacts[].artifactId", "pacts[].pactVersion", "pacts[].deployedVersions");
+
+    private static final Call DEPLOYED_PACTS_READ = (api, params, recorded) -> {
+        JsonNode answer = api.deployedPacts(params.get("provider"));
+        assertThat(answer.path("pacts")).isNotEmpty().allSatisfy(p -> {
+            assertThat(p.path("consumerRepository").asText()).isNotBlank();
+            assertThat(p.path("groupId").asText()).isNotBlank();
+            assertThat(p.path("artifactId").asText()).isNotBlank();
+            assertThat(p.path("pactVersion").asText()).isNotBlank();
+            assertThat(p.path("deployedVersions").isArray()).isTrue();
+        });
+    };
+
     static final List<CliRow> ROWS = List.of(
             row("qits maintenance automations", WITH_AUTOMATIONS, "listReleaseRequestAutomations", "automations",
                     automations(true)).consumes(AUTOMATIONS),
@@ -94,7 +112,10 @@ public final class MaintenanceContract {
                     run(true)).consumes("id")
                     .request("POST /maintenance/api/release-requests/{requestId}/automations/{kind}/runs"),
             row("qits maintenance bump", PENDING_BUMPS, "getBump", "bump", BUMP_READ)
-                    .consumes(BASE.held(PENDING_BUMPS, "getBump", BUMP)));
+                    .consumes(BASE.held(PENDING_BUMPS, "getBump", BUMP)),
+            CliRow.of("qits artifacts fetch deployed-pacts", DEPLOYED_PACTS, "listDeployedPacts",
+                            "MaintenanceApi#deployedPacts", api(DEPLOYED_PACTS_READ)).consumes(DEPLOYED)
+                    .request("GET /maintenance/api/deployed-pacts"));
 
     public static final CliPact CONTRACT = BASE.client(MaintenanceApi.class).rows(ROWS);
 
