@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.access.agentmcp.AgentMcpContract;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import eu.wohlben.qits.cli.access.contracts.CliPact;
@@ -1039,13 +1040,15 @@ public final class ProjectsContract {
 
     public static final CliPact CONTRACT = BASE
             .client(ProjectsApi.class)
+            .client(AgentMcpContract.CLIENT)
             .excluded("ProjectsApi#openApi", "the served OpenAPI document (GET /projects/q/openapi), which the payload"
                     + " commands read a request body's schema from: no operation of the provider, so no recording")
             .excluded("ProjectsApi#remoteLoginSocket", "the backup-remote sign-in terminal, a WebSocket")
             .excluded("ProjectsApi#client", "the client the doors are called with, handed to the sign-in socket")
             .excluded("ProjectsApi#repository", "a lookup over repositories(), whose rows assert the entries: the mock"
                     + " answers every entry alike, so a lookup by name would find it twice")
-            .rows(ROWS);
+            .rows(ROWS)
+            .rows(AgentMcpContract.ROWS);
 
     private static List<CliRow> rows() {
         List<CliRow> rows = new ArrayList<>();

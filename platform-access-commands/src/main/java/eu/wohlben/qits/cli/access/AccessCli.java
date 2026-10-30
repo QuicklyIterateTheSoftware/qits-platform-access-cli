@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access;
 
+import eu.wohlben.qits.cli.access.agentmcp.AgentMcpCommand;
 import eu.wohlben.qits.cli.access.agents.AgentsCommand;
 import eu.wohlben.qits.cli.access.artifacts.ArtifactsCommand;
 import eu.wohlben.qits.cli.access.changelog.ChangelogGroup;
@@ -8,6 +9,7 @@ import eu.wohlben.qits.cli.access.ci.CiCommand;
 import eu.wohlben.qits.cli.access.maintenance.MaintenanceCommand;
 import eu.wohlben.qits.cli.access.daemon.SessionDaemonCommand;
 import eu.wohlben.qits.cli.access.database.DatabaseCommand;
+import eu.wohlben.qits.cli.access.deployments.DeploymentsCommand;
 import eu.wohlben.qits.cli.access.events.EventsCommand;
 import eu.wohlben.qits.cli.access.git.GitCredentialCommand;
 import eu.wohlben.qits.cli.access.git.GitLoginCommand;
@@ -45,10 +47,10 @@ import picocli.CommandLine;
         versionProvider = QitsVersion.Provider.class,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class,
-                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, MaintenanceCommand.class, UsersCommand.class,
+                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, DeploymentsCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
                 ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class, RegistryLoginCommand.class,
-                ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, UpdateCommand.class,
+                ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, AgentMcpCommand.class, UpdateCommand.class,
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "

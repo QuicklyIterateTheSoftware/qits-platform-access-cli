@@ -2315,6 +2315,153 @@ qits database diagram --root . --out docs/database --check
 - `1` With --check: a file would be written or deleted. Otherwise: a file could not be read or written.
 - `2` Used wrongly: --root is not a directory, or nothing is compiled under it (`compile first: no target/classes under <root>`).
 
+## qits deployments
+
+The deployer, qits-deployments. `settings` reads and writes the values it hands each application in each environment.
+
+## qits deployments settings
+
+The settings qits-deployments hands an application in an environment: one value per key, plain or secret. A change reaches the application on its next deployment; `preview` shows what that deployment would change.
+
+A secret's value is never shown: the service does not send it back, and the table prints ******** in its place.
+
+### Notes
+
+- --output and --deployments-url may come before or after the command.
+- Reading (list, preview) takes qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Writing (set, delete) takes qits:admin or qits:system.
+
+## qits deployments settings list
+
+List an application's settings, of every environment or of the one --environment names.
+
+A secret's value shows as ********; -o json gives the service's answer, where it is null.
+
+```
+qits deployments settings list --application <application> [--deployments-url <url>] [--environment <environment>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `--environment <environment>` | Only this environment's settings: dev. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+
+### Examples
+
+```
+qits deployments settings list --application qits-ci
+qits deployments settings list --application qits-ci --environment dev -o json
+```
+
+- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits deployments settings set
+
+Store one setting of an application in an environment. The value is read on stdin, never from a flag, so it stays out of the shell's history; one trailing line break is taken off.
+
+--secret stores it as a secret: no answer sends its value back again. It prints the stored row with the value shown as ********, whether secret or not: the command never repeats what it was given.
+
+```
+qits deployments settings set --application <application> --environment <environment> --key <KEY> [--deployments-url <url>] [--output table|json] [--secret]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--environment <environment>` | Required. The environment: dev. |
+| `--key <KEY>` | Required. The setting's key: API_TOKEN. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--secret` | Store the value as a secret, never sent back by any answer. |
+
+### Examples
+
+```
+echo 'https://hooks.example.org' | qits deployments settings set --application qits-ci --environment dev --key WEBHOOK_URL
+qits deployments settings set --application qits-ci --environment dev --key API_TOKEN --secret < token.txt
+```
+
+- A terminal on stdin, or nothing on it, is refused with exit 2 and nothing is sent.
+- The new value reaches the application on its next deployment: `qits deployments settings preview` shows what that would change.
+- Takes qits:admin or qits:system.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits deployments settings delete
+
+Delete one setting of an application in an environment. The application loses it on its next deployment.
+
+```
+qits deployments settings delete --application <application> --environment <environment> --key <KEY> [--deployments-url <url>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--environment <environment>` | Required. The environment: dev. |
+| `--key <KEY>` | Required. The setting's key: WEBHOOK_URL. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+
+### Examples
+
+```
+qits deployments settings delete --application qits-ci --environment dev --key WEBHOOK_URL
+```
+
+- 404 (exit 1) means no such setting is stored.
+- Takes qits:admin or qits:system.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits deployments settings preview
+
+Show what the next deployment of an application in an environment would change in its settings, against what the running deployment was given.
+
+One line each: `+ KEY=value` added, `- KEY=value` removed, `~ KEY from -> to` changed, `= KEY=value` kept (with --include-extras), a secret's value as ********; then how many are unchanged.
+
+```
+qits deployments settings preview --application <application> --environment <environment> [--deployments-url <url>] [--include-extras] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--environment <environment>` | Required. The environment: dev. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `--include-extras` | Also list the values the running deployment has that no setting holds, which the next deployment keeps (`= KEY=value`). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+
+### Examples
+
+```
+qits deployments settings preview --application qits-ci --environment dev
+qits deployments settings preview --application qits-ci --environment dev --include-extras
+```
+
+- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
 ## qits maintenance
 
 Jobs of qits-maintenance: automations lists a release request's release-request automations and their state, automation run re-runs one kind, and bump shows how one job went.
@@ -5579,6 +5726,106 @@ The example is the entry in Claude's settings.json (~/.claude/settings.json).
 ### Exit codes
 
 - `0` Always, also when nothing was printed.
+
+## qits agent-mcp
+
+The catalog of MCP servers the platform gives its agents, in qits-projects. `credentials` stores the secrets those servers are reached with.
+
+## qits agent-mcp credentials
+
+The credentials of the agent MCP catalog: secrets a catalog entry names by key, stored once in qits-projects and handed to the MCP servers that need them. Only the keys are ever shown.
+
+### Notes
+
+- --output and --projects-url may come before or after the command.
+- list takes the catalog's read roles: qits:admin, qits:admin-agent, qits:desk-admin or qits:agent. set and delete take qits:admin or qits:admin-agent.
+
+## qits agent-mcp credentials list
+
+List the stored credentials' keys, with when and by whom each was last set. Never a value.
+
+```
+qits agent-mcp credentials list [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects`. |
+
+### Examples
+
+```
+qits agent-mcp credentials list
+```
+
+- Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits agent-mcp credentials set
+
+Store one credential under a key, replacing any stored before. The value is read on stdin, never from a flag, so it stays out of the shell's history; one trailing line break is taken off. It is never printed or sent back.
+
+```
+qits agent-mcp credentials set --key <KEY> [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--key <KEY>` | Required. The credential's key, as catalog entries name it: env.<VAR>, such as env.GITHUB_TOKEN. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects`. |
+
+### Examples
+
+```
+qits agent-mcp credentials set --key env.GITHUB_TOKEN < token.txt
+printf '%s' "$TOKEN" | qits agent-mcp credentials set --key env.GITHUB_TOKEN
+```
+
+- A terminal on stdin, or nothing on it, is refused with exit 2 and nothing is sent.
+- 400 (exit 1) means the key is not env.<VAR>, or the value is blank or larger than 16 KiB.
+- Takes qits:admin or qits:admin-agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits agent-mcp credentials delete
+
+Delete the credential stored under a key.
+
+```
+qits agent-mcp credentials delete --key <KEY> [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--key <KEY>` | Required. The credential's key: env.GITHUB_TOKEN. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects`. |
+
+### Examples
+
+```
+qits agent-mcp credentials delete --key env.GITHUB_TOKEN
+```
+
+- 404 (exit 1) means no credential is stored under the key; 400 that the key is not env.<VAR>.
+- Takes qits:admin or qits:admin-agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits update
 

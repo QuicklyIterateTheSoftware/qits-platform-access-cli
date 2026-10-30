@@ -310,8 +310,12 @@ class McpToolCatalogTest {
                     expectedRequired.add(name);
                 }
             }
-            if (TuiCommands.inputOf(spec.userObject()) == Input.PAYLOAD) {
+            if (TuiCommands.inputOf(spec.userObject()) != Input.NONE) {
                 expected.add(ToolCatalog.PAYLOAD);
+            }
+            if (TuiCommands.inputOf(spec.userObject()) == Input.TEXT) {
+                // A value on stdin is all such a command is for: without one it only refuses.
+                expectedRequired.add(ToolCatalog.PAYLOAD);
             }
             assertThat(properties(tool).keySet()).as(tool.name()).containsExactlyInAnyOrderElementsOf(expected);
             assertThat(new TreeSet<>(required(tool))).as(tool.name() + " required").isEqualTo(expectedRequired);
@@ -379,7 +383,8 @@ class McpToolCatalogTest {
                 "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
                 "work_members_list", "work_refinement_show", "work_design_list", "work_design_get",
                 "release-request_list", "ci_runs", "ci_run", "ci_report_show", "maintenance_automations",
-                "maintenance_bump",
+                "maintenance_bump", "deployments_settings_list", "deployments_settings_preview",
+                "agent-mcp_credentials_list",
                 "events", "events_query", "observe", "observe_query", "observe_sources", "observe_errors",
                 "observe_slow-spans", "observe_metrics", "help_skill", "help_guide", "agents_claude_hook_work-links",
                 "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message",
@@ -405,13 +410,34 @@ class McpToolCatalogTest {
         assertThat(marked).containsExactlyInAnyOrder("work_create", "work_update", "work_transition", "work_status",
                 "work_comment_create", "work_comment_update", "work_dossier_put", "work_members_add",
                 "work_members_condition", "work_design_put");
+        Set<String> text = new TreeSet<>();
+        commands.forEach((name, spec) -> {
+            if (TuiCommands.inputOf(spec.userObject()) == Input.TEXT) {
+                text.add(name);
+            }
+        });
+        assertThat(text).containsExactlyInAnyOrder("deployments_settings_set", "agent-mcp_credentials_set");
         for (Tool tool : catalog.tools()) {
             boolean payload = marked.contains(tool.name());
-            assertThat(tool.payload()).as(tool.name()).isEqualTo(payload);
-            assertThat(properties(tool).containsKey(ToolCatalog.PAYLOAD)).as(tool.name()).isEqualTo(payload);
+            boolean value = text.contains(tool.name());
+            assertThat(tool.payload()).as(tool.name()).isEqualTo(payload || value);
+            assertThat(properties(tool).containsKey(ToolCatalog.PAYLOAD)).as(tool.name()).isEqualTo(payload || value);
             assertThat(tool.description().endsWith(ToolCatalog.PAYLOAD_HINT)).as(tool.name()).isEqualTo(payload);
         }
         assertThat(property(tool("work_update"), ToolCatalog.PAYLOAD)).containsEntry("type", "object");
+        assertThat(property(tool("deployments_settings_set"), ToolCatalog.PAYLOAD)).containsEntry("type", "string")
+                .containsEntry("description", ToolCatalog.TEXT_PAYLOAD);
+        assertThat(required(tool("agent-mcp_credentials_set"))).contains(ToolCatalog.PAYLOAD);
+    }
+
+    /** A text payload is the command's stdin byte for byte: a string, never re-encoded as JSON. */
+    @Test
+    void aTextPayloadIsStdinAsItIs() {
+        Tool set = tool("agent-mcp_credentials_set");
+        assertThat(ToolRunner.stdin(set, Map.of("key", "GITHUB_TOKEN", ToolCatalog.PAYLOAD, "s3cr\"et\n")))
+                .isEqualTo("s3cr\"et\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertThat(ToolRunner.argv(set, Map.of("key", "GITHUB_TOKEN", ToolCatalog.PAYLOAD, "s3cr\"et")))
+                .doesNotContain("s3cr\"et").noneMatch(a -> a.contains("s3cr"));
     }
 
     /**

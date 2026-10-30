@@ -273,6 +273,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                ContentHashes), MavenPublisher (flatten + bundle + link over maven-model-builder's
                effective models, MavenReactor), NpmPublisher (the tarball and publish document),
                ContractPackager and ContractDocs, and Archives (the deterministic jar and tar.gz).
+    deployments/ qits deployments settings list|set|delete|preview, on qits-deployments' settings doors
+               (DeploymentsApi; epic qits-765). Its rows are DeploymentsContract, pending until a pinned
+               qits-deployments-golden-masters records their states
+    agentmcp/  qits agent-mcp credentials list|set|delete, on qits-projects' agent MCP catalog
+               (AgentMcpApi; epic qits-765). Its rows belong to ProjectsContract (AgentMcpContract)
     users/     qits users invite, register, list and delete, on the idp's user doors (IdpUsersApi).
                register sends no bearer: the register token is the credential, and the person has
                no session yet. The idp's address is the session's, the wire alias inside
@@ -366,6 +371,10 @@ Two packages sit outside `access/`, because neither is about one command:
   option — all optional, all with a working default. `Interaction.LOCAL` (only means something on the
   caller's machine) and `input = PAYLOAD` (reads a JSON payload on stdin; `PayloadMarkerTest`) are
   for whoever runs the commands somewhere else; the screen treats `LOCAL` like `PLAIN`.
+  `input = TEXT` is a command that reads one plain value on stdin through `StdinValue.read` (a
+  secret: `deployments settings set`, `agent-mcp credentials set`), which refuses a terminal or
+  nothing with exit 2 and takes off one trailing line break; the MCP service gives it a string
+  `payload`, sent as the command's stdin as it is. Such a command never prints the value back.
 - **The CLI never sends `X-Qits-User` / `X-Qits-Roles`.** Those are what the gateway asserts about a
   caller; a client that writes them asserts a role it does not hold. An agent that needs a door its
   credential cannot open is granted the audience instead.

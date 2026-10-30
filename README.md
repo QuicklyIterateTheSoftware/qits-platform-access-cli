@@ -1174,6 +1174,37 @@ with the reason.
     qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind screenshot-baselines
     qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 
+### qits deployments settings
+
+The values qits-deployments hands an application in an environment when it deploys it (epic
+qits-765). `list --application <app> [--environment <env>]` prints APPLICATION, ENVIRONMENT, KEY,
+VALUE and UPDATED BY, a secret's value as `********` (the service sends it as null). `set
+--application <app> --environment <env> --key <KEY> [--secret]` reads the value on stdin, never
+from a flag, takes off one trailing line break, and refuses a terminal or an empty stdin with exit 2
+before sending anything; it prints the stored row with the value masked, plain or secret. `delete`
+prints `deleted`, and a 404 is exit 1. `preview --application <app> --environment <env>
+[--include-extras]` prints what the next deployment would change: `+ KEY=value`, `- KEY=value`,
+`~ KEY from -> to`, `= KEY=value` for a kept extra, then the unchanged count. Reading takes
+qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent; writing qits:admin or
+qits:system.
+
+    qits deployments settings list --application qits-ci --environment dev
+    qits deployments settings set --application qits-ci --environment dev --key API_TOKEN --secret < token.txt
+    qits deployments settings preview --application qits-ci --environment dev
+
+### qits agent-mcp credentials
+
+The secrets the agent MCP catalog's servers are reached with, in qits-projects (epic qits-765).
+`list` prints the stored keys with when and by whom each was set, never a value. `set --key
+env.<VAR>` reads the value on stdin under the same rules as `deployments settings set` and prints
+`set <key>`; `delete --key env.<VAR>` prints `deleted`, a 404 is exit 1. list takes qits:admin,
+qits:admin-agent, qits:desk-admin or qits:agent; set and delete qits:admin or qits:admin-agent.
+
+    printf '%s' "$TOKEN" | qits agent-mcp credentials set --key env.GITHUB_TOKEN
+
+Both `set` commands are `@TuiCommand(input = TEXT)`: the MCP service serves them with a string
+`payload`, which is the command's stdin as it is.
+
 ### qits users
 
 The people who sign in to the platform, on the idp (`/idp/api`). `invite`, `list` and `delete`
