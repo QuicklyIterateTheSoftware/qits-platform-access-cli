@@ -558,6 +558,13 @@ Installing it is not part of this version.
     {"target":"<STATUS>"} | qits work --entity <id or qualified id> status
     <payload> | qits work --entity <id or qualified id> comment create
     <merge patch> | qits work --entity <id or qualified id> comment update --comment <id>
+    qits ideas list --project <project> [--archived] [--status PLANNED|QUEUED|DONE]
+    qits ideas --entity <idea id> details
+    <payload> | qits ideas create
+    <merge patch> | qits ideas --entity <idea id> update
+    qits ideas --entity <idea id> archive --reason <text>
+    qits ideas --entity <idea id> unarchive
+    <payload> | qits ideas --entity <idea id> spawn --archetype EPIC|TICKET
     qits release-request --project <project> [--repository <repository>] list \
         [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
@@ -857,6 +864,29 @@ form takes terminal control characters out of every value, and `-o json` writes 
     qits work list --project qits --status DROPPED --outcome obsolete
     echo '{"body":"I can reproduce it."}' | qits work --entity qits-100 comment create
     echo '{"body":"Fixed."}' | qits work --entity qits-100 comment update --comment <comment id>
+
+### qits ideas
+
+`qits ideas` is a project's ideas (epic qits-888), on the service's `/projects/api/ideas` doors: short,
+titled notes that an epic, a ticket or a campaign names as its `inspiredBy`. An idea is not a work
+archetype: it has no lifecycle a caller moves, no thread, no children and no delete. Its `status`
+(`PLANNED`, `QUEUED`, `DONE`) is derived by the service from the work naming it, and it is archived
+with a reason instead of deleted (`archive --reason`, `unarchive`). `list` leaves the archived ones
+out unless `--archived` adds them. `details` prints the idea, the idea enabling it (with a `hint:`
+line when that one is archived), the ideas it enables and the work it inspired. `create` and
+`update` take their payload on stdin as `qits work` does, and with none print the request body's
+schema from the service's OpenAPI document. `spawn` reads the idea and files an epic or a ticket
+through `POST /projects/api/work`, the door `qits work create` sends to, with `project`, `title`,
+`description` and `inspiredBy` filled in from the idea and the JSON object on stdin merged over them
+(a ticket's `ticketType` and `impetus` go there); with nothing on stdin it prints what the idea fills
+in, what is still missing and the archetype's create schema. `qits work create` and `update` send an
+`inspiredBy` in their payload as it is, and `qits work details` prints it as `inspired by`.
+
+    qits ideas list --project qits
+    echo '{"project":"qits","title":"Faster builds"}' | qits ideas create
+    qits ideas --entity <idea id> details
+    qits ideas --entity <idea id> archive --reason 'Folded into the cache epic.'
+    echo '{}' | qits ideas --entity <idea id> spawn --archetype epic
 
 ### qits release-request
 

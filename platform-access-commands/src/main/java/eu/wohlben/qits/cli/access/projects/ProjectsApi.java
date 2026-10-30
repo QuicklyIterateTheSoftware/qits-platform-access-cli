@@ -381,6 +381,58 @@ public final class ProjectsApi {
         return client.post(uri(workPath(entity) + "/dispatch"), body);
     }
 
+    // --- ideas (epic qits-888) ---
+
+    /** The ideas' root: a project's short notes that epics, tickets and campaigns name as {@code inspiredBy}. */
+    public static final String IDEAS = "/projects/api/ideas";
+
+    static String ideaPath(String idea) {
+        return IDEAS + "/" + segment(idea);
+    }
+
+    /**
+     * {@code {"ideas":[…]}}, oldest first. {@code project} is its id or its slug. {@code archived}
+     * adds the archived ideas beside the others (it does not narrow to them), so the query says it
+     * only when it is true; {@code status} (PLANNED, QUEUED or DONE) narrows, left out when null.
+     */
+    public JsonNode ideas(String project, boolean archived, String status) throws CliFailure, InterruptedException {
+        List<String> query = new ArrayList<>();
+        addQuery(query, "project", project);
+        addQuery(query, "archived", archived ? "true" : null);
+        addQuery(query, "status", status);
+        return client.get(uri(IDEAS + query(query)));
+    }
+
+    /**
+     * One idea with {@code inspired} (the work naming it as inspiredBy), {@code enables} (the ideas
+     * naming it as enabledBy) and {@code enabledByIdea} (the idea enabling it, in brief, or null).
+     */
+    public JsonNode idea(String idea) throws CliFailure, InterruptedException {
+        return client.get(uri(ideaPath(idea)));
+    }
+
+    /** The new idea. The body is the caller's payload, sent as it was written. */
+    public JsonNode createIdea(JsonNode body) throws CliFailure, InterruptedException {
+        return client.post(uri(IDEAS), body);
+    }
+
+    /** The idea with the merge patch applied, sent as it was written. */
+    public JsonNode patchIdea(String idea, JsonNode mergePatch) throws CliFailure, InterruptedException {
+        return client.patch(uri(ideaPath(idea)), mergePatch, MERGE_PATCH);
+    }
+
+    /** The idea, archived. The body is {@code {"reason"}}; the service refuses none (400). */
+    public JsonNode archiveIdea(String idea, String reason) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("reason", reason);
+        return client.post(uri(ideaPath(idea) + "/archive"), body);
+    }
+
+    /** The idea, out of the archive. No body. */
+    public JsonNode unarchiveIdea(String idea) throws CliFailure, InterruptedException {
+        return client.post(uri(ideaPath(idea) + "/unarchive"));
+    }
+
     // --- dossier ---
 
     /** {@code {"pages":[…]}}, in reading order, bodies included. */

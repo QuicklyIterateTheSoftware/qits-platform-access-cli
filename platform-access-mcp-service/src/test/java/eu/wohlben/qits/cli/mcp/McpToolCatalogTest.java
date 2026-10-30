@@ -380,7 +380,7 @@ class McpToolCatalogTest {
         assertThat(reads).containsExactlyInAnyOrder(
                 "projects_list", "projects_delivery", "projects_desk_answer", "projects_desk_triggers", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
                 "repositories_commit-changes", "repositories_commit-diff", "repositories_commit-subjects",
-                "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
+                "work_list", "work_details", "ideas_list", "ideas_details", "work_progress", "work_dossier_list", "work_dossier_get",
                 "work_members_list", "work_refinement_show", "work_design_list", "work_design_get",
                 "release-request_list", "ci_runs", "ci_run", "ci_report_show", "maintenance_automations",
                 "maintenance_bump", "deployments_settings_list", "deployments_settings_preview",
@@ -409,7 +409,7 @@ class McpToolCatalogTest {
         });
         assertThat(marked).containsExactlyInAnyOrder("work_create", "work_update", "work_transition", "work_status",
                 "work_comment_create", "work_comment_update", "work_dossier_put", "work_members_add",
-                "work_members_condition", "work_design_put");
+                "work_members_condition", "work_design_put", "ideas_create", "ideas_update", "ideas_spawn");
         Set<String> text = new TreeSet<>();
         commands.forEach((name, spec) -> {
             if (TuiCommands.inputOf(spec.userObject()) == Input.TEXT) {

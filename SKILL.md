@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, ideas, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -1609,6 +1609,239 @@ qits work --entity qits-100 design put </dev/null
 - `0` The design is written, or nothing was put in and the schema is printed.
 - `1` The platform refused (for example no title, html or version, HTTP 400, your roles, HTTP 403, no such item or design, HTTP 404, or a stale version, HTTP 409), the item has no open refinement, or the platform cannot be reached.
 - `2` Used wrongly (for example no --entity, or a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits ideas
+
+A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its inspiration ("inspiredBy"). list shows a project's ideas, details shows one with the work it inspired and the ideas it enables, create writes one, update edits it, archive and unarchive hide it from the list and bring it back, and spawn files an epic or a ticket from it.
+
+An idea is not a work item: it has no lifecycle you move, no comment thread, no children and no delete. Its status is derived from the work naming it: PLANNED (no counted work names it), QUEUED (some does, not all DONE) or DONE (every counted item DONE); DROPPED work is not counted. One idea may name another of its project as "enabledBy".
+
+A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, from the service's OpenAPI document.
+
+### Notes
+
+- --entity, --output and --projects-url may come before or after the command.
+- --entity is the idea's id, as list and create print it.
+- Reading takes qits:admin or qits:agent; so does writing. An agent writes only in its own project.
+
+## qits ideas list
+
+A project's ideas, oldest first: id, status, whether archived, title and when it last changed. The archived ones are left out unless --archived is given, which adds them beside the rest.
+
+```
+qits ideas list [--archived] [--entity <idea>] [--output table|json] [--project <project>] [--projects-url <url>] [--status <status>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archived` | Show the archived ideas too, beside the others. |
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project (required): its id or its slug. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--status <status>` | Only ideas at this status: PLANNED, QUEUED or DONE. |
+
+### Examples
+
+```
+qits ideas list --project qits
+qits ideas list --project qits --archived --status planned -o json
+```
+
+- --status is PLANNED, QUEUED or DONE, case-insensitive.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example a status it does not know, HTTP 400, or a project it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --project), not signed in, or the session ended.
+
+## qits ideas details
+
+One idea: its title, status, whether it is archived and why, the idea enabling it, its description, the ideas it enables, and the work it inspired (every work item naming it as inspiredBy, DROPPED ones included, with their status). When the idea enabling it is archived, a hint line says so.
+
+```
+qits ideas details [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 details -o json
+```
+
+- -o json prints the service's answer: the idea with inspired, enables and enabledByIdea. Control characters are written as escapes.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits ideas create
+
+Write a new idea of a project.
+
+Reads the payload, a JSON object such as {"project":"qits","title":"..."}, on stdin and sends it unchanged to POST /projects/api/ideas. "project" is the project's id or slug. The title is one line (no line break, at most one '.', fewer than 20 whitespace characters); the description at most 3 paragraphs and 600 characters; "enabledBy" names one idea of the same project that is not itself enabled by another. The idea starts PLANNED. The command prints it, its id first.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi), and exits with 0.
+
+```
+qits ideas create [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas create </dev/null
+echo '{"project":"qits","title":"Faster builds"}' | qits ideas create
+jq -n --rawfile d idea.md '{project:"qits",title:"Share the build cache",description:$d}' | qits ideas create -o json
+```
+
+- The first one prints the schema: nothing is sent.
+
+### Exit codes
+
+- `0` The idea is written, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a title, description or enabledBy breaking its rule, HTTP 400, another project, HTTP 403, or a project it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits ideas update
+
+Edit an idea's title, description or enabledBy.
+
+Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/ideas/{idea} as application/merge-patch+json: a property left out stays as it is, null clears description or enabledBy. The rules are the create's. The status is derived and the archive has its own commands.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the patch's JSON schema from the service's OpenAPI document (/projects/q/openapi), and exits with 0.
+
+```
+qits ideas update [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas update </dev/null
+echo '{"title":"Share the build cache across runners"}' | qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 update
+echo '{"enabledBy":null}' | qits ideas update --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3
+```
+
+### Exit codes
+
+- `0` The idea is edited, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a patch it does not take, HTTP 400, another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or a patch that is not a JSON object), not signed in, or the session ended.
+
+## qits ideas archive
+
+Archive an idea: hide it from the list, and say why. Ideas are never deleted.
+
+Sends {"reason":"..."} to POST /projects/api/ideas/{idea}/archive. Allowed at every status, and the status does not change. Archiving an archived idea states the reason again.
+
+```
+qits ideas archive [--entity <idea>] [--output table|json] [--projects-url <url>] [--reason <text>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--reason <text>` | Why the idea is archived (required). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 archive --reason 'Folded into the cache epic.'
+```
+
+### Exit codes
+
+- `0` The idea is archived.
+- `1` The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --reason), not signed in, or the session ended.
+
+## qits ideas unarchive
+
+Take an idea out of the archive, so the list shows it again.
+
+Sends POST /projects/api/ideas/{idea}/unarchive, which clears the archive and its reason. An idea that is not archived is answered as it is.
+
+```
+qits ideas unarchive [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 unarchive
+```
+
+### Exit codes
+
+- `0` The idea is not archived.
+- `1` The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits ideas spawn
+
+File an epic or a ticket inspired by an idea.
+
+Reads the idea, and starts the new item from it: "project" its project, "title" its title, "description" its description when it has one, and "inspiredBy" its id. The JSON object on stdin is merged over that as a merge patch (null removes a property), "archetype" is set from --archetype, and the result goes to POST /projects/api/work, the door `qits work create` sends to. The command prints the new item, its qualified id first. A ticket also needs its "ticketType" and "impetus" on stdin.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage, what the idea fills in, the required properties still missing, and the archetype's create schema served at GET /projects/api/work/archetypes/{archetype}/schemas/create, and exits with 0. Pipe in {} to file the item as the idea fills it.
+
+```
+qits ideas spawn [--archetype <archetype>] [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archetype <archetype>` | The new item's archetype (required): EPIC or TICKET. Case-insensitive. |
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 spawn --archetype epic </dev/null
+echo '{}' | qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 spawn --archetype epic
+echo '{"ticketType":"IMPROVEMENT","impetus":"Builds wait on downloads."}' | qits ideas spawn --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 --archetype ticket
+```
+
+- The first one prints the schema: nothing is sent.
+
+### Exit codes
+
+- `0` The item is filed, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example an idea it does not know, HTTP 404, a payload it does not take, HTTP 400, or another project, HTTP 403), or cannot be reached.
+- `2` Used wrongly (for example no --entity, an --archetype that is neither EPIC nor TICKET, or a payload that is not a JSON object), not signed in, or the session ended.
 
 ## qits release-request
 

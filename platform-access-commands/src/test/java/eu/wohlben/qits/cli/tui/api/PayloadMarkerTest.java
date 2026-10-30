@@ -41,7 +41,7 @@ class PayloadMarkerTest {
         assertThat(reads.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey)).containsExactlyInAnyOrder(
                 "work create", "work update", "work transition", "work status",
                 "work comment create", "work comment update", "work dossier put", "work members add",
-                "work members condition", "work design put");
+                "work members condition", "work design put", "ideas create", "ideas update", "ideas spawn");
     }
 
     @Test
