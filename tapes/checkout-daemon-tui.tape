@@ -56,7 +56,7 @@ Sleep 1s
 
 Hide
 Type "/--path "
-Wait+Screen /--path +▸/
+Wait+Screen /(?s)\/--path  ┐.*--path +▸/
 Show
 Sleep 1s
 
@@ -81,7 +81,7 @@ Sleep 1s
 
 Hide
 Type "/--once "
-Wait+Screen /--once +▸/
+Wait+Screen /(?s)\/--once  ┐.*--once +▸/
 Show
 Sleep 1s
 

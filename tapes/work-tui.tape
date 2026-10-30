@@ -52,7 +52,7 @@ Sleep 1s
 
 Hide
 Type "/--project "
-Wait+Screen /--project +▸/
+Wait+Screen /(?s)\/--project  ┐.*--project +▸/
 Show
 Sleep 1s
 

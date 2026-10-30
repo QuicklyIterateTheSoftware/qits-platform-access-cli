@@ -37,7 +37,7 @@ Enter
 Wait /^\$$/
 Type "qits events --filter DeploymentActive,ReleaseRequestStateChanged 2> /tmp/qits-tapes/events.log"
 Enter
-Wait+Screen /000000000113/
+Wait+Screen /000000000114/
 Show
 Sleep 2s
 

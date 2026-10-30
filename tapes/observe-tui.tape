@@ -2,7 +2,7 @@
 # with Ctrl+R - a stream, so the box says `streaming` and fills with the records - and then stopped
 # and quit.
 #
-# The stop and the quit are not shown. The stream's first and last notes (connected, stopped) carry
+# The stop is not shown. The stream's first and last notes (connected, stopped) carry
 # a wall-clock stamp, and the box shows stdout and stderr as one: sixteen records push the first one
 # out of the box before the screen is shown, but Ctrl+C would print the second into it. The CLI
 # tape shows both notes, without their stamps.
@@ -52,7 +52,7 @@ Sleep 1s
 Hide
 Type "/--filter "
 Down 1
-Wait+Screen /--filter +▸/
+Wait+Screen /(?s)\/--filter  ┐.*--filter +▸/
 Show
 Sleep 1s
 

@@ -53,7 +53,7 @@ Sleep 1s
 
 Hide
 Type "/--project "
-Wait+Screen /--project +▸/
+Wait+Screen /(?s)\/--project  ┐.*--project +▸/
 Show
 Sleep 1s
 
@@ -77,7 +77,7 @@ Sleep 1s
 
 Hide
 Type "/--repository "
-Wait+Screen /--repository +▸/
+Wait+Screen /(?s)\/--repository  ┐.*--repository +▸/
 Show
 Sleep 1s
 
@@ -102,7 +102,7 @@ Sleep 1s
 
 Hide
 Type "/--request "
-Wait+Screen /--request +▸/
+Wait+Screen /(?s)\/--request  ┐.*--request +▸/
 Show
 Sleep 1s
 

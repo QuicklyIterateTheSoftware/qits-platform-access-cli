@@ -1,7 +1,7 @@
 # qits events, on the screen: `qits tui`, down to events, run with Ctrl+R - a stream, so the box
 # says `streaming` and fills with every event the fake sends - and then stopped and quit.
 #
-# The stop and the quit are not shown. The stream's first and last notes (connected, stopped) carry
+# The stop is not shown. The stream's first and last notes (connected, stopped) carry
 # a wall-clock stamp, and the box shows stdout and stderr as one: sixteen events push the first one
 # out of the box before the screen is shown, but Ctrl+C would print the second into it. The CLI
 # tape shows both notes, without their stamps.
