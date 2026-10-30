@@ -1,0 +1,173 @@
+[
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225602000000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "listing invoices",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225602500000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "listed 12 invoices",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225603000000000,
+      "severityNumber": 13,
+      "severityText": "WARN",
+      "body": "invoice 7 has no customer",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225603500000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "exporting invoices for the accountants",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225604000000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "wrote invoices-2026-01.csv",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225604500000000,
+      "severityNumber": 17,
+      "severityText": "ERROR",
+      "body": "mail relay refused the export",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225605000000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "retrying the export mail",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225605500000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "export mail sent",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  },
+  {
+    "kind": "log",
+    "receivedAtMillis": 1767225612000,
+    "source": "_service/qits-example",
+    "record": {
+      "epochNanos": 1767225606000000000,
+      "severityNumber": 9,
+      "severityText": "INFO",
+      "body": "listing invoices",
+      "traceId": "6a1f0c2b9d8e47f3a5b4c3d2e1f00a03",
+      "spanId": "7b2e1d3c4f5a6b04",
+      "serviceName": "qits-example",
+      "attributes": {},
+      "resourceAttributes": {
+        "service.name": "qits-example",
+        "deployment.environment.name": "dev"
+      }
+    }
+  }
+]

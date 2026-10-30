@@ -99,6 +99,10 @@
         <qits.events-golden-masters.version>2026.1023.82831</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1023.5649</qits.maintenance-golden-masters.version>
         <qits.observability-golden-masters.version>2026.1018.155850</qits.observability-golden-masters.version>
+        <!-- qits-system's recordings, for the targets the VHS tapes' fake platform answers with
+             (FakePlatformMain, epic qits-881); no consumer pact reads them yet. Bumped by
+             qits-maintenance like the others. -->
+        <qits.system-golden-masters.version>2026.1028.203654</qits.system-golden-masters.version>
         <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:
              it reads every provider's recordings off the classpath and binds only what a command
              reads. -->
@@ -176,6 +180,11 @@
                 <groupId>eu.wohlben.qits</groupId>
                 <artifactId>qits-observability-golden-masters</artifactId>
                 <version>${qits.observability-golden-masters.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>eu.wohlben.qits</groupId>
+                <artifactId>qits-system-golden-masters</artifactId>
+                <version>${qits.system-golden-masters.version}</version>
             </dependency>
             <dependency>
                 <groupId>eu.wohlben.qits</groupId>

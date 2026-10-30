@@ -66,6 +66,11 @@ public final class FakeSocketServer implements AutoCloseable {
     public final List<Upgrade> upgrades = Collections.synchronizedList(new ArrayList<>());
     public final List<Connection> connections = Collections.synchronizedList(new ArrayList<>());
     public final BlockingDeque<Script> scripts = new LinkedBlockingDeque<>();
+    /**
+     * What a connection does once {@link #scripts} has no script left; null answers 500, as before. A
+     * process that serves any number of clients, as {@link FakePlatformMain} does, sets it.
+     */
+    public volatile Script everyConnection;
 
     public FakeSocketServer() throws IOException {
         this(0);
@@ -115,9 +120,12 @@ public final class FakeSocketServer implements AutoCloseable {
             String[] parts = requestLine == null ? new String[0] : requestLine.split(" ");
             upgrades.add(new Upgrade(parts.length > 1 ? parts[1] : "", headers.get("authorization")));
             Connection connection = new Connection(socket, in, out, headers.getOrDefault("sec-websocket-key", ""),
-                    Integer.parseInt(headers.getOrDefault("content-length", "0")));
+                    Integer.parseInt(headers.getOrDefault("content-length", "0")), parts.length > 1 ? parts[1] : "");
             connections.add(connection);
             Script script = scripts.poll();
+            if (script == null) {
+                script = everyConnection;
+            }
             if (script == null) {
                 connection.refuse(500, "{\"message\":\"the fake has no script left\"}");
             } else {
@@ -148,8 +156,11 @@ public final class FakeSocketServer implements AutoCloseable {
         private final int contentLength;
         public final List<String> texts = Collections.synchronizedList(new ArrayList<>());
         public final AtomicInteger pings = new AtomicInteger();
+        /** The request line's target, query included: what a script serving several doors tells apart. */
+        public final String path;
 
-        Connection(Socket socket, DataInputStream in, OutputStream out, String key, int contentLength) {
+        Connection(Socket socket, DataInputStream in, OutputStream out, String key, int contentLength, String path) {
+            this.path = path;
             this.socket = socket;
             this.in = in;
             this.out = out;

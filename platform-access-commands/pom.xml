@@ -175,6 +175,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- qits-system's recorded targets: what the VHS tapes' fake platform answers `qits
+                 targets` with (FakePlatformMain, epic qits-881). Pinned in the root pom. -->
+            <groupId>eu.wohlben.qits</groupId>
+            <artifactId>qits-system-golden-masters</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <!-- JpaMappingConformanceTest builds Hibernate's own Metadata over the fixture entities and
                  holds `qits database diagram`'s reconstruction against it. TEST SCOPE ONLY: Hibernate
                  never reaches the commands jar, the binary or its SBOM. The version is quarkus-bom's,

@@ -51,9 +51,15 @@ public final class FakePlatform implements AutoCloseable {
     public final List<Request> requests = Collections.synchronizedList(new ArrayList<>());
     public final BlockingDeque<StreamScript> streams = new LinkedBlockingDeque<>();
     private final Set<String> streamPaths = ConcurrentHashMap.newKeySet();
+    private final Map<String, StreamScript> everyStream = new ConcurrentHashMap<>();
 
     public FakePlatform() throws IOException {
-        server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        this(0);
+    }
+
+    /** On a fixed loopback port, as {@link FakePlatformMain} needs: a tape shows no random port. */
+    public FakePlatform(int port) throws IOException {
+        server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 0);
         // Handlers of held streams block; each exchange needs its own thread.
         server.setExecutor(threads);
         server.createContext("/", this::handle);
@@ -93,6 +99,16 @@ public final class FakePlatform implements AutoCloseable {
     /** Serves {@code path} from {@link #streams} too, as the events stream is: another service's SSE route. */
     public void streamAt(String path) {
         streamPaths.add(path);
+    }
+
+    /**
+     * What every connection to {@code path} does once {@link #streams} has no script left: a
+     * process that serves the same stream to any number of clients, as {@link FakePlatformMain}
+     * does for one tape after another, never runs dry.
+     */
+    public void everyStream(String path, StreamScript script) {
+        streamPaths.add(path);
+        everyStream.put(path, script);
     }
 
     /** A 200 stream that sends these lines, then ends, or stays open (silent) until the fake closes. */
@@ -135,6 +151,9 @@ public final class FakePlatform implements AutoCloseable {
         requests.add(request);
         if (uri.getPath().equals("/events/api/stream") || streamPaths.contains(uri.getPath())) {
             StreamScript script = streams.poll();
+            if (script == null) {
+                script = everyStream.get(uri.getPath());
+            }
             try {
                 if (script == null) {
                     respond(exchange, new Answer(500, "{\"message\":\"the fake has no stream script left\"}", Map.of()));

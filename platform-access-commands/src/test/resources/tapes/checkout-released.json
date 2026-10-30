@@ -1,0 +1,16 @@
+{
+  "events": [
+    {
+      "id": "00000000-0000-4000-8000-000000000100",
+      "name": "ReleaseRequestStateChanged",
+      "occurredAt": "2026-01-01T09:00:00Z",
+      "payload": "{\"eventId\":\"00000000-0000-4000-8000-000000000100\",\"releaseRequestId\":\"00000000-0000-4000-8000-000000000003\",\"projectId\":\"00000000-0000-4000-8000-000000000001\",\"repoName\":\"contract-service\",\"backingBranch\":\"release/contract-service-rr-1\",\"state\":\"FINALIZED\",\"previousState\":\"RELEASED\",\"changedAt\":\"2026-01-01T09:00:00Z\",\"version\":\"2026.101.90000\"}",
+      "description": "contract-service-rr-1 is finalized as 2026.101.90000",
+      "parentId": null,
+      "environment": null,
+      "createdAt": "2026-01-01T09:00:00Z",
+      "updatedAt": "2026-01-01T09:00:00Z"
+    }
+  ],
+  "nextCursor": null
+}
