@@ -1675,6 +1675,8 @@ class PlatformCommandsTest {
         platform.answer("POST", runsOf(REJECTED_ID, "nonsense"), 404, "{\"message\":\"Unknown kind: nonsense\"}");
         platform.answer("POST", runsOf(REJECTED_ID, "entity-diagram"), 503,
                 "{\"message\":\"qits-maintenance is not configured\"}");
+        platform.answer("POST", runsOf(REJECTED_ID, "dependency-bump"), 504,
+                "{\"message\":\"qits-maintenance did not answer in time\"}");
 
         Result busy = run("release-request", "--project", "qits", "--repository", CI, "regenerate", "--kind",
                 "estate-pins");
@@ -1682,6 +1684,8 @@ class PlatformCommandsTest {
                 "nonsense");
         Result down = run("release-request", "--project", "qits", "--repository", CI, "regenerate", "--kind",
                 "entity-diagram");
+        Result timedOut = run("release-request", "--project", "qits", "--repository", CI, "regenerate", "--kind",
+                "dependency-bump");
 
         assertThat(busy.exit()).isEqualTo(1);
         assertThat(busy.err()).contains("The platform will not run estate-pins on release request " + REJECTED_ID
@@ -1696,7 +1700,11 @@ class PlatformCommandsTest {
         assertThat(down.exit()).isEqualTo(1);
         assertThat(down.err()).contains("qits-maintenance cannot be reached or is not set up, so nothing ran "
                 + "(HTTP 503). Try again later.");
-        assertThat(busy.out() + unknown.out() + down.out()).isEmpty();
+        assertThat(timedOut.exit()).isEqualTo(1);
+        assertThat(timedOut.err()).contains("is unknown (HTTP 504)")
+                .contains("`qits maintenance automations --request 33333333`")
+                .doesNotContain("nothing ran");
+        assertThat(busy.out() + unknown.out() + down.out() + timedOut.out()).isEmpty();
     }
 
     // --- rerunning a pipeline phase ---

@@ -1923,7 +1923,7 @@ qits release-request --project qits --repository qits-projects-service regenerat
 ```
 
 - Without --request it takes the repository's one open request. A REJECTED request is open: a red QA is the usual reason to regenerate.
-- 409 means a run of this kind is already active for the request, the request is not open or has no fold, or bumping is off. 404 means the platform knows no such kind or request. 503 means qits-maintenance cannot be reached; nothing ran.
+- 409 means a run of this kind is already active for the request, the request is not open or has no fold, or bumping is off. 404 means the platform knows no such kind or request. 503 means qits-maintenance cannot be reached; nothing ran. 504 means it was asked and did not answer in time; whether it ran is unknown, so check `qits maintenance automations --request <id>` before pressing again.
 - `qits maintenance automations --request <id>` shows each kind's state, and `qits maintenance bump <run id>` how the run went.
 
 ### Exit codes

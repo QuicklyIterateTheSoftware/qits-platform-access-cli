@@ -975,7 +975,9 @@ it, and QA runs again. It prints the run's id; `qits maintenance bump <run id>` 
 
 - HTTP 409 means a run of that kind is already active for the request, the request is not open or
   has no fold, or bumping is off. HTTP 404 means no such kind or request. HTTP 503 means
-  qits-maintenance cannot be reached and nothing ran. Each is exit code 1, with a sentence.
+  qits-maintenance cannot be reached and nothing ran. HTTP 504 means it was asked and did not answer
+  in time; whether it ran is unknown, so check `qits maintenance automations --request <id>` before
+  pressing again. Each is exit code 1, with a sentence.
 
 `rerun` reruns one phase of a request's pipeline. `--request` is found as for `join`; `--phase` is
 `QA`, `PUBLISH` or `DEPLOY`, in any case. QA and PUBLISH re-fire that phase's CI run; DEPLOY

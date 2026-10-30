@@ -850,7 +850,9 @@ public class ReleaseRequestCommand implements Runnable {
                             + "a red QA is the usual reason to regenerate.",
                     "- 409 means a run of this kind is already active for the request, the request is not open or "
                             + "has no fold, or bumping is off. 404 means the platform knows no such kind or "
-                            + "request. 503 means qits-maintenance cannot be reached; nothing ran.",
+                            + "request. 503 means qits-maintenance cannot be reached; nothing ran. 504 means it was "
+                            + "asked and did not answer in time; whether it ran is unknown, so check `qits "
+                            + "maintenance automations --request <id>` before pressing again.",
                     "- `qits maintenance automations --request <id>` shows each kind's state, and "
                             + "`qits maintenance bump <run id>` how the run went."},
             exitCodeListHeading = HelpText.EXIT_CODES,
@@ -927,7 +929,7 @@ public class ReleaseRequestCommand implements Runnable {
             return open.getFirst();
         }
 
-        /** The three refusals the door names get a sentence that says what to do next. */
+        /** The four refusals the door names get a sentence that says what to do next. */
         private static CliFailure explain(CliFailure refused, String requestName, String requestLabel, String kind) {
             return switch (refused.status()) {
                 case 404 -> new CliFailure("The platform knows no kind '" + kind + "' or no release request "
@@ -939,6 +941,10 @@ public class ReleaseRequestCommand implements Runnable {
                         + "` shows the kind's state. " + refused.getMessage(), CliFailure.FAILED);
                 case 503 -> new CliFailure("qits-maintenance cannot be reached or is not set up, so nothing ran "
                         + "(HTTP 503). Try again later. " + refused.getMessage(), CliFailure.FAILED);
+                case 504 -> new CliFailure("qits-maintenance did not answer in time, so whether " + kind
+                        + " was started on release request " + requestName + " is unknown (HTTP 504). "
+                        + "`qits maintenance automations --request " + requestLabel + "` shows it; do not press "
+                        + "again until it says. " + refused.getMessage(), CliFailure.FAILED);
                 default -> refused;
             };
         }
