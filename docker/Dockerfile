@@ -228,6 +228,42 @@ RUN --mount=type=secret,id=qits-client-id \
       -pl platform-access-mcp-service -am \
       test-compile failsafe:integration-test failsafe:verify
 
+# THE TAPES' KIT (epic qits-881): what `tapes/prepare.sh` needs to play the VHS tapes, exported with
+# `--target tapes-kit --output type=local,dest=<dir>`. The tapes run the binary this file builds, so
+# the kit is `build`'s own `qits` — the very bytes `binary` exports — beside the class path of the
+# fake platform they talk to (FakePlatformMain, in the commands module's test classes):
+#
+#     qits            the static musl binary, from `build`
+#     classes/        platform-access-commands' main classes, which the test classes use
+#     test-classes/   its test classes and test resources (the fakes, the tapes' fixtures)
+#     lib/            its test-scope dependency jars (the golden masters among them)
+#
+# A STAGE ON TOP OF `build`, NOT A SECOND BUILD. `build`'s `-DskipTests` package already compiled
+# the test classes and resolved every test-scope jar into its local repository, so the one RUN here
+# copies them out: `dependency:copy-dependencies`, pinned by version so no plugin metadata is
+# resolved, with the same secrets and the same derived addresses as `build`'s RUN in case the
+# plugin itself is not cached yet. The release-request step that plays the tapes passes the same
+# build args and secrets as the QA build, so `build` is a cache hit and the kit costs this RUN only.
+FROM build AS tapes-kit-build
+ARG QITS_DOMAIN=wohlben.eu
+RUN --mount=type=secret,id=qits-client-id \
+    --mount=type=secret,id=qits-client-secret \
+    export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
+    export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
+    export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
+    export QITS_MAVEN_REPOSITORY_URL="https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven"; \
+    ./mvnw -B -ntp -s .qits-maven-settings.xml \
+      -Dqits.maven.repository.url="$QITS_MAVEN_REPOSITORY_URL" \
+      -pl platform-access-commands \
+      org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy-dependencies \
+      -DincludeScope=test -DoutputDirectory=/tapes-kit/lib \
+ && cp -r platform-access-commands/target/classes /tapes-kit/classes \
+ && cp -r platform-access-commands/target/test-classes /tapes-kit/test-classes \
+ && cp platform-access-cli/target/qits /tapes-kit/qits
+
+FROM scratch AS tapes-kit
+COPY --from=tapes-kit-build /tapes-kit/ /
+
 # The CycloneDX document, for the release step's SBOM PUT. Before `binary`, so that stays the
 # default. The application module's document: the closure that made the bytes.
 FROM scratch AS sbom

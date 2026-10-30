@@ -5,3 +5,6 @@ target/
 **/target/
 .git
 out/
+# The VHS tapes, their text goldens and their GIFs (epic qits-881): the build reads none of them, and
+# the GIFs would only make every context upload larger.
+tapes/
