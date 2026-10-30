@@ -122,6 +122,32 @@ release-request:
         --secret id=qits-client-id,src=/tmp/qits-client-id \
         --secret id=qits-client-secret,src=/tmp/qits-client-secret
 
+    # THE TAPES CHECK (epic qits-881). This repository declares its own `release-request:` (see
+    # above: archetype daemon, on its own recipes), and a declared slot replaces the archetype's
+    # whole, so nothing gives it the `cli` archetype's second step; this step is that step, opted
+    # into by hand. Its script only says what it checks: the check is `check-outputs: [cli-tapes]`,
+    # which runs qits-ci's cli-tapes generator after the script (qits-ci-service,
+    # platform-pipelines/automations/cli-tapes.yml): it sources tapes/prepare.sh, which builds the
+    # Dockerfile's `tapes-kit` target (the binary above and the fake platform's class path) with the
+    # QA build's own arguments, so the native compile is a cache hit; plays every tapes/*.tape into
+    # tapes/golden/<tape>.txt, renders tapes/recordings/<tape>.gif only for a changed golden or a
+    # missing GIF; and then fails the step as stale on any change under those two directories,
+    # naming `qits release-request regenerate --kind cli-tapes`. Nothing is committed here; the
+    # goldens and GIFs come from that automation, never by hand.
+    #
+    # A step of its own, after the build, so a red unit suite, a broken native build and a stale
+    # golden are told apart by the step that failed. `build: true` because prepare.sh builds through
+    # the platform's builder. `image:` is ignored — every step runs in the run's
+    # qits/build-images/ci-slot container, which carries vhs, ttyd, ffmpeg and a chromium (qits-1544)
+    # — and kept for the record of what the step needs.
+  - image: qits/build-images/vhs-base:latest
+    build: true
+    timeout-seconds: 3600
+    check-outputs: [cli-tapes]
+    script: |
+      # The check itself is the cli-tapes generator, run by `check-outputs` after this script.
+      echo "checking the VHS tapes: tapes/*.tape against tapes/golden/ and tapes/recordings/"
+
 release:
     # Two native compiles in one step — the binary and the MCP service — one after the other, each
     # inside the 4g cap; 5400 rather than 3600 for the second.
