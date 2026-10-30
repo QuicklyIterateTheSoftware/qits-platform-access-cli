@@ -22467,68 +22467,41 @@
                   "DONE": [],
                   "DROPPED": [
                     {
-                      "kind": "REOPEN",
                       "to": "REPORTED"
                     }
                   ],
                   "IMPLEMENTED": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTING"
                     }
                   ],
                   "REFINED": [
                     {
-                      "gates": [
-                        "ACCEPTANCE_CRITERIA",
-                        "ACCEPTANCE_CRITERIA"
-                      ],
-                      "kind": "FORWARD",
                       "to": "READY_FOR_DEV"
-                    },
-                    {
-                      "kind": "BACK",
-                      "to": "REPORTED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "REPORTED": [
                     {
-                      "gates": [
-                        "ACCEPTANCE_CRITERIA"
-                      ],
-                      "kind": "FORWARD",
                       "to": "REFINED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "VERIFIED": [
                     {
-                      "kind": "FORWARD",
                       "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFIED"
                     }
                   ]
@@ -22551,68 +22524,41 @@
                   "DONE": [],
                   "DROPPED": [
                     {
-                      "kind": "REOPEN",
                       "to": "REPORTED"
                     }
                   ],
                   "IMPLEMENTED": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTING"
                     }
                   ],
                   "REFINED": [
                     {
-                      "gates": [
-                        "ACCEPTANCE_CRITERIA",
-                        "ACCEPTANCE_CRITERIA"
-                      ],
-                      "kind": "FORWARD",
                       "to": "READY_FOR_DEV"
-                    },
-                    {
-                      "kind": "BACK",
-                      "to": "REPORTED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "REPORTED": [
                     {
-                      "gates": [
-                        "ACCEPTANCE_CRITERIA"
-                      ],
-                      "kind": "FORWARD",
                       "to": "REFINED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "VERIFIED": [
                     {
-                      "kind": "FORWARD",
                       "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFIED"
                     }
                   ]
@@ -22635,64 +22581,41 @@
                   "DONE": [],
                   "DROPPED": [
                     {
-                      "kind": "REOPEN",
                       "to": "REPORTED"
                     }
                   ],
                   "IMPLEMENTED": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTING"
                     }
                   ],
                   "REFINED": [
                     {
-                      "gates": [
-                        "PERSON_APPROVAL"
-                      ],
-                      "kind": "FORWARD",
                       "to": "READY_FOR_DEV"
-                    },
-                    {
-                      "kind": "BACK",
-                      "to": "REPORTED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "REPORTED": [
                     {
-                      "kind": "FORWARD",
-                      "to": "REFINED"
-                    },
-                    {
-                      "kind": "FORWARD",
                       "to": "REFINED"
                     }
                   ],
                   "VERIFIED": [
                     {
-                      "kind": "FORWARD",
                       "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFIED"
                     }
                   ]
@@ -22715,64 +22638,41 @@
                   "DONE": [],
                   "DROPPED": [
                     {
-                      "kind": "REOPEN",
                       "to": "REPORTED"
                     }
                   ],
                   "IMPLEMENTED": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTING"
                     }
                   ],
                   "REFINED": [
                     {
-                      "gates": [
-                        "PERSON_APPROVAL"
-                      ],
-                      "kind": "FORWARD",
                       "to": "READY_FOR_DEV"
-                    },
-                    {
-                      "kind": "BACK",
-                      "to": "REPORTED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "REPORTED": [
                     {
-                      "kind": "FORWARD",
-                      "to": "REFINED"
-                    },
-                    {
-                      "kind": "FORWARD",
                       "to": "REFINED"
                     }
                   ],
                   "VERIFIED": [
                     {
-                      "kind": "FORWARD",
                       "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFIED"
                     }
                   ]
@@ -22793,53 +22693,31 @@
                   "DONE": [],
                   "DROPPED": [
                     {
-                      "kind": "REOPEN",
                       "to": "REPORTED"
                     }
                   ],
                   "IMPLEMENTED": [
                     {
-                      "kind": "FORWARD",
                       "to": "VERIFYING"
                     }
                   ],
                   "READY_FOR_DEV": [
                     {
-                      "kind": "FORWARD",
                       "to": "IMPLEMENTING"
                     }
                   ],
                   "REFINED": [
                     {
-                      "gates": [
-                        "MEMBERS_SCHEDULED",
-                        "MEMBERS_SCHEDULED"
-                      ],
-                      "kind": "FORWARD",
                       "to": "READY_FOR_DEV"
-                    },
-                    {
-                      "kind": "BACK",
-                      "to": "REPORTED"
-                    },
-                    {
-                      "kind": "DROP",
-                      "to": "DROPPED"
                     }
                   ],
                   "REPORTED": [
                     {
-                      "kind": "FORWARD",
-                      "to": "REFINED"
-                    },
-                    {
-                      "kind": "FORWARD",
                       "to": "REFINED"
                     }
                   ],
                   "VERIFIED": [
                     {
-                      "kind": "FORWARD",
                       "to": "DONE"
                     }
                   ]
@@ -22892,14 +22770,6 @@
                 }
               ]
             },
-            "$.archetypes[0].transitions.DROPPED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[0].transitions.DROPPED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -22914,14 +22784,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.IMPLEMENTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -22942,14 +22804,6 @@
                 }
               ]
             },
-            "$.archetypes[0].transitions.IMPLEMENTING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[0].transitions.IMPLEMENTING[*].to": {
               "combine": "AND",
               "matchers": [
@@ -22967,14 +22821,6 @@
                 }
               ]
             },
-            "$.archetypes[0].transitions.READY_FOR_DEV[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[0].transitions.READY_FOR_DEV[*].to": {
               "combine": "AND",
               "matchers": [
@@ -22983,17 +22829,16 @@
                 }
               ]
             },
-            "$.archetypes[0].transitions.REFINED[0].gates": {
+            "$.archetypes[0].transitions.REFINED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[0].transitions.REFINED[0].gates[*]": {
+            "$.archetypes[0].transitions.REFINED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23001,97 +22846,16 @@
                 }
               ]
             },
-            "$.archetypes[0].transitions.REFINED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REFINED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REFINED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REFINED[1].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REFINED[2].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REFINED[2].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REPORTED[0].gates": {
+            "$.archetypes[0].transitions.REPORTED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[0].transitions.REPORTED[0].gates[*]": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REPORTED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REPORTED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REPORTED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.REPORTED[1].to": {
+            "$.archetypes[0].transitions.REPORTED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23105,14 +22869,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.VERIFIED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23130,14 +22886,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[0].transitions.VERIFYING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23184,14 +22932,6 @@
                 }
               ]
             },
-            "$.archetypes[1].transitions.DROPPED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[1].transitions.DROPPED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23206,14 +22946,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.IMPLEMENTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23234,14 +22966,6 @@
                 }
               ]
             },
-            "$.archetypes[1].transitions.IMPLEMENTING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[1].transitions.IMPLEMENTING[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23259,14 +22983,6 @@
                 }
               ]
             },
-            "$.archetypes[1].transitions.READY_FOR_DEV[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[1].transitions.READY_FOR_DEV[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23275,17 +22991,16 @@
                 }
               ]
             },
-            "$.archetypes[1].transitions.REFINED[0].gates": {
+            "$.archetypes[1].transitions.REFINED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[1].transitions.REFINED[0].gates[*]": {
+            "$.archetypes[1].transitions.REFINED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23293,97 +23008,16 @@
                 }
               ]
             },
-            "$.archetypes[1].transitions.REFINED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REFINED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REFINED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REFINED[1].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REFINED[2].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REFINED[2].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REPORTED[0].gates": {
+            "$.archetypes[1].transitions.REPORTED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[1].transitions.REPORTED[0].gates[*]": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REPORTED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REPORTED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REPORTED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.REPORTED[1].to": {
+            "$.archetypes[1].transitions.REPORTED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23397,14 +23031,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.VERIFIED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23422,14 +23048,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[1].transitions.VERIFYING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23476,14 +23094,6 @@
                 }
               ]
             },
-            "$.archetypes[2].transitions.DROPPED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[2].transitions.DROPPED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23498,14 +23108,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.IMPLEMENTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23526,14 +23128,6 @@
                 }
               ]
             },
-            "$.archetypes[2].transitions.IMPLEMENTING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[2].transitions.IMPLEMENTING[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23551,14 +23145,6 @@
                 }
               ]
             },
-            "$.archetypes[2].transitions.READY_FOR_DEV[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[2].transitions.READY_FOR_DEV[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23567,65 +23153,16 @@
                 }
               ]
             },
-            "$.archetypes[2].transitions.REFINED[0].gates": {
+            "$.archetypes[2].transitions.REFINED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[2].transitions.REFINED[0].gates[*]": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REFINED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REFINED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REFINED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REFINED[1].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REFINED[2].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REFINED[2].to": {
+            "$.archetypes[2].transitions.REFINED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23638,16 +23175,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.REPORTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
+                  "min": 0
                 }
               ]
             },
@@ -23668,14 +23196,6 @@
                 }
               ]
             },
-            "$.archetypes[2].transitions.VERIFIED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[2].transitions.VERIFIED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23690,14 +23210,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[2].transitions.VERIFYING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23744,14 +23256,6 @@
                 }
               ]
             },
-            "$.archetypes[3].transitions.DROPPED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[3].transitions.DROPPED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23766,14 +23270,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.IMPLEMENTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -23794,14 +23290,6 @@
                 }
               ]
             },
-            "$.archetypes[3].transitions.IMPLEMENTING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[3].transitions.IMPLEMENTING[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23819,14 +23307,6 @@
                 }
               ]
             },
-            "$.archetypes[3].transitions.READY_FOR_DEV[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[3].transitions.READY_FOR_DEV[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23835,65 +23315,16 @@
                 }
               ]
             },
-            "$.archetypes[3].transitions.REFINED[0].gates": {
+            "$.archetypes[3].transitions.REFINED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[3].transitions.REFINED[0].gates[*]": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REFINED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REFINED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REFINED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REFINED[1].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REFINED[2].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REFINED[2].to": {
+            "$.archetypes[3].transitions.REFINED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23906,16 +23337,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.REPORTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
+                  "min": 0
                 }
               ]
             },
@@ -23936,14 +23358,6 @@
                 }
               ]
             },
-            "$.archetypes[3].transitions.VERIFIED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[3].transitions.VERIFIED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -23958,14 +23372,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[3].transitions.VERIFYING[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -24012,14 +23418,6 @@
                 }
               ]
             },
-            "$.archetypes[4].transitions.DROPPED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[4].transitions.DROPPED[*].to": {
               "combine": "AND",
               "matchers": [
@@ -24034,14 +23432,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.IMPLEMENTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },
@@ -24062,14 +23452,6 @@
                 }
               ]
             },
-            "$.archetypes[4].transitions.READY_FOR_DEV[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.archetypes[4].transitions.READY_FOR_DEV[*].to": {
               "combine": "AND",
               "matchers": [
@@ -24078,65 +23460,16 @@
                 }
               ]
             },
-            "$.archetypes[4].transitions.REFINED[0].gates": {
+            "$.archetypes[4].transitions.REFINED": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
-            "$.archetypes[4].transitions.REFINED[0].gates[*]": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REFINED[0].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REFINED[0].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REFINED[1].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REFINED[1].to": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REFINED[2].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REFINED[2].to": {
+            "$.archetypes[4].transitions.REFINED[*].to": {
               "combine": "AND",
               "matchers": [
                 {
@@ -24149,16 +23482,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.REPORTED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
+                  "min": 0
                 }
               ]
             },
@@ -24176,14 +23500,6 @@
                 {
                   "match": "type",
                   "min": 0
-                }
-              ]
-            },
-            "$.archetypes[4].transitions.VERIFIED[*].kind": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },

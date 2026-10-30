@@ -1248,18 +1248,25 @@ public final class ProjectsContract {
         rows.add(row("qits work status", IMPLEMENTED_TICKET, "getWork", "work", GET)
                 .consumes("archetype", "qualifiedId", "status"));
         rows.add(row("qits work status", REGISTRY, "listWorkArchetypes", "archetypes", REGISTRY_READ)
-                .consumes("archetypes[].archetype", "archetypes[].lifecycle", "archetypes[].transitions")
-                // The command reads `transitions` as a whole object and binds no status's move
-                // count: a status whose moves share one shape in every archetype (no move there
-                // ever carries `gates`) is left free to grow, so the provider may add a move
-                // (such as a CLOSE to DONE) without breaking this pact (qits-1757). REFINED, and
-                // REPORTED for EPIC/TICKET, mix a gated move with ungated ones and so are matched
-                // positionally already; qits-pact-consumer has no way to merge an optional field
-                // into one template without wrongly requiring it everywhere, so those stay as the
-                // golden master records them.
-                .anyLength("archetypes[].transitions.DROPPED", "archetypes[].transitions.IMPLEMENTED",
-                        "archetypes[].transitions.IMPLEMENTING", "archetypes[].transitions.READY_FOR_DEV",
-                        "archetypes[].transitions.VERIFIED", "archetypes[].transitions.VERIFYING"));
+                // The command reads only each move's `to` (WorkCommand#execute), never `kind` or
+                // `gates`, so consuming just that field per status drops `gates` from the projected
+                // body and the REFINED/REPORTED disagreement over carrying it disappears with it:
+                // every status's moves now share one shape, and every status array is free to grow,
+                // so the provider may add a move (such as a CLOSE to DONE) to any of them without
+                // breaking this pact (qits-1757). DONE keeps its path in `consumes` (every status's
+                // key stays in the projected body) but not in `anyLength`: it is recorded empty in
+                // every archetype, so there is no element anywhere to take an open-ended template
+                // from, and it stays matched as the empty array it always is.
+                .consumes("archetypes[].archetype", "archetypes[].lifecycle",
+                        "archetypes[].transitions.REPORTED[].to", "archetypes[].transitions.REFINED[].to",
+                        "archetypes[].transitions.READY_FOR_DEV[].to", "archetypes[].transitions.IMPLEMENTING[].to",
+                        "archetypes[].transitions.IMPLEMENTED[].to", "archetypes[].transitions.VERIFYING[].to",
+                        "archetypes[].transitions.VERIFIED[].to", "archetypes[].transitions.DONE[].to",
+                        "archetypes[].transitions.DROPPED[].to")
+                .anyLength("archetypes[].transitions.REPORTED", "archetypes[].transitions.REFINED",
+                        "archetypes[].transitions.READY_FOR_DEV", "archetypes[].transitions.IMPLEMENTING",
+                        "archetypes[].transitions.IMPLEMENTED", "archetypes[].transitions.VERIFYING",
+                        "archetypes[].transitions.VERIFIED", "archetypes[].transitions.DROPPED"));
         rows.add(row("qits work status", REPORTED_TICKET, "setWorkStatus", "setWorkStatus", STATUS)
                 .consumes(held(REPORTED_TICKET, "setWorkStatus", ROW)));
         rows.add(row("qits work comment create", TICKET_WITH_A_COMMENT, "addWorkComment", "addWorkComment", COMMENT)
