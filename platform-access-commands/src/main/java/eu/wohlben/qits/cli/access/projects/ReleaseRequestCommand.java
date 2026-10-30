@@ -833,9 +833,10 @@ public class ReleaseRequestCommand implements Runnable {
 
     @CommandLine.Command(name = "regenerate", mixinStandardHelpOptions = true,
             description = {"Generate one release output again on an open release request: the entity diagram, the "
-                    + "screenshot baselines, the dependency bump, the estate pins, or the golden recordings (maven "
-                    + "or npm).",
-                    "QA checks the entity diagram and the screenshot baselines and fails when they are stale; it "
+                    + "screenshot baselines, a CLI's tapes, the dependency bump, the estate pins, or the golden "
+                    + "recordings (maven or npm).",
+                    "QA checks the entity diagram, the screenshot baselines and a CLI's tapes and fails when they "
+                            + "are stale; it "
                             + "does not regenerate them. This command asks for the run. The automation commits the "
                             + "output to maintenance/automations/<kind>/<request id>, the request folds again with "
                             + "it, and QA then runs again. It prints the run's id."},
@@ -845,6 +846,8 @@ public class ReleaseRequestCommand implements Runnable {
                             + "--kind screenshot-baselines",
                     "  qits release-request --project qits --repository qits-projects-service regenerate "
                             + "--request qits-projects-service-rr-12 --kind entity-diagram",
+                    "  qits release-request --project qits --repository qits-platform-access-cli regenerate "
+                            + "--kind cli-tapes",
                     "",
                     "- Without --request it takes the repository's one open request. A REJECTED request is open: "
                             + "a red QA is the usual reason to regenerate.",
@@ -862,7 +865,7 @@ public class ReleaseRequestCommand implements Runnable {
     public static class RegenerateCommand extends PlatformCommand {
 
         /** The kinds the platform runs today; the service is the authority, this list is for the sentences. */
-        static final String KINDS = "entity-diagram, screenshot-baselines, dependency-bump, estate-pins, "
+        static final String KINDS = "entity-diagram, screenshot-baselines, cli-tapes, dependency-bump, estate-pins, "
                 + "golden-recordings-maven and golden-recordings-npm";
 
         @CommandLine.ParentCommand
@@ -875,7 +878,7 @@ public class ReleaseRequestCommand implements Runnable {
         String request;
 
         @CommandLine.Option(names = "--kind", paramLabel = "<kind>", required = true,
-                description = "What to generate: entity-diagram, screenshot-baselines, dependency-bump, "
+                description = "What to generate: entity-diagram, screenshot-baselines, cli-tapes, dependency-bump, "
                         + "estate-pins, golden-recordings-maven or golden-recordings-npm.")
         String kind;
 

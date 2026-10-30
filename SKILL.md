@@ -1900,9 +1900,9 @@ qits release-request --project qits decline --request qits-ci-service-rr-221 --s
 
 ## qits release-request regenerate
 
-Generate one release output again on an open release request: the entity diagram, the screenshot baselines, the dependency bump, the estate pins, or the golden recordings (maven or npm).
+Generate one release output again on an open release request: the entity diagram, the screenshot baselines, a CLI's tapes, the dependency bump, the estate pins, or the golden recordings (maven or npm).
 
-QA checks the entity diagram and the screenshot baselines and fails when they are stale; it does not regenerate them. This command asks for the run. The automation commits the output to maintenance/automations/<kind>/<request id>, the request folds again with it, and QA then runs again. It prints the run's id.
+QA checks the entity diagram, the screenshot baselines and a CLI's tapes and fails when they are stale; it does not regenerate them. This command asks for the run. The automation commits the output to maintenance/automations/<kind>/<request id>, the request folds again with it, and QA then runs again. It prints the run's id.
 
 ```
 qits release-request regenerate --kind <kind> [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] [--request <id>]
@@ -1910,7 +1910,7 @@ qits release-request regenerate --kind <kind> [--output table|json] [--project <
 
 | Name | What it does |
 |---|---|
-| `--kind <kind>` | Required. What to generate: entity-diagram, screenshot-baselines, dependency-bump, estate-pins, golden-recordings-maven or golden-recordings-npm. |
+| `--kind <kind>` | Required. What to generate: entity-diagram, screenshot-baselines, cli-tapes, dependency-bump, estate-pins, golden-recordings-maven or golden-recordings-npm. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
@@ -1922,6 +1922,7 @@ qits release-request regenerate --kind <kind> [--output table|json] [--project <
 ```
 qits release-request --project qits --repository qits-landing-app regenerate --kind screenshot-baselines
 qits release-request --project qits --repository qits-projects-service regenerate --request qits-projects-service-rr-12 --kind entity-diagram
+qits release-request --project qits --repository qits-platform-access-cli regenerate --kind cli-tapes
 ```
 
 - Without --request it takes the repository's one open request. A REJECTED request is open: a red QA is the usual reason to regenerate.
@@ -2387,9 +2388,10 @@ qits maintenance automation run --kind <kind> --request <id> [--maintenance-url 
 ```
 qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins
 qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins --work-item qits-112
+qits maintenance --project qits --repository qits-platform-access-cli automation run --request qits-platform-access-cli-rr-3 --kind cli-tapes
 ```
 
-- `qits maintenance automations --request <id>` names the kinds; `kind` is the first column.
+- `qits maintenance automations --request <id>` names the kinds; `kind` is the first column. cli-tapes plays a CLI's VHS tapes (tapes/*.tape) and commits their text goldens and GIFs.
 - 404 means the kind or the repository is not one the platform knows. 409 means one is already running for this (request, kind), the request takes no branch, or bumping is off.
 - --work-item is the commit subject's scope (chore(<work item>): update <label>). Without it, the newest one named on the request's own commits is used.
 

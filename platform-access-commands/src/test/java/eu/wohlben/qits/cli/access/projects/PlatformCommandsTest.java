@@ -1694,7 +1694,7 @@ class PlatformCommandsTest {
                 .contains("An estate-pins run is already active for this request");
         assertThat(unknown.exit()).isEqualTo(1);
         assertThat(unknown.err()).contains("The platform knows no kind 'nonsense' or no release request "
-                        + REJECTED_ID + " (HTTP 404). The kinds are entity-diagram, screenshot-baselines, "
+                        + REJECTED_ID + " (HTTP 404). The kinds are entity-diagram, screenshot-baselines, cli-tapes, "
                         + "dependency-bump, estate-pins, golden-recordings-maven and golden-recordings-npm.")
                 .contains("Unknown kind: nonsense");
         assertThat(down.exit()).isEqualTo(1);
