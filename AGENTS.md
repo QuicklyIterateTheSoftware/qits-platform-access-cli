@@ -5,7 +5,7 @@
 The `qits` command: access to the qits platform from a Linux or WSL workstation. A Quarkus
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
-that session fresh), `qits projects|repositories|work|release-request` (the projects service;
+that session fresh), `qits projects|repositories|work|ideas|release-request` (the projects service;
 `work` is every work item, of every archetype), `qits ci runs|run|retry|cancel|report` (qits-ci's runs, a
 run's step logs, a retry, a cancel, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
@@ -151,7 +151,7 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                the HTTP client and its error messages, which address a service has (PlatformUrls),
                the aligned table (Table), and the --since/--until/--limit window both query
                commands share (QueryWindow, a picocli mixin)
-    projects/  qits projects, repositories, work and release-request. `qits work` is one group for
+    projects/  qits projects, repositories, work, ideas and release-request. `qits work` is one group for
                every archetype (WorkCommand; WorkEntities holds the transition's full-state merge
                and the tables). Its writes take a JSON payload on stdin and, with none, print the
                usage and the schema the service serves per archetype and door (entity doors) or
@@ -161,6 +161,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                terminal/'s TerminalAttach; without --repository it is the list's
                wrapper.repositoryId, as the page's Backups panel picks it, and a clean close is
                followed by the panel's project-wide backup-sync and one re-read 3 s later
+               `qits ideas` (IdeasCommand, epic qits-888) is a project's ideas on /projects/api/ideas, the
+               same shape: --entity is the idea's id, the writes' schemas come from the OpenAPI
+               document through WorkPayload, and `spawn` files work through createWork with the
+               idea's project, title, description and inspiredBy filled in
+               `qits ideas` (IdeasCommand, epic qits-888) is a project's ideas on /projects/api/ideas, the
+               same shape: --entity is the idea's id, the writes' schemas come from the OpenAPI
+               document through WorkPayload, and `spawn` files work through createWork with the
+               idea's project, title, description and inspiredBy filled in
     ci/        qits ci: runs, run (with the step logs), retry and cancel, on qits-ci's run API
     report/    qits ci report: release reports. The framework (ReportKind, ReportParser,
                StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
@@ -537,7 +545,11 @@ outside `/work`: the release request's commits for `qits artifacts publish chang
 every state, where a command finds a request by its logical id (`listRepositoryReleaseRequests` with
 `state=all`, state `a repository with a release not merged to main`; qits-1158); the git reads of
 `qits repositories` (branches, commits, commit changes and diff, commit subjects); a refinement's
-designs for `qits work design` (state `a ticket with a design`; qits-1174); the room itself for `qits
+designs for `qits work design` (state `a ticket with a design`; qits-1174); the idea doors of `qits ideas`
+(epic qits-888: list, get, create, patch, archive, unarchive in `a project with ideas`, create also
+in `a project with no work`; pending until the pin reaches qits-projects-service 2026.1030.185452); the idea doors of `qits ideas`
+(epic qits-888: list, get, create, patch, archive, unarchive in `a project with ideas`, create also
+in `a project with no work`; pending until the pin reaches qits-projects-service 2026.1030.185452); the room itself for `qits
 work refinement` (qits-1383): `open`'s `startWorkRefinement` then `ensureRefinementContainer`, both in
 `a ticket with a design`, and its 409 in `a refined ticket`; `show`'s `getWorkRefinement` in `a
 reported ticket` (null) and `a ticket with a design`; `discard`'s `getWorkRefinement` and
