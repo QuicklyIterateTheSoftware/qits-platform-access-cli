@@ -1248,7 +1248,18 @@ public final class ProjectsContract {
         rows.add(row("qits work status", IMPLEMENTED_TICKET, "getWork", "work", GET)
                 .consumes("archetype", "qualifiedId", "status"));
         rows.add(row("qits work status", REGISTRY, "listWorkArchetypes", "archetypes", REGISTRY_READ)
-                .consumes("archetypes[].archetype", "archetypes[].lifecycle", "archetypes[].transitions"));
+                .consumes("archetypes[].archetype", "archetypes[].lifecycle", "archetypes[].transitions")
+                // The command reads `transitions` as a whole object and binds no status's move
+                // count: a status whose moves share one shape in every archetype (no move there
+                // ever carries `gates`) is left free to grow, so the provider may add a move
+                // (such as a CLOSE to DONE) without breaking this pact (qits-1757). REFINED, and
+                // REPORTED for EPIC/TICKET, mix a gated move with ungated ones and so are matched
+                // positionally already; qits-pact-consumer has no way to merge an optional field
+                // into one template without wrongly requiring it everywhere, so those stay as the
+                // golden master records them.
+                .anyLength("archetypes[].transitions.DROPPED", "archetypes[].transitions.IMPLEMENTED",
+                        "archetypes[].transitions.IMPLEMENTING", "archetypes[].transitions.READY_FOR_DEV",
+                        "archetypes[].transitions.VERIFIED", "archetypes[].transitions.VERIFYING"));
         rows.add(row("qits work status", REPORTED_TICKET, "setWorkStatus", "setWorkStatus", STATUS)
                 .consumes(held(REPORTED_TICKET, "setWorkStatus", ROW)));
         rows.add(row("qits work comment create", TICKET_WITH_A_COMMENT, "addWorkComment", "addWorkComment", COMMENT)

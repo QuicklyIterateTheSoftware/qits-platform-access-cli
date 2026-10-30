@@ -22475,43 +22475,15 @@
                     {
                       "kind": "FORWARD",
                       "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTING"
@@ -22552,25 +22524,9 @@
                     {
                       "kind": "FORWARD",
                       "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "VERIFIED"
@@ -22603,43 +22559,15 @@
                     {
                       "kind": "FORWARD",
                       "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTING"
@@ -22680,25 +22608,9 @@
                     {
                       "kind": "FORWARD",
                       "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "VERIFIED"
@@ -22731,43 +22643,15 @@
                     {
                       "kind": "FORWARD",
                       "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTING"
@@ -22804,25 +22688,9 @@
                     {
                       "kind": "FORWARD",
                       "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "VERIFIED"
@@ -22855,43 +22723,15 @@
                     {
                       "kind": "FORWARD",
                       "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFYING"
                     }
                   ],
                   "IMPLEMENTING": [
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
                     }
                   ],
                   "READY_FOR_DEV": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTING"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "IMPLEMENTING"
@@ -22928,25 +22768,9 @@
                     {
                       "kind": "FORWARD",
                       "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
                     }
                   ],
                   "VERIFYING": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "VERIFIED"
@@ -22976,29 +22800,13 @@
                   "IMPLEMENTED": [
                     {
                       "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "VERIFIED"
+                      "to": "VERIFYING"
                     }
                   ],
                   "READY_FOR_DEV": [
                     {
                       "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "IMPLEMENTED"
+                      "to": "IMPLEMENTING"
                     }
                   ],
                   "REFINED": [
@@ -23030,14 +22838,6 @@
                     }
                   ],
                   "VERIFIED": [
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
-                    },
-                    {
-                      "kind": "FORWARD",
-                      "to": "DONE"
-                    },
                     {
                       "kind": "FORWARD",
                       "to": "DONE"
@@ -23088,8 +22888,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -23114,8 +22913,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -23140,8 +22938,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -23166,8 +22963,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -23308,8 +23104,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -23334,8 +23129,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -23386,8 +23180,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -23412,8 +23205,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -23438,8 +23230,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -23464,8 +23255,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -23606,8 +23396,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -23632,8 +23421,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -23684,8 +23472,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -23710,8 +23497,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -23736,8 +23522,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -23762,8 +23547,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -23880,8 +23664,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -23906,8 +23689,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -23958,8 +23740,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -23984,8 +23765,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -24010,8 +23790,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 2,
-                  "min": 2
+                  "min": 0
                 }
               ]
             },
@@ -24036,8 +23815,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 4,
-                  "min": 4
+                  "min": 0
                 }
               ]
             },
@@ -24154,8 +23932,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -24180,8 +23957,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -24232,8 +24008,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 1,
-                  "min": 1
+                  "min": 0
                 }
               ]
             },
@@ -24258,8 +24033,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -24284,8 +24058,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },
@@ -24402,8 +24175,7 @@
               "matchers": [
                 {
                   "match": "type",
-                  "max": 3,
-                  "min": 3
+                  "min": 0
                 }
               ]
             },

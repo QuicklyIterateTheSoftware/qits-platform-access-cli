@@ -571,7 +571,9 @@ public class WorkCommand implements Runnable {
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the "
                             + "payload's schema, whose target enum is the moves open from the item's current status "
                             + "as the service's archetype registry (GET /projects/api/work/archetypes) states "
-                            + "them, and exits with 0."},
+                            + "them, and exits with 0.",
+                    "A campaign, epic or feature whose children are all DONE or DROPPED can be closed straight to "
+                            + "DONE by a person or the delivery desk (a CLOSE move)."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 status </dev/null",
