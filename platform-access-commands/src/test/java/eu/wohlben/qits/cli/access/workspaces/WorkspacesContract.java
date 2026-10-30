@@ -160,12 +160,6 @@ public final class WorkspacesContract {
             assertThat(api.discardAgent(params.get("agentId"), body(recorded).path("force").asBoolean())
                     .path("state").asText()).isNotBlank();
 
-    private static final Call DELIVER = (api, params, recorded) -> {
-        JsonNode answer = api.deliver(body(recorded).path("workId").asText(), body(recorded).path("text").asText());
-        assertThat(answer.path("delivered").isBoolean()).isTrue();
-        assertThat(answer.path("detail").asText()).isNotBlank();
-    };
-
     private static final Call DRAFT = (api, params, recorded) -> {
         JsonNode saved = api.draft(params.get("agentId")).path("draft");
         assertThat(WorkspacesCommand.Json.parse(saved.path("content").asText())).isNotNull();
@@ -292,26 +286,6 @@ public final class WorkspacesContract {
         rows.add(row("qits workspaces history", NO_WORKSPACES, "listWorkItemWorkspaces", "workItemWorkspaces",
                 HISTORY).consumes("entries"));
 
-        // qits workspaces agents: one row per query the provider recorded
-        for (String state : List.of(SLOTS_HOSTING_AGENTS, AGENTS_BOUND, WORKSPACE_STARTING, SLOT_HOSTING_AGENTS)) {
-            rows.add(row("qits workspaces agents list", state, "listAgents", "agents", AGENTS)
-                    .consumes(held(state, "listAgents", prefixed("agents[].", AGENT))));
-        }
-        rows.add(row("qits workspaces agents list", AGENTS_NEEDING_ATTENTION, "listAgents", "agents", AGENTS)
-                .consumes(held(AGENTS_NEEDING_ATTENTION, "listAgents", prefixed("agents[].", AGENT_STATUS))));
-        rows.add(row("qits workspaces agents discard", WAITING_FOR_A_SLOT, "discardAgent", "discardAgent", DISCARD)
-                .consumes("state"));
-        for (String state : List.of(WORKING_ON_A_TICKET, NO_WORKSPACES)) {
-            rows.add(row("qits workspaces agents prompt", state, "deliverAgentTurn", "deliver", DELIVER)
-                    .consumes("agentId", "delivered", "launched", "resumed", "detail"));
-        }
-        rows.add(row("qits workspaces agents draft show", SAVED_DRAFT, "getAgentPromptDraft", "draft", DRAFT)
-                .consumes("draft.content", "draft.updatedAt"));
-        rows.add(row("qits workspaces agents draft show", NO_DRAFT, "getAgentPromptDraft", "draft", NO_SAVED_DRAFT));
-        rows.add(row("qits workspaces agents draft save", SAVED_DRAFT, "saveAgentPromptDraft", "saveDraft",
-                SAVE_DRAFT).consumes("draft.updatedAt"));
-        rows.add(row("qits workspaces agents draft discard", SAVED_DRAFT, "deleteAgentPromptDraft", "deleteDraft",
-                DELETE_DRAFT));
         rows.addAll(agents());
         return List.copyOf(rows);
     }

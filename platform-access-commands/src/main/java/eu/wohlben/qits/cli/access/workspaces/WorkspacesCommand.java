@@ -37,11 +37,12 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 /**
  * {@code qits workspaces}: every action the landing app's workspace pages offer, one command each,
  * on the same qits-workspaces door the page calls (qits-1261). The slots and their containers are
- * here; the agents are {@link WorkspaceAgentsCommand}. The nodes slots are placed on are
- * {@code qits targets} (epic qits-1481, qits-1534): {@code qits workspaces runners} is retired.
+ * here; a slot's container (sign-in, plugins, refine) is {@link WorkspaceAgentsCommand}. The nodes
+ * slots are placed on are {@code qits targets} (epic qits-1481, qits-1534): {@code qits workspaces
+ * runners} is retired.
  * <p>
- * The agents' own verbs are {@code qits agents} ({@link AgentCommands}, epic qits-1667); most of
- * {@code qits workspaces agents} is their deprecated alias for one release.
+ * The agents themselves are {@code qits agents} ({@link AgentCommands}, epic qits-1667); their
+ * deprecated aliases under {@code qits workspaces agents} lived for one release and are gone.
  */
 @CommandLine.Command(name = "workspaces", mixinStandardHelpOptions = true,
         subcommands = {WorkspacesCommand.ListCommand.class, WorkspacesCommand.ShowCommand.class,
@@ -51,8 +52,9 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 WorkspacesCommand.ItemsCommand.class,
                 WorkspacesCommand.HistoryCommand.class, WorkspaceAgentsCommand.class},
         description = {"The workspaces of qits-workspaces, with every action the landing app's workspace pages "
-                        + "offer, each on the same door the page calls: the slots and their containers, and the "
-                        + "agents working in them (agents). The nodes slots are placed on are `qits targets`.",
+                        + "offer, each on the same door the page calls: the slots and their containers, and a "
+                        + "container's sign-in and plugins (agents). The agents themselves are `qits agents`. The "
+                        + "nodes slots are placed on are `qits targets`.",
                 "A slot is a workspace row, named by its number (`qits workspaces list` shows it). It hosts agents; "
                         + "an agent works on one work item. Starting a container is a technical process, whose log "
                         + "`qits workspaces log` follows."},
@@ -61,11 +63,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin, "
                         + "qits:admin-agent or qits:desk-admin (the delivery desk, within its own project); "
                         + "qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.",
-                "- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the "
-                        + "slot's daemon, through qits-workspaces' container proxy, which checks the caller: a "
-                        + "person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only "
-                        + "its own workspace's. qits:desk-admin is judged as qits:agent there: the slot is a shell "
-                        + "that can push.",
+                "- A container's sign-in and plugins (agents sign-in, agents plugins) come from the slot's daemon, "
+                        + "through qits-workspaces' container proxy, which checks the caller: a person, qits:system, "
+                        + "qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's. "
+                        + "qits:desk-admin is judged as qits:agent there: the slot is a shell that can push.",
                 "- `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's "
                         + "terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads "
                         + "the chat's transcript and sends prompts.",
@@ -718,9 +719,9 @@ public class WorkspacesCommand implements Runnable, WorkspacesAccess {
     @CommandLine.Command(name = "attach", mixinStandardHelpOptions = true,
             description = {"Attach this terminal to a command's terminal on a slot's daemon: what you type goes to "
                     + "the command, what it prints comes here. The agent's Terminal tab in the landing app.",
-                    "Command ids come from `qits workspaces agents sign-in open` (the sign-in terminal) and "
-                            + "`qits workspaces agents harness` (an agent's harness, when it runs as a terminal); "
-                            + "both also take --attach, which opens or finds the command and attaches at once.",
+                    "Command ids come from `qits workspaces agents sign-in open` (the sign-in terminal), which also "
+                            + "takes --attach, opening and attaching to it at once. An agent's own harness is `qits "
+                            + "agents attach`, which takes the agent rather than a command.",
                     "Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to the command. "
                             + "The window's size goes along and follows the window. The command ending ends this "
                             + "too. A dropped connection attaches again after 0.5, 1, 2, 4 and 4 s, and the screen is "
@@ -733,7 +734,7 @@ public class WorkspacesCommand implements Runnable, WorkspacesAccess {
             footer = {"  qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1",
                     "  qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1 > terminal.log",
                     "",
-                    "- Detaching never ends the command. End it with `qits workspaces agents terminate`.",
+                    "- Detaching never ends the command.",
                     "- Not an MCP tool: it needs a terminal and runs until the command ends."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The command ended, you detached (Ctrl-]), or it was stopped (SIGINT, SIGTERM); only "
@@ -762,8 +763,8 @@ public class WorkspacesCommand implements Runnable, WorkspacesAccess {
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             String id = command == null ? "" : command.strip();
             if (id.isEmpty()) {
-                throw new CliFailure("Name the command: its id, as `qits workspaces agents sign-in open` or "
-                        + "`qits workspaces agents harness` shows it.", CliFailure.USAGE);
+                throw new CliFailure("Name the command: its id, as `qits workspaces agents sign-in open` shows it.",
+                        CliFailure.USAGE);
             }
             long slot = slot(workspace);
             return attach(context, parent.api(context), slot, id, terminals);

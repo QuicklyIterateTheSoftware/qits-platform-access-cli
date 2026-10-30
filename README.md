@@ -603,21 +603,21 @@ Installing it is not part of this version.
     qits workspaces start|stop|recreate <n>
     qits workspaces log <process id>
     qits workspaces attach <command id> --workspace <n>
-    qits workspaces agents list [--project <project>] [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
-    qits workspaces agents discard <agent> [--force]
-    qits workspaces agents prompt <work> <text>
-    qits workspaces agents draft show|discard <agent>
-    qits workspaces agents draft save <agent> <text>
-    qits workspaces agents chat|terminate <agent> --workspace <n> [--command <id>]
-    qits workspaces agents harness <agent> --workspace <n> [--attach]
     qits workspaces agents refine --workspace <n> [--preamble <text>] <notes>
-    qits workspaces agents files list <agent> --workspace <n> [--path <dir>]
-    qits workspaces agents files read <agent> <path> --workspace <n>
-    qits workspaces agents files detect <agent> --workspace <n>
     qits workspaces agents sign-in status --workspace <n>
     qits workspaces agents sign-in open --workspace <n> [--harness CLAUDE|KIMI] [--attach]
     qits workspaces agents plugins list --workspace <n>
     qits workspaces agents plugins install <plugin> --workspace <n>
+    qits agents list [--project <project>] [--work <work>] [--workspace <n>] [--state ACTIVE|REMOVED]
+    qits agents show|discard [--force] <agent> | --work <work>
+    qits agents prompt <agent> <text> [--compact-first] | --work <work> <text>
+    qits agents interrupt|stop|restart|yield <agent> | --work <work>
+    qits agents sessions <agent> | --work <work>
+    qits agents transcript <agent> <session> | --work <work> <session>
+    qits agents chat <agent> | --work <work>
+    qits agents attach <agent> | --work <work>
+    qits agents files list|read|detect <agent> [--path <dir>] | --work <work>
+    qits agents draft show|save|discard <agent> | --work <work>
     qits targets list | show --target <name|id>
     qits targets create --name <name> [--description <text>] [--reserved-ci <n>] [--reserved-workspace <n>] \
         [--reserved-desk <n>]
@@ -1551,40 +1551,26 @@ by one command, the same way.
     qits workspaces attach <command id>           WS   …/terminal/commands/{id}
     qits workspaces items                         GET  /workspaces/api/work/workspaces
     qits workspaces history <work>                GET  /workspaces/api/work/{work}/workspaces
-    qits workspaces agents list (deprecated)      GET  /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]
-    qits workspaces agents discard [--force]      POST /workspaces/api/agents/{id}/discard {"force":…}
-    qits workspaces agents prompt <work> <text>   POST /workspaces/api/agent-dispatches/delivery
-    qits workspaces agents draft show|save|discard     GET|PUT|DELETE /workspaces/api/agents/{id}/prompt-draft
-    qits workspaces agents chat                   GET  …/agent-worktrees/{agent}, then
-                                                       …/commands/{command}/log?channel=TRANSCRIPT
-    qits workspaces agents terminate              POST …/commands/{command}/terminate {}
     qits workspaces agents refine                 POST …/prompt-refinements
-    qits workspaces agents harness                GET  …/agent-worktrees/{agent}, then …/commands
-    qits workspaces agents files list|read|detect GET  …/agent-worktrees/{agent}/files[?path=],
-                                                       files/content?path=, detection
     qits workspaces agents sign-in status|open    GET  …/agents/available, POST …/agents/sign-in
     qits workspaces agents plugins list|install   GET  …/agent-plugins, POST …/agent-plugins/{id}/install {}
 
 `…` is `/workspaces/container/{n}`: qits-workspaces' container proxy to the slot's daemon, so those
 commands take the slot with `--workspace <n>`, as the page's base URL does.
 
-**`qits workspaces agents list|discard|prompt|draft|chat|terminate|harness|files` are deprecated**
-(epic qits-1667): the agents' verbs are `qits agents` now (below), which names an agent by its id or
-`--work` and never needs the slot. For one release each alias still works as it did and prints
-`deprecated: use 'qits agents <verb>'` on stderr, never on stdout, so `-o json` stays parseable:
-`terminate` points at `stop`, `harness` at `show` (or `attach` with `--attach`), `prompt <qits-123>`
-at `prompt --work qits-123`. `sign-in`, `plugins` and `refine` are the container's harness install
-and stay. `qits workspaces show <n>` lists the agents placed in the slot after its status, from `GET
-/workspaces/api/workspaces/{n}/agents`, as `qits agents list` prints them; its `-o json` is the slot's
-answer alone, as before, and a service without that door (404) leaves the agents out. A work item is its
-qualified id (`qits-123`), looked up in the projects service, or its id; `history` sends either as it
-is, since the service takes both.
+The agents themselves are `qits agents` (below), which names an agent by its id or `--work` and
+never needs the slot; `qits workspaces agents` keeps only `sign-in`, `plugins` and `refine`, the
+container's harness install (its `list|discard|prompt|draft|chat|terminate|harness|files` aliases
+of epic qits-1667 lived for one release and are gone, qits-1749). `qits workspaces show <n>` lists
+the agents placed in the slot after its status, from `GET /workspaces/api/workspaces/{n}/agents`, as
+`qits agents list` prints them; its `-o json` is the slot's answer alone, as before, and a service
+without that door (404) leaves the agents out. A work item is its qualified id (`qits-123`), looked
+up in the projects service, or its id; `history` sends either as it is, since the service takes both.
 
 Who may: every read is open to every credential, `qits:agent` included. The JSON API's writes (start,
-stop, recreate, agents discard/prompt, draft save/discard) need `qits:admin` or
-`qits:admin-agent`, which a person's token carries; `qits:agent` is refused with 403 by design. The
-container proxy checks the caller instead: a person, `qits:system`, `qits:admin` or `qits:admin-agent`
-may reach any slot; `qits:agent` only its own workspace's.
+stop, recreate) need `qits:admin` or `qits:admin-agent`, which a person's token carries; `qits:agent`
+is refused with 403 by design. The container proxy checks the caller instead: a person, `qits:system`,
+`qits:admin` or `qits:admin-agent` may reach any slot; `qits:agent` only its own workspace's.
 Each command's help says which applies.
 
 Not here, on purpose: the live chat socket (`WS …/chat/commands/{id}`), whose transcript `agents chat`
@@ -1593,11 +1579,11 @@ reads and whose prompts `agents prompt` sends; and the slot's hint stream
 log` is a stream and therefore not an MCP tool. The nodes slots are placed on are no longer here
 either: `qits workspaces runners` is retired (qits-1534, epic qits-1481); see `qits targets` below.
 
-`qits workspaces attach <command id> --workspace <n>` is the agent's Terminal tab (qits-1265): this
+`qits workspaces attach <command id> --workspace <n>` is a slot's container terminal (qits-1265): this
 terminal attached to a command's terminal on the slot's daemon, `WS …/terminal/commands/{id}` through
-the container proxy, with the caller's own bearer. The command ids come from `agents sign-in open`
-(the sign-in terminal) and `agents harness` (an agent's harness that runs as a terminal); both take
-`--attach` to open or find the command and attach at once.
+the container proxy, with the caller's own bearer. The command id comes from `agents sign-in open`
+(the sign-in terminal), which also takes `--attach` to open and attach at once. An agent's own
+harness is `qits agents attach`, which takes the agent rather than a command.
 
 - The terminal goes raw (`stty raw -echo` on `/dev/tty`) and every key goes to the command as
   `{"type":"data","data":…}`, Ctrl-C included. The window's size goes as

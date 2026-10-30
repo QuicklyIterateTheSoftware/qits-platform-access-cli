@@ -38,34 +38,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * The CLI asks qits-workspaces exactly what the landing app asks (qits-1261): every request the
  * landing app's workspace pages recorded in their consumer pacts, with qits-workspaces and with a
- * slot's daemon through the container proxy, is made by one `qits workspaces` command, with the
- * same method, path, query and body.
+ * slot's daemon through the container proxy, is made by one `qits` command, with the same method,
+ * path, query and body.
  * <p>
  * The two pact files under {@code workspaces/landing-pacts/} are copies of qits-landing-app's
- * {@code pacts/} (taken at its commit 3c9c65c); copy them again when the pages change. Each
- * interaction names the call it records ({@code qits-call.operationId}), and {@link #ROWS} says which
- * command makes it, read from the recorded request. A call no row covers fails here, unless it is one
- * of {@link #NOT_OFFERED}, with the reason there.
+ * {@code pacts/}; copy them again when the pages change. Each interaction names the call it records
+ * ({@code qits-call.operationId}), and {@link #ROWS} says which command makes it, read from the
+ * recorded request. A call no row covers fails here, unless it is one of {@link #NOT_OFFERED}, with
+ * the reason there.
  */
 class LandingPactTest {
 
     private static final Instant T0 = Instant.parse("2026-10-10T10:00:00Z");
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    /** The agent the daemon interactions that name none (the commands list) are read for. */
-    private static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
-
     /**
-     * The landing app's calls the CLI leaves out on purpose: {@code createRunner} and
-     * {@code rotateRunnerRegistrationToken} each answer a one-time registration token; the other
-     * runner calls are retired by qits-1534, ahead of the epic qits-1481 feature that drops the
-     * landing app's own Runners page and this fixture's copy of its pact (`qits targets` replaces
-     * the group). {@code createAgent} is retired by qits-1705: the CLI offers no command for it,
-     * by the owner's ruling.
+     * The landing app's calls the CLI leaves out on purpose. {@code getAgentActiveProcess} has no
+     * command yet: nothing in this epic asked for one. The daemon ops qits-landing-app's Chat and
+     * Files tabs reach through the agent proxy (`getCommandLog`, `listFiles`, `readFile`, `detect`)
+     * are recorded here at the daemon's own, slot-addressed shape (the pact's own javadoc), which
+     * only the deprecated `qits workspaces agents chat|harness|files` aliases of epic qits-1667 ever
+     * reproduced; those are gone (qits-1749), and `qits agents chat|files` reach the same operations
+     * through the agent proxy instead, which qits-workspaces' contract records no row for
+     * ({@code WorkspacesContract}'s {@code AGENT_PROXY} exclusion) because it is forwarded raw.
      */
-    static final Set<String> NOT_OFFERED = Set.of("createRunner", "rotateRunnerRegistrationToken", "listRunners",
-            "getRunnerHealth", "patchRunner", "greenlightRunner", "requestRunnerHealthcheck",
-            "requestRunnerLoginCheck", "deleteRunner", "createAgent");
+    static final Set<String> NOT_OFFERED = Set.of("getAgentActiveProcess", "getCommandLog", "listFiles", "readFile",
+            "detect");
 
     /** The command that makes each call, built from the request the landing app recorded. */
     static final Map<String, Function<JsonNode, List<String>>> ROWS = new HashMap<>();
@@ -80,9 +78,10 @@ class LandingPactTest {
         ROWS.put("recreateWorkspaceContainer", r -> List.of("workspaces", "recreate", segment(r, 3)));
         ROWS.put("listOpenWorkspaces", r -> List.of("workspaces", "items"));
         ROWS.put("listWorkItemWorkspaces", r -> List.of("workspaces", "history", segment(r, 3)));
-        // --- agents ---
+        ROWS.put("listWorkspaceAgents", r -> List.of("workspaces", "show", segment(r, 3)));
+        // --- agents (qits agents, epic qits-1667) ---
         ROWS.put("listAgents", r -> {
-            List<String> argv = new ArrayList<>(List.of("workspaces", "agents", "list"));
+            List<String> argv = new ArrayList<>(List.of("agents", "list"));
             if (query(r, "workId") != null) {
                 argv.addAll(List.of("--work", query(r, "workId")));
             }
@@ -92,39 +91,26 @@ class LandingPactTest {
             if (query(r, "state") != null) {
                 argv.addAll(List.of("--state", query(r, "state")));
             }
-            return argv;
-        });
-        ROWS.put("discardAgent", r -> body(r).path("force").asBoolean()
-                ? List.of("workspaces", "agents", "discard", segment(r, 3), "--force")
-                : List.of("workspaces", "agents", "discard", segment(r, 3)));
-        ROWS.put("deliverAgentTurn", r -> List.of("workspaces", "agents", "prompt",
-                body(r).path("workId").asText(), body(r).path("text").asText()));
-        ROWS.put("getAgentPromptDraft", r -> List.of("workspaces", "agents", "draft", "show", segment(r, 3)));
-        ROWS.put("saveAgentPromptDraft", r -> List.of("workspaces", "agents", "draft", "save", segment(r, 3),
-                body(r).path("serializedPrompt").asText()));
-        ROWS.put("deleteAgentPromptDraft", r -> List.of("workspaces", "agents", "draft", "discard", segment(r, 3)));
-        // --- a slot's daemon ---
-        ROWS.put("getAgentWorktree", r -> List.of("workspaces", "agents", "harness", segment(r, 4),
-                "--workspace", segment(r, 2)));
-        ROWS.put("listCommands", r -> List.of("workspaces", "agents", "harness", AGENT, "--workspace", segment(r, 2)));
-        ROWS.put("getCommandLog", r -> List.of("workspaces", "agents", "chat", AGENT, "--workspace", segment(r, 2),
-                "--command", segment(r, 4)));
-        ROWS.put("terminateCommand", r -> List.of("workspaces", "agents", "terminate", AGENT,
-                "--workspace", segment(r, 2), "--command", segment(r, 4)));
-        ROWS.put("refinePrompt", r -> List.of("workspaces", "agents", "refine", "--workspace", segment(r, 2),
-                "--preamble", body(r).path("preamble").asText(), body(r).path("transcript").asText()));
-        ROWS.put("listFiles", r -> {
-            List<String> argv = new ArrayList<>(List.of("workspaces", "agents", "files", "list", segment(r, 4),
-                    "--workspace", segment(r, 2)));
-            if (query(r, "path") != null) {
-                argv.addAll(List.of("--path", query(r, "path")));
+            if (query(r, "projectId") != null) {
+                argv.addAll(List.of("--project", query(r, "projectId")));
             }
             return argv;
         });
-        ROWS.put("readFile", r -> List.of("workspaces", "agents", "files", "read", segment(r, 4), query(r, "path"),
-                "--workspace", segment(r, 2)));
-        ROWS.put("detect", r -> List.of("workspaces", "agents", "files", "detect", segment(r, 4),
-                "--workspace", segment(r, 2)));
+        ROWS.put("getAgent", r -> List.of("agents", "show", segment(r, 3)));
+        ROWS.put("promptAgent", r -> List.of("agents", "prompt", segment(r, 3), body(r).path("text").asText()));
+        ROWS.put("interruptAgent", r -> List.of("agents", "interrupt", segment(r, 3)));
+        ROWS.put("stopAgent", r -> List.of("agents", "stop", segment(r, 3)));
+        ROWS.put("restartAgent", r -> List.of("agents", "restart", segment(r, 3)));
+        ROWS.put("discardAgent", r -> body(r).path("force").asBoolean()
+                ? List.of("agents", "discard", segment(r, 3), "--force")
+                : List.of("agents", "discard", segment(r, 3)));
+        ROWS.put("getAgentPromptDraft", r -> List.of("agents", "draft", "show", segment(r, 3)));
+        ROWS.put("saveAgentPromptDraft", r -> List.of("agents", "draft", "save", segment(r, 3),
+                body(r).path("serializedPrompt").asText()));
+        ROWS.put("deleteAgentPromptDraft", r -> List.of("agents", "draft", "discard", segment(r, 3)));
+        // --- a slot's container, through the container proxy ---
+        ROWS.put("refinePrompt", r -> List.of("workspaces", "agents", "refine", "--workspace", segment(r, 2),
+                "--preamble", body(r).path("preamble").asText(), body(r).path("transcript").asText()));
         ROWS.put("availableAgents", r -> List.of("workspaces", "agents", "sign-in", "status",
                 "--workspace", segment(r, 2)));
         ROWS.put("openSignInTerminal", r -> body(r).has("agentType")
@@ -184,7 +170,7 @@ class LandingPactTest {
         }
         assertThat(skipped).isEqualTo(NOT_OFFERED);
         assertThat(covered).isEqualTo(ROWS.keySet());
-        assertThat(checked).isGreaterThan(40);
+        assertThat(checked).isGreaterThan(30);
     }
 
     private void check(JsonNode interaction, List<String> argv) throws Exception {
@@ -197,13 +183,18 @@ class LandingPactTest {
         String method = request.path("method").asText();
         String path = request.path("path").asText();
         // What a command reads before the recorded call: a work item looked up by its placeholder id,
-        // the agent's harness command.
+        // or --project resolved to the project's uuid.
         for (String placeholder : List.of("{bugTicketId}", "{ticketId}", "{improvementTicketId}")) {
             platform.answer("GET", "/projects/api/work/" + placeholder,
                     "{\"id\":\"" + placeholder + "\",\"qualifiedId\":\"qits-1\",\"archetype\":\"TICKET\"}");
         }
-        platform.answer("GET", "/workspaces/container/1/agent-worktrees/" + AGENT,
-                "{\"commandId\":\"00000000-0000-4000-8000-000000000100\"}");
+        String projectId = query(request, "projectId");
+        if (projectId != null) {
+            platform.answer("GET", "/projects/api/projects",
+                    "{\"entries\":[{\"project\":{\"id\":\"" + projectId + "\",\"slug\":\"p\",\"name\":\"p\"}}]}");
+        }
+        // listWorkspaceAgents: `qits workspaces show` reads the slot itself first.
+        platform.answer("GET", "/workspaces/api/workspaces/1", "{\"workspace\":{\"id\":1,\"runtimeStatus\":\"RUNNING\"}}");
         JsonNode answer = content(response.path("body"));
         platform.answer(method, path, response.path("status").asInt(), answer == null ? "" : answer.toString());
 

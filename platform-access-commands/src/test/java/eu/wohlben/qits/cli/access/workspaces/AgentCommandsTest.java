@@ -170,6 +170,146 @@ class AgentCommandsTest {
     }
 
     @Test
+    void aReleaseRequestWaitShowsItsQualifiedIdAndState() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Invoice totals",
+                 "waits":[{"subjectKind":"RELEASE_REQUEST","subjectRef":"00000000-0000-4000-8000-0000000000c1",
+                  "subjectQualifiedId":"qits-projects-service-rr-368","subjectState":"FINALIZED"}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("WAITING ON").contains("ATTENTION")
+                .contains("qits-projects-service-rr-368 FINALIZED");
+    }
+
+    @Test
+    void aCiRunWaitShowsTheRunsFirstEightCharactersAndState() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Download button",
+                 "waits":[{"subjectKind":"CI_RUN","subjectRef":"9677c59a-0000-4000-8000-0000000000c2",
+                  "subjectQualifiedId":null,"subjectState":"RUNNING"}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("run 9677c59a RUNNING");
+    }
+
+    @Test
+    void aWorkItemWaitShowsItsQualifiedIdAndStateOrAQuestionMarkWhenItIsUnknown() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Remember the format",
+                 "waits":[{"subjectKind":"WORK_ITEM","subjectRef":"00000000-0000-4000-8000-000000000011",
+                  "subjectQualifiedId":"contract-00000001-5","subjectState":null}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("contract-00000001-5 ?");
+    }
+
+    @Test
+    void aCommentsWaitShowsCommentsOnTheItem() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Remember the format",
+                 "waits":[{"subjectKind":"COMMENTS","subjectRef":"00000000-0000-4000-8000-000000000011",
+                  "subjectQualifiedId":"qits-5","subjectState":null},
+                 {"subjectKind":"WORK_ITEM","subjectRef":"00000000-0000-4000-8000-000000000011",
+                  "subjectQualifiedId":"qits-5","subjectState":"IMPLEMENTING"}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("comments on qits-5; qits-5 IMPLEMENTING");
+    }
+
+    @Test
+    void anOtherOrUnrecognisedWaitKindShowsItsLabel() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"Remember the format",
+                 "waits":[{"subjectKind":"OTHER","label":"something else","subjectRef":null,
+                  "subjectQualifiedId":null,"subjectState":null},
+                 {"subjectKind":"A_FUTURE_KIND","label":"a future kind","subjectRef":null,
+                  "subjectQualifiedId":null,"subjectState":null}],
+                 "attention":null}]}
+                """.formatted(AGENT));
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("something else; a future kind");
+    }
+
+    @Test
+    void waitsAbsentFallsBackToTodaysWaitingOn() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[{"agentId":"%s","workspaceRowId":1,"entityId":"contract-1","state":"ACTIVE",
+                 "runState":"RUNNING","harness":"CLAUDE","entityTitle":"PDF export",
+                 "waitingOn":"CI run 00000000 to end"}]}
+                """.formatted(AGENT));
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("CI run 00000000 to end");
+    }
+
+    @Test
+    void theAttentionColumnShowsTheReasonOrADash() {
+        platform.answer("GET", "/workspaces/api/agents", """
+                {"agents":[
+                 {"agentId":"00000000-0000-4000-8000-0000000000a6","workspaceRowId":1,"entityId":"contract-1",
+                  "state":"ACTIVE","runState":"RUNNING","harness":"CLAUDE","entityTitle":"Export invoices",
+                  "waits":[],"attention":{"code":"BLOCKED_NO_DESK",
+                   "reason":"Blocked 50 min by contract-person, no @desk comment since","since":null,"waitId":null}},
+                 {"agentId":"00000000-0000-4000-8000-0000000000a7","workspaceRowId":1,"entityId":"contract-2",
+                  "state":"ACTIVE","runState":"RUNNING","harness":"CLAUDE","entityTitle":"PDF export",
+                  "waits":[],"attention":null}]}
+                """);
+
+        Result table = run("agents", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("Blocked 50 min by contract-person, no @desk comment since");
+        List<String> lines = table.out().lines().toList();
+        String noAttention = lines.stream().filter(l -> l.contains("0000000000a7")).findFirst().orElseThrow();
+        assertThat(noAttention).endsWith("-");
+    }
+
+    @Test
+    void listSendsTheProjectsUuidWhenGivenAndResolvesASlugFirst() throws Exception {
+        platform.answer("GET", "/projects/api/projects", """
+                {"entries":[{"project":{"id":"11111111-1111-4111-8111-111111111111","slug":"qits","name":"qits"}}]}
+                """);
+        platform.answer("GET", "/workspaces/api/agents", "{\"agents\":[]}");
+
+        Result named = run("agents", "list", "--project", "qits", "--state", "ACTIVE");
+
+        assertThat(named.exit()).as(named.err()).isZero();
+        assertThat(platform.requests("GET", "/workspaces/api/agents").getFirst().query())
+                .isEqualTo("state=ACTIVE&projectId=11111111-1111-4111-8111-111111111111");
+
+        Result byUuid = run("agents", "list", "--project", "11111111-1111-4111-8111-111111111111");
+        assertThat(byUuid.exit()).as(byUuid.err()).isZero();
+        assertThat(platform.requests("GET", "/workspaces/api/agents").getLast().query())
+                .isEqualTo("projectId=11111111-1111-4111-8111-111111111111");
+    }
+
+    @Test
     void showPrintsTheAgentAndJsonIsTheAnswer() throws Exception {
         platform.answer("GET", API, agent(AGENT, "RUNNING"));
 
@@ -378,7 +518,7 @@ class AgentCommandsTest {
         assertThat(read.out()).contains("logo.png is binary");
     }
 
-    // --- qits workspaces show, and the deprecated aliases ---
+    // --- qits workspaces show ---
 
     @Test
     void workspacesShowListsTheSlotsAgents() {
@@ -405,37 +545,6 @@ class AgentCommandsTest {
         assertThat(JSON.readTree(json.out()).path("workspace").path("id").asInt()).isEqualTo(1);
         assertThat(platform.requests("GET", "/workspaces/api/workspaces/1/agents")).as("json is the slot alone")
                 .hasSize(1);
-    }
-
-    @Test
-    void theDeprecatedAliasesSayWhatReplacesThemOnStderrOnly() throws Exception {
-        platform.answer("GET", "/workspaces/api/agents", "{\"agents\":[" + agent(AGENT, "RUNNING") + "]}");
-        platform.answer("GET", API + "/prompt-draft", 404, "");
-        platform.answer("POST", "/workspaces/api/agent-dispatches/delivery", """
-                {"agentId":"%s","delivered":true,"launched":false,"resumed":false,"detail":"Queued."}"""
-                .formatted(AGENT));
-        platform.answer("GET", "/projects/api/work/qits-123",
-                "{\"id\":\"" + TICKET + "\",\"qualifiedId\":\"qits-123\",\"archetype\":\"TICKET\"}");
-        platform.answer("GET", "/workspaces/container/1/agent-worktrees/" + AGENT + "/files", "{\"paths\":[]}");
-
-        Map<List<String>, String> aliases = Map.of(
-                List.of("workspaces", "agents", "list", "-o", "json"), "list",
-                List.of("workspaces", "agents", "draft", "show", AGENT, "-o", "json"), "draft show",
-                List.of("workspaces", "agents", "prompt", "qits-123", "Go on.", "-o", "json"), "prompt",
-                List.of("workspaces", "agents", "files", "list", AGENT, "--workspace", "1", "-o", "json"),
-                "files list");
-        aliases.forEach((argv, verb) -> {
-            Result result = run(argv.toArray(String[]::new));
-            assertThat(result.exit()).as(argv + ": " + result.err()).isZero();
-            assertThat(result.err()).as(String.valueOf(argv))
-                    .isEqualTo("deprecated: use 'qits agents " + verb + "'" + System.lineSeparator());
-            assertThat(result.out()).doesNotContain("deprecated");
-            try {
-                assertThat(JSON.readTree(result.out()).isObject()).as(argv + ": stdout is still the JSON").isTrue();
-            } catch (Exception e) {
-                throw new AssertionError(argv + ": stdout is not JSON: " + result.out(), e);
-            }
-        });
     }
 
     @Test

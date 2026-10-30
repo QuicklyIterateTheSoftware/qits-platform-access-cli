@@ -238,17 +238,13 @@ class McpToolCatalogTest {
         Map<String, String> config = Map.of("QITS_ENV", "dev", "QITS_WORKSPACES_URL", platform.url());
         ToolRunner runner = new ToolRunner(factory -> new CommandLine(new AccessCli(), factory),
                 ToolRunner.environment(config::get), Clock.systemUTC());
-        for (String name : List.of("workspaces_agents_sign-in_open", "workspaces_agents_harness")) {
-            Map<String, Object> arguments = new HashMap<>(Map.of("workspace", 1, "attach", true));
-            if (name.endsWith("harness")) {
-                arguments.put("agent", "00000000-0000-4000-8000-0000000000a1");
-            }
-            ToolRunner.Result result = runner.run(tool(name), arguments, new RequestCredential(AGENT));
+        Map<String, Object> arguments = new HashMap<>(Map.of("workspace", 1, "attach", true));
+        ToolRunner.Result result = runner.run(tool("workspaces_agents_sign-in_open"), arguments,
+                new RequestCredential(AGENT));
 
-            assertThat(result.error()).as(name).isTrue();
-            assertThat(result.texts().get(0)).as(name).contains("needs a terminal");
-            assertThat(result.texts().get(1)).as(name).isEqualTo("exit 2");
-        }
+        assertThat(result.error()).isTrue();
+        assertThat(result.texts().get(0)).contains("needs a terminal");
+        assertThat(result.texts().get(1)).isEqualTo("exit 2");
         assertThat(platform.requests).as("nothing was opened").isEmpty();
     }
 
@@ -388,9 +384,7 @@ class McpToolCatalogTest {
                 "observe_slow-spans", "observe_metrics", "help_skill", "help_guide", "agents_claude_hook_work-links",
                 "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message",
                 "workspaces_list", "workspaces_show", "workspaces_active-process", "workspaces_items",
-                "workspaces_history", "workspaces_log", "workspaces_agents_list", "workspaces_agents_draft_show",
-                "workspaces_agents_chat", "workspaces_agents_harness", "workspaces_agents_files_list",
-                "workspaces_agents_files_read", "workspaces_agents_files_detect", "workspaces_agents_sign-in_status",
+                "workspaces_history", "workspaces_log", "workspaces_agents_sign-in_status",
                 "workspaces_agents_plugins_list", "agents_list", "agents_show", "agents_sessions", "agents_transcript",
                 "agents_chat", "agents_files_list", "agents_files_read", "agents_files_detect", "agents_draft_show");
         // The default is what keeps a new command out: no marker, or a marker without an effect, is a write.

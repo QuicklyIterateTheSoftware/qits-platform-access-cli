@@ -3105,14 +3105,14 @@ qits wait cancel 7c1e2d3f-0000-4000-8000-000000000001
 
 ## qits workspaces
 
-The workspaces of qits-workspaces, with every action the landing app's workspace pages offer, each on the same door the page calls: the slots and their containers, and the agents working in them (agents). The nodes slots are placed on are `qits targets`.
+The workspaces of qits-workspaces, with every action the landing app's workspace pages offer, each on the same door the page calls: the slots and their containers, and a container's sign-in and plugins (agents). The agents themselves are `qits agents`. The nodes slots are placed on are `qits targets`.
 
 A slot is a workspace row, named by its number (`qits workspaces list` shows it). It hosts agents; an agent works on one work item. Starting a container is a technical process, whose log `qits workspaces log` follows.
 
 ### Notes
 
 - Reads are open to every credential, qits:agent included. Writes on the JSON API need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project); qits:agent alone is refused (HTTP 403) by design. Each command's help names its door.
-- What an agent's tabs show (its files, its chat, its harness, sign-in and plugins) comes from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there: the slot is a shell that can push.
+- A container's sign-in and plugins (agents sign-in, agents plugins) come from the slot's daemon, through qits-workspaces' container proxy, which checks the caller: a person, qits:system, qits:admin or qits:admin-agent may reach any slot, qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there: the slot is a shell that can push.
 - `qits workspaces attach` is the agent's Terminal tab: it attaches this terminal to a command's terminal on the slot's daemon. The live chat socket stays the landing app's: the CLI reads the chat's transcript and sends prompts.
 - --workspaces-url, --projects-url and --output may come before or after the command.
 
@@ -3336,7 +3336,7 @@ qits workspaces log 00000000-0000-4000-8000-000000000100
 
 Attach this terminal to a command's terminal on a slot's daemon: what you type goes to the command, what it prints comes here. The agent's Terminal tab in the landing app.
 
-Command ids come from `qits workspaces agents sign-in open` (the sign-in terminal) and `qits workspaces agents harness` (an agent's harness, when it runs as a terminal); both also take --attach, which opens or finds the command and attaches at once.
+Command ids come from `qits workspaces agents sign-in open` (the sign-in terminal), which also takes --attach, opening and attaching to it at once. An agent's own harness is `qits agents attach`, which takes the agent rather than a command.
 
 Ctrl-] detaches and leaves the command running; Ctrl-C and every other key go to the command. The window's size goes along and follows the window. The command ending ends this too. A dropped connection attaches again after 0.5, 1, 2, 4 and 4 s, and the screen is cleared before the daemon replays up to 256 KB of what the terminal held.
 
@@ -3363,7 +3363,7 @@ qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1
 qits workspaces attach 00000000-0000-4000-8000-000000000100 --workspace 1 > terminal.log
 ```
 
-- Detaching never ends the command. End it with `qits workspaces agents terminate`.
+- Detaching never ends the command.
 - Not an MCP tool: it needs a terminal and runs until the command ends.
 
 ### Exit codes
@@ -3431,288 +3431,13 @@ qits workspaces history qits-123
 
 ## qits workspaces agents
 
-The agents in the workspace slots: list and discard them, send one a prompt, keep its prompt draft, read its chat, and what its tabs show of its container (files, harness, sign-in, plugins).
+The workspace slots' container: a harness's sign-in and the plugins on its shared agent home, and rewriting rough notes into a prompt. The agents themselves are `qits agents`.
 
-Deprecated, all but sign-in, plugins and refine: the agents' verbs are `qits agents` now (epic qits-1667). list, discard, prompt, draft, chat, terminate, harness and files stay for one release and say so on stderr.
-
-An agent is named by its id (`qits workspaces agents list` shows it); a work item by its qualified id (qits-123) or its id. The commands that read the agent's container take its slot with --workspace.
+The commands here take the slot with --workspace, as the page does.
 
 ### Notes
 
-- discard, prompt, draft save and draft discard need qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project, and never an admin agent); qits:agent alone is refused (HTTP 403) by design. The reads are open to it, and so is everything that goes through the container proxy (chat, terminate, refine, harness, files, sign-in, plugins).
-
-## qits workspaces agents list
-
-Deprecated: use `qits agents list` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-Agents, newest first: what each works on, its slot, how it runs, what it waits on and what it needs a person for. Bare, every agent (the project's Workspaces page); --work, one item's (its agent page); --workspace, one slot's (the slot's page); --state ACTIVE, the In Progress tab's; --project, one project's.
-
-WAITING ON is built from each open wait's subject: a release request or work item shows its qualified id and state, a CI run the first 8 characters of its id and state, a comments wait "comments on <item>", anything else its label; several are joined with "; ". With no waits array (an older service), it falls back to today's waitingOn. ATTENTION is attention.reason, a dash when there is none.
-
-GET /workspaces/api/agents[?workId=&workspaceId=&state=&projectId=]. Any credential may read it, qits:agent included.
-
-```
-qits workspaces agents list [--output table|json] [--project <project>] [--projects-url <url>] [--state <STATE>] [--work <work>] [--workspace <n>] [--workspaces-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--project <project>` | Only the agents whose repository is this project's: its id, slug or name. Sent as projectId. Without it, every project's. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--state <STATE>` | Only the agents in this state: ACTIVE or REMOVED. Default: all. |
-| `--work <work>` | Only this work item's agents: its qualified id (qits-123) or its id. |
-| `--workspace <n>` | Only the agents this slot hosts. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents list --state ACTIVE
-qits workspaces agents list --work qits-123
-qits workspaces agents list --project qits --state ACTIVE
-qits workspaces agents list --workspace 1 -o json
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents discard
-
-Deprecated: use `qits agents discard` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-Remove an agent: its worktrees, credential and draft go. Discard on a slot's or an item's agent page; --force is Discard anyway.
-
-POST /workspaces/api/agents/{id}/discard with {"force": false|true}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
-
-```
-qits workspaces agents discard [--force] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `--force` | Remove it despite leftover work or a daemon that does not answer. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1
-qits workspaces agents discard 00000000-0000-4000-8000-0000000000a1 --force
-```
-
-- Without --force the service refuses (HTTP 409) an agent whose worktrees hold work that never reached the git host (AGENT_HAS_LEFTOVER_WORK), whose daemon does not answer (AGENT_DAEMON_UNREACHABLE) or that is still busy (AGENT_BUSY). --force removes it anyway and throws the leftover work away.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents prompt
-
-Deprecated: use `qits agents prompt --work <work> <text>` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-Send a prompt to a work item's agent: said when its current turn ends (at once if it is idle), as its first turn, or to a yielded agent that resumes to hear it. An item with no agent is told so, and nothing is created. Send on an agent's Chat tab.
-
-POST /workspaces/api/agent-dispatches/delivery with {workId, text, compactFirst: false}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
-
-```
-qits workspaces agents prompt [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <work> <text>
-```
-
-| Name | What it does |
-|---|---|
-| `<work>` | The work item whose agent hears it: its qualified id (qits-123) or its id. |
-| `<text>` | The prompt. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents prompt qits-123 'The ticket moved to REVIEW.'
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents draft
-
-Deprecated: use `qits agents draft` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-An agent's saved prompt draft: what the prompt box on its Chat tab holds, kept on the service so it survives a reload and another device.
-
-## qits workspaces agents draft show
-
-Deprecated: use `qits agents draft show` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-The agent's saved prompt draft: its text and when it was written. An agent with none says so.
-
-GET /workspaces/api/agents/{id}/prompt-draft (HTTP 404: nothing was composed). Any credential may read it, qits:agent included.
-
-```
-qits workspaces agents draft show [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents draft show 00000000-0000-4000-8000-0000000000a1
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents draft save
-
-Deprecated: use `qits agents draft save` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-Save the agent's prompt draft, as typing in its prompt box does. The draft holds the text and no picked file ranges.
-
-PUT /workspaces/api/agents/{id}/prompt-draft with {content: '{"text":<text>,"picked":[]}', serializedPrompt: <text, trimmed>}. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
-
-```
-qits workspaces agents draft save [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <text>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `<text>` | The draft's text. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents draft save 00000000-0000-4000-8000-0000000000a1 'Check the rounding.'
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents draft discard
-
-Deprecated: use `qits agents draft discard` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-Delete the agent's saved prompt draft: Discard on a restored draft.
-
-DELETE /workspaces/api/agents/{id}/prompt-draft. It needs qits:admin, qits:admin-agent or qits:desk-admin (the delivery desk, within its own project), which a person's token or the desk's carries. qits:agent alone is refused (HTTP 403) by design: an agent keeps every read and loses the writes.
-
-```
-qits workspaces agents draft discard [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents draft discard 00000000-0000-4000-8000-0000000000a1
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents chat
-
-Deprecated: use `qits agents chat` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-Read the agent's conversation: its harness command's transcript, in order. The agent's Chat tab, without the live socket.
-
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then GET /workspaces/container/{slot}/commands/{commandId}/log?channel=TRANSCRIPT. With -o json, the transcript as the daemon answers it. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
-
-```
-qits workspaces agents chat --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
-| `--command <id>` | The harness command whose transcript to read. Default: the agent's last. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1
-qits workspaces agents chat 00000000-0000-4000-8000-0000000000a1 --workspace 1 -o json
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused, cannot be reached, or the agent has no harness command.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents terminate
-
-Deprecated: use `qits agents stop` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-End the agent's running harness command: Terminate on a live chat.
-
-The command is the agent's last harness command (GET /workspaces/container/{slot}/agent-worktrees/{agentId}), unless --command names one; then POST /workspaces/container/{slot}/commands/{commandId}/terminate with {}. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
-
-```
-qits workspaces agents terminate --workspace <n> [--command <id>] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
-| `--command <id>` | The command to end. Default: the agent's last harness command. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents terminate 00000000-0000-4000-8000-0000000000a1 --workspace 1
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused, cannot be reached, or the agent has no harness command.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+- The reads are open to every credential, qits:agent included, and so is everything that goes through the container proxy (refine, sign-in, plugins).
 
 ## qits workspaces agents refine
 
@@ -3727,7 +3452,7 @@ qits workspaces agents refine --workspace <n> [--output table|json] [--preamble 
 | Name | What it does |
 |---|---|
 | `<notes>` | The rough notes. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--workspace <n>` | Required. The slot: its number, as `qits workspaces list` shows it. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--preamble <text>` | What the prompt is about, which the rewrite keeps in front. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
@@ -3737,149 +3462,6 @@ qits workspaces agents refine --workspace <n> [--output table|json] [--preamble 
 
 ```
 qits workspaces agents refine --workspace 1 --preamble 'Fix the login' 'uh so the login fails when the name has spaces'
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents harness
-
-Deprecated: use `qits agents show`, or `qits agents attach` for --attach (epic qits-1667). This alias stays for one release and says so on stderr.
-
-The agent's harness on its slot's daemon: its last command, whether it still runs, and as a terminal or a chat. What the Terminal and Chat tabs attach to.
-
-With --attach, a harness that runs as a terminal is attached to at once, as `qits workspaces attach <command> --workspace <n>` does (Ctrl-] detaches); a chat is refused, since `qits workspaces agents chat` reads it.
-
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}, then GET /workspaces/container/{slot}/commands. With -o json, {worktree, command}: the first answer and the command's entry of the second. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
-
-```
-qits workspaces agents harness --workspace <n> [--attach] [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
-| `--attach` | Attach to the harness's terminal once it is found, until it ends or Ctrl-] detaches. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1
-qits workspaces agents harness 00000000-0000-4000-8000-0000000000a1 --workspace 1 --attach
-```
-
-- --attach needs a terminal for typing, and the MCP service refuses it; without a terminal it streams what the harness prints, read-only.
-
-### Exit codes
-
-- `0` Done; with --attach, the command ended or you detached.
-- `1` The platform refused or cannot be reached; with --attach, the agent has no terminal to attach to, or the connection could not be kept.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents files
-
-Deprecated: use `qits agents files` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-The agent's worktree, as its Files tab shows it: the tree, one file, and the frameworks and test links the tab draws.
-
-## qits workspaces agents files list
-
-Deprecated: use `qits agents files list` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-The agent's worktree: without --path the whole tree, every gitignored directory a stub with its entry count; with --path that directory, one level deep.
-
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files[?path=]. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
-
-```
-qits workspaces agents files list --workspace <n> [--output table|json] [--path <dir>] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--path <dir>` | A directory of the worktree, relative to its root. Default: the whole tree. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspace 1
-qits workspaces agents files list 00000000-0000-4000-8000-0000000000a1 --workspace 1 --path node_modules
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (the message names the status), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents files read
-
-Deprecated: use `qits agents files read` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-One file of the agent's worktree, its text. A binary file, or one over the daemon's 2 MB cap, is not shown.
-
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/files/content?path=. In the table form each line is made safe for a terminal (a tab becomes a space); -o json keeps the text exact. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
-
-```
-qits workspaces agents files read --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent> <path>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `<path>` | The file, relative to the worktree's root. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents files read 00000000-0000-4000-8000-0000000000a1 src/main/java/app/Login.java --workspace 1
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (HTTP 404: the path names nothing), or cannot be reached.
-- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
-
-## qits workspaces agents files detect
-
-Deprecated: use `qits agents files detect` (epic qits-1667). This alias stays for one release and says so on stderr.
-
-The frameworks the agent's worktree holds (each with its member paths) and which tests reach each source file: the Files tab's footer and its test links.
-
-GET /workspaces/container/{slot}/agent-worktrees/{agentId}/detection. It goes through qits-workspaces' container proxy to the slot's daemon. A person, qits:system, qits:admin or qits:admin-agent may reach any slot; qits:agent only its own workspace's. qits:desk-admin is judged as qits:agent there, because the slot is a shell that can push.
-
-```
-qits workspaces agents files detect --workspace <n> [--output table|json] [--projects-url <url>] [--workspaces-url <url>] <agent>
-```
-
-| Name | What it does |
-|---|---|
-| `<agent>` | The agent's id. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
-| `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
-| `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
-| `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
-
-### Examples
-
-```
-qits workspaces agents files detect 00000000-0000-4000-8000-0000000000a1 --workspace 1
 ```
 
 ### Exit codes
@@ -3904,7 +3486,7 @@ qits workspaces agents sign-in status --workspace <n> [--output table|json] [--p
 
 | Name | What it does |
 |---|---|
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--workspace <n>` | Required. The slot: its number, as `qits workspaces list` shows it. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
@@ -3933,7 +3515,7 @@ qits workspaces agents sign-in open --workspace <n> [--attach] [--harness CLAUDE
 
 | Name | What it does |
 |---|---|
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--workspace <n>` | Required. The slot: its number, as `qits workspaces list` shows it. |
 | `--attach` | Attach to the sign-in terminal once it is open, until it ends or Ctrl-] detaches. |
 | `--harness CLAUDE\|KIMI` | The harness to sign in. Default: the daemon's. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
@@ -3971,7 +3553,7 @@ qits workspaces agents plugins list --workspace <n> [--output table|json] [--pro
 
 | Name | What it does |
 |---|---|
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--workspace <n>` | Required. The slot: its number, as `qits workspaces list` shows it. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |
@@ -4001,7 +3583,7 @@ qits workspaces agents plugins install --workspace <n> [--output table|json] [--
 | Name | What it does |
 |---|---|
 | `<plugin>` | The plugin's id, as the catalogue names it. |
-| `--workspace <n>` | Required. The agent's slot: its number, as `qits workspaces agents list` shows it. |
+| `--workspace <n>` | Required. The slot: its number, as `qits workspaces list` shows it. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where a work item's qualified id (qits-123) is looked up. Default: QITS_PROJECTS_URL, else derived from the idp address. |
 | `--workspaces-url <url>` | The workspaces service's base URL, without /workspaces. Default: QITS_WORKSPACES_URL, else derived from the idp address, like the other services. |

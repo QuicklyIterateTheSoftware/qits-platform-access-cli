@@ -31,8 +31,8 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.entries;
  * chat, its terminal, its worktree), so no verb needs the slot the agent happens to be in.
  * <p>
  * {@code qits agents} itself is {@code agents/AgentsCommand}, which lists these beside the Claude
- * Code commands. The tables and the draft are {@link AgentViews}, shared with the deprecated aliases
- * under {@code qits workspaces agents}.
+ * Code commands. The tables and the draft are {@link AgentViews}, shared with {@code qits workspaces
+ * show}, which prints a slot's agents the same way.
  */
 public final class AgentCommands {
 
