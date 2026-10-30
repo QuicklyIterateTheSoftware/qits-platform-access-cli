@@ -22,28 +22,14 @@ import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.entries;
 import static eu.wohlben.qits.cli.access.workspaces.WorkspacesCommand.slot;
 
 /**
- * What {@code qits agents} and its deprecated aliases under {@code qits workspaces agents} share
- * (epic qits-1667): the agents table, the draft, and how a chat, a worktree and a detection read for
- * a person. One copy, so the alias and the verb never print two different things for one answer.
+ * What {@code qits agents} and {@code qits workspaces show} share (epic qits-1667): the agents
+ * table, the draft, and how a chat, a worktree and a detection read for a person.
  */
 final class AgentViews {
 
     static final Set<String> STATES = Set.of("ACTIVE", "REMOVED");
 
     private AgentViews() {
-    }
-
-    /** The stderr line of a deprecated alias. stdout stays the verb's own, so -o json still parses. */
-    static void deprecated(CliContext context, String verb) {
-        context.err().println("deprecated: use 'qits agents " + verb + "'");
-    }
-
-    static String agentId(String given) throws CliFailure {
-        String id = given == null ? "" : given.strip();
-        if (id.isEmpty()) {
-            throw new CliFailure("Name the agent: its id, as `qits agents list` shows it.", CliFailure.USAGE);
-        }
-        return id;
     }
 
     static String required(String given, String what) throws CliFailure {

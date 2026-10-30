@@ -136,15 +136,6 @@ final class WorkspacesApi {
         return client.post(uri(API + "/agents/" + segment(agentId) + "/discard"), body);
     }
 
-    /** {@code deliverAgentTurn}: {@code {workId, text, compactFirst: false}}, as the prompt box sends it. */
-    JsonNode deliver(String workId, String text) throws CliFailure, InterruptedException {
-        ObjectNode body = JsonNodeFactory.instance.objectNode();
-        body.put("workId", workId);
-        body.put("text", text);
-        body.put("compactFirst", false);
-        return client.post(uri(API + "/agent-dispatches/delivery"), body);
-    }
-
     /** {@code getAgentPromptDraft}. */
     JsonNode draft(String agentId) throws CliFailure, InterruptedException {
         return client.get(uri(draftPath(agentId)));
@@ -166,27 +157,6 @@ final class WorkspacesApi {
 
     // --- a slot's daemon, through the container proxy ---
 
-    /** {@code getAgentWorktree}: the agent's worktree, with its harness's last command. */
-    JsonNode agentWorktree(long slot, String agentId) throws CliFailure, InterruptedException {
-        return client.get(uri(container(slot) + "/agent-worktrees/" + segment(agentId)));
-    }
-
-    /** {@code listCommands}: the container's commands. */
-    JsonNode commands(long slot) throws CliFailure, InterruptedException {
-        return client.get(uri(container(slot) + "/commands"));
-    }
-
-    /** {@code getCommandLog} with {@code channel=TRANSCRIPT}: the harness's own JSON lines. */
-    JsonNode transcript(long slot, String commandId) throws CliFailure, InterruptedException {
-        return client.get(uri(container(slot) + "/commands/" + segment(commandId) + "/log?channel=TRANSCRIPT"));
-    }
-
-    /** {@code terminateCommand}: an empty JSON object, as the Chat tab sends it. */
-    JsonNode terminate(long slot, String commandId) throws CliFailure, InterruptedException {
-        return client.post(uri(container(slot) + "/commands/" + segment(commandId) + "/terminate"),
-                JsonNodeFactory.instance.objectNode());
-    }
-
     /** {@code refinePrompt}: {@code {transcript, preamble?}}. */
     JsonNode refine(long slot, String transcript, String preamble) throws CliFailure, InterruptedException {
         ObjectNode body = JsonNodeFactory.instance.objectNode();
@@ -195,23 +165,6 @@ final class WorkspacesApi {
             body.put("preamble", preamble);
         }
         return client.post(uri(container(slot) + "/prompt-refinements"), body);
-    }
-
-    /** {@code listFiles}: the whole eager tree without a path, one directory with one. */
-    JsonNode files(long slot, String agentId, String path) throws CliFailure, InterruptedException {
-        return client.get(uri(container(slot) + "/agent-worktrees/" + segment(agentId) + "/files"
-                + query("path", path)));
-    }
-
-    /** {@code readFile}. */
-    JsonNode file(long slot, String agentId, String path) throws CliFailure, InterruptedException {
-        return client.get(uri(container(slot) + "/agent-worktrees/" + segment(agentId) + "/files/content"
-                + query("path", path)));
-    }
-
-    /** {@code detect}: the frameworks and the source-to-test links. */
-    JsonNode detect(long slot, String agentId) throws CliFailure, InterruptedException {
-        return client.get(uri(container(slot) + "/agent-worktrees/" + segment(agentId) + "/detection"));
     }
 
     /** {@code availableAgents}: whether anybody signed each harness in. */

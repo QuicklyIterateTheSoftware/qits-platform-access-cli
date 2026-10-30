@@ -32,10 +32,11 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * `qits workspaces attach` and the two commands that attach at once (`agents sign-in open --attach`,
- * `agents harness --attach`), as a person types them, against one fake that serves both the doors and
- * the terminal socket on the same address, as qits-workspaces does. The attachment's own behaviour is
- * {@link eu.wohlben.qits.cli.access.terminal.TerminalAttachTest}'s; this is which command it attaches to, and what is refused first.
+ * `qits workspaces attach`, `qits agents attach` and the command that attaches at once (`workspaces
+ * agents sign-in open --attach`), as a person types them, against one fake that serves both the doors
+ * and the terminal socket on the same address, as qits-workspaces does. The attachment's own
+ * behaviour is {@link eu.wohlben.qits.cli.access.terminal.TerminalAttachTest}'s; this is which command
+ * it attaches to, and what is refused first.
  */
 class AttachCommandsTest {
 
@@ -94,7 +95,6 @@ class AttachCommandsTest {
                         case WorkspacesCommand.AttachCommand attach -> attach.terminals = fake;
                         case AgentCommands.AttachCommand attach -> attach.terminals = fake;
                         case WorkspaceAgentsCommand.SignInOpenCommand open -> open.terminals = fake;
-                        case WorkspaceAgentsCommand.HarnessCommand harness -> harness.terminals = fake;
                         default -> {
                         }
                     }
@@ -229,45 +229,15 @@ class AttachCommandsTest {
     }
 
     @Test
-    void harnessAttachFindsTheAgentsTerminalAndAttaches() {
-        server.scripts.add(c -> c.answer("{\"commandId\":\"%s\"}".formatted(COMMAND)));
-        server.scripts.add(c -> c.answer("""
-                {"entries":[{"command":{"id":"%s","kind":"TERMINAL","status":"RUNNING"}}]}""".formatted(COMMAND)));
-        aTerminalThatSaysAndEnds("> ");
-
-        Result attached = run("workspaces", "agents", "harness", AGENT, "--workspace", "1", "--attach");
-
-        assertThat(attached.exit()).as(attached.err()).isZero();
-        assertThat(server.upgrades).extracting(FakeSocketServer.Upgrade::path).containsExactly(
-                "/workspaces/container/1/agent-worktrees/" + AGENT, "/workspaces/container/1/commands", SOCKET);
-        assertThat(attached.out()).isEqualTo("> ");
-        assertThat(attached.err()).contains("attaching to command " + COMMAND);
-    }
-
-    @Test
-    void harnessAttachRefusesAChat() {
-        server.scripts.add(c -> c.answer("{\"commandId\":\"%s\"}".formatted(COMMAND)));
-        server.scripts.add(c -> c.answer("""
-                {"entries":[{"command":{"id":"%s","kind":"CHAT","status":"RUNNING"}}]}""".formatted(COMMAND)));
-
-        Result attached = run("workspaces", "agents", "harness", AGENT, "--workspace", "1", "--attach");
-
-        assertThat(attached.exit()).isEqualTo(1);
-        assertThat(attached.err()).contains("runs as a chat").contains("qits workspaces agents chat");
-        assertThat(server.upgrades).hasSize(2);
-    }
-
-    @Test
     void theMcpServiceAttachesToNothingAndOpensNothing() {
         String previous = System.getProperty(CliContext.MCP_SERVICE);
         System.setProperty(CliContext.MCP_SERVICE, "true");
         try {
             Result open = run("workspaces", "agents", "sign-in", "open", "--workspace", "1", "--attach");
-            Result harness = run("workspaces", "agents", "harness", AGENT, "--workspace", "1", "--attach");
             Result attach = run("workspaces", "attach", COMMAND, "--workspace", "1");
             Result agent = run("agents", "attach", AGENT);
 
-            for (Result refused : new Result[] {open, harness, attach, agent}) {
+            for (Result refused : new Result[] {open, attach, agent}) {
                 assertThat(refused.exit()).isEqualTo(2);
                 assertThat(refused.err()).contains("needs a terminal");
             }

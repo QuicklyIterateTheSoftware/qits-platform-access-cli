@@ -203,6 +203,202 @@
           },
           "qits-trigger": {
             "app": "qits-platform-access-cli",
+            "command": "qits agents list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits agents list: getWork",
+      "key": "5a58cafb",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a comment",
+          "params": {
+            "commentId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "archetype": "TICKET",
+            "id": "00000000-0000-4000-8000-000000000003",
+            "qualifiedId": "contract-00000001-1"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits agents prompt",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits agents prompt: getWork",
+      "key": "8fc3c179",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket with a comment",
+          "params": {
+            "commentId": "00000000-0000-4000-8000-000000000001",
+            "projectId": "00000000-0000-4000-8000-000000000002",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "archetype": "TICKET",
+            "id": "00000000-0000-4000-8000-000000000003",
+            "qualifiedId": "contract-00000001-1"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
             "command": "qits artifacts publish changelog",
             "kind": "command"
           }
@@ -25988,202 +26184,6 @@
                 {
                   "match": "regex",
                   "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-projects-service",
-            "operationId": "getWork"
-          },
-          "qits-trigger": {
-            "app": "qits-platform-access-cli",
-            "command": "qits workspaces agents list",
-            "kind": "command"
-          }
-        }
-      },
-      "description": "qits workspaces agents list: getWork",
-      "key": "b508f94b",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a ticket with a comment",
-          "params": {
-            "commentId": "00000000-0000-4000-8000-000000000001",
-            "projectId": "00000000-0000-4000-8000-000000000002",
-            "qualifiedId": "contract-00000001-1",
-            "ticketId": "00000000-0000-4000-8000-000000000003"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "dataType": "RAW",
-            "expression": "/projects/api/work/${qualifiedId}",
-            "type": "ProviderState"
-          }
-        },
-        "method": "GET",
-        "path": "/projects/api/work/contract-00000001-1"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "archetype": "TICKET",
-            "id": "00000000-0000-4000-8000-000000000003",
-            "qualifiedId": "contract-00000001-1"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.archetype": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.id": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                }
-              ]
-            },
-            "$.qualifiedId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-projects-service",
-            "operationId": "getWork"
-          },
-          "qits-trigger": {
-            "app": "qits-platform-access-cli",
-            "command": "qits workspaces agents prompt",
-            "kind": "command"
-          }
-        }
-      },
-      "description": "qits workspaces agents prompt: getWork",
-      "key": "ff219bc9",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a ticket with a comment",
-          "params": {
-            "commentId": "00000000-0000-4000-8000-000000000001",
-            "projectId": "00000000-0000-4000-8000-000000000002",
-            "qualifiedId": "contract-00000001-1",
-            "ticketId": "00000000-0000-4000-8000-000000000003"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "dataType": "RAW",
-            "expression": "/projects/api/work/${qualifiedId}",
-            "type": "ProviderState"
-          }
-        },
-        "method": "GET",
-        "path": "/projects/api/work/contract-00000001-1"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "archetype": "TICKET",
-            "id": "00000000-0000-4000-8000-000000000003",
-            "qualifiedId": "contract-00000001-1"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.archetype": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.id": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-                }
-              ]
-            },
-            "$.qualifiedId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             }

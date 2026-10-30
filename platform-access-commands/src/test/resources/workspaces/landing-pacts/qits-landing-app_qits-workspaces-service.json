@@ -8,22 +8,21 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "createAgent"
+            "operationId": "listAgents"
           },
           "qits-trigger": {
             "app": "qits-landing-app",
-            "interaction": "create-agent",
+            "interaction": "agents-menu",
             "kind": "ui"
           }
         }
       },
-      "description": "create-agent: createAgent",
+      "description": "agents-menu: listAgents",
       "pending": false,
       "providerStates": [
         {
-          "name": "a workspace slot hosting agents",
+          "name": "a project with agents needing attention",
           "params": {
-            "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
             "bugTicketQualifiedId": "contract-00000001-10",
             "epicId": "00000000-0000-4000-8000-000000000006",
@@ -32,39 +31,246 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "workspaceId": "1"
+            "taskId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
       "request": {
-        "body": {
-          "content": {
-            "admin": false,
-            "entityId": "{bugTicketQualifiedId}",
-            "kind": "TICKET",
-            "repositoryId": "{repositoryId}",
-            "workId": "{bugTicketId}"
-          },
-          "contentType": "application/json",
-          "encoded": false
+        "generators": {
+          "query": {
+            "projectId": {
+              "expression": "${projectId}",
+              "type": "ProviderState"
+            }
+          }
         },
-        "headers": {
-          "Content-Type": [
-            "application/json"
+        "matchingRules": {
+          "query": {
+            "projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/agents",
+        "query": {
+          "projectId": [
+            "00000000-0000-4000-8000-00000000000f"
+          ],
+          "state": [
+            "ACTIVE"
           ]
-        },
-        "method": "POST",
-        "path": "/workspaces/api/agents"
+        }
       },
       "response": {
         "body": {
           "content": {
-            "agent": {
-              "agentId": "00000000-0000-4000-8000-0000000000a1"
-            },
-            "fresh": false
+            "agents": [
+              {
+                "activity": null,
+                "admin": false,
+                "agentId": "00000000-0000-4000-8000-0000000000a6",
+                "attention": {
+                  "code": "WAIT_SUBJECT_PASSED",
+                  "reason": "Waits on contract-qits-rr-368 to end; it is FINALIZED since 10:42",
+                  "since": "2026-01-01T00:00:00Z",
+                  "waitId": "00000000-0000-4000-8000-0000000000b2"
+                },
+                "blockedAt": null,
+                "deskAskedAt": null,
+                "entityBlocked": false,
+                "entityId": "contract-00000001-10",
+                "entityStatus": "IMPLEMENTING",
+                "entityTitle": "Invoice totals are off by one cent",
+                "lastActivityAt": "2026-01-01T00:00:00Z",
+                "repositoryId": "00000000-0000-4000-8000-000000000018",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "release request contract-qits-rr-368 to end",
+                "waitingOnSince": "2026-01-01T00:00:00Z",
+                "waitingSince": null,
+                "waits": [
+                  {
+                    "createdAt": "2026-01-01T00:00:00Z",
+                    "id": "00000000-0000-4000-8000-0000000000b2",
+                    "label": "release request contract-qits-rr-368 to end",
+                    "subjectExpectedBy": null,
+                    "subjectId": "00000000-0000-4000-8000-0000000000c1",
+                    "subjectKind": "RELEASE_REQUEST",
+                    "subjectQualifiedId": "contract-qits-rr-368",
+                    "subjectRef": "00000000-0000-4000-8000-0000000000c1",
+                    "subjectState": "FINALIZED",
+                    "subjectStateAt": "2026-01-01T00:00:00Z",
+                    "targetStates": [
+                      "FINALIZED",
+                      "FINALIZED",
+                      "FINALIZED",
+                      "FINALIZED",
+                      "FINALIZED"
+                    ]
+                  }
+                ],
+                "workId": "00000000-0000-4000-8000-000000000001",
+                "workspaceRowId": 1
+              },
+              {
+                "activity": null,
+                "admin": false,
+                "agentId": "00000000-0000-4000-8000-0000000000a7",
+                "attention": {
+                  "code": "BLOCKED_NO_DESK",
+                  "reason": "Blocked 50 min by contract-person, no @desk comment since",
+                  "since": "2026-01-01T00:00:00Z",
+                  "waitId": null
+                },
+                "blockedAt": "2026-01-01T00:00:00Z",
+                "deskAskedAt": "2026-01-01T00:00:00Z",
+                "entityBlocked": true,
+                "entityId": "contract-00000001-2",
+                "entityStatus": "IMPLEMENTING",
+                "entityTitle": "Export invoices for the accountants",
+                "lastActivityAt": "2026-01-01T00:00:00Z",
+                "repositoryId": "00000000-0000-4000-8000-000000000018",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": null,
+                "waitingOnSince": null,
+                "waitingSince": null,
+                "waits": [],
+                "workId": "00000000-0000-4000-8000-000000000006",
+                "workspaceRowId": 1
+              },
+              {
+                "activity": null,
+                "admin": false,
+                "agentId": "00000000-0000-4000-8000-0000000000a8",
+                "attention": {
+                  "code": "IDLE_NO_WAIT",
+                  "reason": "Idle 42 min with no wait and no block",
+                  "since": "2026-01-01T00:00:00Z",
+                  "waitId": null
+                },
+                "blockedAt": null,
+                "deskAskedAt": null,
+                "entityBlocked": false,
+                "entityId": "contract-00000001-6",
+                "entityStatus": "IMPLEMENTING",
+                "entityTitle": "PDF export",
+                "lastActivityAt": "2026-01-01T00:00:00Z",
+                "repositoryId": "00000000-0000-4000-8000-000000000018",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": null,
+                "waitingOnSince": null,
+                "waitingSince": "2026-01-01T00:00:00Z",
+                "waits": [],
+                "workId": "00000000-0000-4000-8000-000000000007",
+                "workspaceRowId": 1
+              },
+              {
+                "activity": null,
+                "admin": false,
+                "agentId": "00000000-0000-4000-8000-0000000000a9",
+                "attention": {
+                  "code": "WAIT_OVERDUE",
+                  "reason": "Run 00000000 RUNNING for 1 h 40 min, expected about 35 min",
+                  "since": "2026-01-01T00:00:00Z",
+                  "waitId": "00000000-0000-4000-8000-0000000000b3"
+                },
+                "blockedAt": null,
+                "deskAskedAt": null,
+                "entityBlocked": false,
+                "entityId": "contract-00000001-5",
+                "entityStatus": "IMPLEMENTING",
+                "entityTitle": "Download button on the invoice list",
+                "lastActivityAt": "2026-01-01T00:00:00Z",
+                "repositoryId": "00000000-0000-4000-8000-000000000018",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "CI run 00000000 to end",
+                "waitingOnSince": "2026-01-01T00:00:00Z",
+                "waitingSince": null,
+                "waits": [
+                  {
+                    "createdAt": "2026-01-01T00:00:00Z",
+                    "id": "00000000-0000-4000-8000-0000000000b3",
+                    "label": "CI run 00000000 to end",
+                    "subjectExpectedBy": "2026-01-01T00:00:00Z",
+                    "subjectId": "00000000-0000-4000-8000-0000000000c2",
+                    "subjectKind": "CI_RUN",
+                    "subjectQualifiedId": null,
+                    "subjectRef": "00000000-0000-4000-8000-0000000000c2",
+                    "subjectState": "RUNNING",
+                    "subjectStateAt": "2026-01-01T00:00:00Z",
+                    "targetStates": [
+                      "SUCCESS",
+                      "SUCCESS",
+                      "SUCCESS",
+                      "SUCCESS",
+                      "SUCCESS"
+                    ]
+                  }
+                ],
+                "workId": "00000000-0000-4000-8000-000000000011",
+                "workspaceRowId": 1
+              },
+              {
+                "activity": null,
+                "admin": false,
+                "agentId": "00000000-0000-4000-8000-0000000000aa",
+                "attention": null,
+                "blockedAt": null,
+                "deskAskedAt": null,
+                "entityBlocked": false,
+                "entityId": "contract-00000001-11",
+                "entityStatus": "IMPLEMENTING",
+                "entityTitle": "Remember the last export format",
+                "lastActivityAt": "2026-01-01T00:00:00Z",
+                "repositoryId": "00000000-0000-4000-8000-000000000018",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "work contract-00000001-5 VERIFIED; a comment on contract-00000001-5",
+                "waitingOnSince": "2026-01-01T00:00:00Z",
+                "waitingSince": null,
+                "waits": [
+                  {
+                    "createdAt": "2026-01-01T00:00:00Z",
+                    "id": "00000000-0000-4000-8000-0000000000b4",
+                    "label": "work contract-00000001-5 VERIFIED",
+                    "subjectExpectedBy": null,
+                    "subjectId": "00000000-0000-4000-8000-000000000011",
+                    "subjectKind": "WORK_ITEM",
+                    "subjectQualifiedId": "contract-00000001-5",
+                    "subjectRef": "00000000-0000-4000-8000-000000000011",
+                    "subjectState": "IMPLEMENTING",
+                    "subjectStateAt": "2026-01-01T00:00:00Z",
+                    "targetStates": [
+                      "VERIFIED"
+                    ]
+                  },
+                  {
+                    "createdAt": "2026-01-01T00:00:00Z",
+                    "id": "00000000-0000-4000-8000-0000000000b5",
+                    "label": "a comment on contract-00000001-5",
+                    "subjectExpectedBy": null,
+                    "subjectId": null,
+                    "subjectKind": "COMMENTS",
+                    "subjectQualifiedId": null,
+                    "subjectRef": "00000000-0000-4000-8000-000000000011",
+                    "subjectState": null,
+                    "subjectStateAt": null,
+                    "targetStates": []
+                  }
+                ],
+                "workId": "00000000-0000-4000-8000-00000000000b",
+                "workspaceRowId": 1
+              }
+            ]
           },
           "contentType": "application/json",
           "encoded": false
@@ -76,20 +282,1127 @@
         },
         "matchingRules": {
           "body": {
-            "$.agent.agentId": {
+            "$.agents": {
               "combine": "AND",
               "matchers": [
                 {
-                  "match": "regex",
-                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                }
-              ]
-            },
-            "$.fresh": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
+                  "match": "arrayContains",
+                  "variants": [
+                    {
+                      "index": 0,
+                      "rules": {
+                        "$.admin": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.agentId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.attention.code": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.reason": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.since": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.attention.waitId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.entityBlocked": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityStatus": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityTitle": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.lastActivityAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.runState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.state": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingOn": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingOnSince": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 1,
+                              "min": 1
+                            }
+                          ]
+                        },
+                        "$.waits[*].createdAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].id": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].label": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectKind": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectQualifiedId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectRef": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectStateAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].targetStates": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 5,
+                              "min": 5
+                            }
+                          ]
+                        },
+                        "$.waits[*].targetStates[*]": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.workId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.workspaceRowId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "index": 1,
+                      "rules": {
+                        "$.admin": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.agentId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.attention.code": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.reason": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.since": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.blockedAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.deskAskedAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.entityBlocked": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityStatus": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityTitle": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.lastActivityAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.runState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.state": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.workId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.workspaceRowId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "index": 2,
+                      "rules": {
+                        "$.admin": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.agentId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.attention.code": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.reason": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.since": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.entityBlocked": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityStatus": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityTitle": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.lastActivityAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.runState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.state": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingSince": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.workId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.workspaceRowId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "index": 3,
+                      "rules": {
+                        "$.admin": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.agentId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.attention.code": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.reason": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.attention.since": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.attention.waitId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.entityBlocked": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityStatus": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityTitle": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.lastActivityAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.runState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.state": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingOn": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingOnSince": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 1,
+                              "min": 1
+                            }
+                          ]
+                        },
+                        "$.waits[*].createdAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].id": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].label": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectExpectedBy": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectKind": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectRef": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waits[*].subjectStateAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits[*].targetStates": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type",
+                              "max": 5,
+                              "min": 5
+                            }
+                          ]
+                        },
+                        "$.waits[*].targetStates[*]": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            },
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.workId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.workspaceRowId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "index": 4,
+                      "rules": {
+                        "$.admin": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.agentId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.entityBlocked": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityStatus": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityTitle": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.lastActivityAt": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.repositoryId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.runState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.state": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingOn": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.waitingOnSince": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                            }
+                          ]
+                        },
+                        "$.waits": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "arrayContains",
+                              "variants": [
+                                {
+                                  "index": 0,
+                                  "rules": {
+                                    "$.createdAt": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                                        }
+                                      ]
+                                    },
+                                    "$.id": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                                        }
+                                      ]
+                                    },
+                                    "$.label": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectId": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectKind": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectQualifiedId": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectRef": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectState": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectStateAt": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                                        }
+                                      ]
+                                    },
+                                    "$.targetStates": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type",
+                                          "max": 1,
+                                          "min": 1
+                                        }
+                                      ]
+                                    },
+                                    "$.targetStates[*]": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                {
+                                  "index": 1,
+                                  "rules": {
+                                    "$.createdAt": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                                        }
+                                      ]
+                                    },
+                                    "$.id": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                                        }
+                                      ]
+                                    },
+                                    "$.label": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectKind": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "type"
+                                        }
+                                      ]
+                                    },
+                                    "$.subjectRef": {
+                                      "combine": "AND",
+                                      "matchers": [
+                                        {
+                                          "match": "regex",
+                                          "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "$.workId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.workspaceRowId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -107,282 +1420,6 @@
           }
         },
         "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "createAgent"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "create-agent",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "create-agent: createAgent",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a wrapper repository and a ticket to dispatch",
-          "params": {
-            "repositoryId": "00000000-0000-4000-8000-000000000014",
-            "ticketId": "00000000-0000-4000-8000-000000000001",
-            "ticketQualifiedId": "contract-00000001-10",
-            "wrapperBranch": "ticket/contract-00000001-10"
-          }
-        }
-      ],
-      "request": {
-        "body": {
-          "content": {
-            "admin": false,
-            "entityId": "{ticketQualifiedId}",
-            "harness": "CLAUDE",
-            "instruction": "Fix contract-00000001-10.",
-            "kind": "TICKET",
-            "repositoryId": "{repositoryId}",
-            "workId": "{ticketId}"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "method": "POST",
-        "path": "/workspaces/api/agents"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "agent": {
-              "agentId": "00000000-0000-4000-8000-000000000100"
-            },
-            "fresh": true
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.agent.agentId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                }
-              ]
-            },
-            "$.fresh": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "deleteRunner"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "delete-runner",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "delete-runner: deleteRunner",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a workspace slot hosting agents",
-          "params": {
-            "agentId": "00000000-0000-4000-8000-0000000000a1",
-            "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "workspaceId": "1"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "DELETE",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "code": "RUNNER_OWNS_WORKSPACES",
-            "message": "RUNNER_OWNS_WORKSPACES: runner localhost owns 1 active workspace(s) [1]; resolve them before deleting it",
-            "workspaceIds": [
-              1
-            ]
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.code": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.message": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.workspaceIds": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type",
-                  "max": 1,
-                  "min": 1
-                }
-              ]
-            },
-            "$.workspaceIds[*]": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 409
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "deleteRunner"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "delete-runner",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "delete-runner: deleteRunner",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an unregistered runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "DELETE",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020"
-      },
-      "response": {
-        "status": 204
       },
       "type": "Synchronous/HTTP"
     },
@@ -753,47 +1790,33 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "patchRunner"
+            "operationId": "interruptAgent"
           },
           "qits-trigger": {
             "app": "qits-landing-app",
-            "interaction": "edit-runner",
+            "interaction": "interrupt-agent",
             "kind": "ui"
           }
         }
       },
-      "description": "edit-runner: patchRunner",
+      "description": "interrupt-agent: interruptAgent",
       "pending": false,
       "providerStates": [
         {
-          "name": "a runner in service",
+          "name": "an agent in the middle of a turn",
           "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "workspaceId": "1"
           }
         }
       ],
       "request": {
-        "body": {
-          "content": {
-            "description": "The build machine under the desk",
-            "slots": 2,
-            "workspaceMemoryLimit": "8g",
-            "workspaceMemorySwapLimit": "8g"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
         "generators": {
           "path": {
-            "expression": "/workspaces/api/runners/${runnerId}",
+            "expression": "/workspaces/api/agents/${agentId}/interrupt",
             "type": "ProviderState"
           }
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
         },
         "matchingRules": {
           "path": {
@@ -805,16 +1828,14 @@
             ]
           }
         },
-        "method": "PATCH",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020"
+        "method": "POST",
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a1/interrupt"
       },
       "response": {
         "body": {
           "content": {
-            "description": "The build machine under the desk",
-            "slots": 2,
-            "workspaceMemoryLimit": "8g",
-            "workspaceMemorySwapLimit": "8g"
+            "detail": "ESC was sent to the agent's harness.",
+            "interrupted": true
           },
           "contentType": "application/json",
           "encoded": false
@@ -826,7 +1847,7 @@
         },
         "matchingRules": {
           "body": {
-            "$.description": {
+            "$.detail": {
               "combine": "AND",
               "matchers": [
                 {
@@ -834,23 +1855,7 @@
                 }
               ]
             },
-            "$.slots": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.workspaceMemoryLimit": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.workspaceMemorySwapLimit": {
+            "$.interrupted": {
               "combine": "AND",
               "matchers": [
                 {
@@ -872,235 +1877,6 @@
           }
         },
         "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "greenlightRunner"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "greenlight-runner",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "greenlight-runner: greenlightRunner",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a quarantined runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/greenlight",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "POST",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/greenlight"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "quarantined": false
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.quarantined": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "requestRunnerLoginCheck"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "recheck-runner-login",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "recheck-runner-login: requestRunnerLoginCheck",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a runner in service",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/login-check",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "POST",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/login-check"
-      },
-      "response": {
-        "status": 202
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "requestRunnerLoginCheck"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "recheck-runner-login",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "recheck-runner-login: requestRunnerLoginCheck",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an unregistered runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/login-check",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "POST",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/login-check"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "code": "RUNNER_UNAVAILABLE",
-            "message": "Runner localhost is not connected, so it cannot check its login now"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.code": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.message": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 409
       },
       "type": "Synchronous/HTTP"
     },
@@ -1153,7 +1929,7 @@
       "response": {
         "body": {
           "content": {
-            "message": "Cannot recreate workspace 'ws-contract': its working tree must be clean, but its reported state is unknown. Commit or discard changes, and ensure its daemon is connected, first."
+            "message": "Cannot recreate workspace 'ws-contract': its daemon cannot be asked whether the worktrees of agent 00000000-0000-4000-8000-0000000000a1 (work item contract-00000001-10) (the daemon is not connected) hold unpushed work. Wait for the daemon to connect, or discard the agent, first."
           },
           "contentType": "application/json",
           "encoded": false
@@ -1195,132 +1971,31 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "createRunner"
+            "operationId": "restartAgent"
           },
           "qits-trigger": {
             "app": "qits-landing-app",
-            "interaction": "register-runner",
+            "interaction": "restart-agent",
             "kind": "ui"
           }
         }
       },
-      "description": "register-runner: createRunner",
+      "description": "restart-agent: restartAgent",
       "pending": false,
       "providerStates": [
         {
-          "name": "no runners",
+          "name": "a stopped workspace slot",
           "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "body": {
-          "content": {
-            "name": "{runnerName}",
-            "slots": 1
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "method": "POST",
-        "path": "/workspaces/api/runners"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "installLine": "curl -fsSL -H 'Authorization: Bearer qits_tok_contract-registration' https://workspaces.qits.runners.example.test/workspaces/api/runners/install.sh | sudo env QITS_WORKSPACES_RUNNER_URL='https://workspaces.qits.runners.example.test' QITS_WORKSPACES_RUNNER_ID='00000000-0000-4000-8000-000000000100' QITS_WORKSPACES_RUNNER_REGISTRATION_TOKEN='qits_tok_contract-registration' QITS_WORKSPACES_RUNNER_SLOTS='1' sh",
-            "registrationToken": "qits_tok_contract-registration",
-            "runner": {
-              "name": "localhost"
-            }
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.installLine": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.registrationToken": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.runner.name": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 201
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "rotateRunnerRegistrationToken"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "rotate-runner-token",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "rotate-runner-token: rotateRunnerRegistrationToken",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an unregistered runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "repositoryId": "00000000-0000-4000-8000-000000000013",
+            "workspaceId": "1"
           }
         }
       ],
       "request": {
         "generators": {
           "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/registration-token",
+            "expression": "/workspaces/api/agents/${agentId}/restart",
             "type": "ProviderState"
           }
         },
@@ -1335,16 +2010,12 @@
           }
         },
         "method": "POST",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/registration-token"
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a1/restart"
       },
       "response": {
         "body": {
           "content": {
-            "installLine": "curl -fsSL -H 'Authorization: Bearer qits_tok_contract-registration' https://workspaces.qits.runners.example.test/workspaces/api/runners/install.sh | sudo env QITS_WORKSPACES_RUNNER_URL='https://workspaces.qits.runners.example.test' QITS_WORKSPACES_RUNNER_ID='00000000-0000-4000-8000-000000000020' QITS_WORKSPACES_RUNNER_REGISTRATION_TOKEN='qits_tok_contract-registration' QITS_WORKSPACES_RUNNER_SLOTS='1' sh",
-            "registrationToken": "qits_tok_contract-registration",
-            "runner": {
-              "name": "localhost"
-            }
+            "runState": "YIELDED"
           },
           "contentType": "application/json",
           "encoded": false
@@ -1356,23 +2027,7 @@
         },
         "matchingRules": {
           "body": {
-            "$.installLine": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.registrationToken": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.runner.name": {
+            "$.runState": {
               "combine": "AND",
               "matchers": [
                 {
@@ -1394,150 +2049,6 @@
           }
         },
         "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "requestRunnerHealthcheck"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "run-runner-healthcheck",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "run-runner-healthcheck: requestRunnerHealthcheck",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a runner in service",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/healthcheck",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "POST",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/healthcheck"
-      },
-      "response": {
-        "status": 202
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "requestRunnerHealthcheck"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "run-runner-healthcheck",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "run-runner-healthcheck: requestRunnerHealthcheck",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an unregistered runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/healthcheck",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "POST",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/healthcheck"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "code": "RUNNER_UNAVAILABLE",
-            "message": "Runner localhost is not connected, so it cannot run a health check now"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.code": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.message": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 409
       },
       "type": "Synchronous/HTTP"
     },
@@ -1699,7 +2210,7 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "deliverAgentTurn"
+            "operationId": "promptAgent"
           },
           "qits-trigger": {
             "app": "qits-landing-app",
@@ -1708,130 +2219,13 @@
           }
         }
       },
-      "description": "send-agent-prompt: deliverAgentTurn",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a work item with no workspaces",
-          "params": {
-            "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "taskId": "00000000-0000-4000-8000-000000000011"
-          }
-        }
-      ],
-      "request": {
-        "body": {
-          "content": {
-            "compactFirst": false,
-            "text": "Remember the CSV format too.",
-            "workId": "{improvementTicketId}"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "method": "POST",
-        "path": "/workspaces/api/agent-dispatches/delivery"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "agentId": null,
-            "delivered": false,
-            "detail": "No agent works on work item 00000000-0000-4000-8000-00000000000b; nothing was said.",
-            "launched": false,
-            "resumed": false
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.delivered": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.detail": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.launched": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.resumed": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "deliverAgentTurn"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "send-agent-prompt",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "send-agent-prompt: deliverAgentTurn",
+      "description": "send-agent-prompt: promptAgent",
       "pending": false,
       "providerStates": [
         {
           "name": "an agent working on a ticket",
           "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
             "ticketId": "00000000-0000-4000-8000-000000000001"
           }
         }
@@ -1840,19 +2234,34 @@
         "body": {
           "content": {
             "compactFirst": false,
-            "text": "The ticket moved to REVIEW.",
-            "workId": "{ticketId}"
+            "text": "Check the rounding first."
           },
           "contentType": "application/json",
           "encoded": false
+        },
+        "generators": {
+          "path": {
+            "expression": "/workspaces/api/agents/${agentId}/prompt",
+            "type": "ProviderState"
+          }
         },
         "headers": {
           "Content-Type": [
             "application/json"
           ]
         },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
         "method": "POST",
-        "path": "/workspaces/api/agent-dispatches/delivery"
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a1/prompt"
       },
       "response": {
         "body": {
@@ -2178,6 +2587,340 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
+            "operationId": "getAgent"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-agent",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-agent: getAgent",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an agent with a saved prompt draft",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "workspaceId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "expression": "/workspaces/api/agents/${agentId}",
+            "type": "ProviderState"
+          }
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "activity": null,
+            "admin": false,
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "entityBlocked": false,
+            "entityId": "contract-00000001-10",
+            "entityStatus": "IMPLEMENTING",
+            "entityTitle": "Invoice totals are off by one cent",
+            "harness": "CLAUDE",
+            "repositoryId": "00000000-0000-4000-8000-000000000013",
+            "runState": "RUNNING",
+            "state": "ACTIVE",
+            "waitingOn": null,
+            "waitingOnSince": null,
+            "workId": "00000000-0000-4000-8000-000000000001",
+            "workspaceRowId": 1,
+            "wrapperBranch": "ticket/contract-00000001-10"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.admin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.agentId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              ]
+            },
+            "$.entityBlocked": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entityStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entityTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.harness": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.repositoryId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              ]
+            },
+            "$.runState": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.state": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.workId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              ]
+            },
+            "$.workspaceRowId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.wrapperBranch": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspaces-service",
+            "operationId": "getAgent"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-agent",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-agent: getAgent",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no agent with that id",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a9"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "expression": "/workspaces/api/agents/${agentId}",
+            "type": "ProviderState"
+          }
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a9"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspaces-service",
+            "operationId": "getAgentActiveProcess"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-agent",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-agent: getAgentActiveProcess",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a workspace slot hosting agents",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "bugTicketQualifiedId": "contract-00000001-10",
+            "epicId": "00000000-0000-4000-8000-000000000006",
+            "featureId": "00000000-0000-4000-8000-000000000007",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
+            "improvementTicketQualifiedId": "contract-00000001-11",
+            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "repositoryId": "00000000-0000-4000-8000-000000000013",
+            "targetId": "00000000-0000-4000-8000-000000000020",
+            "taskId": "00000000-0000-4000-8000-000000000011",
+            "workspaceId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "expression": "/workspaces/api/agents/${agentId}/active-process",
+            "type": "ProviderState"
+          }
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a1/active-process"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "technicalProcessId": null
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspaces-service",
             "operationId": "listOpenWorkspaces"
           },
           "qits-trigger": {
@@ -2366,7 +3109,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011"
           }
         }
@@ -2708,7 +3451,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011"
           }
         }
@@ -2750,11 +3493,8 @@
                 "workspace": {
                   "admin": false,
                   "id": 1,
-                  "placement": "RUNNER",
+                  "placement": "TARGET",
                   "queuedAt": null,
-                  "runner": {
-                    "name": "localhost"
-                  },
                   "runtimeStatus": "RUNNING",
                   "workspaceId": "ws-contract"
                 }
@@ -2797,14 +3537,6 @@
                           ]
                         },
                         "$.workspace.placement": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.workspace.runner.name": {
                           "combine": "AND",
                           "matchers": [
                             {
@@ -2856,1202 +3588,6 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "getRunnerHealth"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-runner-node-details",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-runner-node-details: getRunnerHealth",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a runner in service",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/health",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "GET",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/health"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "checks": [
-              {
-                "data": {
-                  "version": "27.1"
-                },
-                "name": "docker",
-                "ok": true
-              },
-              {
-                "data": {},
-                "name": "selfTest",
-                "ok": true
-              }
-            ]
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.checks": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "arrayContains",
-                  "variants": [
-                    {
-                      "index": 0,
-                      "rules": {
-                        "$.data.version": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    {
-                      "index": 1,
-                      "rules": {
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "getRunnerHealth"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-runner-node-details",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-runner-node-details: getRunnerHealth",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an unregistered runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/runners/${runnerId}/health",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "GET",
-        "path": "/workspaces/api/runners/00000000-0000-4000-8000-000000000020/health"
-      },
-      "response": {
-        "status": 204
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "listRunners"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-runners",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-runners: listRunners",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a connected runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "path": "/workspaces/api/runners"
-      },
-      "response": {
-        "body": {
-          "content": [
-            {
-              "connected": true,
-              "connectedSince": "2026-01-01T00:00:00Z",
-              "description": null,
-              "health": null,
-              "id": "00000000-0000-4000-8000-000000000020",
-              "kimiLoginCommand": null,
-              "lastHealthCheckAt": null,
-              "lastHealthCheckOk": null,
-              "lastSeenAt": "2026-01-01T00:00:00Z",
-              "login": null,
-              "loginCommand": null,
-              "loginCommandPending": false,
-              "name": "localhost",
-              "owned": 0,
-              "pinnedVersion": "2026.101.120000",
-              "quarantineReason": null,
-              "quarantined": false,
-              "quarantinedAt": null,
-              "queued": 0,
-              "registered": true,
-              "running": 0,
-              "slots": 1,
-              "version": null,
-              "workspaceMemoryLimit": null,
-              "workspaceMemorySwapLimit": null
-            }
-          ],
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "arrayContains",
-                  "variants": [
-                    {
-                      "index": 0,
-                      "rules": {
-                        "$.connected": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.connectedSince": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.id": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                            }
-                          ]
-                        },
-                        "$.lastSeenAt": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.loginCommandPending": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.owned": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.pinnedVersion": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.quarantined": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.queued": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.registered": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.running": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.slots": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "listRunners"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-runners",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-runners: listRunners",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a runner in service",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "path": "/workspaces/api/runners"
-      },
-      "response": {
-        "body": {
-          "content": [
-            {
-              "connected": true,
-              "connectedSince": "2026-01-01T00:00:00Z",
-              "description": null,
-              "health": {
-                "at": "2026-01-01T00:00:00Z",
-                "checks": [
-                  {
-                    "detail": "27.1",
-                    "name": "docker",
-                    "ok": true
-                  },
-                  {
-                    "detail": "27.1",
-                    "name": "docker",
-                    "ok": true
-                  }
-                ],
-                "detail": "2 checks passed",
-                "ok": true
-              },
-              "id": "00000000-0000-4000-8000-000000000020",
-              "kimiLoginCommand": "docker run --rm -it --user 1000 --entrypoint kimi -v qits-workspaces-runner-dot-claude-contract:/claude-home -e HOME=/claude-home -e KIMI_CODE_HOME=/claude-home/.kimi-code registry.qits.runners.example.test/qits/workspace:2026.101.120000 login",
-              "lastHealthCheckAt": "2026-01-01T00:00:00Z",
-              "lastHealthCheckOk": true,
-              "lastSeenAt": "2026-01-01T00:00:00Z",
-              "login": {
-                "checkedAt": "2026-01-01T00:00:00Z",
-                "claude": "PRESENT",
-                "kimi": "ABSENT"
-              },
-              "loginCommand": "docker run --rm -it --user 1000 --entrypoint claude -v qits-workspaces-runner-dot-claude-contract:/claude-home -e HOME=/claude-home -e CLAUDE_CONFIG_DIR=/claude-home/.claude registry.qits.runners.example.test/qits/workspace:2026.101.120000",
-              "loginCommandPending": false,
-              "name": "localhost",
-              "owned": 0,
-              "pinnedVersion": "2026.101.120000",
-              "quarantineReason": null,
-              "quarantined": false,
-              "quarantinedAt": null,
-              "queued": 0,
-              "registered": true,
-              "running": 0,
-              "slots": 1,
-              "version": "2026.101.120000",
-              "workspaceMemoryLimit": null,
-              "workspaceMemorySwapLimit": null
-            }
-          ],
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "arrayContains",
-                  "variants": [
-                    {
-                      "index": 0,
-                      "rules": {
-                        "$.connected": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.connectedSince": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.health.at": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.health.checks": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type",
-                              "max": 2,
-                              "min": 2
-                            }
-                          ]
-                        },
-                        "$.health.checks[*].detail": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            },
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.health.checks[*].name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            },
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.health.checks[*].ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            },
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.health.detail": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.health.ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.id": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                            }
-                          ]
-                        },
-                        "$.kimiLoginCommand": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.lastHealthCheckAt": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.lastHealthCheckOk": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.lastSeenAt": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.login.checkedAt": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                            }
-                          ]
-                        },
-                        "$.login.claude": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.login.kimi": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.loginCommand": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.loginCommandPending": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.owned": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.pinnedVersion": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.quarantined": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.queued": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.registered": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.running": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.slots": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.version": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "listRunners"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-runners",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-runners: listRunners",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an unregistered runner",
-          "params": {
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost"
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "path": "/workspaces/api/runners"
-      },
-      "response": {
-        "body": {
-          "content": [
-            {
-              "connected": false,
-              "connectedSince": null,
-              "description": null,
-              "health": null,
-              "id": "00000000-0000-4000-8000-000000000020",
-              "kimiLoginCommand": null,
-              "lastHealthCheckAt": null,
-              "lastHealthCheckOk": null,
-              "lastSeenAt": null,
-              "login": null,
-              "loginCommand": null,
-              "loginCommandPending": false,
-              "name": "localhost",
-              "owned": 0,
-              "pinnedVersion": "2026.101.120000",
-              "quarantineReason": null,
-              "quarantined": false,
-              "quarantinedAt": null,
-              "queued": 0,
-              "registered": false,
-              "running": 0,
-              "slots": 1,
-              "version": null,
-              "workspaceMemoryLimit": null,
-              "workspaceMemorySwapLimit": null
-            }
-          ],
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "arrayContains",
-                  "variants": [
-                    {
-                      "index": 0,
-                      "rules": {
-                        "$.connected": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.id": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                            }
-                          ]
-                        },
-                        "$.loginCommandPending": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.owned": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.pinnedVersion": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.quarantined": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.queued": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.registered": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.running": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.slots": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "getWorkspace"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-work-item-agent",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-work-item-agent: getWorkspace",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an agent whose workspace is starting",
-          "params": {
-            "agentId": "00000000-0000-4000-8000-0000000000a1",
-            "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "workspaceId": "1"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/workspaces/${workspaceId}",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "GET",
-        "path": "/workspaces/api/workspaces/1"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "workspace": {
-              "admin": false,
-              "daemonConnectedAt": null,
-              "daemonOutdated": null,
-              "daemonVersion": null,
-              "id": 1,
-              "placement": "RUNNER",
-              "queuedAt": null,
-              "runner": {
-                "name": "localhost"
-              },
-              "runtimeError": null,
-              "runtimeStatus": "PROVISIONING",
-              "workspaceId": "ws-contract"
-            }
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.workspace.admin": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.workspace.id": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.workspace.placement": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.workspace.runner.name": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.workspace.runtimeStatus": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.workspace.workspaceId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "getWorkspaceActiveProcess"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "show-work-item-agent",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "show-work-item-agent: getWorkspaceActiveProcess",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "an agent whose workspace is starting",
-          "params": {
-            "agentId": "00000000-0000-4000-8000-0000000000a1",
-            "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "workspaceId": "1"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/workspaces/${workspaceId}/active-process",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "GET",
-        "path": "/workspaces/api/workspaces/1/active-process"
-      },
-      "response": {
-        "body": {
-          "content": {
-            "technicalProcessId": "00000000-0000-4000-8000-000000000100"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.technicalProcessId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 200
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
             "operationId": "listAgents"
           },
           "qits-trigger": {
@@ -4071,7 +3607,7 @@
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
             "bugTicketQualifiedId": "contract-00000001-10",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
           }
         }
@@ -4110,20 +3646,8 @@
           "content": {
             "agents": [
               {
-                "activity": null,
-                "admin": false,
                 "agentId": "00000000-0000-4000-8000-0000000000a1",
-                "entityBlocked": false,
-                "entityId": "contract-00000001-10",
-                "entityStatus": "IMPLEMENTING",
-                "entityTitle": "Invoice totals are off by one cent",
-                "harness": "CLAUDE",
-                "runState": "RUNNING",
-                "state": "ACTIVE",
-                "waitingOn": "release-request 00000000-0000-4000-8000-0000000000c1",
-                "waitingOnSince": "2026-01-01T00:00:00Z",
-                "workspaceRowId": 1,
-                "wrapperBranch": "ticket/contract-00000001-10"
+                "state": "ACTIVE"
               }
             ]
           },
@@ -4147,14 +3671,6 @@
                 }
               ]
             },
-            "$.agents[*].admin": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.agents[*].agentId": {
               "combine": "AND",
               "matchers": [
@@ -4164,88 +3680,7 @@
                 }
               ]
             },
-            "$.agents[*].entityBlocked": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].entityId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].entityStatus": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].entityTitle": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].harness": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].runState": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
             "$.agents[*].state": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].waitingOn": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.agents[*].waitingOnSince": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
-                }
-              ]
-            },
-            "$.agents[*].workspaceRowId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.agents[*].wrapperBranch": {
               "combine": "AND",
               "matchers": [
                 {
@@ -4579,7 +4014,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -4614,11 +4049,8 @@
               "daemonOutdated": null,
               "daemonVersion": null,
               "id": 1,
-              "placement": "RUNNER",
+              "placement": "TARGET",
               "queuedAt": null,
-              "runner": {
-                "name": "localhost"
-              },
               "runtimeError": null,
               "runtimeStatus": "RUNNING",
               "workspaceId": "ws-contract"
@@ -4658,7 +4090,131 @@
                 }
               ]
             },
-            "$.workspace.runner.name": {
+            "$.workspace.runtimeStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.workspace.workspaceId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspaces-service",
+            "operationId": "getWorkspace"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-workspace-slot",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-workspace-slot: getWorkspace",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an agent whose workspace is starting",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "bugTicketQualifiedId": "contract-00000001-10",
+            "repositoryId": "00000000-0000-4000-8000-000000000013",
+            "targetId": "00000000-0000-4000-8000-000000000020",
+            "workspaceId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "expression": "/workspaces/api/workspaces/${workspaceId}",
+            "type": "ProviderState"
+          }
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/workspaces/1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "workspace": {
+              "admin": false,
+              "daemonConnectedAt": null,
+              "daemonOutdated": null,
+              "daemonVersion": null,
+              "id": 1,
+              "placement": "TARGET",
+              "queuedAt": null,
+              "runtimeError": null,
+              "runtimeStatus": "PROVISIONING",
+              "workspaceId": "ws-contract"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.workspace.admin": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.workspace.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.workspace.placement": {
               "combine": "AND",
               "matchers": [
                 {
@@ -4728,7 +4284,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -4789,7 +4345,7 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "listAgents"
+            "operationId": "getWorkspaceActiveProcess"
           },
           "qits-trigger": {
             "app": "qits-landing-app",
@@ -4798,7 +4354,97 @@
           }
         }
       },
-      "description": "show-workspace-slot: listAgents",
+      "description": "show-workspace-slot: getWorkspaceActiveProcess",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an agent whose workspace is starting",
+          "params": {
+            "agentId": "00000000-0000-4000-8000-0000000000a1",
+            "bugTicketId": "00000000-0000-4000-8000-000000000001",
+            "bugTicketQualifiedId": "contract-00000001-10",
+            "repositoryId": "00000000-0000-4000-8000-000000000013",
+            "targetId": "00000000-0000-4000-8000-000000000020",
+            "workspaceId": "1"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "expression": "/workspaces/api/workspaces/${workspaceId}/active-process",
+            "type": "ProviderState"
+          }
+        },
+        "matchingRules": {
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        },
+        "method": "GET",
+        "path": "/workspaces/api/workspaces/1/active-process"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "technicalProcessId": "00000000-0000-4000-8000-000000000100"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.technicalProcessId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-workspaces-service",
+            "operationId": "listWorkspaceAgents"
+          },
+          "qits-trigger": {
+            "app": "qits-landing-app",
+            "interaction": "show-workspace-slot",
+            "kind": "ui"
+          }
+        }
+      },
+      "description": "show-workspace-slot: listWorkspaceAgents",
       "pending": false,
       "providerStates": [
         {
@@ -4813,7 +4459,7 @@
             "improvementTicketQualifiedId": "contract-00000001-11",
             "projectId": "00000000-0000-4000-8000-00000000000f",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
+            "targetId": "00000000-0000-4000-8000-000000000020",
             "taskId": "00000000-0000-4000-8000-000000000011",
             "workspaceId": "1"
           }
@@ -4821,50 +4467,28 @@
       ],
       "request": {
         "generators": {
-          "query": {
-            "workspaceId": {
-              "expression": "${workspaceId}",
-              "type": "ProviderState"
-            }
+          "path": {
+            "expression": "/workspaces/api/workspaces/${workspaceId}/agents",
+            "type": "ProviderState"
           }
         },
         "matchingRules": {
-          "query": {
-            "workspaceId": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
+          "path": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
           }
         },
         "method": "GET",
-        "path": "/workspaces/api/agents",
-        "query": {
-          "workspaceId": [
-            "1"
-          ]
-        }
+        "path": "/workspaces/api/workspaces/1/agents"
       },
       "response": {
         "body": {
           "content": {
             "agents": [
-              {
-                "activity": null,
-                "admin": false,
-                "agentId": "00000000-0000-4000-8000-0000000000a1",
-                "entityId": "contract-00000001-10",
-                "entityTitle": "Invoice totals are off by one cent",
-                "harness": "CLAUDE",
-                "runState": "RUNNING",
-                "state": "ACTIVE",
-                "waitingOn": "release-request 00000000-0000-4000-8000-0000000000c1",
-                "waitingOnSince": "2026-01-01T00:00:00Z",
-                "wrapperBranch": "ticket/contract-00000001-10"
-              },
               {
                 "activity": null,
                 "admin": false,
@@ -4877,6 +4501,19 @@
                 "waitingOn": null,
                 "waitingOnSince": null,
                 "wrapperBranch": "epic/contract-00000001-2"
+              },
+              {
+                "activity": null,
+                "admin": false,
+                "agentId": "00000000-0000-4000-8000-0000000000a1",
+                "entityId": "contract-00000001-10",
+                "entityTitle": "Invoice totals are off by one cent",
+                "harness": "CLAUDE",
+                "runState": "RUNNING",
+                "state": "ACTIVE",
+                "waitingOn": "release-request 00000000-0000-4000-8000-0000000000c1",
+                "waitingOnSince": "2026-01-01T00:00:00Z",
+                "wrapperBranch": "ticket/contract-00000001-10"
               }
             ]
           },
@@ -4898,6 +4535,76 @@
                   "variants": [
                     {
                       "index": 0,
+                      "rules": {
+                        "$.admin": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.agentId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "regex",
+                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                            }
+                          ]
+                        },
+                        "$.entityId": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.entityTitle": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.harness": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.runState": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.state": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        },
+                        "$.wrapperBranch": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "index": 1,
                       "rules": {
                         "$.admin": {
                           "combine": "AND",
@@ -4982,76 +4689,6 @@
                           ]
                         }
                       }
-                    },
-                    {
-                      "index": 1,
-                      "rules": {
-                        "$.admin": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.agentId": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "regex",
-                              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-                            }
-                          ]
-                        },
-                        "$.entityId": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.entityTitle": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.harness": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.runState": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.state": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.wrapperBranch": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
                     }
                   ]
                 }
@@ -5092,12 +4729,10 @@
       "pending": false,
       "providerStates": [
         {
-          "name": "a stopped workspace slot on a runner in service",
+          "name": "a stopped workspace slot",
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost",
             "workspaceId": "1"
           }
         }
@@ -5125,7 +4760,7 @@
       "response": {
         "body": {
           "content": {
-            "technicalProcessId": "00000000-0000-4000-8000-000000000100"
+            "technicalProcessId": "00000000-0000-4000-8000-000000000101"
           },
           "contentType": "application/json",
           "encoded": false
@@ -5168,33 +4803,30 @@
         "references": {
           "qits-call": {
             "app": "qits-workspaces-service",
-            "operationId": "ensureWorkspaceContainer"
+            "operationId": "stopAgent"
           },
           "qits-trigger": {
             "app": "qits-landing-app",
-            "interaction": "start-workspace-container",
+            "interaction": "stop-agent",
             "kind": "ui"
           }
         }
       },
-      "description": "start-workspace-container: ensureWorkspaceContainer",
+      "description": "stop-agent: stopAgent",
       "pending": false,
       "providerStates": [
         {
-          "name": "a workspace slot on a disconnected runner",
+          "name": "an agent working on a ticket",
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
-            "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost",
-            "workspaceId": "1"
+            "ticketId": "00000000-0000-4000-8000-000000000001"
           }
         }
       ],
       "request": {
         "generators": {
           "path": {
-            "expression": "/workspaces/api/workspaces/${workspaceId}/ensure-container",
+            "expression": "/workspaces/api/agents/${agentId}/stop",
             "type": "ProviderState"
           }
         },
@@ -5209,13 +4841,12 @@
           }
         },
         "method": "POST",
-        "path": "/workspaces/api/workspaces/1/ensure-container"
+        "path": "/workspaces/api/agents/00000000-0000-4000-8000-0000000000a1/stop"
       },
       "response": {
         "body": {
           "content": {
-            "code": "RUNNER_UNAVAILABLE",
-            "message": "Workspace 1 is on a runner that is offline; it cannot start until the runner is back"
+            "runState": "STOPPED"
           },
           "contentType": "application/json",
           "encoded": false
@@ -5227,15 +4858,7 @@
         },
         "matchingRules": {
           "body": {
-            "$.code": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.message": {
+            "$.runState": {
               "combine": "AND",
               "matchers": [
                 {
@@ -5256,7 +4879,7 @@
             }
           }
         },
-        "status": 409
+        "status": 200
       },
       "type": "Synchronous/HTTP"
     },
@@ -5278,12 +4901,10 @@
       "pending": false,
       "providerStates": [
         {
-          "name": "a workspace slot on a disconnected runner",
+          "name": "a workspace slot running on a target",
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost",
             "workspaceId": "1"
           }
         }
@@ -5311,103 +4932,9 @@
       "response": {
         "body": {
           "content": {
-            "code": "RUNNER_UNAVAILABLE",
-            "message": "Workspace 1 is on a runner that is offline; it cannot stop until the runner is back"
-          },
-          "contentType": "application/json",
-          "encoded": false
-        },
-        "headers": {
-          "Content-Type": [
-            "application/json"
-          ]
-        },
-        "matchingRules": {
-          "body": {
-            "$.code": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            },
-            "$.message": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
-                }
-              ]
-            }
-          },
-          "header": {
-            "Content-Type": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "regex",
-                  "regex": "application/json.*"
-                }
-              ]
-            }
-          }
-        },
-        "status": 409
-      },
-      "type": "Synchronous/HTTP"
-    },
-    {
-      "comments": {
-        "references": {
-          "qits-call": {
-            "app": "qits-workspaces-service",
-            "operationId": "stopWorkspaceContainer"
-          },
-          "qits-trigger": {
-            "app": "qits-landing-app",
-            "interaction": "stop-workspace-container",
-            "kind": "ui"
-          }
-        }
-      },
-      "description": "stop-workspace-container: stopWorkspaceContainer",
-      "pending": false,
-      "providerStates": [
-        {
-          "name": "a workspace slot running on a runner in service",
-          "params": {
-            "agentId": "00000000-0000-4000-8000-0000000000a1",
-            "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "runnerId": "00000000-0000-4000-8000-000000000020",
-            "runnerName": "localhost",
-            "workspaceId": "1"
-          }
-        }
-      ],
-      "request": {
-        "generators": {
-          "path": {
-            "expression": "/workspaces/api/workspaces/${workspaceId}/stop-container",
-            "type": "ProviderState"
-          }
-        },
-        "matchingRules": {
-          "path": {
-            "combine": "AND",
-            "matchers": [
-              {
-                "match": "type"
-              }
-            ]
-          }
-        },
-        "method": "POST",
-        "path": "/workspaces/api/workspaces/1/stop-container"
-      },
-      "response": {
-        "body": {
-          "content": {
+            "affectedAgentIds": [
+              "00000000-0000-4000-8000-0000000000a1"
+            ],
             "runtimeStatus": "STOPPED"
           },
           "contentType": "application/json",
@@ -5420,6 +4947,25 @@
         },
         "matchingRules": {
           "body": {
+            "$.affectedAgentIds": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.affectedAgentIds[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              ]
+            },
             "$.runtimeStatus": {
               "combine": "AND",
               "matchers": [

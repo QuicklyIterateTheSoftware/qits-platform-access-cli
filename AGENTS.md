@@ -223,17 +223,21 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                runs a command for every call in the landing app's pacts (copied under
                src/test/resources/workspaces/landing-pacts/) and fails on a call no command makes;
                copy the pacts again when the pages change. Register runner and rotate token are
-               left out: they answer a one-time token. `attach` (and `--attach` on sign-in open
-               and harness) is the Terminal tab, on terminal/'s TerminalAttach.
+               left out: they answer a one-time token. `attach` is the Terminal tab, on terminal/'s
+               TerminalAttach; `--attach` on `workspaces agents sign-in open` does the same for the
+               sign-in terminal.
                `qits agents`' verbs live here too (epic qits-1667), because WorkspacesApi does:
                AgentCommands (the verbs, listed by agents/AgentsCommand), AgentRef (an agent's id or
                --work, the one ACTIVE agent on the item; none or several is exit 1), AgentOptions
                (each verb's -o and service URLs, a mixin, so `qits agents claude` carries none),
                WorkspacesAccess (what both trees take from their options) and AgentViews (the
-               agents table, the draft, the chat, file and detection printing, shared with the
-               deprecated `qits workspaces agents` aliases, which say so on stderr only). chat,
-               attach and files go through the agent proxy, /workspaces/agent/{id}/…, never the
-               container proxy, so no verb takes the slot
+               agents table, the draft, the chat, file and detection printing, shared with `qits
+               workspaces show`, which prints a slot's agents the same way). The deprecated aliases
+               of epic qits-1667 (`qits workspaces agents list|discard|prompt|draft|chat|terminate|
+               harness|files`) lived for one release and are gone (qits-1749); `workspaces agents`
+               keeps only sign-in, plugins and refine, the container's harness install. chat, attach
+               and files go through the agent proxy, /workspaces/agent/{id}/…, never the container
+               proxy, so no verb takes the slot
     terminal/  attaching this terminal to a remote one over a WebSocket, shared by `workspaces
                attach` and `repositories remote-login`: TerminalAttach is the reconnecting socket
                with the landing app's frames and backoff (what is attached to is only a label in
@@ -539,11 +543,12 @@ under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole
 elements only, so no row consumes it: qits-pact-consumer would match it as a UUID.
 
 The qits-workspaces table (`workspaces/WorkspacesContract`) has the `qits agents` rows of epic
-qits-1667 beside the `qits workspaces agents` ones they replace. `getAgent` (`show`) is pinned and
-live; prompt, interrupt, stop, restart, yield, sessions, transcript and `qits workspaces show`'s
-`listWorkspaceAgents` are recorded on the provider's epic branch and pending until a pin carries
-them; `--work`'s lookup (`listAgents` with `workId` and `state=ACTIVE`) is recorded in no state yet
-and waits in `an agent working on a ticket`. The agent proxy's routes are exclusions, not rows.
+qits-1667; the deprecated `qits workspaces agents` rows they replaced went with the aliases
+(qits-1749). `getAgent` (`show`) is pinned and live; prompt, interrupt, stop, restart, yield,
+sessions, transcript and `qits workspaces show`'s `listWorkspaceAgents` are recorded on the
+provider's epic branch and pending until a pin carries them; `--work`'s lookup (`listAgents` with
+`workId` and `state=ACTIVE`) is recorded in no state yet and waits in `an agent working on a
+ticket`. The agent proxy's routes are exclusions, not rows.
 
 What only a person can prove: a real sign-in in the browser, and a daemon that rotates the session
 against the real idp for longer than one access token lives.
