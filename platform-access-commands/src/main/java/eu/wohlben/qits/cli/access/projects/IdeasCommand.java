@@ -55,8 +55,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footer = {
                 "- --entity, --output and --projects-url may come before or after the command.",
                 "- --entity is the idea's id, as list and create print it.",
-                "- Reading takes qits:admin or qits:agent. Writing (create, update, archive, unarchive, spawn) "
-                        + "takes the project's delivery desk, in its own project, or an admin.",
+                "- Reading takes qits:admin or qits:agent. Writing (create, update, archive, unarchive, rank, "
+                        + "spawn) takes the project's delivery desk, in its own project, or an admin.",
                 "- An agent does not write ideas: it files a ticket or an epic with qits work create, and asks the "
                         + "desk with an @desk comment to file or link an idea."})
 public class IdeasCommand implements Runnable {
@@ -356,8 +356,9 @@ public class IdeasCommand implements Runnable {
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The idea is moved.",
                     "1:The platform refused (for example an anchor that is the idea itself, unknown, of another "
-                            + "project, archived or DONE, HTTP 400, another project, HTTP 403, an idea it does not "
-                            + "know, HTTP 404, or an idea that is archived or DONE, HTTP 409), or cannot be reached.",
+                            + "project, archived or DONE, HTTP 400, an agent, or the desk in another project, HTTP "
+                            + "403, an idea it does not know, HTTP 404, or an idea that is archived or DONE, HTTP "
+                            + "409), or cannot be reached.",
                     "2:Used wrongly (for example no --entity, or not exactly one of --above and --below), not "
                             + "signed in, or the session ended."})
     public static class RankCommand extends PlatformCommand {
