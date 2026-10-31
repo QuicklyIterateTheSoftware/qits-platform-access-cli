@@ -1612,7 +1612,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits ideas
 
-A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its inspiration ("inspiredBy"). list shows a project's ideas, details shows one with the work it inspired and the ideas it enables, create writes one, update edits it, archive and unarchive hide it from the list and bring it back, and spawn files an epic or a ticket from it.
+A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its inspiration ("inspiredBy"). list shows a project's ideas, details shows one with the work it inspired and the ideas it enables, create writes one, update edits it, archive and unarchive hide it from the list and bring it back, rank moves it above or below another, and spawn files an epic or a ticket from it.
 
 An idea is not a work item: it has no lifecycle you move, no comment thread, no children and no delete. Its status is derived from the work naming it: PLANNED (no counted work names it), QUEUED (some does, not all DONE) or DONE (every counted item DONE); DROPPED work is not counted. One idea may name another of its project as "enabledBy".
 
@@ -1626,7 +1626,7 @@ A write reads its payload, a JSON document, on stdin. With nothing on stdin (a t
 
 ## qits ideas list
 
-A project's ideas, oldest first: id, status, whether archived, title and when it last changed. The archived ones are left out unless --archived is given, which adds them beside the rest.
+A project's ideas in rank order: the highest priority first, the unranked after them, and oldest first among equals. Each row is the id, status, whether archived, priority (empty when unranked), title and when it last changed. The archived ones are left out unless --archived is given, which adds them beside the rest.
 
 ```
 qits ideas list [--archived] [--entity <idea>] [--output table|json] [--project <project>] [--projects-url <url>] [--status <status>]
@@ -1721,9 +1721,9 @@ jq -n --rawfile d idea.md '{project:"qits",title:"Share the build cache",descrip
 
 ## qits ideas update
 
-Edit an idea's title, description or enabledBy.
+Edit an idea's title, description, enabledBy or priority.
 
-Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/ideas/{idea} as application/merge-patch+json: a property left out stays as it is, null clears description or enabledBy. The rules are the create's. The status is derived and the archive has its own commands.
+Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/ideas/{idea} as application/merge-patch+json: a property left out stays as it is, null clears description, enabledBy or priority. The rules are the create's; a priority is an integer, and an archived or DONE idea takes none (HTTP 409). To move an idea among the others, rank is simpler. The status is derived and the archive has its own commands.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the patch's JSON schema from the service's OpenAPI document (/projects/q/openapi), and exits with 0.
 
@@ -1807,6 +1807,41 @@ qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 unarchive
 - `0` The idea is not archived.
 - `1` The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits ideas rank
+
+Move an idea in its project's rank order: directly above or directly below another.
+
+Sends {"above":"<idea>"} or {"below":"<idea>"} to PUT /projects/api/ideas/{idea}/priority, and prints each idea whose priority the move wrote, highest first: its id and its new priority. list then answers in the new order.
+
+Only rankable ideas move or anchor a move: not archived and not DONE. Give exactly one of --above and --below.
+
+```
+qits ideas rank [--above <idea>] [--below <idea>] [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--above <idea>` | The idea this one then sits directly above: its id. |
+| `--below <idea>` | The idea this one then sits directly below: its id. |
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 rank --above 6c0d1e2f-3a4b-4c5d-8e6f-7a8b9c0d1e2f
+qits ideas rank --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 --below 6c0d1e2f-3a4b-4c5d-8e6f-7a8b9c0d1e2f -o json
+```
+
+- -o json prints the service's answer: {"items":[{"id","priority"},...]}.
+
+### Exit codes
+
+- `0` The idea is moved.
+- `1` The platform refused (for example an anchor that is the idea itself, unknown, of another project, archived or DONE, HTTP 400, another project, HTTP 403, an idea it does not know, HTTP 404, or an idea that is archived or DONE, HTTP 409), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or not exactly one of --above and --below), not signed in, or the session ended.
 
 ## qits ideas spawn
 

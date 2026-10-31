@@ -38,12 +38,12 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 @CommandLine.Command(name = "ideas", mixinStandardHelpOptions = true,
         subcommands = {IdeasCommand.ListCommand.class, IdeasCommand.DetailsCommand.class,
                 IdeasCommand.CreateCommand.class, IdeasCommand.UpdateCommand.class, IdeasCommand.ArchiveCommand.class,
-                IdeasCommand.UnarchiveCommand.class, IdeasCommand.SpawnCommand.class},
+                IdeasCommand.UnarchiveCommand.class, IdeasCommand.RankCommand.class, IdeasCommand.SpawnCommand.class},
         description = {"A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its "
                         + "inspiration (\"inspiredBy\"). list shows a project's ideas, details shows one with the "
                         + "work it inspired and the ideas it enables, create writes one, update edits it, archive "
-                        + "and unarchive hide it from the list and bring it back, and spawn files an epic or a "
-                        + "ticket from it.",
+                        + "and unarchive hide it from the list and bring it back, rank moves it above or below "
+                        + "another, and spawn files an epic or a ticket from it.",
                 "An idea is not a work item: it has no lifecycle you move, no comment thread, no children and no "
                         + "delete. Its status is derived from the work naming it: PLANNED (no counted work names "
                         + "it), QUEUED (some does, not all DONE) or DONE (every counted item DONE); DROPPED work is "
@@ -89,9 +89,10 @@ public class IdeasCommand implements Runnable {
     // --- list ---
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
-            description = {"A project's ideas, oldest first: id, status, whether archived, title and when it last "
-                    + "changed. The archived ones are left out unless --archived is given, which adds them beside "
-                    + "the rest."},
+            description = {"A project's ideas in rank order: the highest priority first, the unranked after "
+                    + "them, and oldest first among equals. Each row is the id, status, whether archived, "
+                    + "priority (empty when unranked), title and when it last changed. The archived ones are "
+                    + "left out unless --archived is given, which adds them beside the rest."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits ideas list --project qits",
@@ -229,10 +230,12 @@ public class IdeasCommand implements Runnable {
     // --- update ---
 
     @CommandLine.Command(name = "update", mixinStandardHelpOptions = true,
-            description = {"Edit an idea's title, description or enabledBy.",
+            description = {"Edit an idea's title, description, enabledBy or priority.",
                     "Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/ideas/{idea} as "
                             + "application/merge-patch+json: a property left out stays as it is, null clears "
-                            + "description or enabledBy. The rules are the create's. The status is derived and the "
+                            + "description, enabledBy or priority. The rules are the create's; a priority is an "
+                            + "integer, and an archived or DONE idea takes none (HTTP 409). To move an idea "
+                            + "among the others, rank is simpler. The status is derived and the "
                             + "archive has its own commands.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the patch's "
                             + "JSON schema from the service's OpenAPI document (/projects/q/openapi), and exits with "
@@ -324,6 +327,67 @@ public class IdeasCommand implements Runnable {
             boolean json = json(ideas.options.output);
             String wanted = ideas.entity();
             printAnswer(context.out(), json, ideas.api(context).unarchiveIdea(wanted));
+            return 0;
+        }
+    }
+
+    // --- rank ---
+
+    @CommandLine.Command(name = "rank", mixinStandardHelpOptions = true,
+            description = {"Move an idea in its project's rank order: directly above or directly below another.",
+                    "Sends {\"above\":\"<idea>\"} or {\"below\":\"<idea>\"} to PUT "
+                            + "/projects/api/ideas/{idea}/priority, and prints each idea whose priority the move "
+                            + "wrote, highest first: its id and its new priority. list then answers in the new "
+                            + "order.",
+                    "Only rankable ideas move or anchor a move: not archived and not DONE. Give exactly one of "
+                            + "--above and --below."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 rank "
+                            + "--above 6c0d1e2f-3a4b-4c5d-8e6f-7a8b9c0d1e2f",
+                    "  qits ideas rank --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 "
+                            + "--below 6c0d1e2f-3a4b-4c5d-8e6f-7a8b9c0d1e2f -o json",
+                    "",
+                    "- -o json prints the service's answer: {\"items\":[{\"id\",\"priority\"},...]}."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The idea is moved.",
+                    "1:The platform refused (for example an anchor that is the idea itself, unknown, of another "
+                            + "project, archived or DONE, HTTP 400, another project, HTTP 403, an idea it does not "
+                            + "know, HTTP 404, or an idea that is archived or DONE, HTTP 409), or cannot be reached.",
+                    "2:Used wrongly (for example no --entity, or not exactly one of --above and --below), not "
+                            + "signed in, or the session ended."})
+    public static class RankCommand extends PlatformCommand {
+
+        static final String ONE_ANCHOR = "Say where the idea goes: exactly one of --above <idea> and --below <idea>.";
+
+        @CommandLine.ParentCommand
+        IdeasCommand ideas;
+
+        @CommandLine.Option(names = "--above", paramLabel = "<idea>",
+                description = "The idea this one then sits directly above: its id.")
+        String above;
+
+        @CommandLine.Option(names = "--below", paramLabel = "<idea>",
+                description = "The idea this one then sits directly below: its id.")
+        String below;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(ideas.options.output);
+            String wanted = ideas.entity();
+            boolean isAbove = above != null && !above.isBlank();
+            boolean isBelow = below != null && !below.isBlank();
+            if (isAbove == isBelow) {
+                throw new CliFailure(ONE_ANCHOR + " Nothing was sent.", CliFailure.USAGE);
+            }
+            String where = isAbove ? "above" : "below";
+            String anchor = (isAbove ? above : below).strip();
+            JsonNode answer = ideas.api(context).reprioritizeIdea(wanted, where, anchor);
+            if (json) {
+                SafeJson.print(context.out(), answer);
+                return 0;
+            }
+            printPriorities(context.out(), objects(answer.path("items")));
             return 0;
         }
     }
@@ -430,12 +494,30 @@ public class IdeasCommand implements Runnable {
         printRows(out, "", List.of(answer));
     }
 
-    /** ID, STATUS, ARCHIVED, TITLE, UPDATED. */
+    /** ID, STATUS, ARCHIVED, PRIORITY, TITLE, UPDATED. */
     static void printRows(PrintStream out, String indent, List<JsonNode> ideas) {
-        Table.print(out, indent, List.of("ID", "STATUS", "ARCHIVED", "TITLE", "UPDATED"), ideas.stream()
+        Table.print(out, indent, List.of("ID", "STATUS", "ARCHIVED", "PRIORITY", "TITLE", "UPDATED"), ideas.stream()
                 .map(i -> List.of(WorkEntities.cell(text(i, "id"), 40), WorkEntities.cell(text(i, "status"), 8),
-                        archivedCell(i), WorkEntities.cell(text(i, "title"), 70), Table.time(text(i, "updatedAt"))))
+                        archivedCell(i), priorityCell(i), WorkEntities.cell(text(i, "title"), 70),
+                        Table.time(text(i, "updatedAt"))))
                 .toList());
+    }
+
+    /** ID, PRIORITY: the rows a rank wrote, in the order the service sent them. */
+    static void printPriorities(PrintStream out, List<JsonNode> rows) {
+        if (rows.isEmpty()) {
+            out.println("No priority changed.");
+            return;
+        }
+        Table.print(out, "", List.of("ID", "PRIORITY"), rows.stream()
+                .map(i -> List.of(WorkEntities.cell(text(i, "id"), 40), priorityCell(i)))
+                .toList());
+    }
+
+    /** The priority, or empty for an idea with none (null, or a service that sends none). */
+    private static String priorityCell(JsonNode idea) {
+        JsonNode priority = idea.path("priority");
+        return priority.isIntegralNumber() ? priority.asText() : "";
     }
 
     private static String archivedCell(JsonNode idea) {

@@ -134,6 +134,16 @@ public final class ProjectsContract {
     static final String IDEAS = "a project with ideas";
 
     /**
+     * {@code qits ideas rank} and the priority half of {@code qits ideas update} (qits-1791): the
+     * provider records the drop door, {@code reprioritizeIdea}, as a {@code below} drop, and {@code
+     * patchIdea} with {@code {"priority":5}}, in this state (qits-projects-service
+     * 2026.1031.205956). Pending until qits-maintenance bumps {@code
+     * qits.projects-golden-masters.version} to that release or a later one; on that bump write the
+     * pact again with {@code -Dgolden.update=true}.
+     */
+    static final String IDEAS_ONE_RANKED = "a project with three ideas, one with a priority";
+
+    /**
      * One idea as a row of {@code qits ideas list} and of every write's answer. Neither {@code
      * enabledBy}, {@code archiveReason} nor {@code archivedAt}: null in most recordings, and a pact
      * must not demand a null the field exists to replace; the table does not print them.
@@ -870,6 +880,24 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(archived, "archiveReason")).isEqualTo(body(recorded).path("reason").asText());
     };
 
+    /** {@code qits ideas update} with {@code {"priority":n}}: the idea, with the priority its PRIORITY column prints. */
+    private static final Call PRIORITIZE_IDEA = (api, params, recorded) -> {
+        JsonNode patched = api.patchIdea(params.get("ideaId"), body(recorded));
+        idea(patched);
+        assertThat(patched.path("priority").asInt()).isEqualTo(body(recorded).path("priority").asInt());
+    };
+
+    /** {@code qits ideas rank}: a drop below the anchor; the table prints each written row's id and priority. */
+    private static final Call RANK_IDEA = (api, params, recorded) -> {
+        JsonNode body = body(recorded);
+        String where = body.has("above") ? "above" : "below";
+        JsonNode items = api.reprioritizeIdea(params.get("ideaId"), where, body.path(where).asText()).path("items");
+        assertThat(items).isNotEmpty().allSatisfy(i -> {
+            assertThat(ProjectsApi.text(i, "id")).isNotBlank();
+            assertThat(i.path("priority").isIntegralNumber()).isTrue();
+        });
+    };
+
     private static final Call UNARCHIVE_IDEA = (api, params, recorded) -> {
         JsonNode unarchived = api.unarchiveIdea(params.get("archivedIdeaId"));
         idea(unarchived);
@@ -1470,6 +1498,14 @@ public final class ProjectsContract {
         rows.add(row("qits ideas unarchive", IDEAS, "unarchiveIdea", "unarchiveIdea", UNARCHIVE_IDEA)
                 .consumes(held(IDEAS, "unarchiveIdea", IDEA_ROW))
                 .request("POST /projects/api/ideas/{archivedIdeaId}/unarchive"));
+        rows.add(row("qits ideas update", IDEAS_ONE_RANKED, "patchIdea", "patchIdea", PRIORITIZE_IDEA)
+                .consumes(held(IDEAS_ONE_RANKED, "patchIdea", concat(IDEA_ROW, List.of("priority"))))
+                .header("Content-Type", ProjectsApi.MERGE_PATCH)
+                .request("PATCH /projects/api/ideas/{ideaId}"));
+        rows.add(row("qits ideas rank", IDEAS_ONE_RANKED, "reprioritizeIdea", "reprioritizeIdea", RANK_IDEA)
+                .consumes("items[].id", "items[].priority")
+                .anyLength("items")
+                .request("PUT /projects/api/ideas/{ideaId}/priority"));
         // spawn reads the idea, then files the item through work create's door: that door's recording
         // carries no inspiredBy yet, so the row binds what spawn reads of its answer, as work create's does.
         rows.add(row("qits ideas spawn", IDEAS, "getIdea", "idea", SPAWN_FROM)
