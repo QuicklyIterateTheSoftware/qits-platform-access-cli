@@ -13,7 +13,7 @@ import eu.wohlben.qits.cli.access.platform.CliFailure;
  * There is deliberately nothing here that judges, before a call, whether this credential may dial a
  * service. There used to be: it read the minted token's {@code aud} claim and refused any service
  * not named in it. That was a false negative, and it cost {@code qits observe} its whole agent
- * audience — every qits service also accepts {@code qits-platform}, which is exactly what an agent's
+ * audience — every qits service accepts {@code qits-platform}, which is exactly what an agent's
  * token carries. Only the service knows who it accepts. Dial it, and let {@link #explain(int)} do
  * the talking if it says no.
  */

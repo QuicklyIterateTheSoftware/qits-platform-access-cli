@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RequestCredentialTest {
 
     private static final String AGENT = token("""
-            {"sub":"workspace-7f3a","aud":["dev-qits-projects","qits-platform"],"groups":["qits:agent"]}""");
+            {"sub":"workspace-7f3a","aud":["qits-platform"],"groups":["qits:agent"]}""");
     private static final String PERSON = token("""
             {"sub":"0b5e","preferred_username":"jan","aud":"qits-platform","groups":["qits:admin","staff"]}""");
 

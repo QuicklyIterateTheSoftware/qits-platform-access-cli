@@ -85,7 +85,7 @@ class GitCredentialCommandTest {
     }
 
     private GitCredential seed(Duration accessLeft, String refreshToken, Duration signInLeft) throws Exception {
-        GitCredential credential = new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, "dev-qits-githost", ORIGIN,
+        GitCredential credential = new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, ORIGIN,
                 OLD_ACCESS, T0.plus(accessLeft), refreshToken, T0.plus(signInLeft));
         try (ExclusiveLock ignored = store.lock()) {
             store.put(credential);
@@ -144,11 +144,38 @@ class GitCredentialCommandTest {
 
         assertThat(idp.grants("refresh_token")).isEqualTo(1);
         assertThat(idp.requests.getFirst()).containsEntry("client_id", "qits-git-workstation")
-                .containsEntry("refresh_token", old).containsEntry("audience", "dev-qits-githost");
+                .containsEntry("refresh_token", old).containsEntry("audience", "qits-platform");
         GitCredential now = store.find(ORIGIN).orElseThrow();
         assertThat(now.refreshToken()).isNotEqualTo(old);
         assertThat(now.accessExpiresAt()).isEqualTo(T0.plusSeconds(900));
         assertThat(r.out()).isEqualTo(answer(now.accessToken()));
+    }
+
+    /**
+     * A {@code git.json} written when a sign-in still kept its own audience: it loads, the refresh
+     * asks for {@code qits-platform} whatever it names, and the rewritten entry drops the field.
+     */
+    @Test
+    void anOldSignInWithItsOwnAudienceRefreshesForQitsPlatform() throws Exception {
+        String old = idp.issueRefreshToken();
+        Files.createDirectories(store.path().getParent());
+        Files.writeString(store.path(), """
+                {"credentials": {"%s": {
+                  "idpUrl": "%s", "clientId": "qits-git-workstation", "audience": "dev-qits-githost",
+                  "gitOrigin": "%s", "accessToken": "%s", "accessExpiresAt": "%s",
+                  "refreshToken": "%s", "refreshExpiresAt": "%s"}}}
+                """.formatted(ORIGIN, idp.url(), ORIGIN, OLD_ACCESS, T0.plusSeconds(10), old,
+                T0.plus(Duration.ofDays(30))));
+
+        Result r = credential("get", REQUEST);
+
+        assertThat(r.exit()).isZero();
+        assertThat(idp.grants("refresh_token")).isEqualTo(1);
+        assertThat(idp.requests.getFirst()).containsEntry("client_id", "qits-git-workstation")
+                .containsEntry("refresh_token", old).containsEntry("audience", "qits-platform");
+        GitCredential now = store.find(ORIGIN).orElseThrow();
+        assertThat(r.out()).isEqualTo(answer(now.accessToken()));
+        assertThat(Files.readString(store.path())).doesNotContain("audience");
     }
 
     /** Two Git processes at once: the second waits for the lock and uses the first one's refresh. */
@@ -173,7 +200,7 @@ class GitCredentialCommandTest {
                 return this;
             }
         };
-        GitCredential refreshedElsewhere = new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, "dev-qits-githost",
+        GitCredential refreshedElsewhere = new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID,
                 ORIGIN, FakeIdp.SECRET + "access-elsewhere", T0.plusSeconds(900), FakeIdp.SECRET + "refresh-elsewhere",
                 T0.plus(Duration.ofDays(30)));
         PrintStream err = new PrintStream(allErr, true, StandardCharsets.UTF_8);

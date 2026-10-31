@@ -4729,12 +4729,11 @@ Sign this workstation in for Git pushes to the platform's git host, through the 
 The sign-in may push branches under refs/heads/external/ and nothing else. It is stored in $XDG_CONFIG_HOME/qits/git.json, apart from the session of `qits login`.
 
 ```
-qits git-login [--audience <audience>] [--configure] [--git-host <url>] [--idp-url <url>] [--no-browser] [--timeout <seconds>]
+qits git-login [--configure] [--git-host <url>] [--idp-url <url>] [--no-browser] [--timeout <seconds>]
 ```
 
 | Name | What it does |
 |---|---|
-| `--audience <audience>` | The audience of the token. Default: qits-platform, the one audience every platform service accepts. |
 | `--configure` | Also run the two `git config --global` commands that make Git ask `qits git-credential` for this git host (and no other). |
 | `--git-host <url>` | The git host's address. Default: QITS_GIT_HOST_URL, else the idp's host with `idp` swapped for `githost` (https://githost.qits.wohlben.eu). |
 | `--idp-url <url>` | The idp's public base URL. Default: QITS_IDP_URL, else the idp of the `qits login` session, else https://idp.qits.<QITS_DOMAIN>/idp, else https://idp.qits.wohlben.eu/idp. |

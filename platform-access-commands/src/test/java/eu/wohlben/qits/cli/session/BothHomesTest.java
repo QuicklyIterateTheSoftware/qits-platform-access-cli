@@ -139,7 +139,7 @@ class BothHomesTest {
         String access = FakeIdp.SECRET + "access-git";
         GitCredentialFile gitStore = new GitCredentialFile(home.resolve("qits"));
         try (ExclusiveLock ignored = gitStore.lock()) {
-            gitStore.put(new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, "dev-qits-githost", origin,
+            gitStore.put(new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, origin,
                     access, T0.plus(Duration.ofMinutes(10)), idp.issueRefreshToken(), T0.plus(Duration.ofDays(30))));
         }
         env.put("QITS_GIT_AUTH_HOST", "githost.qits.wohlben.eu");

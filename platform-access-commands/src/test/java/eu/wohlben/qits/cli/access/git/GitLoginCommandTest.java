@@ -58,15 +58,8 @@ class GitLoginCommandTest {
     /** The sign-in address the last run printed. */
     private String address;
 
-    /** Runs the command with an explicit audience, and plays the browser once the address is on stdout. */
+    /** Runs the command, and plays the browser once the address is on stdout. */
     private int gitLogin(String... extra) throws Exception {
-        List<String> args = new java.util.ArrayList<>(List.of("--audience", "dev-qits-githost"));
-        args.addAll(List.of(extra));
-        return gitLoginWith(args.toArray(String[]::new));
-    }
-
-    /** The same, with no audience but what {@code extra} names. */
-    private int gitLoginWith(String... extra) throws Exception {
         CliContext context = new CliContext(Map.copyOf(env), InputStream.nullInputStream(),
                 new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
                 new FakeTime(Instant.parse("2026-09-12T10:00:00Z")), new FakeTime(Instant.EPOCH), TokenClient::new, stop -> { });
@@ -105,12 +98,21 @@ class GitLoginCommandTest {
     }
 
     @Test
-    void withNoAudienceItAsksForTheOneEveryPlatformServiceAccepts() throws Exception {
-        assertThat(gitLoginWith()).isZero();
+    void itAsksForTheOneAudienceEveryPlatformServiceAccepts() throws Exception {
+        assertThat(gitLogin()).isZero();
 
         assertThat(GitLoginFlowTest.query(address)).containsEntry("audience", "qits-platform");
-        assertThat(new GitCredentialFile(home.resolve("qits")).find(ORIGIN)).get()
-                .extracting(GitCredential::audience).isEqualTo("qits-platform");
+    }
+
+    @Test
+    void thereIsNoAudienceOption() throws Exception {
+        CliContext context = new CliContext(Map.copyOf(env), InputStream.nullInputStream(),
+                new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
+                new FakeTime(Instant.parse("2026-09-12T10:00:00Z")), new FakeTime(Instant.EPOCH), TokenClient::new, stop -> { });
+
+        assertThat(TestCli.execute(context, "git-login", "--idp-url", idp.url(), "--audience", "dev-qits-githost"))
+                .isEqualTo(2);
+        assertThat(new GitCredentialFile(home.resolve("qits")).find(ORIGIN)).isEmpty();
     }
 
     @Test

@@ -35,7 +35,7 @@ class GitLoginFlowTest {
 
     private static final Instant T0 = Instant.parse("2026-09-12T10:00:00Z");
     static final String ORIGIN = "https://githost.qits.wohlben.eu";
-    private static final String AUDIENCE = "dev-qits-githost";
+    private static final String AUDIENCE = "qits-platform";
 
     @TempDir
     Path home;
@@ -61,7 +61,7 @@ class GitLoginFlowTest {
     }
 
     private int login(Consumer<String> browser, Duration timeout) throws Exception {
-        return new GitLoginFlow(new TokenClient(idp.url(), GitLoginFlow.CLIENT_ID), store, ORIGIN, AUDIENCE,
+        return new GitLoginFlow(new TokenClient(idp.url(), GitLoginFlow.CLIENT_ID), store, ORIGIN,
                 new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
                 time, url -> {
                     opened = url;
@@ -132,7 +132,6 @@ class GitLoginFlowTest {
         GitCredential saved = store.find(ORIGIN).orElseThrow();
         assertThat(saved.idpUrl()).isEqualTo(idp.url());
         assertThat(saved.clientId()).isEqualTo("qits-git-workstation");
-        assertThat(saved.audience()).isEqualTo(AUDIENCE);
         assertThat(saved.gitOrigin()).isEqualTo(ORIGIN);
         assertThat(saved.accessToken()).startsWith(FakeIdp.SECRET + "access-");
         assertThat(saved.accessExpiresAt()).isEqualTo(T0.plusSeconds(900));
@@ -141,6 +140,7 @@ class GitLoginFlowTest {
         assertThat(saved.toString()).doesNotContain(FakeIdp.SECRET);
 
         JsonNode file = new ObjectMapper().readTree(Files.readString(store.path()));
+        assertThat(file.path("credentials").path(ORIGIN).has("audience")).isFalse();
         assertThat(file.path("credentials").path(ORIGIN).path("accessExpiresAt").asText()).isEqualTo("2026-09-12T10:15:00Z");
         assertThat(PosixFilePermissions.toString(Files.getPosixFilePermissions(store.path()))).isEqualTo("rw-------");
         assertThat(PosixFilePermissions.toString(Files.getPosixFilePermissions(home.resolve("qits")))).isEqualTo("rwx------");
@@ -150,7 +150,7 @@ class GitLoginFlowTest {
 
     @Test
     void anotherOriginsSignInIsKept() throws Exception {
-        GitCredential other = new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID, "prod-qits-githost",
+        GitCredential other = new GitCredential(idp.url(), GitLoginFlow.CLIENT_ID,
                 "http://githost.prod.localhost:8080", null, null, FakeIdp.SECRET + "other", T0.plus(Duration.ofDays(1)));
         try (ExclusiveLock ignored = store.lock()) {
             store.put(other);
