@@ -1823,7 +1823,7 @@ Which platform:
 - idp: `--idp-url`, else `QITS_IDP_URL`, else the idp of the `qits login` session, else as
   `qits login` finds it.
 - git host: `--git-host`, else `QITS_GIT_HOST_URL`, else the idp's host with `idp` swapped for
-  `githost` (`https://githost.qits.wohlben.eu`).
+  `githost` (`https://githost.qits.<QITS_DOMAIN>`).
 - audience: always `qits-platform`, the one audience every platform service accepts, the git host
   included. Sign-in and every refresh ask for it; an `audience` an older `git.json` still holds is
   ignored.
