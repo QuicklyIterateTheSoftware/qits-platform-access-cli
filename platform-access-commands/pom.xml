@@ -7,7 +7,7 @@
     <parent>
         <groupId>eu.wohlben</groupId>
         <artifactId>qits</artifactId>
-        <version>2026.1030.161945</version>
+        <version>2026.1031.10603</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -179,6 +179,11 @@
                  targets` with (FakePlatformMain, epic qits-881). Pinned in the root pom. -->
             <groupId>eu.wohlben.qits</groupId>
             <artifactId>qits-system-golden-masters</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>eu.wohlben.qits</groupId>
+            <artifactId>qits-deployments-golden-masters</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

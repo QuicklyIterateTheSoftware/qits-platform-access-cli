@@ -5,7 +5,7 @@
 The `qits` command: access to the qits platform from a Linux or WSL workstation. A Quarkus
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
-that session fresh), `qits projects|repositories|work|release-request` (the projects service;
+that session fresh), `qits projects|repositories|work|ideas|release-request` (the projects service;
 `work` is every work item, of every archetype), `qits ci runs|run|retry|cancel|report` (qits-ci's runs, a
 run's step logs, a retry, a cancel, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
@@ -151,7 +151,7 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                the HTTP client and its error messages, which address a service has (PlatformUrls),
                the aligned table (Table), and the --since/--until/--limit window both query
                commands share (QueryWindow, a picocli mixin)
-    projects/  qits projects, repositories, work and release-request. `qits work` is one group for
+    projects/  qits projects, repositories, work, ideas and release-request. `qits work` is one group for
                every archetype (WorkCommand; WorkEntities holds the transition's full-state merge
                and the tables). Its writes take a JSON payload on stdin and, with none, print the
                usage and the schema the service serves per archetype and door (entity doors) or
@@ -161,6 +161,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                terminal/'s TerminalAttach; without --repository it is the list's
                wrapper.repositoryId, as the page's Backups panel picks it, and a clean close is
                followed by the panel's project-wide backup-sync and one re-read 3 s later
+               `qits ideas` (IdeasCommand, epic qits-888) is a project's ideas on /projects/api/ideas, the
+               same shape: --entity is the idea's id, the writes' schemas come from the OpenAPI
+               document through WorkPayload, and `spawn` files work through createWork with the
+               idea's project, title, description and inspiredBy filled in
+               `qits ideas` (IdeasCommand, epic qits-888) is a project's ideas on /projects/api/ideas, the
+               same shape: --entity is the idea's id, the writes' schemas come from the OpenAPI
+               document through WorkPayload, and `spawn` files work through createWork with the
+               idea's project, title, description and inspiredBy filled in
     ci/        qits ci: runs, run (with the step logs), retry and cancel, on qits-ci's run API
     report/    qits ci report: release reports. The framework (ReportKind, ReportParser,
                StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
@@ -254,7 +262,14 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                every 30 seconds until PRESENT or --timeout passes
     git/       qits git-login and git-credential: the loopback callback, git.json, Git's helper
                protocol, the per-host Git setup
-    artifacts/ qits artifacts: the group. Its only command today is publish, in publish/ below.
+    artifacts/ qits artifacts: the group, with publish (in publish/ below) and fetch. `fetch
+               deployed-pacts` (qits-1765, Interaction.LOCAL: it writes files) asks qits-maintenance's
+               MaintenanceApi.deployedPacts which pact package each deployed consumer version was
+               built against and unpacks each jar's pacts/*_<provider>.json through PactJars (the
+               hosted maven repository over PlatformClient, the command's own credential). Its rows:
+               listDeployedPacts in MaintenanceContract, pending until a pinned
+               qits-maintenance-golden-masters records `a provider whose deployed consumers publish
+               pacts`; the jar GET in ArtifactsContract (FetchRows)
     changelog/ qits changelog bump-message, and the two grammars a changelog shares with its
                readers: CommitSubjects (the ids a `type(qits-9, qits-10):` subject names, and their
                order) and AssociatedTickets (the changelog's last line, written and read back).
@@ -273,6 +288,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                ContentHashes), MavenPublisher (flatten + bundle + link over maven-model-builder's
                effective models, MavenReactor), NpmPublisher (the tarball and publish document),
                ContractPackager and ContractDocs, and Archives (the deterministic jar and tar.gz).
+    deployments/ qits deployments settings list|set|delete|preview, on qits-deployments' settings doors
+               (DeploymentsApi; epic qits-765). Its rows are DeploymentsContract, pending until a pinned
+               qits-deployments-golden-masters records their states
+    agentmcp/  qits agent-mcp credentials list|set|delete, on qits-projects' agent MCP catalog
+               (AgentMcpApi; epic qits-765). Its rows belong to ProjectsContract (AgentMcpContract)
     users/     qits users invite, register, list and delete, on the idp's user doors (IdpUsersApi).
                register sends no bearer: the register token is the credential, and the person has
                no session yet. The idp's address is the session's, the wire alias inside
@@ -366,6 +386,10 @@ Two packages sit outside `access/`, because neither is about one command:
   option — all optional, all with a working default. `Interaction.LOCAL` (only means something on the
   caller's machine) and `input = PAYLOAD` (reads a JSON payload on stdin; `PayloadMarkerTest`) are
   for whoever runs the commands somewhere else; the screen treats `LOCAL` like `PLAIN`.
+  `input = TEXT` is a command that reads one plain value on stdin through `StdinValue.read` (a
+  secret: `deployments settings set`, `agent-mcp credentials set`), which refuses a terminal or
+  nothing with exit 2 and takes off one trailing line break; the MCP service gives it a string
+  `payload`, sent as the command's stdin as it is. Such a command never prints the value back.
 - **The CLI never sends `X-Qits-User` / `X-Qits-Roles`.** Those are what the gateway asserts about a
   caller; a client that writes them asserts a role it does not hold. An agent that needs a door its
   credential cannot open is granted the audience instead.
@@ -528,7 +552,11 @@ outside `/work`: the release request's commits for `qits artifacts publish chang
 every state, where a command finds a request by its logical id (`listRepositoryReleaseRequests` with
 `state=all`, state `a repository with a release not merged to main`; qits-1158); the git reads of
 `qits repositories` (branches, commits, commit changes and diff, commit subjects); a refinement's
-designs for `qits work design` (state `a ticket with a design`; qits-1174); the room itself for `qits
+designs for `qits work design` (state `a ticket with a design`; qits-1174); the idea doors of `qits ideas`
+(epic qits-888: list, get, create, patch, archive, unarchive in `a project with ideas`, create also
+in `a project with no work`; pending until the pin reaches qits-projects-service 2026.1030.185452); the idea doors of `qits ideas`
+(epic qits-888: list, get, create, patch, archive, unarchive in `a project with ideas`, create also
+in `a project with no work`; pending until the pin reaches qits-projects-service 2026.1030.185452); the room itself for `qits
 work refinement` (qits-1383): `open`'s `startWorkRefinement` then `ensureRefinementContainer`, both in
 `a ticket with a design`, and its 409 in `a refined ticket`; `show`'s `getWorkRefinement` in `a
 reported ticket` (null) and `a ticket with a design`; `discard`'s `getWorkRefinement` and

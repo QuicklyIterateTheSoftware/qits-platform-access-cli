@@ -186,6 +186,19 @@ class McpToolCatalogTest {
         assertThat(instructions).contains("Not served here (" + catalog.excluded().size() + ")");
     }
 
+    /** qits-1765: it writes pacts to a local directory, which in this service nobody would read. */
+    @Test
+    void fetchingDeployedPactsIsLocalAndNoTool() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(byCommand.get("qits artifacts fetch deployed-pacts")).isNotNull();
+        assertThat(byCommand.get("qits artifacts fetch deployed-pacts").reason())
+                .isEqualTo("only means something on the caller's machine");
+        assertThat(catalog.tool("artifacts_fetch_deployed-pacts")).isEmpty();
+        assertThat(catalog.tool("artifacts_fetch")).isEmpty();
+    }
+
     @Test
     void theReportSubmitIsCiOnlyAndTheReportShowIsATool() {
         Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
@@ -310,8 +323,12 @@ class McpToolCatalogTest {
                     expectedRequired.add(name);
                 }
             }
-            if (TuiCommands.inputOf(spec.userObject()) == Input.PAYLOAD) {
+            if (TuiCommands.inputOf(spec.userObject()) != Input.NONE) {
                 expected.add(ToolCatalog.PAYLOAD);
+            }
+            if (TuiCommands.inputOf(spec.userObject()) == Input.TEXT) {
+                // A value on stdin is all such a command is for: without one it only refuses.
+                expectedRequired.add(ToolCatalog.PAYLOAD);
             }
             assertThat(properties(tool).keySet()).as(tool.name()).containsExactlyInAnyOrderElementsOf(expected);
             assertThat(new TreeSet<>(required(tool))).as(tool.name() + " required").isEqualTo(expectedRequired);
@@ -376,13 +393,15 @@ class McpToolCatalogTest {
         assertThat(reads).containsExactlyInAnyOrder(
                 "projects_list", "projects_delivery", "projects_desk_answer", "projects_desk_triggers", "users_list", "repositories_list", "repositories_branches", "repositories_commits",
                 "repositories_commit-changes", "repositories_commit-diff", "repositories_commit-subjects",
-                "work_list", "work_details", "work_progress", "work_dossier_list", "work_dossier_get",
+                "work_list", "work_details", "ideas_list", "ideas_details", "work_progress", "work_dossier_list", "work_dossier_get",
                 "work_members_list", "work_refinement_show", "work_design_list", "work_design_get",
                 "release-request_list", "ci_runs", "ci_run", "ci_report_show", "maintenance_automations",
-                "maintenance_bump",
+                "maintenance_bump", "deployments_settings_list", "deployments_settings_preview",
+                "agent-mcp_credentials_list",
                 "events", "events_query", "observe", "observe_query", "observe_sources", "observe_errors",
                 "observe_slow-spans", "observe_metrics", "help_skill", "help_guide", "agents_claude_hook_work-links",
-                "agents_claude_statusline_work-items", "artifacts_publish_exists", "changelog_bump-message",
+                "agents_claude_statusline_work-items", "artifacts_publish_exists", "artifacts_fetch_deployed-pacts",
+                "changelog_bump-message",
                 "workspaces_list", "workspaces_show", "workspaces_active-process", "workspaces_items",
                 "workspaces_history", "workspaces_log", "workspaces_agents_sign-in_status",
                 "workspaces_agents_plugins_list", "agents_list", "agents_show", "agents_sessions", "agents_transcript",
@@ -404,14 +423,35 @@ class McpToolCatalogTest {
         });
         assertThat(marked).containsExactlyInAnyOrder("work_create", "work_update", "work_transition", "work_status",
                 "work_comment_create", "work_comment_update", "work_dossier_put", "work_members_add",
-                "work_members_condition", "work_design_put");
+                "work_members_condition", "work_design_put", "ideas_create", "ideas_update", "ideas_spawn");
+        Set<String> text = new TreeSet<>();
+        commands.forEach((name, spec) -> {
+            if (TuiCommands.inputOf(spec.userObject()) == Input.TEXT) {
+                text.add(name);
+            }
+        });
+        assertThat(text).containsExactlyInAnyOrder("deployments_settings_set", "agent-mcp_credentials_set");
         for (Tool tool : catalog.tools()) {
             boolean payload = marked.contains(tool.name());
-            assertThat(tool.payload()).as(tool.name()).isEqualTo(payload);
-            assertThat(properties(tool).containsKey(ToolCatalog.PAYLOAD)).as(tool.name()).isEqualTo(payload);
+            boolean value = text.contains(tool.name());
+            assertThat(tool.payload()).as(tool.name()).isEqualTo(payload || value);
+            assertThat(properties(tool).containsKey(ToolCatalog.PAYLOAD)).as(tool.name()).isEqualTo(payload || value);
             assertThat(tool.description().endsWith(ToolCatalog.PAYLOAD_HINT)).as(tool.name()).isEqualTo(payload);
         }
         assertThat(property(tool("work_update"), ToolCatalog.PAYLOAD)).containsEntry("type", "object");
+        assertThat(property(tool("deployments_settings_set"), ToolCatalog.PAYLOAD)).containsEntry("type", "string")
+                .containsEntry("description", ToolCatalog.TEXT_PAYLOAD);
+        assertThat(required(tool("agent-mcp_credentials_set"))).contains(ToolCatalog.PAYLOAD);
+    }
+
+    /** A text payload is the command's stdin byte for byte: a string, never re-encoded as JSON. */
+    @Test
+    void aTextPayloadIsStdinAsItIs() {
+        Tool set = tool("agent-mcp_credentials_set");
+        assertThat(ToolRunner.stdin(set, Map.of("key", "GITHUB_TOKEN", ToolCatalog.PAYLOAD, "s3cr\"et\n")))
+                .isEqualTo("s3cr\"et\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertThat(ToolRunner.argv(set, Map.of("key", "GITHUB_TOKEN", ToolCatalog.PAYLOAD, "s3cr\"et")))
+                .doesNotContain("s3cr\"et").noneMatch(a -> a.contains("s3cr"));
     }
 
     /**

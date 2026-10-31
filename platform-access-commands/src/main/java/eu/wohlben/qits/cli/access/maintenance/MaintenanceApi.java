@@ -51,6 +51,17 @@ public final class MaintenanceApi {
         return client.get(uri("/maintenance/api/bumps/" + segment(id)));
     }
 
+    /**
+     * {@code {provider, pacts:[{consumerRepository, groupId, artifactId, pactVersion,
+     * deployedVersions}]}}: for each consumer of {@code provider} that is deployed somewhere, or kept
+     * as a rollback target, the newest pact package not above each such version (ticket qits-1765).
+     * HTTP 503 when qits-deployments cannot say what serves; HTTP 400 without a provider.
+     */
+    public JsonNode deployedPacts(String provider) throws CliFailure, InterruptedException {
+        return client.get(uri("/maintenance/api/deployed-pacts?provider="
+                + URLEncoder.encode(provider.strip(), StandardCharsets.UTF_8)));
+    }
+
     private URI uri(String path) throws CliFailure {
         try {
             URI uri = URI.create(base + path);

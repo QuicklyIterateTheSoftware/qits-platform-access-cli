@@ -34,11 +34,18 @@ import java.util.concurrent.Callable;
  */
 public final class ToolCatalog {
 
-    /** The property a payload command's JSON document goes in. Never an option name: no option is called that. */
+    /**
+     * The property a payload command's JSON document, or a text command's value, goes in. Never an
+     * option name: no option is called that.
+     */
     public static final String PAYLOAD = "payload";
 
     /** Appended to a payload command's description: the CLI's own way to the schema, empty stdin. */
     static final String PAYLOAD_HINT = "Call without `payload` to get the payload's schema.";
+
+    /** The {@code payload} of a command that reads a plain value on stdin ({@code Input.TEXT}). */
+    static final String TEXT_PAYLOAD = "The value the command reads on stdin, as text: it is sent as it is, one trailing "
+            + "line break taken off, and never printed back.";
 
     /** What a call answers in when it says nothing else: the form a program reads. */
     static final String JSON = "json";
@@ -49,7 +56,8 @@ public final class ToolCatalog {
      * @param path        the command path below the root, as picocli spells each name
      * @param inputSchema the JSON schema of the arguments, as plain maps and lists
      * @param arguments   how each schema property goes back onto the command line
-     * @param payload     whether the command reads a JSON document on stdin
+     * @param payload     whether the command reads stdin: a JSON document ({@code Input.PAYLOAD}) or a
+     *                    value as text ({@code Input.TEXT})
      * @param outputJson  the name of the output option the runner sets to {@code json} when the call
      *                    did not choose, or null when the command offers no JSON
      * @param read        whether the command is marked {@code Effect.READ}; false for every other,
@@ -199,7 +207,8 @@ public final class ToolCatalog {
     }
 
     private static Tool tool(CommandSpec spec, List<String> path) {
-        boolean payload = TuiCommands.inputOf(spec.userObject()) == Input.PAYLOAD;
+        Input reads = TuiCommands.inputOf(spec.userObject());
+        boolean payload = reads != Input.NONE;
         Map<String, Object> properties = new LinkedHashMap<>();
         List<String> required = new ArrayList<>();
         List<Argument> arguments = new ArrayList<>();
@@ -237,11 +246,18 @@ public final class ToolCatalog {
             arguments.add(new Argument(property, null, index++, kind, false));
         }
 
-        if (payload) {
+        if (reads == Input.PAYLOAD) {
             Map<String, Object> schema = new LinkedHashMap<>();
             schema.put("type", "object");
             schema.put("description", "The JSON document the command reads on stdin. " + PAYLOAD_HINT);
             properties.put(PAYLOAD, schema);
+        } else if (reads == Input.TEXT) {
+            // A value read as text (a secret, kept off the command line): the string is stdin as it is.
+            Map<String, Object> schema = new LinkedHashMap<>();
+            schema.put("type", "string");
+            schema.put("description", TEXT_PAYLOAD);
+            properties.put(PAYLOAD, schema);
+            required.add(PAYLOAD);
         }
 
         Map<String, Object> input = new LinkedHashMap<>();
@@ -250,7 +266,8 @@ public final class ToolCatalog {
         if (!required.isEmpty()) {
             input.put("required", required);
         }
-        return new Tool(String.join("_", path), path, description(spec, payload), input, arguments, payload,
+        return new Tool(String.join("_", path), path, description(spec, reads == Input.PAYLOAD), input, arguments,
+                payload,
                 outputJson, TuiCommands.effectOf(spec.userObject()) == Effect.READ);
     }
 

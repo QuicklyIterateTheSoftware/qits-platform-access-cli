@@ -47,6 +47,7 @@ public final class FakePlatform implements AutoCloseable {
     private final ExecutorService threads = Executors.newCachedThreadPool(r -> Thread.ofPlatform().daemon().unstarted(r));
     private final Map<String, Answer> answers = new ConcurrentHashMap<>();
     private final Map<String, Function<Request, Answer>> routes = new ConcurrentHashMap<>();
+    private final Map<String, byte[]> files = new ConcurrentHashMap<>();
     private final CountDownLatch closing = new CountDownLatch(1);
     public final List<Request> requests = Collections.synchronizedList(new ArrayList<>());
     public final BlockingDeque<StreamScript> streams = new LinkedBlockingDeque<>();
@@ -84,6 +85,11 @@ public final class FakePlatform implements AutoCloseable {
      */
     public void route(String method, String path, Function<Request, Answer> handler) {
         routes.put(method + " " + path, handler);
+    }
+
+    /** A GET answered 200 with these bytes as they are: a jar, which a string body would mangle. */
+    public void file(String path, byte[] bytes) {
+        files.put("GET " + path, bytes.clone());
     }
 
     public void answer(String method, String path, String json) {
@@ -176,6 +182,16 @@ public final class FakePlatform implements AutoCloseable {
                 routed = new Answer(500, "{\"message\":\"the fake's route failed: " + failed + "\"}", Map.of());
             }
             respond(exchange, routed);
+            return;
+        }
+        byte[] file = files.get(exchange.getRequestMethod() + " " + uri.getPath());
+        if (file != null) {
+            exchange.getResponseHeaders().set("Content-Type", "application/java-archive");
+            exchange.sendResponseHeaders(200, file.length == 0 ? -1 : file.length);
+            if (file.length > 0) {
+                exchange.getResponseBody().write(file);
+            }
+            exchange.close();
             return;
         }
         Answer answer = answers.get(exchange.getRequestMethod() + " " + uri.getPath());

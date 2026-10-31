@@ -624,6 +624,13 @@ Installing it is not part of this version.
     {"target":"<STATUS>"} | qits work --entity <id or qualified id> status
     <payload> | qits work --entity <id or qualified id> comment create
     <merge patch> | qits work --entity <id or qualified id> comment update --comment <id>
+    qits ideas list --project <project> [--archived] [--status PLANNED|QUEUED|DONE]
+    qits ideas --entity <idea id> details
+    <payload> | qits ideas create
+    <merge patch> | qits ideas --entity <idea id> update
+    qits ideas --entity <idea id> archive --reason <text>
+    qits ideas --entity <idea id> unarchive
+    <payload> | qits ideas --entity <idea id> spawn --archetype EPIC|TICKET
     qits release-request --project <project> [--repository <repository>] list \
         [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
@@ -923,6 +930,29 @@ form takes terminal control characters out of every value, and `-o json` writes 
     qits work list --project qits --status DROPPED --outcome obsolete
     echo '{"body":"I can reproduce it."}' | qits work --entity qits-100 comment create
     echo '{"body":"Fixed."}' | qits work --entity qits-100 comment update --comment <comment id>
+
+### qits ideas
+
+`qits ideas` is a project's ideas (epic qits-888), on the service's `/projects/api/ideas` doors: short,
+titled notes that an epic, a ticket or a campaign names as its `inspiredBy`. An idea is not a work
+archetype: it has no lifecycle a caller moves, no thread, no children and no delete. Its `status`
+(`PLANNED`, `QUEUED`, `DONE`) is derived by the service from the work naming it, and it is archived
+with a reason instead of deleted (`archive --reason`, `unarchive`). `list` leaves the archived ones
+out unless `--archived` adds them. `details` prints the idea, the idea enabling it (with a `hint:`
+line when that one is archived), the ideas it enables and the work it inspired. `create` and
+`update` take their payload on stdin as `qits work` does, and with none print the request body's
+schema from the service's OpenAPI document. `spawn` reads the idea and files an epic or a ticket
+through `POST /projects/api/work`, the door `qits work create` sends to, with `project`, `title`,
+`description` and `inspiredBy` filled in from the idea and the JSON object on stdin merged over them
+(a ticket's `ticketType` and `impetus` go there); with nothing on stdin it prints what the idea fills
+in, what is still missing and the archetype's create schema. `qits work create` and `update` send an
+`inspiredBy` in their payload as it is, and `qits work details` prints it as `inspired by`.
+
+    qits ideas list --project qits
+    echo '{"project":"qits","title":"Faster builds"}' | qits ideas create
+    qits ideas --entity <idea id> details
+    qits ideas --entity <idea id> archive --reason 'Folded into the cache epic.'
+    echo '{}' | qits ideas --entity <idea id> spawn --archetype epic
 
 ### qits release-request
 
@@ -1239,6 +1269,37 @@ with the reason.
     qits maintenance --project qits --repository qits-landing-app automations --request qits-landing-app-rr-7
     qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind screenshot-baselines
     qits maintenance bump 6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+
+### qits deployments settings
+
+The values qits-deployments hands an application in an environment when it deploys it (epic
+qits-765). `list --application <app> [--environment <env>]` prints APPLICATION, ENVIRONMENT, KEY,
+VALUE and UPDATED BY, a secret's value as `********` (the service sends it as null). `set
+--application <app> --environment <env> --key <KEY> [--secret]` reads the value on stdin, never
+from a flag, takes off one trailing line break, and refuses a terminal or an empty stdin with exit 2
+before sending anything; it prints the stored row with the value masked, plain or secret. `delete`
+prints `deleted`, and a 404 is exit 1. `preview --application <app> --environment <env>
+[--include-extras]` prints what the next deployment would change: `+ KEY=value`, `- KEY=value`,
+`~ KEY from -> to`, `= KEY=value` for a kept extra, then the unchanged count. Reading takes
+qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent; writing qits:admin or
+qits:system.
+
+    qits deployments settings list --application qits-ci --environment dev
+    qits deployments settings set --application qits-ci --environment dev --key API_TOKEN --secret < token.txt
+    qits deployments settings preview --application qits-ci --environment dev
+
+### qits agent-mcp credentials
+
+The secrets the agent MCP catalog's servers are reached with, in qits-projects (epic qits-765).
+`list` prints the stored keys with when and by whom each was set, never a value. `set --key
+env.<VAR>` reads the value on stdin under the same rules as `deployments settings set` and prints
+`set <key>`; `delete --key env.<VAR>` prints `deleted`, a 404 is exit 1. list takes qits:admin,
+qits:admin-agent, qits:desk-admin or qits:agent; set and delete qits:admin or qits:admin-agent.
+
+    printf '%s' "$TOKEN" | qits agent-mcp credentials set --key env.GITHUB_TOKEN
+
+Both `set` commands are `@TuiCommand(input = TEXT)`: the MCP service serves them with a string
+`payload`, which is the command's stdin as it is.
 
 ### qits users
 
@@ -2037,6 +2098,40 @@ A binary or a symlink started under the name `qits-publish` — its own name, be
 release still publishes the binary as `qits-platform-access-cli`; a step that still says
 `qits-publish` needs only that name on its `PATH`, as a copy or a symlink of `qits`. New pipelines
 should call `qits artifacts publish` directly.
+
+## qits artifacts fetch deployed-pacts
+
+    qits artifacts fetch deployed-pacts --provider <provider repository> --out <dir> [-o json]
+
+The consumer pacts a provider has to keep honouring (qits-1765): for every consumer version that is
+deployed in some environment, or kept there as the rollback target, the pact package it was built
+against. A provider's release gate runs it before `./mvnw verify` and points its pact loader at
+`<dir>`, so each deployed consumer version is verified on its own rather than only the version the
+pom pins.
+
+qits-maintenance makes the join (`GET /maintenance/api/deployed-pacts?provider=<repository>`: what
+qits-deployments says serves, which repository built each application, and the newest pact package
+not above each deployed version), and the command only downloads. Each package's jar,
+`<groupId>:<artifactId>:<pactVersion>`, comes from qits-artifacts' hosted maven repository
+(`https://registry.qits.$QITS_DOMAIN/artifacts/maven/maven`), and its top-level
+`pacts/*_<provider>.json` entries are written to `<dir>/<consumer repository>/<pact version>/`.
+That directory is replaced as a whole; `<dir>` is created when missing.
+
+    fetched qits-maintenance-service pact 2026.1028.235307 for deployed 2026.1030.204903, 2026.1030.192107
+    fetched 1 pact for qits-projects-service into target/deployed-pacts
+
+No deployed consumer prints `no deployed consumer pacts for <provider>` and exits `0`. `-o json`
+prints qits-maintenance's answer with `files` (the paths written) on each pact and `out`.
+
+**It fails closed.** A gate that verified fewer pacts than are deployed would pass for the wrong
+reason, so a refusal from qits-maintenance (`503` when qits-deployments cannot say what serves), a
+jar that cannot be downloaded and a jar without `pacts/*_<provider>.json` are each exit `1`, with
+a sentence naming it. A name in the answer that is not a plain path segment is refused before
+anything is written.
+
+Both reads go out with the command's credential like every other platform command's: the run's own
+`QITS_TOKEN` in a CI step, the workspace's token, or the session on a workstation. It writes files
+on the caller's disk, so it is `Interaction.LOCAL` and the MCP service does not serve it.
 
 ## qits changelog
 

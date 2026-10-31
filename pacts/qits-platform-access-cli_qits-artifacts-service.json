@@ -8,6 +8,51 @@
         "references": {
           "qits-call": {
             "app": "qits-artifacts-service",
+            "operationId": "getMavenFile"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts fetch deployed-pacts",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts fetch deployed-pacts: getMavenFile",
+      "key": "ed28be9c",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a maven jar published at a version",
+          "params": {
+            "artifact": "contract-maven",
+            "groupPath": "eu/wohlben/qits",
+            "name": "eu.wohlben.qits:contract-maven",
+            "type": "maven",
+            "version": "2100.1.0"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/artifacts/maven/maven/${groupPath}/${artifact}/${version}/${artifact}-${version}.jar",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/artifacts/maven/maven/eu/wohlben/qits/contract-maven/2100.1.0/contract-maven-2100.1.0.jar"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-artifacts-service",
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {

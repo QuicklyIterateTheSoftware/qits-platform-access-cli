@@ -1,5 +1,6 @@
 package eu.wohlben.qits.cli.access.projects;
 
+import eu.wohlben.qits.cli.access.agentmcp.AgentMcpContract;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import eu.wohlben.qits.cli.access.contracts.CliPact;
@@ -124,6 +125,30 @@ public final class ProjectsContract {
      */
     static final String SUPERSEDED_ITEMS = "an item that other items name as their supersededBy";
 
+    /**
+     * {@code qits ideas} (epic qits-888): the provider records the idea doors in this state, and
+     * {@code createIdea} in {@link #NO_WORK} too. Pending until qits-maintenance bumps {@code
+     * qits.projects-golden-masters.version} to a release that records it (qits-projects-service
+     * 2026.1030.185452 does); on that bump write the pact again with {@code -Dgolden.update=true}.
+     */
+    static final String IDEAS = "a project with ideas";
+
+    /**
+     * One idea as a row of {@code qits ideas list} and of every write's answer. Neither {@code
+     * enabledBy}, {@code archiveReason} nor {@code archivedAt}: null in most recordings, and a pact
+     * must not demand a null the field exists to replace; the table does not print them.
+     */
+    static final List<String> IDEA_ROW = List.of("id", "title", "status", "archived", "updatedAt");
+
+    /**
+     * What {@code qits ideas details} reads where the recording holds a value: the idea, the work it
+     * inspired and the ideas it enables. {@code enabledBy}, {@code enabledByIdea}, {@code
+     * archiveReason} and {@code archivedAt} are read too, but recorded null here, so not bound.
+     */
+    static final List<String> IDEA_DETAILS = List.of("id", "projectId", "title", "description", "status", "archived",
+            "createdAt", "updatedAt", "inspired[].qualifiedId", "inspired[].archetype", "inspired[].status",
+            "inspired[].title", "enables[].id", "enables[].status", "enables[].archived", "enables[].title");
+
     private static final CliPact BASE = CliPact.of("qits-projects-service", "qits-projects");
 
     // --- what the commands read -----------------------------------------------------------------
@@ -163,7 +188,8 @@ public final class ProjectsContract {
     /** One work item in full ({@code WorkEntities.printDetails}), and the project its closes are read in. */
     static final List<String> DETAILS = Stream.concat(ROW.stream(), Stream.of("blockReason", "blockedBy",
             "ticketType", "impetus", "assignee", "parent", "position", "dependsOn", "repositoryId", "supersededBy",
-            "implementedAt", "createdBy", "createdAt", "description", "acceptanceCriteria", "projectId")).toList();
+            "implementedAt", "createdBy", "createdAt", "description", "acceptanceCriteria", "projectId", "inspiredBy"))
+            .toList();
 
     /** What {@code qits work transition} carries over from the item ({@code WorkEntities.currentState}). */
     static final List<String> CARRIED = Stream.concat(WorkEntities.CARRIED.stream(), Stream.of("parent", "position"))
@@ -775,6 +801,81 @@ public final class ProjectsContract {
         });
     };
 
+    /** {@code qits ideas list}: the project's ideas, without the archived ones. */
+    private static final Call LIST_IDEAS = (api, params, recorded) -> {
+        // No length: the list grows as a project writes ideas, so the mock answers its shortest.
+        JsonNode ideas = api.ideas(params.get("projectId"), false, null).path("ideas");
+        assertThat(ideas).isNotEmpty().allSatisfy(ProjectsContract::idea);
+    };
+
+    /** An idea as a row prints it. */
+    private static void idea(JsonNode idea) {
+        assertThat(ProjectsApi.text(idea, "id")).isNotBlank();
+        assertThat(ProjectsApi.text(idea, "title")).isNotBlank();
+        assertThat(ProjectsApi.text(idea, "status")).isNotBlank();
+        assertThat(idea.path("archived").isBoolean()).isTrue();
+    }
+
+    /** {@code qits ideas details}: the idea, the work it inspired and the ideas it enables. */
+    private static final Call GET_IDEA = (api, params, recorded) -> {
+        JsonNode idea = api.idea(params.get("ideaId"));
+        idea(idea);
+        assertThat(ProjectsApi.text(idea, "id")).isEqualTo(params.get("ideaId"));
+        assertThat(idea.path("inspired")).isNotEmpty().allSatisfy(w -> {
+            assertThat(ProjectsApi.text(w, "qualifiedId")).isNotBlank();
+            assertThat(ProjectsApi.text(w, "status")).isNotBlank();
+        });
+        assertThat(idea.path("enables")).isNotEmpty().allSatisfy(ProjectsContract::ideaRef);
+    };
+
+    /** An idea in brief, as details lists the ones it enables. */
+    private static void ideaRef(JsonNode idea) {
+        assertThat(ProjectsApi.text(idea, "id")).isNotBlank();
+        assertThat(idea.path("archived").isBoolean()).isTrue();
+    }
+
+    /** {@code qits ideas spawn}: the pre-fill the idea gives the new item. */
+    private static final Call SPAWN_FROM = (api, params, recorded) -> {
+        JsonNode prefill = IdeasCommand.SpawnCommand.prefill(api.idea(params.get("ideaId")));
+        assertThat(ProjectsApi.text(prefill, "project")).isNotBlank();
+        assertThat(ProjectsApi.text(prefill, "title")).isNotBlank();
+        assertThat(ProjectsApi.text(prefill, "inspiredBy")).isEqualTo(params.get("ideaId"));
+    };
+
+    private static final Call CREATE_IDEA = (api, params, recorded) -> {
+        JsonNode created = api.createIdea(body(recorded));
+        idea(created);
+        assertThat(ProjectsApi.text(created, "title")).isEqualTo(body(recorded).path("title").asText());
+    };
+
+    /** A title the service refuses: the client fails with its status and the service's sentence. */
+    private static final Call CREATE_IDEA_REFUSED = (api, params, recorded) ->
+            assertThatThrownBy(() -> api.createIdea(body(recorded)))
+                    .isInstanceOfSatisfying(CliFailure.class, f -> {
+                        assertThat(f.status()).isEqualTo(400);
+                        assertThat(f.getMessage()).contains(ProjectsApi.text(
+                                BASE.masters().json(recorded.state(), recorded.operationId()), "message"));
+                    });
+
+    private static final Call PATCH_IDEA = (api, params, recorded) -> {
+        JsonNode patched = api.patchIdea(params.get("enabledIdeaId"), body(recorded));
+        idea(patched);
+        assertThat(ProjectsApi.text(patched, "title")).isEqualTo(body(recorded).path("title").asText());
+    };
+
+    private static final Call ARCHIVE_IDEA = (api, params, recorded) -> {
+        JsonNode archived = api.archiveIdea(params.get("enabledIdeaId"), body(recorded).path("reason").asText());
+        idea(archived);
+        assertThat(archived.path("archived").asBoolean()).isTrue();
+        assertThat(ProjectsApi.text(archived, "archiveReason")).isEqualTo(body(recorded).path("reason").asText());
+    };
+
+    private static final Call UNARCHIVE_IDEA = (api, params, recorded) -> {
+        JsonNode unarchived = api.unarchiveIdea(params.get("archivedIdeaId"));
+        idea(unarchived);
+        assertThat(unarchived.path("archived").asBoolean()).isFalse();
+    };
+
     /** {@code qits work dispatch}: the recorded mode, no rule; the table prints the mode, phase, branch and assignee. */
     private static final Call DISPATCH = (api, params, recorded) -> {
         JsonNode dispatch = api.dispatchWork(params.get("qualifiedId"), body(recorded).path("mode").asText(),
@@ -1039,13 +1140,15 @@ public final class ProjectsContract {
 
     public static final CliPact CONTRACT = BASE
             .client(ProjectsApi.class)
+            .client(AgentMcpContract.CLIENT)
             .excluded("ProjectsApi#openApi", "the served OpenAPI document (GET /projects/q/openapi), which the payload"
                     + " commands read a request body's schema from: no operation of the provider, so no recording")
             .excluded("ProjectsApi#remoteLoginSocket", "the backup-remote sign-in terminal, a WebSocket")
             .excluded("ProjectsApi#client", "the client the doors are called with, handed to the sign-in socket")
             .excluded("ProjectsApi#repository", "a lookup over repositories(), whose rows assert the entries: the mock"
                     + " answers every entry alike, so a lookup by name would find it twice")
-            .rows(ROWS);
+            .rows(ROWS)
+            .rows(AgentMcpContract.ROWS);
 
     private static List<CliRow> rows() {
         List<CliRow> rows = new ArrayList<>();
@@ -1341,6 +1444,39 @@ public final class ProjectsContract {
                 DISCARD_FINDS_THE_ROOM).consumes("refinement.id"));
         rows.add(row("qits work refinement discard", TICKET_WITH_A_DESIGN, "discardRefinement", "discardRefinement",
                 DISCARD_ROOM));
+
+        // qits ideas (epic qits-888): pending until the pinned golden masters carry the ideas
+        rows.add(row("qits ideas list", IDEAS, "listIdeas", "ideas", LIST_IDEAS)
+                .consumes(held(IDEAS, "listIdeas", prefixed("ideas[].", IDEA_ROW)))
+                .anyLength("ideas")
+                .request("GET /projects/api/ideas?project={projectId}"));
+        rows.add(row("qits ideas details", IDEAS, "getIdea", "idea", GET_IDEA)
+                .consumes(held(IDEAS, "getIdea", IDEA_DETAILS))
+                .anyLength("inspired", "enables")
+                .request("GET /projects/api/ideas/{ideaId}"));
+        rows.add(row("qits ideas create", NO_WORK, "createIdea", "createIdea", CREATE_IDEA)
+                .consumes(held(NO_WORK, "createIdea", IDEA_ROW))
+                .request("POST /projects/api/ideas"));
+        rows.add(row("qits ideas create", IDEAS, "createIdea", "createIdea", CREATE_IDEA_REFUSED)
+                .consumes("message")
+                .request("POST /projects/api/ideas"));
+        rows.add(row("qits ideas update", IDEAS, "patchIdea", "patchIdea", PATCH_IDEA)
+                .consumes(held(IDEAS, "patchIdea", IDEA_ROW))
+                .header("Content-Type", ProjectsApi.MERGE_PATCH)
+                .request("PATCH /projects/api/ideas/{enabledIdeaId}"));
+        rows.add(row("qits ideas archive", IDEAS, "archiveIdea", "archiveIdea", ARCHIVE_IDEA)
+                .consumes(held(IDEAS, "archiveIdea", concat(IDEA_ROW, List.of("archiveReason"))))
+                .request("POST /projects/api/ideas/{enabledIdeaId}/archive"));
+        rows.add(row("qits ideas unarchive", IDEAS, "unarchiveIdea", "unarchiveIdea", UNARCHIVE_IDEA)
+                .consumes(held(IDEAS, "unarchiveIdea", IDEA_ROW))
+                .request("POST /projects/api/ideas/{archivedIdeaId}/unarchive"));
+        // spawn reads the idea, then files the item through work create's door: that door's recording
+        // carries no inspiredBy yet, so the row binds what spawn reads of its answer, as work create's does.
+        rows.add(row("qits ideas spawn", IDEAS, "getIdea", "idea", SPAWN_FROM)
+                .consumes(held(IDEAS, "getIdea", List.of("id", "projectId", "title", "description")))
+                .request("GET /projects/api/ideas/{ideaId}"));
+        rows.add(row("qits ideas spawn", NO_WORK, "createWork", "createWork", CREATE)
+                .consumes(held(NO_WORK, "createWork", ROW)));
 
         // a work item named by its qualified id outside qits work
         WORK_ITEM_SCOPED.forEach(c -> rows.add(row(c, TICKET_WITH_A_COMMENT, "getWork", "work", WORK_ID)

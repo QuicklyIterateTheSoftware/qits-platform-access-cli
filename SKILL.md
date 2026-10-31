@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, ideas, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -1610,6 +1610,239 @@ qits work --entity qits-100 design put </dev/null
 - `1` The platform refused (for example no title, html or version, HTTP 400, your roles, HTTP 403, no such item or design, HTTP 404, or a stale version, HTTP 409), the item has no open refinement, or the platform cannot be reached.
 - `2` Used wrongly (for example no --entity, or a payload that is not a JSON object), not signed in, or the session ended.
 
+## qits ideas
+
+A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its inspiration ("inspiredBy"). list shows a project's ideas, details shows one with the work it inspired and the ideas it enables, create writes one, update edits it, archive and unarchive hide it from the list and bring it back, and spawn files an epic or a ticket from it.
+
+An idea is not a work item: it has no lifecycle you move, no comment thread, no children and no delete. Its status is derived from the work naming it: PLANNED (no counted work names it), QUEUED (some does, not all DONE) or DONE (every counted item DONE); DROPPED work is not counted. One idea may name another of its project as "enabledBy".
+
+A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, from the service's OpenAPI document.
+
+### Notes
+
+- --entity, --output and --projects-url may come before or after the command.
+- --entity is the idea's id, as list and create print it.
+- Reading takes qits:admin or qits:agent; so does writing. An agent writes only in its own project.
+
+## qits ideas list
+
+A project's ideas, oldest first: id, status, whether archived, title and when it last changed. The archived ones are left out unless --archived is given, which adds them beside the rest.
+
+```
+qits ideas list [--archived] [--entity <idea>] [--output table|json] [--project <project>] [--projects-url <url>] [--status <status>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archived` | Show the archived ideas too, beside the others. |
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project (required): its id or its slug. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--status <status>` | Only ideas at this status: PLANNED, QUEUED or DONE. |
+
+### Examples
+
+```
+qits ideas list --project qits
+qits ideas list --project qits --archived --status planned -o json
+```
+
+- --status is PLANNED, QUEUED or DONE, case-insensitive.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example a status it does not know, HTTP 400, or a project it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --project), not signed in, or the session ended.
+
+## qits ideas details
+
+One idea: its title, status, whether it is archived and why, the idea enabling it, its description, the ideas it enables, and the work it inspired (every work item naming it as inspiredBy, DROPPED ones included, with their status). When the idea enabling it is archived, a hint line says so.
+
+```
+qits ideas details [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 details -o json
+```
+
+- -o json prints the service's answer: the idea with inspired, enables and enabledByIdea. Control characters are written as escapes.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (for example an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits ideas create
+
+Write a new idea of a project.
+
+Reads the payload, a JSON object such as {"project":"qits","title":"..."}, on stdin and sends it unchanged to POST /projects/api/ideas. "project" is the project's id or slug. The title is one line (no line break, at most one '.', fewer than 20 whitespace characters); the description at most 3 paragraphs and 600 characters; "enabledBy" names one idea of the same project that is not itself enabled by another. The idea starts PLANNED. The command prints it, its id first.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi), and exits with 0.
+
+```
+qits ideas create [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas create </dev/null
+echo '{"project":"qits","title":"Faster builds"}' | qits ideas create
+jq -n --rawfile d idea.md '{project:"qits",title:"Share the build cache",description:$d}' | qits ideas create -o json
+```
+
+- The first one prints the schema: nothing is sent.
+
+### Exit codes
+
+- `0` The idea is written, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a title, description or enabledBy breaking its rule, HTTP 400, another project, HTTP 403, or a project it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example a payload that is not a JSON object), not signed in, or the session ended.
+
+## qits ideas update
+
+Edit an idea's title, description or enabledBy.
+
+Reads a JSON merge patch on stdin and sends it unchanged to PATCH /projects/api/ideas/{idea} as application/merge-patch+json: a property left out stays as it is, null clears description or enabledBy. The rules are the create's. The status is derived and the archive has its own commands.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the patch's JSON schema from the service's OpenAPI document (/projects/q/openapi), and exits with 0.
+
+```
+qits ideas update [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas update </dev/null
+echo '{"title":"Share the build cache across runners"}' | qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 update
+echo '{"enabledBy":null}' | qits ideas update --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3
+```
+
+### Exit codes
+
+- `0` The idea is edited, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example a patch it does not take, HTTP 400, another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity, or a patch that is not a JSON object), not signed in, or the session ended.
+
+## qits ideas archive
+
+Archive an idea: hide it from the list, and say why. Ideas are never deleted.
+
+Sends {"reason":"..."} to POST /projects/api/ideas/{idea}/archive. Allowed at every status, and the status does not change. Archiving an archived idea states the reason again.
+
+```
+qits ideas archive [--entity <idea>] [--output table|json] [--projects-url <url>] [--reason <text>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--reason <text>` | Why the idea is archived (required). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 archive --reason 'Folded into the cache epic.'
+```
+
+### Exit codes
+
+- `0` The idea is archived.
+- `1` The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity or no --reason), not signed in, or the session ended.
+
+## qits ideas unarchive
+
+Take an idea out of the archive, so the list shows it again.
+
+Sends POST /projects/api/ideas/{idea}/unarchive, which clears the archive and its reason. An idea that is not archived is answered as it is.
+
+```
+qits ideas unarchive [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 unarchive
+```
+
+### Exit codes
+
+- `0` The idea is not archived.
+- `1` The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be reached.
+- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
+
+## qits ideas spawn
+
+File an epic or a ticket inspired by an idea.
+
+Reads the idea, and starts the new item from it: "project" its project, "title" its title, "description" its description when it has one, and "inspiredBy" its id. The JSON object on stdin is merged over that as a merge patch (null removes a property), "archetype" is set from --archetype, and the result goes to POST /projects/api/work, the door `qits work create` sends to. The command prints the new item, its qualified id first. A ticket also needs its "ticketType" and "impetus" on stdin.
+
+With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage, what the idea fills in, the required properties still missing, and the archetype's create schema served at GET /projects/api/work/archetypes/{archetype}/schemas/create, and exits with 0. Pipe in {} to file the item as the idea fills it.
+
+```
+qits ideas spawn [--archetype <archetype>] [--entity <idea>] [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--archetype <archetype>` | The new item's archetype (required): EPIC or TICKET. Case-insensitive. |
+| `--entity <idea>` | The idea: its id, passed to the service as it is. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+
+### Examples
+
+```
+qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 spawn --archetype epic </dev/null
+echo '{}' | qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 spawn --archetype epic
+echo '{"ticketType":"IMPROVEMENT","impetus":"Builds wait on downloads."}' | qits ideas spawn --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 --archetype ticket
+```
+
+- The first one prints the schema: nothing is sent.
+
+### Exit codes
+
+- `0` The item is filed, or nothing was put in and the schema is printed.
+- `1` The platform refused (for example an idea it does not know, HTTP 404, a payload it does not take, HTTP 400, or another project, HTTP 403), or cannot be reached.
+- `2` Used wrongly (for example no --entity, an --archetype that is neither EPIC nor TICKET, or a payload that is not a JSON object), not signed in, or the session ended.
+
 ## qits release-request
 
 Release requests: the one way to release a repository. list shows them (of the whole project, or of one repository), create asks for a branch to be released, join adds a branch to an open request, move takes one branch off it onto the request queued after it, withdraw ends a request that must not ship, approve lets the fold a request is on go ahead, decline sends it back, regenerate runs one release output again, override lifts the upstream-in-flight gate for one upstream request that is itself still building, and rerun fires one pipeline phase again: QA or PUBLISH re-fire that phase's CI run, DEPLOY redeploys the already-released version.
@@ -2315,6 +2548,153 @@ qits database diagram --root . --out docs/database --check
 - `0` Done, or nothing to draw (`no JPA entities found`).
 - `1` With --check: a file would be written or deleted. Otherwise: a file could not be read or written.
 - `2` Used wrongly: --root is not a directory, or nothing is compiled under it (`compile first: no target/classes under <root>`).
+
+## qits deployments
+
+The deployer, qits-deployments. `settings` reads and writes the values it hands each application in each environment.
+
+## qits deployments settings
+
+The settings qits-deployments hands an application in an environment: one value per key, plain or secret. A change reaches the application on its next deployment; `preview` shows what that deployment would change.
+
+A secret's value is never shown: the service does not send it back, and the table prints ******** in its place.
+
+### Notes
+
+- --output and --deployments-url may come before or after the command.
+- Reading (list, preview) takes qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent. Writing (set, delete) takes qits:admin or qits:system.
+
+## qits deployments settings list
+
+List an application's settings, of every environment or of the one --environment names.
+
+A secret's value shows as ********; -o json gives the service's answer, where it is null.
+
+```
+qits deployments settings list --application <application> [--deployments-url <url>] [--environment <environment>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `--environment <environment>` | Only this environment's settings: dev. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+
+### Examples
+
+```
+qits deployments settings list --application qits-ci
+qits deployments settings list --application qits-ci --environment dev -o json
+```
+
+- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits deployments settings set
+
+Store one setting of an application in an environment. The value is read on stdin, never from a flag, so it stays out of the shell's history; one trailing line break is taken off.
+
+--secret stores it as a secret: no answer sends its value back again. It prints the stored row with the value shown as ********, whether secret or not: the command never repeats what it was given.
+
+```
+qits deployments settings set --application <application> --environment <environment> --key <KEY> [--deployments-url <url>] [--output table|json] [--secret]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--environment <environment>` | Required. The environment: dev. |
+| `--key <KEY>` | Required. The setting's key: API_TOKEN. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--secret` | Store the value as a secret, never sent back by any answer. |
+
+### Examples
+
+```
+echo 'https://hooks.example.org' | qits deployments settings set --application qits-ci --environment dev --key WEBHOOK_URL
+qits deployments settings set --application qits-ci --environment dev --key API_TOKEN --secret < token.txt
+```
+
+- A terminal on stdin, or nothing on it, is refused with exit 2 and nothing is sent.
+- The new value reaches the application on its next deployment: `qits deployments settings preview` shows what that would change.
+- Takes qits:admin or qits:system.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits deployments settings delete
+
+Delete one setting of an application in an environment. The application loses it on its next deployment.
+
+```
+qits deployments settings delete --application <application> --environment <environment> --key <KEY> [--deployments-url <url>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--environment <environment>` | Required. The environment: dev. |
+| `--key <KEY>` | Required. The setting's key: WEBHOOK_URL. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+
+### Examples
+
+```
+qits deployments settings delete --application qits-ci --environment dev --key WEBHOOK_URL
+```
+
+- 404 (exit 1) means no such setting is stored.
+- Takes qits:admin or qits:system.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits deployments settings preview
+
+Show what the next deployment of an application in an environment would change in its settings, against what the running deployment was given.
+
+One line each: `+ KEY=value` added, `- KEY=value` removed, `~ KEY from -> to` changed, `= KEY=value` kept (with --include-extras), a secret's value as ********; then how many are unchanged.
+
+```
+qits deployments settings preview --application <application> --environment <environment> [--deployments-url <url>] [--include-extras] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--application <application>` | Required. The application, as qits-deployments names it: qits-ci. |
+| `--environment <environment>` | Required. The environment: dev. |
+| `--deployments-url <url>` | The deployments service's base URL, without /deployments. Default: QITS_DEPLOYMENTS_URL, else the session's idp address with `idp` swapped for `deployments`. |
+| `--include-extras` | Also list the values the running deployment has that no setting holds, which the next deployment keeps (`= KEY=value`). |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+
+### Examples
+
+```
+qits deployments settings preview --application qits-ci --environment dev
+qits deployments settings preview --application qits-ci --environment dev --include-extras
+```
+
+- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:system or qits:agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits maintenance
 
@@ -4452,7 +4832,7 @@ qits registry-login
 
 ## qits artifacts
 
-The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: a maven module, an npm package, a contract package, an sbom, a docs bundle or a daemon binary.
+The platform's artifacts store. `qits artifacts publish` is a CI release step's publish client: a maven module, an npm package, a contract package, an sbom, a docs bundle or a daemon binary. `qits artifacts fetch` writes published artifacts to a local directory: the consumer pacts a provider's deployed consumers were built against.
 
 ## qits artifacts publish
 
@@ -4862,6 +5242,46 @@ qits artifacts publish exists npm @qits/ui-components 2026.906.1
 - `0` Published.
 - `1` Not published, or the arguments are wrong.
 - `2` Could not ask: the store unreachable, an I/O failure, or a 5xx.
+
+## qits artifacts fetch
+
+Write published artifacts to a local directory. deployed-pacts: the consumer pacts a provider has to keep honouring, one per consumer version that is deployed or kept for a rollback.
+
+## qits artifacts fetch deployed-pacts
+
+Download the consumer pacts a provider has to keep honouring: for each consumer version that is deployed or kept as a rollback target, the pact package it was built against.
+
+qits-maintenance names the packages (GET /maintenance/api/deployed-pacts); each one's jar comes from qits-artifacts' hosted maven repository, and its pacts/*_<provider>.json files are written to <out>/<consumer repository>/<pact version>/. One line per pact: `fetched <consumer> pact <version> for deployed <v1>, <v2>`, then the count.
+
+```
+qits artifacts fetch deployed-pacts --out <dir> --provider <repository> [--artifacts-url <url>] [--maintenance-url <url>] [--output table|json]
+```
+
+| Name | What it does |
+|---|---|
+| `--out <dir>` | Required. Where the pacts are written, created when missing. |
+| `--provider <repository>` | Required. The provider's repository name, as its pact packages name it: qits-projects-service. |
+| `--artifacts-url <url>` | qits-artifacts' base URL, without /artifacts. Default: QITS_ARTIFACTS_URL, else https://registry.qits.<domain>. |
+| `--maintenance-url <url>` | The maintenance service's base URL, without /maintenance. Default: QITS_MAINTENANCE_URL, else derived from the idp address or QITS_DOMAIN. |
+| `-o, --output table\|json` | table (the default): one line per pact and a count. json: the service's answer with the files written. |
+
+### Examples
+
+```
+qits artifacts fetch deployed-pacts --provider qits-projects-service --out target/deployed-pacts
+qits artifacts fetch deployed-pacts --provider qits-projects-service --out /tmp/pacts -o json
+```
+
+- --out is created when it is missing. A consumer version's directory is replaced as a whole; one the platform no longer names is left as it is, so give a fresh --out to get exactly what serves now.
+- No deployed consumer is not an error: --out is created and the command says so.
+- In a CI step the run's token (QITS_TOKEN) reads both services; elsewhere the session or the workspace's token does.
+- -o json prints qits-maintenance's answer with `files` (the paths written) on each pact and `out`.
+
+### Exit codes
+
+- `0` Every named pact was written, or no consumer of the provider is deployed.
+- `1` qits-maintenance refused (503: qits-deployments cannot say what serves), a jar could not be downloaded, a jar holds no pacts/*_<provider>.json, or --out could not be written.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits changelog
 
@@ -5581,6 +6001,106 @@ The example is the entry in Claude's settings.json (~/.claude/settings.json).
 ### Exit codes
 
 - `0` Always, also when nothing was printed.
+
+## qits agent-mcp
+
+The catalog of MCP servers the platform gives its agents, in qits-projects. `credentials` stores the secrets those servers are reached with.
+
+## qits agent-mcp credentials
+
+The credentials of the agent MCP catalog: secrets a catalog entry names by key, stored once in qits-projects and handed to the MCP servers that need them. Only the keys are ever shown.
+
+### Notes
+
+- --output and --projects-url may come before or after the command.
+- list takes the catalog's read roles: qits:admin, qits:admin-agent, qits:desk-admin or qits:agent. set and delete take qits:admin or qits:admin-agent.
+
+## qits agent-mcp credentials list
+
+List the stored credentials' keys, with when and by whom each was last set. Never a value.
+
+```
+qits agent-mcp credentials list [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects`. |
+
+### Examples
+
+```
+qits agent-mcp credentials list
+```
+
+- Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits agent-mcp credentials set
+
+Store one credential under a key, replacing any stored before. The value is read on stdin, never from a flag, so it stays out of the shell's history; one trailing line break is taken off. It is never printed or sent back.
+
+```
+qits agent-mcp credentials set --key <KEY> [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--key <KEY>` | Required. The credential's key, as catalog entries name it: env.<VAR>, such as env.GITHUB_TOKEN. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects`. |
+
+### Examples
+
+```
+qits agent-mcp credentials set --key env.GITHUB_TOKEN < token.txt
+printf '%s' "$TOKEN" | qits agent-mcp credentials set --key env.GITHUB_TOKEN
+```
+
+- A terminal on stdin, or nothing on it, is refused with exit 2 and nothing is sent.
+- 400 (exit 1) means the key is not env.<VAR>, or the value is blank or larger than 16 KiB.
+- Takes qits:admin or qits:admin-agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits agent-mcp credentials delete
+
+Delete the credential stored under a key.
+
+```
+qits agent-mcp credentials delete --key <KEY> [--output table|json] [--projects-url <url>]
+```
+
+| Name | What it does |
+|---|---|
+| `--key <KEY>` | Required. The credential's key: env.GITHUB_TOKEN. |
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects`. |
+
+### Examples
+
+```
+qits agent-mcp credentials delete --key env.GITHUB_TOKEN
+```
+
+- 404 (exit 1) means no credential is stored under the key; 400 that the key is not env.<VAR>.
+- Takes qits:admin or qits:admin-agent.
+
+### Exit codes
+
+- `0` Done.
+- `1` The platform refused (the message names the status), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits update
 
