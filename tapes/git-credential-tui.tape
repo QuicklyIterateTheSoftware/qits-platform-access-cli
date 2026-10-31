@@ -46,7 +46,7 @@ Sleep 1s
 
 Hide
 Enter
-Wait+Screen /get/
+Wait+Screen /type the value/
 Show
 Sleep 1s
 
