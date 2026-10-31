@@ -606,6 +606,28 @@ public final class ProjectsApi {
         return client.get(uri(repositoryPath(repoId) + "/commit-subjects" + query(query)));
     }
 
+    // --- archiving a repository (qits-1784) ---
+
+    /**
+     * {@code {outcome, archived, branch?, commit?, releaseRequestId?, qualifiedId?, detail}}: asks
+     * for {@code repository.archived: true} in the repository's own {@code
+     * .config/qits/repository.yml}, as a commit on {@code archive/<name>} released through the
+     * repository's release request — never a push to main. 202 {@code outcome: "requested"} when
+     * the edit was committed and the branch asked for; 200 {@code outcome: "unchanged"} when main
+     * already says so and nothing was opened.
+     */
+    public JsonNode archiveRepository(String repoId) throws CliFailure, InterruptedException {
+        return client.post(uri(repositoryPath(repoId) + "/archive"));
+    }
+
+    /**
+     * {@link #archiveRepository}'s mirror: asks for {@code repository.archived} to be removed from
+     * the file, on {@code unarchive/<name>}, the same two outcomes.
+     */
+    public JsonNode unarchiveRepository(String repoId) throws CliFailure, InterruptedException {
+        return client.post(uri(repositoryPath(repoId) + "/unarchive"));
+    }
+
     // --- the front desk ---
 
     /**
