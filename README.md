@@ -1349,7 +1349,7 @@ secret for one person, and a tool's answer lands in an agent's transcript.
 Prints the domain events of qits-events as they happen, one JSON object per line on stdout, each
 line flushed at once, so `| jq` shows an event when it arrives:
 
-    {"id":"…","name":"BuildSuccessful","occurredAt":"…","payload":{"repoName":"qits-ci-service",…},"description":null,"parentId":null,"environment":"dev"}
+    {"id":"…","name":"BuildSuccessful","occurredAt":"…","payload":{"repoName":"qits-ci-service",…},"description":null,"parentId":null,"environment":"dev","publisher":null}
 
 `payload` travels as a JSON string; the command reads it into JSON. A payload that is not JSON
 stays a string.

@@ -144,7 +144,7 @@ class EventsQueryCommandTest {
         for (Row row : kept) {
             events.addObject().put("id", row.id()).put("name", row.name()).put("occurredAt", row.occurredAt().toString())
                     .put("payload", "{\"repository\":\"qits-ci-service\"}").putNull("description").putNull("parentId")
-                    .put("environment", "dev").put("createdAt", NOW.toString()).put("updatedAt", NOW.toString());
+                    .put("environment", "dev").putNull("publisher").put("createdAt", NOW.toString()).put("updatedAt", NOW.toString());
         }
         if (more) {
             Row last = kept.getLast();
@@ -175,8 +175,8 @@ class EventsQueryCommandTest {
 
         assertThat(out()).isEqualTo("""
                 window: 2026-10-01T17:00:00Z .. 2026-10-01T18:00:00Z
-                {"id":"a","name":"BuildSuccessful","occurredAt":"2026-10-01T17:00:00Z","payload":{"repository":"qits-ci-service"},"description":null,"parentId":null,"environment":"dev"}
-                {"id":"b","name":"BuildFailed","occurredAt":"2026-10-01T17:59:50Z","payload":{"repository":"qits-ci-service"},"description":null,"parentId":null,"environment":"dev"}
+                {"id":"a","name":"BuildSuccessful","occurredAt":"2026-10-01T17:00:00Z","payload":{"repository":"qits-ci-service"},"description":null,"parentId":null,"environment":"dev","publisher":null}
+                {"id":"b","name":"BuildFailed","occurredAt":"2026-10-01T17:59:50Z","payload":{"repository":"qits-ci-service"},"description":null,"parentId":null,"environment":"dev","publisher":null}
                 """);
         Map<String, String> first = asked().getFirst();
         assertThat(first).doesNotContainKey("name")
@@ -303,7 +303,7 @@ class EventsQueryCommandTest {
         assertThat(json()).isEqualTo(JSON.readTree("""
                 {"events":[{"id":"e01","name":"BuildSuccessful","occurredAt":"2026-10-01T17:59:00Z",
                             "payload":{"repository":"qits-ci-service"},"description":null,"parentId":null,
-                            "environment":"dev"}],
+                            "environment":"dev","publisher":null}],
                  "truncated":false,
                  "window":{"since":"2026-10-01T17:00:00Z","until":"2026-10-01T18:00:00Z"}}
                 """));
