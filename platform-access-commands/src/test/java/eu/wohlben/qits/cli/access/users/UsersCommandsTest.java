@@ -156,6 +156,18 @@ class UsersCommandsTest {
     }
 
     @Test
+    void registerWithNoSessionAndNoPlatformNamedIsAUsageErrorNamingQitsDomain() throws Exception {
+        Files.delete(home.resolve("qits").resolve("t.json"));
+
+        Result r = run("users", "register", "--token", REGISTER_TOKEN, "jan");
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("QITS_DOMAIN").contains("QITS_IDP_URL").doesNotContain("wohlben")
+                .doesNotContain(REGISTER_TOKEN);
+        assertThat(idp.requests("POST", REGISTER)).isEmpty();
+    }
+
+    @Test
     void registerJsonPrintsTheUsernameAndPasswordAndNothingOfTheSession() {
         Result r = run("users", "register", "--token", REGISTER_TOKEN, "jan", "-o", "json");
 

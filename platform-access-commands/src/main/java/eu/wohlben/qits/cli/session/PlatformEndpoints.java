@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * Where a service is, in either home. The one place that decides it.
  * <p>
- * Outside, a service is a public vhost behind the edge — {@code https://projects.qits.wohlben.eu} —
+ * Outside, a service is a public vhost behind the edge — {@code https://projects.qits.<QITS_DOMAIN>} —
  * derived from the session's own idp address. Inside the platform those names do not resolve at
  * all: the container network answers wire aliases, and nothing else. That is a second set of
  * addresses, not a second code path, which is why both live here.
@@ -60,7 +60,7 @@ public final class PlatformEndpoints {
 
     static final String DEFAULT_ENVIRONMENT = "dev";
 
-    /** The estate's public domain, {@code wohlben.eu}: what the token home's vhosts hang off. */
+    /** The estate's public domain, {@code <QITS_DOMAIN>}: what the token home's vhosts hang off. */
     static final String DOMAIN = "QITS_DOMAIN";
 
     private final Mode mode;
@@ -102,7 +102,7 @@ public final class PlatformEndpoints {
     }
 
     /**
-     * The landing app, {@code https://qits.wohlben.eu}: the bare platform domain, where a person's
+     * The landing app, {@code https://qits.<QITS_DOMAIN>}: the bare platform domain, where a person's
      * browser opens a work item. A browser address in every home, so inside the platform it is never a
      * wire alias: it comes from {@code QITS_DOMAIN}, and without one there is none to give.
      * {@code QITS_URL_LANDING} overrides it, as it does every address.
@@ -121,7 +121,7 @@ public final class PlatformEndpoints {
     }
 
     /**
-     * {@code https://projects.qits.wohlben.eu}, from {@code QITS_DOMAIN}: the shape of {@link
+     * {@code https://projects.qits.<QITS_DOMAIN>}, from {@code QITS_DOMAIN}: the shape of {@link
      * #vhost}, fed from the environment instead of a session.
      * <p>
      * A domain that cannot be a public one is refused rather than dialled. Blank or undotted gives a
@@ -132,7 +132,7 @@ public final class PlatformEndpoints {
         return "https://" + app + ".qits." + domain(env);
     }
 
-    /** {@code wohlben.eu}, or a usage failure naming {@code QITS_DOMAIN}. */
+    /** {@code <QITS_DOMAIN>}, or a usage failure naming {@code QITS_DOMAIN}. */
     public static String domain(Map<String, String> env) throws CliFailure {
         String told = env.get(DOMAIN);
         String domain = told == null ? "" : told.strip();
@@ -174,7 +174,7 @@ public final class PlatformEndpoints {
         return "http://" + environment() + "-qits-" + app + ":" + WIRE_PORT;
     }
 
-    /** {@code https://projects.qits.wohlben.eu}, from the session's own idp address. */
+    /** {@code https://projects.qits.<QITS_DOMAIN>}, from the session's own idp address. */
     String vhost(String app, String refusal) throws CliFailure {
         URI idp = uri(idpUrl);
         String host = idp == null ? null : idp.getHost();

@@ -86,7 +86,7 @@ import java.util.function.Consumer;
                         + "baseline every image is NEW.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
-                        + "https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no "
+                        + "https://ci.qits.$QITS_DOMAIN, and without QITS_DOMAIN the command refuses (exit 2); no variable and no "
                         + "option names another address.",
                 "- The bearer comes from QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, the first that is "
                         + "set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.",

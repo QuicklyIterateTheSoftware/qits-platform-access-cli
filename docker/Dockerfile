@@ -51,8 +51,14 @@
 # The host build (`./mvnw package -Dnative`) stays glibc-linked: it needs no musl toolchain, because
 # the static flags are added here only.
 # The platform's public domain; the release recipes pass `--opt build-arg:QITS_DOMAIN`. Global, so
-# the FROM lines and the ARG defaults below can read it.
-ARG QITS_DOMAIN=wohlben.eu
+# the FROM lines and the ARG defaults below can read it. REQUIRED, no default: qits-ci now injects
+# this build arg into every step unconditionally, and a hand build must pass it too (the header's
+# example does). An unset QITS_DOMAIN makes the `FROM mirror.qits.${QITS_DOMAIN}/...` lines below
+# (TOOLCHAIN_BASE and the service runtime base) resolve to an invalid image reference, which
+# BuildKit already refuses on its own; the `: "${QITS_DOMAIN:?...}"` guards on the RUN steps below
+# exist to fail loudly at the step that actually needs the value, rather than let an empty
+# substitution build a wrong URL silently.
+ARG QITS_DOMAIN
 ARG MUSL_URL=https://registry.qits.${QITS_DOMAIN}/artifacts/maven/maven/eu/wohlben/qits/toolchain/x86_64-linux-musl-native/11.2.1/x86_64-linux-musl-native-11.2.1.tgz
 ARG ZLIB_URL=https://registry.qits.${QITS_DOMAIN}/artifacts/maven/maven/eu/wohlben/qits/toolchain/zlib/1.3.1/zlib-1.3.1.tar.gz
 # mirror.qits.$QITS_DOMAIN is qits-mirror's pull-through cache, on the edge.
@@ -107,7 +113,7 @@ COPY . .
 # way, for the one artifact the reactor takes from it: qits-projects' golden masters jar, a TEST
 # dependency of the commands (their consumer pact). `-DskipTests` still compiles the tests, so the
 # jar is still resolved here; the same two secrets authenticate `qits-maven-network`.
-ARG QITS_DOMAIN=wohlben.eu
+ARG QITS_DOMAIN
 
 # - additional-build-args-APPEND: the pom's native profile sets additional-build-args (Pkce's
 #   run-time initialisation), and a second value for that key would replace it, not add to it.
@@ -129,6 +135,7 @@ ARG QITS_DOMAIN=wohlben.eu
 # the one the sbom stage exports.
 RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
+    : "${QITS_DOMAIN:?QITS_DOMAIN build arg is required}"; \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
@@ -171,9 +178,10 @@ FROM ${BUILDER_IMAGE} AS service-build
 USER root
 WORKDIR /qits-build
 COPY . .
-ARG QITS_DOMAIN=wohlben.eu
+ARG QITS_DOMAIN
 RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
+    : "${QITS_DOMAIN:?QITS_DOMAIN build arg is required}"; \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
@@ -216,9 +224,10 @@ RUN --mount=type=secret,id=qits-client-id \
 # what only a test run resolves — failsafe itself and its JUnit provider — and those come from the
 # same two hosts. The runner listens on the RUN's own loopback, on quarkus.http.test-port's 8081.
 FROM service-build AS service-it
-ARG QITS_DOMAIN=wohlben.eu
+ARG QITS_DOMAIN
 RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
+    : "${QITS_DOMAIN:?QITS_DOMAIN build arg is required}"; \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \
@@ -245,9 +254,10 @@ RUN --mount=type=secret,id=qits-client-id \
 # plugin itself is not cached yet. The release-request step that plays the tapes passes the same
 # build args and secrets as the QA build, so `build` is a cache hit and the kit costs this RUN only.
 FROM build AS tapes-kit-build
-ARG QITS_DOMAIN=wohlben.eu
+ARG QITS_DOMAIN
 RUN --mount=type=secret,id=qits-client-id \
     --mount=type=secret,id=qits-client-secret \
+    : "${QITS_DOMAIN:?QITS_DOMAIN build arg is required}"; \
     export QITS_MAVEN_AUTH_USR="$(cat /run/secrets/qits-client-id 2>/dev/null || true)"; \
     export QITS_MAVEN_AUTH_PSW="$(cat /run/secrets/qits-client-secret 2>/dev/null || true)"; \
     export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$QITS_DOMAIN/mirror/maven/central"; \

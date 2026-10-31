@@ -23,7 +23,7 @@ public final class PactJars {
     private final PlatformClient client;
     private final String root;
 
-    /** @param root the hosted maven repository, {@code https://registry.qits.wohlben.eu/artifacts/maven/maven} */
+    /** @param root the hosted maven repository, {@code https://registry.qits.<QITS_DOMAIN>/artifacts/maven/maven} */
     public PactJars(PlatformClient client, String root) {
         this.client = client;
         this.root = root;

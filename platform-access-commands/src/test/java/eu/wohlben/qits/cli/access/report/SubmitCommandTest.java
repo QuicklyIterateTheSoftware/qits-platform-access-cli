@@ -494,11 +494,24 @@ class SubmitCommandTest {
     }
 
     @Test
-    void theAddressIsComposedFromTheDomainAsThePublishStoreIs() {
+    void theAddressIsComposedFromTheDomainAsThePublishStoreIs() throws Exception {
         assertThat(eu.wohlben.qits.cli.access.publish.Store.publicOrigin("ci", Map.of("QITS_DOMAIN", " .Example.COM. ")))
                 .isEqualTo("https://ci.qits.example.com");
-        assertThat(eu.wohlben.qits.cli.access.publish.Store.publicOrigin("ci", Map.of()))
-                .isEqualTo("https://ci.qits.wohlben.eu");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> eu.wohlben.qits.cli.access.publish.Store.publicOrigin("ci", Map.of()))
+                .hasMessageContaining("QITS_DOMAIN");
+    }
+
+    @Test
+    void withNoDomainAndNoOriginItRefusesAsAUsageErrorNamingQitsDomain() {
+        env.remove("QITS_DOMAIN");
+        origin = null;
+
+        Result result = submit("--exit-code", "0", "--root", work.toString());
+
+        assertThat(result.exit()).isEqualTo(2);
+        assertThat(result.err()).contains("QITS_DOMAIN").doesNotContain("wohlben").doesNotContain("Exception");
+        assertThat(ci.requests).isEmpty();
     }
 
     @Test

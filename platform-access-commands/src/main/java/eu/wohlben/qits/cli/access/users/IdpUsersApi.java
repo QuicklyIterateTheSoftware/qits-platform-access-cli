@@ -39,7 +39,7 @@ public final class IdpUsersApi {
     private static final int REFUSAL_BODY_LIMIT = 64 * 1024;
 
     private final PlatformClient client;
-    /** The idp's base URL with its path prefix: {@code https://idp.qits.wohlben.eu/idp}. */
+    /** The idp's base URL with its path prefix: {@code https://idp.qits.<QITS_DOMAIN>/idp}. */
     private final String idp;
 
     IdpUsersApi(PlatformClient client, String idp) {

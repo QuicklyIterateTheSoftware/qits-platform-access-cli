@@ -49,12 +49,12 @@ public class GitLoginCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--idp-url", paramLabel = "<url>",
             description = "The idp's public base URL. Default: QITS_IDP_URL, else the idp of the `qits login` "
-                    + "session, else https://idp.qits.<QITS_DOMAIN>/idp, else https://idp.qits.wohlben.eu/idp.")
+                    + "session, else https://idp.qits.<QITS_DOMAIN>/idp; with none of them, the command refuses.")
     String idpUrl;
 
     @CommandLine.Option(names = "--git-host", paramLabel = "<url>",
             description = "The git host's address. Default: QITS_GIT_HOST_URL, else the idp's host with `idp` "
-                    + "swapped for `githost` (https://githost.qits.wohlben.eu).")
+                    + "swapped for `githost` (https://githost.qits.<QITS_DOMAIN>).")
     String gitHost;
 
     @CommandLine.Option(names = "--audience", paramLabel = "<audience>",
@@ -120,7 +120,7 @@ public class GitLoginCommand extends PlatformCommand {
     }
 
     /** Which idp: the flag or QITS_IDP_URL, else the `qits login` session's, else as `qits login` finds it. */
-    static String idpUrl(String flag, Map<String, String> env, CliContext context) {
+    static String idpUrl(String flag, Map<String, String> env, CliContext context) throws CliFailure {
         if ((flag != null && !flag.isBlank()) || !blank(env.get("QITS_IDP_URL"))) {
             return IdpUrl.resolve(flag, env);
         }

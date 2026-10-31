@@ -2,6 +2,7 @@ package eu.wohlben.qits.cli.access.login;
 
 import eu.wohlben.qits.cli.access.idp.IdpUrl;
 import eu.wohlben.qits.cli.access.idp.TokenClient;
+import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.session.SessionFile;
 import eu.wohlben.qits.cli.tui.api.Interaction;
@@ -25,18 +26,18 @@ import java.util.concurrent.Callable;
         footerHeading = HelpText.EXAMPLES,
         footer = {
                 "  qits login",
-                "  qits login --idp-url https://idp.qits.wohlben.eu/idp",
+                "  qits login --idp-url https://idp.qits.example.com/idp",
                 "  qits login --no-browser",
                 "",
                 "Over SSH, use --no-browser and open the printed address on a machine with a browser."},
         exitCodeListHeading = HelpText.EXIT_CODES,
         exitCodeList = {"0:Signed in; the session is stored.", "1:The sign-in did not complete.",
-                "2:Used wrongly."})
+                "2:Used wrongly, or no platform is named (no --idp-url, QITS_IDP_URL or QITS_DOMAIN)."})
 public class LoginCommand implements Callable<Integer> {
 
     @CommandLine.Option(names = "--idp-url", paramLabel = "<url>",
             description = "The idp's public base URL. Default: QITS_IDP_URL, else "
-                    + "https://idp.qits.<QITS_DOMAIN>/idp, else https://idp.qits.wohlben.eu/idp.")
+                    + "https://idp.qits.<QITS_DOMAIN>/idp; with neither, the command refuses.")
     String idpUrl;
 
     @CommandLine.Option(names = "--no-browser",
@@ -46,7 +47,14 @@ public class LoginCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Map<String, String> env = System.getenv();
-        String idp = IdpUrl.resolve(idpUrl, env);
+        String idp;
+        try {
+            idp = IdpUrl.resolve(idpUrl, env);
+        } catch (CliFailure failure) {
+            System.err.println(failure.getMessage());
+            System.err.flush();
+            return failure.exitCode();
+        }
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
         return new LoginFlow(new TokenClient(idp), SessionFile.fromEnvironment(env), in, System.out, System.err,
                 Clock.systemUTC(), noBrowser ? null : url -> Browser.open(url, env)).run();

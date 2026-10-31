@@ -87,7 +87,9 @@ Run it once. After `qits login`, the installed `qits` keeps itself on the newest
 
 Environment overrides:
 
-- `QITS_IDP_URL` — the idp's base URL. Default `https://idp.qits.wohlben.eu/idp`.
+- `QITS_IDP_URL` — the idp's base URL. No built-in default: without it, set `QITS_DOMAIN` (your
+  platform's public domain) and the idp URL is derived as `https://idp.qits.<QITS_DOMAIN>/idp`.
+  With neither set, the script refuses (exit 2).
 - `QITS_ARTIFACTS_URL` — the artifacts store's base URL. Default: derived from the idp URL, the
   same way `qits` derives every other service's address (swap the idp host's first label).
 - `QITS_GIT_HOST_URL` — the git host's base URL. Default: derived the same way.
@@ -385,7 +387,7 @@ the options of the one you chose, required first and marked `*`; the line betwee
 command your choices have built, so the screen also teaches the command line; the lower half is what
 the last run printed.
 
-     qits tui · qits.wohlben.eu · signed in as jan
+     qits tui · qits.example.com · signed in as jan
      ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────┐
      │ * --project        qits                                                     │
      │ * --repository     ▸ qits-ci-service                                        │
@@ -526,13 +528,14 @@ with `login` and `git-login` dim and sorted last, the way a CI-only command alre
 4. The session goes to `$XDG_CONFIG_HOME/qits/t.json` (default `~/.config/qits/t.json`), and the
    command prints when the access token and the session end.
 
-Which platform: `--idp-url`, else `QITS_IDP_URL`, else `https://idp.qits.<QITS_DOMAIN>/idp`, else
-`https://idp.qits.wohlben.eu/idp` (the default install.sh uses too). The platform is the project
-`qits` and has no environments, so `QITS_ENV_NAME` is not read.
+Which platform: `--idp-url`, else `QITS_IDP_URL`, else `https://idp.qits.<QITS_DOMAIN>/idp`. There
+is no built-in default domain: with none of the flag, `QITS_IDP_URL` or `QITS_DOMAIN` set, the
+command refuses (exit 2) naming `QITS_DOMAIN` (`install.sh` refuses the same way). The platform is
+the project `qits` and has no environments, so `QITS_ENV_NAME` is not read.
 
 Naming the platform explicitly:
 
-    qits login --idp-url https://idp.qits.wohlben.eu/idp
+    qits login --idp-url https://idp.qits.example.com/idp
 
 `--no-browser` only prints the address. Use it over SSH.
 
@@ -545,7 +548,7 @@ stay behind and are harmless: Git never asks that host again.
 ### The session file
 
     {
-      "idpUrl" : "https://idp.qits.wohlben.eu/idp",
+      "idpUrl" : "https://idp.qits.example.com/idp",
       "clientId" : "qits-cli",
       "accessToken" : "…",
       "accessExpiresAt" : "2026-09-11T20:15:00Z",
@@ -728,9 +731,9 @@ refuses prints `Session ended — run `qits login`.` and exits with 2.
 ### Which address
 
 A service lives at `<app>.qits.<domain>`. The commands take the session's idp address and swap
-its first label: `https://idp.qits.wohlben.eu/idp` gives `https://projects.qits.wohlben.eu`,
-`https://ci.qits.wohlben.eu`, `https://events.qits.wohlben.eu` and
-`https://observability.qits.wohlben.eu`. To name the address yourself (a base URL, without
+its first label: `https://idp.qits.example.com/idp` gives `https://projects.qits.example.com`,
+`https://ci.qits.example.com`, `https://events.qits.example.com` and
+`https://observability.qits.example.com`. To name the address yourself (a base URL, without
 `/projects`, `/ci`, `/events` or `/observability`):
 
 - projects: `--projects-url`, else `QITS_PROJECTS_URL`
@@ -1824,7 +1827,7 @@ Which platform:
 - idp: `--idp-url`, else `QITS_IDP_URL`, else the idp of the `qits login` session, else as
   `qits login` finds it.
 - git host: `--git-host`, else `QITS_GIT_HOST_URL`, else the idp's host with `idp` swapped for
-  `githost` (`https://githost.qits.wohlben.eu`).
+  `githost` (`https://githost.qits.<QITS_DOMAIN>`).
 - audience: `--audience`, else `qits-platform`, the one audience every platform service accepts
   and the one the git host validates.
 
@@ -1836,8 +1839,8 @@ On a workstation Git asks `qits git-credential` for the git host and for no othe
 helper (for example Git Credential Manager for GitHub) stays as it is. The empty value first clears
 the helper list for this host:
 
-    git config --global --replace-all credential.https://githost.qits.wohlben.eu.helper ''
-    git config --global --add credential.https://githost.qits.wohlben.eu.helper '!/home/you/.local/bin/qits git-credential'
+    git config --global --replace-all credential.https://githost.qits.example.com.helper ''
+    git config --global --add credential.https://githost.qits.example.com.helper '!/home/you/.local/bin/qits git-credential'
 
 `qits git-login` prints these two lines with the git host and its own path. `--configure` runs them.
 Running them again changes nothing.
@@ -1988,7 +1991,7 @@ hidden `--refresh` in a session of its own, which asks the projects service with
 credential. Until the first refresh is done only `qits` ids are linked.
 
 The landing app is the platform's bare domain: on a workstation the session's idp address without
-`idp.` (`https://qits.wohlben.eu`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
+`idp.` (`https://qits.example.com`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
 `QITS_LANDING_URL` sets it. `--style osc8` or `QITS_LINK_STYLE=osc8` writes a terminal hyperlink
 instead of a markdown link, and `QITS_LINK_PROJECTS` (comma-separated slugs) replaces the cache.
 
@@ -2061,7 +2064,8 @@ service that cannot be reached or answers 5xx is 2. Changelogs are kept for good
 them with their release during GC is not implemented.
 
 **Addresses are code, not configuration.** The one input is `QITS_DOMAIN`, the platform's bare public
-domain (default `wohlben.eu`). The store is `https://registry.qits.$QITS_DOMAIN` — hosted npm under
+domain. There is no default: qits-ci injects it into every step, and its absence fails loudly. The
+store is `https://registry.qits.$QITS_DOMAIN` — hosted npm under
 `/artifacts/npm/npm`, hosted maven under `/artifacts/maven/maven`, docs under `/artifacts/docs/docs`,
 and the sbom, daemon and content-hash stores beside them — and a pom outside the reactor is read from
 there, then from qits-mirror's Maven Central cache at

@@ -38,14 +38,14 @@ qits login [--idp-url <url>] [--no-browser]
 
 | Name | What it does |
 |---|---|
-| `--idp-url <url>` | The idp's public base URL. Default: QITS_IDP_URL, else https://idp.qits.<QITS_DOMAIN>/idp, else https://idp.qits.wohlben.eu/idp. |
+| `--idp-url <url>` | The idp's public base URL. Default: QITS_IDP_URL, else https://idp.qits.<QITS_DOMAIN>/idp; with neither, the command refuses. |
 | `--no-browser` | Only print the sign-in address; do not start a browser. |
 
 ### Examples
 
 ```
 qits login
-qits login --idp-url https://idp.qits.wohlben.eu/idp
+qits login --idp-url https://idp.qits.example.com/idp
 qits login --no-browser
 ```
 
@@ -55,7 +55,7 @@ Over SSH, use --no-browser and open the printed address on a machine with a brow
 
 - `0` Signed in; the session is stored.
 - `1` The sign-in did not complete.
-- `2` Used wrongly.
+- `2` Used wrongly, or no platform is named (no --idp-url, QITS_IDP_URL or QITS_DOMAIN).
 
 ## qits session-daemon
 
@@ -141,7 +141,7 @@ qits projects list [--output table|json] [--projects-url <url>]
 | Name | What it does |
 |---|---|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -170,7 +170,7 @@ qits projects delivery [--output table|json] [--project <project>] [--projects-u
 |---|---|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project (required): its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -212,7 +212,7 @@ qits projects desk prompt [--output table|json] [--project <project>] [--project
 | `<text>` | The turn's text (required). The words are joined with spaces. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project (required): its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -247,7 +247,7 @@ qits projects desk answer [--output table|json] [--project <project>] [--project
 |---|---|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project (required): its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -281,7 +281,7 @@ qits projects desk triggers [--limit <n>] [--output table|json] [--project <proj
 | `--limit <n>` | At most this many messages, the newest. 1 to 100. Default: 20. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project (required): its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -323,7 +323,7 @@ qits repositories list [--output table|json] [--project <project>] [--projects-u
 |---|---|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -356,7 +356,7 @@ qits repositories create [--component <component>] [--output table|json] [--proj
 | `--component <component>` | The technical component to mount the entry under: components/<component>/<name>. Default: the wrapper's own layout decides. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -390,7 +390,7 @@ qits repositories branches [--output table|json] [--project <project>] [--projec
 |---|---|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository (required): its id or name. |
 
 ### Examples
@@ -420,7 +420,7 @@ qits repositories commits [--branch <branch>] [--output table|json] [--project <
 | `--branch <branch>` | The branch whose commits to list (required). |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository (required): its id or name. |
 
 ### Examples
@@ -451,7 +451,7 @@ qits repositories commit-changes [--commit <hash>] [--output table|json] [--pare
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--parent <hash>` | The commit to compare against. Default: the commit's first parent. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository (required): its id or name. |
 
 ### Examples
@@ -483,7 +483,7 @@ qits repositories commit-diff [--commit <hash>] [--output table|json] [--parent 
 | `--parent <hash>` | The commit to compare against. Default: the commit's first parent. |
 | `--path <path>` | The file (required): its path in the repository. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository (required): its id or name. |
 
 ### Examples
@@ -514,7 +514,7 @@ qits repositories commit-subjects [--branch <branch>] [--limit <n>] [--output ta
 | `--limit <n>` | How many of the newest commits to read. Default 100, at most 1000. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository (required): its id or name. |
 
 ### Examples
@@ -552,7 +552,7 @@ qits repositories remote-login [--output table|json] [--project <project>] [--pr
 |---|---|
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository whose backup remote to sign in to: its id or name. Default: the project repository. |
 
 ### Examples
@@ -606,7 +606,7 @@ qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--parent <entity>` | Only the children of this item: its id or its qualified id. |
 | `--project <project>` | The project (required): its id or its slug. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--status <status>` | Only items in this status, such as REFINED. |
 
 ### Examples
@@ -638,7 +638,7 @@ qits work details [--entity <entity>] [--output table|json] [--projects-url <url
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -672,7 +672,7 @@ qits work create [--archetype <archetype>] [--entity <entity>] [--output table|j
 | `--archetype <archetype>` | The new item's archetype (required): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -706,7 +706,7 @@ qits work update [--entity <entity>] [--output table|json] [--projects-url <url>
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -742,7 +742,7 @@ qits work transition [--archetype <archetype>] [--entity <entity>] [--map] [--ou
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--map` | Send the payload as it is: a map of entity to full state, for several items at once. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -782,7 +782,7 @@ qits work status [--entity <entity>] [--output table|json] [--projects-url <url>
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -816,7 +816,7 @@ qits work block [--entity <entity>] [--output table|json] [--projects-url <url>]
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--reason <text>` | What is in the way (required). It lands on the item's thread. |
 
 ### Examples
@@ -847,7 +847,7 @@ qits work unblock [--entity <entity>] [--output table|json] [--projects-url <url
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--reason <text>` | Why it can go on again. Optional. |
 
 ### Examples
@@ -877,7 +877,7 @@ qits work delete [--entity <entity>] [--output table|json] [--projects-url <url>
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -905,7 +905,7 @@ qits work progress [--entity <entity>] [--output table|json] [--projects-url <ur
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -937,7 +937,7 @@ qits work dispatch [--entity <entity>] [--mode <mode>] [--output table|json] [--
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--mode <mode>` | FLOW (every phase from here on) or PHASE (the next one only); required. Case-insensitive. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--rule <rule>` | The delivery desk's rule the press is made under (backlog-newest-first, start-refined). Optional; the service ignores it for anyone but the desk. |
 
 ### Examples
@@ -984,7 +984,7 @@ qits work comment create [--entity <entity>] [--output table|json] [--projects-u
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1020,7 +1020,7 @@ qits work comment update [--comment <comment>] [--entity <entity>] [--output tab
 | `--comment <comment>` | The comment to edit (required unless nothing is put in): its id. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1064,7 +1064,7 @@ qits work dossier list [--entity <entity>] [--output table|json] [--projects-url
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1094,7 +1094,7 @@ qits work dossier get [--entity <entity>] [--output table|json] [--page <page>] 
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--page <page>` | The page (required): its slug or its id. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1130,7 +1130,7 @@ qits work dossier put [--entity <entity>] [--output table|json] [--page <page>] 
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--page <page>` | The page to rewrite: its slug or its id. Leave it out to add a page. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1162,7 +1162,7 @@ qits work dossier move [--entity <entity>] [--output table|json] [--page <page>]
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--page <page>` | The page to move (required): its slug or its id. |
 | `--position <n>` | Where it goes (required), counted from 0. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1191,7 +1191,7 @@ qits work dossier delete [--entity <entity>] [--output table|json] [--page <page
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--page <page>` | The page to delete (required): its slug or its id. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1222,7 +1222,7 @@ qits work dossier inline [--entity <entity>] [--kind <kind>] [--output table|jso
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--kind <kind>` | IMAGE for a sketch, DESIGN for a design (required). Case-insensitive. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--source <id>` | The sketch's or the design's id (required). |
 
 ### Examples
@@ -1265,7 +1265,7 @@ qits work members list [--entity <entity>] [--output table|json] [--projects-url
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1296,7 +1296,7 @@ qits work members add [--entity <entity>] [--output table|json] [--projects-url 
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1328,7 +1328,7 @@ qits work members move [--entity <entity>] [--member <membership>] [--output tab
 | `--member <membership>` | The membership to move (required): its id, as list prints it. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--position <n>` | Where it goes (required), counted from 0. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1357,7 +1357,7 @@ qits work members remove [--entity <entity>] [--member <membership>] [--output t
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--member <membership>` | The membership to remove (required): its id, as list prints it. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1390,7 +1390,7 @@ qits work members condition [--entity <entity>] [--member <membership>] [--outpu
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--member <membership>` | The membership whose condition to replace (required unless nothing is put in): its id, as list prints it. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1432,7 +1432,7 @@ qits work refinement open [--entity <entity>] [--output table|json] [--projects-
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1461,7 +1461,7 @@ qits work refinement show [--entity <entity>] [--output table|json] [--projects-
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1490,7 +1490,7 @@ qits work refinement discard [--entity <entity>] [--output table|json] [--projec
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1530,7 +1530,7 @@ qits work design list [--entity <entity>] [--output table|json] [--projects-url 
 |---|---|
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1560,7 +1560,7 @@ qits work design get [--design <design>] [--entity <entity>] [--output table|jso
 | `--design <design>` | The design's id (required). |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1594,7 +1594,7 @@ qits work design put [--design <design>] [--entity <entity>] [--output table|jso
 | `--design <design>` | The design to rewrite: its id. Leave it out to add a design. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1638,7 +1638,7 @@ qits ideas list [--archived] [--entity <idea>] [--output table|json] [--project 
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project (required): its id or its slug. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--status <status>` | Only ideas at this status: PLANNED, QUEUED or DONE. |
 
 ### Examples
@@ -1668,7 +1668,7 @@ qits ideas details [--entity <idea>] [--output table|json] [--projects-url <url>
 |---|---|
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1701,7 +1701,7 @@ qits ideas create [--entity <idea>] [--output table|json] [--projects-url <url>]
 |---|---|
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1735,7 +1735,7 @@ qits ideas update [--entity <idea>] [--output table|json] [--projects-url <url>]
 |---|---|
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1765,7 +1765,7 @@ qits ideas archive [--entity <idea>] [--output table|json] [--projects-url <url>
 |---|---|
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--reason <text>` | Why the idea is archived (required). |
 
 ### Examples
@@ -1794,7 +1794,7 @@ qits ideas unarchive [--entity <idea>] [--output table|json] [--projects-url <ur
 |---|---|
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1825,7 +1825,7 @@ qits ideas spawn [--archetype <archetype>] [--entity <idea>] [--output table|jso
 | `--archetype <archetype>` | The new item's archetype (required): EPIC or TICKET. Case-insensitive. |
 | `--entity <idea>` | The idea: its id, passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 
 ### Examples
 
@@ -1883,7 +1883,7 @@ qits release-request list [--limit <n>] [--output table|json] [--project <projec
 | `--limit <n>` | Show at most this many requests, the most recent first. Default: all that came back. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 | `--state <STATE\|all>` | Only this state (PENDING, READY, RELEASED, FINALIZED, REJECTED, FAILED, CONFLICTED, WITHDRAWN, OBSOLETE), or all for every request. Default: the open ones (and, for the whole project, the last 10 FINALIZED). |
 
@@ -1920,7 +1920,7 @@ qits release-request create --branch <branch> [--output table|json] [--priority 
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--priority <priority>` | LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: the platform's (MEDIUM). |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 
 ### Examples
@@ -1962,7 +1962,7 @@ qits release-request join --branch <branch> --request <id> [--output table|json]
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--priority <priority>` | LOWEST, LOW, MEDIUM, HIGH, HIGHER or BLOCKING. Default: MEDIUM for a new branch; a branch already on the request keeps its priority. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 
 ### Examples
@@ -2002,7 +2002,7 @@ qits release-request move --branch <branch> --reason <text> --request <id> [--ou
 | `--request <id>` | Required. The request the branch is on: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 
 ### Examples
@@ -2036,7 +2036,7 @@ qits release-request withdraw --request <id> [--output table|json] [--project <p
 | `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--reason <text>` | Why it must not ship, in a sentence. The request shows it as its detail. Default: the platform writes who withdrew it. |
 | `--repository <repository>` | The repository: its id or name. |
 
@@ -2073,7 +2073,7 @@ qits release-request approve --request <id> [--note <text>] [--output table|json
 | `--note <text>` | Why, in a sentence, for the record. A decline's note becomes the request's detail, the first thing whoever answers the decline reads. Default: none. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 | `--sha <merged sha>` | The fold you judged: the request's merged sha, as the landing app or -o json shows it. This is the strict form: the platform refuses the decision (HTTP 409) if the request is on another fold by then. Without it the command judges whatever fold the request is on at the moment it is read. |
 
@@ -2110,7 +2110,7 @@ qits release-request decline --request <id> [--note <text>] [--output table|json
 | `--note <text>` | Why, in a sentence, for the record. A decline's note becomes the request's detail, the first thing whoever answers the decline reads. Default: none. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 | `--sha <merged sha>` | The fold you judged: the request's merged sha, as the landing app or -o json shows it. This is the strict form: the platform refuses the decision (HTTP 409) if the request is on another fold by then. Without it the command judges whatever fold the request is on at the moment it is read. |
 
@@ -2146,7 +2146,7 @@ qits release-request regenerate --kind <kind> [--output table|json] [--project <
 | `--kind <kind>` | Required. What to generate: entity-diagram, screenshot-baselines, cli-tapes, dependency-bump, estate-pins, golden-recordings-maven or golden-recordings-npm. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 | `--request <id>` | The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. Default: the repository's one open request. |
 
@@ -2187,7 +2187,7 @@ qits release-request override --request <id> --upstream <id> [--note <text>] [--
 | `--note <text>` | Why, in a sentence, for the record. Default: none. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 
 ### Examples
@@ -2225,7 +2225,7 @@ qits release-request rerun --phase <phase> --request <id> [--output table|json] 
 | `--request <id>` | Required. The request: its id as list shows it (qits-ci-service-rr-12), its uuid, or the start of the uuid. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.wohlben.eu/idp gives https://projects.qits.wohlben.eu). |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.example.com/idp gives https://projects.qits.example.com). |
 | `--repository <repository>` | The repository: its id or name. |
 
 ### Examples
@@ -2272,7 +2272,7 @@ qits ci runs [--branch <branch>] [--ci-url <url>] [--limit <n>] [--output table|
 | Name | What it does |
 |---|---|
 | `--branch <branch>` | Only the runs of this branch: main, release/<request id>, or a version for a release run. |
-| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.example.com/idp gives https://ci.qits.example.com). |
 | `--limit <n>` | At most this many runs, the newest. Default: 20. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -2312,7 +2312,7 @@ qits ci run [--ci-url <url>] [--logs] [--output table|json] [--project <project>
 | Name | What it does |
 |---|---|
 | `<run id>` | The run: its id, or its start when --project and --repository name its repository. |
-| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.example.com/idp gives https://ci.qits.example.com). |
 | `--logs` | Also print each step's output, with terminal control characters taken out. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -2350,7 +2350,7 @@ qits ci retry [--ci-url <url>] [--output table|json] [--project <project>] [--pr
 | Name | What it does |
 |---|---|
 | `<run id>` | The run to retry: its id, or its start when --project and --repository name its repository. |
-| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.example.com/idp gives https://ci.qits.example.com). |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
@@ -2388,7 +2388,7 @@ qits ci cancel [--ci-url <url>] [--output table|json] [--project <project>] [--p
 | Name | What it does |
 |---|---|
 | `<run id>` | The run to cancel: its id, or its start when --project and --repository name its repository. |
-| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.example.com/idp gives https://ci.qits.example.com). |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
@@ -2452,7 +2452,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 - contracts reads pacts/*.json (the committed consumer pacts, Pact v2 to v4), .qits-reports/pact-verification/*.json (Pact-JVM's JSON verification report: the pacts the provider verified) and golden-masters/index.json (the provider states), and only in a step where test-results found a file, so a run reports its tree once.
 - entity-changes reads the generated docs/database/*.md (the files `qits database diagram` wrote; a hand-written file there is ignored), only in step 0, and compares them with the same files at the baseline's tag, fetched as for coverage. Without a baseline, or at a baseline from before the diagrams, every unit is CURRENT: the diagram is new.
 - screenshots reads the committed screenshot baselines (vitest browser mode's **/__screenshots__/<spec file>/<name>-<browser>-<platform>.png) from `git ls-tree` at HEAD and at the baseline's tag, fetched as for coverage, and lists the NEW, CHANGED and REMOVED ones by path and blob id, never their bytes, with the keys of **/testing/browser/renderer.txt that changed. Only in a step that rendered them: one on the renderer image (/etc/qits-renderer-provenance) or with @qits/angular's run record (node_modules/.cache/@qits/angular/screenshot-references.json); otherwise `screenshots: not reported (not rendered in this step)`, and `(no screenshot baselines)` when neither side holds one. QITS_CI_REPO_ID names the repository for the images. Without a baseline every image is NEW.
-- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN (QITS_DOMAIN defaults to wohlben.eu); no variable and no option names another address.
+- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN, and without QITS_DOMAIN the command refuses (exit 2); no variable and no option names another address.
 - The bearer comes from QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.
 - No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without the comparison.
 - A non-zero --exit-code means the step may have stopped part way, so its test count and coverage are partial: they are sent and say so, and never compared with the baseline's.
@@ -2478,7 +2478,7 @@ qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--pr
 | Name | What it does |
 |---|---|
 | `<run id>` | The run: its id, or its start when --project and --repository name its repository. |
-| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.wohlben.eu/idp gives https://ci.qits.wohlben.eu). |
+| `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.example.com/idp gives https://ci.qits.example.com). |
 | `--kind <kind>` | Only this kind of report (test-results, coverage, contracts, entity-changes, screenshots), and print the whole of it. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -4736,8 +4736,8 @@ qits git-login [--audience <audience>] [--configure] [--git-host <url>] [--idp-u
 |---|---|
 | `--audience <audience>` | The audience of the token. Default: qits-platform, the one audience every platform service accepts. |
 | `--configure` | Also run the two `git config --global` commands that make Git ask `qits git-credential` for this git host (and no other). |
-| `--git-host <url>` | The git host's address. Default: QITS_GIT_HOST_URL, else the idp's host with `idp` swapped for `githost` (https://githost.qits.wohlben.eu). |
-| `--idp-url <url>` | The idp's public base URL. Default: QITS_IDP_URL, else the idp of the `qits login` session, else https://idp.qits.<QITS_DOMAIN>/idp, else https://idp.qits.wohlben.eu/idp. |
+| `--git-host <url>` | The git host's address. Default: QITS_GIT_HOST_URL, else the idp's host with `idp` swapped for `githost` (https://githost.qits.<QITS_DOMAIN>). |
+| `--idp-url <url>` | The idp's public base URL. Default: QITS_IDP_URL, else the idp of the `qits login` session, else https://idp.qits.<QITS_DOMAIN>/idp; with none of them, the command refuses. |
 | `--no-browser` | Only print the sign-in address; do not start a browser. |
 | `--timeout <seconds>` | How long to wait for the browser to come back. Default: 300. |
 
@@ -4778,7 +4778,7 @@ qits git-credential <get|store|erase>
 ### Examples
 
 ```
-git config --global --get-all credential.https://githost.qits.wohlben.eu.helper
+git config --global --get-all credential.https://githost.qits.example.com.helper
 ```
 
 The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, because that is Git's helper protocol.
@@ -4845,7 +4845,7 @@ Every publish follows one rule, for every surface: absent, PUT it and say what l
 - This command never signs in and never reads or writes what `qits login` keeps: it runs in a CI step container with no person. `qits login` and `qits git-login` do not apply to it.
 - Only a CI run may publish to qits-artifacts, so every request carries a bearer. The token comes from the first of these the environment has: QITS_PUBLISH_TOKEN_COMMAND (an executable that prints a fresh token, re-run for every request), else QITS_PUBLISH_TOKEN (a token). With neither of them the request still goes out, unauthenticated, and the store answers 401: the store decides who may write, not this client.
 - Started under the name `qits-publish` (its own file, or a symlink to `qits`), any command runs exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as `qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.
-- The store is https://registry.qits.$QITS_DOMAIN and the Maven Central cache https://mirror.qits.$QITS_DOMAIN; QITS_DOMAIN defaults to wohlben.eu. No other variable names an address: the hosted npm and maven repositories, the docs, sbom and daemon stores are fixed paths under the store's host.
+- The store is https://registry.qits.$QITS_DOMAIN and the Maven Central cache https://mirror.qits.$QITS_DOMAIN; without QITS_DOMAIN a command refuses (exit 2). No other variable names an address: the hosted npm and maven repositories, the docs, sbom and daemon stores are fixed paths under the store's host.
 
 ### Exit codes
 

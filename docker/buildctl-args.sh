@@ -4,8 +4,9 @@
 # argument for argument: that is what makes the second and every later one cache hits on the native
 # compile. POSIX sh (a step's shell is sh where the image has no bash) and `set -u` safe. It sets:
 #
-#   qits_domain   the platform's public domain; `wohlben.eu` covers a qits-ci too old to inject
-#                 $QITS_DOMAIN
+#   qits_domain   the platform's public domain. REQUIRED: qits-ci injects $QITS_DOMAIN into every
+#                 step unconditionally, and a missing value fails loudly rather than falling back
+#                 to one install's domain
 #   maven_root    the platform's own Maven, under that domain
 #   musl_url      the Dockerfile's MUSL_URL default, re-rooted at maven_root
 #   zlib_url      the same for ZLIB_URL
@@ -20,7 +21,7 @@
 #
 # THE MAVEN STAGE'S CREDENTIAL IS NOT HERE: it is unconditional, the two files qits-ci's prelude
 # writes (/tmp/qits-client-id, /tmp/qits-client-secret), which every invocation names itself.
-qits_domain=${QITS_DOMAIN:-wohlben.eu}
+qits_domain=${QITS_DOMAIN:?QITS_DOMAIN is not set}
 maven_root="https://registry.qits.$qits_domain/artifacts/maven/maven"
 musl_url=$(sed -n 's/^ARG MUSL_URL=//p' docker/Dockerfile)
 zlib_url=$(sed -n 's/^ARG ZLIB_URL=//p' docker/Dockerfile)

@@ -1,6 +1,8 @@
 package eu.wohlben.qits.cli.access.publish;
 
 import eu.wohlben.qits.cli.access.idp.IdpUrl;
+import eu.wohlben.qits.cli.access.platform.CliFailure;
+import eu.wohlben.qits.cli.session.PlatformEndpoints;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -18,9 +20,11 @@ import java.util.Set;
  *
  * <h2>The one input</h2>
  *
- * <p>{@code QITS_DOMAIN}, the bare public domain ({@code wohlben.eu}), folded the way qits-ci folds
- * it: trimmed, lower-cased, leading and trailing dots dropped. Absent, it is {@value
- * #DEFAULT_DOMAIN}, the same default {@code IdpUrl} falls back to. <b>Never an internal address</b>:
+ * <p>{@code QITS_DOMAIN}, the bare public domain ({@code <QITS_DOMAIN>}, for example {@code
+ * example.com}), folded the way qits-ci folds it: trimmed, lower-cased, leading and trailing dots
+ * dropped. Absent, blank, undotted or a {@code *.localhost} name, it is a usage failure naming
+ * {@code QITS_DOMAIN}: there is no default, because any default is one install's domain. qits-ci
+ * sets it in every step. <b>Never an internal address</b>:
  * the public names resolve and answer from inside the platform network too (the edge hairpins), and
  * an internal fallback is exactly the class of address that stopped resolving every time a wire
  * alias moved. The public hosts answer 401 anonymously, which is why every request here goes out
@@ -31,9 +35,6 @@ import java.util.Set;
  * same.
  */
 public final class Store {
-
-  /** The domain a CLI with no {@code QITS_DOMAIN} talks to: the live estate's. */
-  static final String DEFAULT_DOMAIN = "wohlben.eu";
 
   /** qits-artifacts' host label, {@code host: registry} in its deployments.yml. */
   public static final String REGISTRY_HOST = "registry";
@@ -64,7 +65,7 @@ public final class Store {
   record Hosts(String registry, String mirror) {
 
     /** {@code https://registry.qits.<domain>} and {@code https://mirror.qits.<domain>}. */
-    static Hosts of(Env env) {
+    static Hosts of(Env env) throws CliFailure {
       String domain = domain(env.get("QITS_DOMAIN"));
       return new Hosts(origin(REGISTRY_HOST, domain), origin(MIRROR_HOST, domain));
     }
@@ -73,21 +74,35 @@ public final class Store {
       return "https://" + host + "." + IdpUrl.PROJECT + "." + domain;
     }
 
-    /** Folded as qits-ci's {@code RunnerAddresses.publicOrigin} folds it; blank is the default. */
-    static String domain(String value) {
+    /**
+     * Folded as qits-ci's {@code RunnerAddresses.publicOrigin} folds it, then held to the rule
+     * {@link PlatformEndpoints#domain} holds every public domain to. Blank, undotted or {@code
+     * *.localhost} is a usage failure naming {@code QITS_DOMAIN}.
+     */
+    static String domain(String value) throws CliFailure {
       String folded =
           value == null ? "" : value.strip().toLowerCase(Locale.ROOT).replaceAll("^\\.+|\\.+$", "");
-      return folded.isEmpty() ? DEFAULT_DOMAIN : folded;
+      try {
+        return PlatformEndpoints.domain(java.util.Map.of("QITS_DOMAIN", folded));
+      } catch (CliFailure refused) {
+        throw new CliFailure(
+            "QITS_DOMAIN is "
+                + (folded.isEmpty() ? "not set" : "'" + folded + "', which is not a public domain")
+                + ": the platform's public names are https://<app>.qits.<QITS_DOMAIN>, and qits-ci sets"
+                + " QITS_DOMAIN in every step. Set it.",
+            CliFailure.USAGE);
+      }
     }
   }
 
   /**
-   * {@code https://<label>.qits.<QITS_DOMAIN>}, with the domain folded and defaulted exactly as the
+   * {@code https://<label>.qits.<QITS_DOMAIN>}, with the domain folded and checked exactly as the
    * store's own two hosts are. For a CI-step command outside this package that dials another
    * service on the same public names, so the rule stays in one place: {@code qits ci report submit}
    * reaches qits-ci as label {@code ci}.
    */
-  public static String publicOrigin(String label, java.util.Map<String, String> env) {
+  public static String publicOrigin(String label, java.util.Map<String, String> env)
+      throws CliFailure {
     return Hosts.origin(label, Hosts.domain(new Env(env).get("QITS_DOMAIN")));
   }
 
@@ -96,7 +111,7 @@ public final class Store {
    * platform's pages (a work item is {@code /projects/<slug>/work/detail/<qualifiedId>} under it).
    * Not a {@link #publicOrigin} label: {@code landing.qits.<domain>} is no application's host.
    */
-  public static String projectRoot(java.util.Map<String, String> env) {
+  public static String projectRoot(java.util.Map<String, String> env) throws CliFailure {
     return "https://" + IdpUrl.PROJECT + "." + Hosts.domain(new Env(env).get("QITS_DOMAIN"));
   }
 
@@ -106,7 +121,7 @@ public final class Store {
     this.hosts = new Hosts(trim(hosts.registry()), trim(hosts.mirror()));
   }
 
-  static Store from(Env env) {
+  static Store from(Env env) throws CliFailure {
     return new Store(Hosts.of(env));
   }
 

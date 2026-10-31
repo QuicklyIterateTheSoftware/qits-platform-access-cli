@@ -132,8 +132,8 @@ public class ChangelogCommand extends AbstractPublishCommand {
         Map<String, String> variables = context.env();
         PlatformClient client = new PlatformClient(PublishCredential.forCiStep(variables, context.err()));
         ProjectsApi projects = new ProjectsApi(client,
-                projectsOrigin != null ? projectsOrigin : Store.publicOrigin("projects", variables));
-        CiApi ci = new CiApi(client, ciOrigin != null ? ciOrigin : Store.publicOrigin("ci", variables));
+                projectsOrigin != null ? projectsOrigin : composed(() -> Store.publicOrigin("projects", variables)));
+        CiApi ci = new CiApi(client, ciOrigin != null ? ciOrigin : composed(() -> Store.publicOrigin("ci", variables)));
 
         List<Changelog.Earlier> earlier = new ArrayList<>();
         List<JsonNode> listed = new ArrayList<>();
@@ -160,7 +160,7 @@ public class ChangelogCommand extends AbstractPublishCommand {
             }
             commits.add(new Changelog.Commit(shortHash, subject, text(commit, "author")));
         }
-        String root = Store.projectRoot(variables);
+        String root = composed(() -> Store.projectRoot(variables));
         List<Changelog.Ticket> tickets = new ArrayList<>();
         for (String id : CommitSubjects.ids(subjects)) {
             tickets.add(ticket(projects, id, root));

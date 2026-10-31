@@ -57,7 +57,25 @@ abstract class AbstractPublishCommand extends PlatformCommand {
 
     /** The store this command talks to: the platform's public hosts, from {@code QITS_DOMAIN}. */
     protected final Store store(Env env) {
-        return hosts != null ? new Store(hosts) : Store.from(env);
+        if (hosts != null) {
+            return new Store(hosts);
+        }
+        return composed(() -> Store.from(env));
+    }
+
+    /** What a public address is composed into, or the refusal naming {@code QITS_DOMAIN} as its exit 2. */
+    protected static <T> T composed(Composed<T> address) {
+        try {
+            return address.get();
+        } catch (CliFailure refused) {
+            throw new CliException(refused.exitCode(), refused.getMessage());
+        }
+    }
+
+    /** An address composed from {@code QITS_DOMAIN}, which refuses without one. */
+    @FunctionalInterface
+    protected interface Composed<T> {
+        T get() throws CliFailure;
     }
 
     protected abstract int run(Env env, Console console);

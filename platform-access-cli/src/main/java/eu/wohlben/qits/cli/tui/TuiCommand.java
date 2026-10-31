@@ -153,7 +153,7 @@ public class TuiCommand extends PlatformCommand {
     }
 
     /**
-     * Where this is and who is holding it: {@code qits.wohlben.eu · signed in as jan} on a
+     * Where this is and who is holding it: {@code qits.example.com · signed in as jan} on a
      * workstation, {@code in platform · dev · agent (qits:agent)} in a container.
      * <p>
      * Neither is worth refusing to paint over. A person browsing the command tree needs no
@@ -180,7 +180,7 @@ public class TuiCommand extends PlatformCommand {
         }
     }
 
-    /** {@code https://idp.qits.wohlben.eu/idp} is {@code qits.wohlben.eu}. */
+    /** {@code https://idp.qits.example.com/idp} is {@code qits.example.com}. */
     private String domain(CliContext context) {
         try {
             String host = URI.create(String.valueOf(context.idpUrl()).strip()).getHost();

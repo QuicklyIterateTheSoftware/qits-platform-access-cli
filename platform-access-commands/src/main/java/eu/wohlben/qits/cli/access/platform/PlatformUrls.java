@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * Where a platform service is, as a base URL without its path prefix ({@code
- * https://projects.qits.wohlben.eu}). The one place that decides it.
+ * https://projects.qits.<QITS_DOMAIN>}). The one place that decides it.
  * <p>
  * Order: the command's flag, else {@code QITS_<APP>_URL}, else whatever {@link PlatformEndpoints}
  * works out — the public vhost on a workstation, the wire alias inside the platform. The commands
@@ -54,14 +54,14 @@ public final class PlatformUrls {
 
     /**
      * qits-artifacts, which answers on the host {@code registry}: {@code
-     * https://registry.qits.wohlben.eu}. {@code QITS_ARTIFACTS_URL} is the variable install.sh reads
+     * https://registry.qits.<QITS_DOMAIN>}. {@code QITS_ARTIFACTS_URL} is the variable install.sh reads
      * for the same address.
      */
     public static String artifacts(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         return resolve("registry", "--artifacts-url", "QITS_ARTIFACTS_URL", flag, env, idpUrl);
     }
 
-    /** qits-mirror, the pull-through caches of npmjs and Maven Central: {@code https://mirror.qits.wohlben.eu}. */
+    /** qits-mirror, the pull-through caches of npmjs and Maven Central: {@code https://mirror.qits.<QITS_DOMAIN>}. */
     public static String mirror(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         return resolve("mirror", "--mirror-url", "QITS_MIRROR_URL", flag, env, idpUrl);
     }
@@ -71,7 +71,7 @@ public final class PlatformUrls {
         return resolve("githost", "--git-host", "QITS_GIT_HOST_URL", flag, env, idpUrl);
     }
 
-    /** The landing app, which a person's browser opens: {@code https://qits.wohlben.eu}. */
+    /** The landing app, which a person's browser opens: {@code https://qits.<QITS_DOMAIN>}. */
     public static String landing(String flag, Map<String, String> env, String idpUrl) throws CliFailure {
         if (!blank(flag)) {
             return trim(flag);

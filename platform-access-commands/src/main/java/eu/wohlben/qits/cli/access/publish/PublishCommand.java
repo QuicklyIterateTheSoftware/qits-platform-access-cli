@@ -35,7 +35,7 @@ import picocli.CommandLine;
                         + "exactly as `qits artifacts publish <command>`: `qits-publish sbom submit ...` behaves as "
                         + "`qits artifacts publish sbom submit ...`. A hand-written pipeline may still call it that way.",
                 "- The store is https://registry.qits.$QITS_DOMAIN and the Maven Central cache "
-                        + "https://mirror.qits.$QITS_DOMAIN; QITS_DOMAIN defaults to wohlben.eu. No other variable "
+                        + "https://mirror.qits.$QITS_DOMAIN; without QITS_DOMAIN a command refuses (exit 2). No other variable "
                         + "names an address: the hosted npm and maven repositories, the docs, sbom and daemon "
                         + "stores are fixed paths under the store's host."},
         exitCodeListHeading = "%nExit codes:%n",

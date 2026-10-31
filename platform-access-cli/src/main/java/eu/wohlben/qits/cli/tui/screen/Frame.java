@@ -12,7 +12,7 @@ import java.util.List;
  * asserting what it returns — no terminal, no timing.
  *
  * <pre>
- *  qits tui · qits.wohlben.eu · signed in as jan
+ *  qits tui · qits.example.com · signed in as jan
  *  ┌ ci ▸ runs ──────────────────────────────┐
  *  │ * --project        qits                 │
  *  │ ↑↓ move · ⏎ choose · ␛ back · q quit    │

@@ -17,7 +17,11 @@
 # `qits login` does (see LoginFlow.java in this repository).
 #
 # Environment overrides:
-#   QITS_IDP_URL        the idp's base URL (default https://idp.qits.wohlben.eu/idp)
+#   QITS_DOMAIN          your platform's public domain, used to derive the idp URL when
+#                        QITS_IDP_URL is not set (https://idp.qits.$QITS_DOMAIN/idp). With
+#                        neither QITS_DOMAIN nor QITS_IDP_URL set, this script refuses (exit 2):
+#                        there is no built-in default domain.
+#   QITS_IDP_URL        the idp's base URL. Overrides QITS_DOMAIN's derived address.
 #   QITS_ARTIFACTS_URL   the artifacts store's base URL (default: derived from
 #                        the idp URL, swapping the idp host label for `registry`)
 #   QITS_GIT_HOST_URL    the git host's base URL (default: derived from the idp
@@ -33,7 +37,14 @@ DAEMON_NAME="qits-platform-access-cli"
 CLIENT_ID="qits-cli"
 CODE_TTL_SECONDS=300
 
-IDP_URL="${QITS_IDP_URL:-https://idp.qits.wohlben.eu/idp}"
+if [[ -n "${QITS_IDP_URL:-}" ]]; then
+    IDP_URL="$QITS_IDP_URL"
+elif [[ -n "${QITS_DOMAIN:-}" ]]; then
+    IDP_URL="https://idp.qits.${QITS_DOMAIN}/idp"
+else
+    echo "Set QITS_DOMAIN (your platform's public domain) or QITS_IDP_URL." >&2
+    exit 2
+fi
 INSTALL_DIR="${QITS_INSTALL_DIR:-$HOME/.local/bin}"
 
 # ---- helpers ------------------------------------------------------------

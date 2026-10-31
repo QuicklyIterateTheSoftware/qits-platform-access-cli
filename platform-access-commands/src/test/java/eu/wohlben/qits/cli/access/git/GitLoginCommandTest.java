@@ -130,4 +130,39 @@ class GitLoginCommandTest {
         assertThat(commands.get(1).getLast()).isEqualTo("!\"/home/a b/qits\" git-credential");
         assertThat(GitSetup.shellLine(commands.get(1))).endsWith("'!\"/home/a b/qits\" git-credential'");
     }
+
+    private CliContext quiet(Map<String, String> variables) {
+        return new CliContext(Map.copyOf(variables), InputStream.nullInputStream(),
+                new PrintStream(out, true, StandardCharsets.UTF_8), new PrintStream(err, true, StandardCharsets.UTF_8),
+                new FakeTime(Instant.parse("2026-09-12T10:00:00Z")), new FakeTime(Instant.EPOCH), TokenClient::new, stop -> { });
+    }
+
+    @Test
+    void withNoFlagNoVariableAndNoSessionTheIdpIsAUsageFailureNamingQitsDomain() {
+        CliContext context = quiet(env);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> GitLoginCommand.idpUrl(null, env, context))
+                .isInstanceOfSatisfying(eu.wohlben.qits.cli.access.platform.CliFailure.class,
+                        failure -> assertThat(failure.exitCode())
+                                .isEqualTo(eu.wohlben.qits.cli.access.platform.CliFailure.USAGE))
+                .hasMessageContaining("QITS_DOMAIN")
+                .hasMessageNotContaining("wohlben");
+    }
+
+    @Test
+    void theStoredSessionNamesTheIdpWhenNothingElseDoes() throws Exception {
+        new eu.wohlben.qits.cli.access.session.SessionFile(home.resolve("qits")).write(
+                new eu.wohlben.qits.cli.access.session.Session("https://idp.qits.example.com/idp", "qits-cli",
+                        "access", Instant.parse("2026-09-12T10:10:00Z"), "refresh",
+                        Instant.parse("2026-10-12T10:00:00Z")));
+
+        assertThat(GitLoginCommand.idpUrl(null, env, quiet(env))).isEqualTo("https://idp.qits.example.com/idp");
+    }
+
+    @Test
+    void withNoSessionTheDomainNamesTheIdp() throws Exception {
+        env.put("QITS_DOMAIN", "example.org");
+
+        assertThat(GitLoginCommand.idpUrl(null, env, quiet(env))).isEqualTo("https://idp.qits.example.org/idp");
+    }
 }

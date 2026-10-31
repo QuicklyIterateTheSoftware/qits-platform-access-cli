@@ -97,9 +97,8 @@ public class UsersCommand implements Runnable {
             if (session) {
                 return IdpUrl.resolve(context.idpUrl(), context.env());
             }
-            return storedSession(context).map(Session::idpUrl)
-                    .map(url -> IdpUrl.resolve(url, context.env()))
-                    .orElseGet(() -> IdpUrl.resolve(null, context.env()));
+            Optional<String> stored = storedSession(context).map(Session::idpUrl);
+            return IdpUrl.resolve(stored.orElse(null), context.env());
         }
         // No session address outside a workstation: the endpoints work it out from the environment.
         return context.endpoints(null).base("idp") + "/idp";

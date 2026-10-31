@@ -59,9 +59,10 @@ release-request:
   - image: qits/build-images/maven-base:latest
     timeout-seconds: 1800
     script: |
-      # The addresses are code under the platform's public domain (qits-731); `wohlben.eu` covers a
-      # qits-ci too old to inject $QITS_DOMAIN.
-      qits_domain=${QITS_DOMAIN:-wohlben.eu}
+      # The addresses are code under the platform's public domain (qits-731); qits-ci injects
+      # $QITS_DOMAIN into every step unconditionally, so a missing value is a configuration bug,
+      # never a default to fall back on.
+      qits_domain=${QITS_DOMAIN:?QITS_DOMAIN is not set}
       export QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central"
       # The platform's own Maven, for qits-projects' golden masters jar, which the commands' consumer
       # pact test reads (the java-service archetype's QA step passes it the same way).
@@ -226,7 +227,7 @@ release:
       # NO LONGER A DEPLOY: the CLI publishes this coordinate from the postlude, off the jar
       # this step leaves in target/. This step only has to build it. The QITS_MAVEN_* prefix
       # stays: `-am` still resolves the parent and junit off qits-maven's mirror of Central.
-      qits_domain=${QITS_DOMAIN:-wohlben.eu}
+      qits_domain=${QITS_DOMAIN:?QITS_DOMAIN is not set}
       QITS_MAVEN_CENTRAL_URL="https://mirror.qits.$qits_domain/mirror/maven/central" \
       QITS_MAVEN_AUTH_USR="${QITS_MAVEN_AUTH_USR-}" \
       QITS_MAVEN_AUTH_PSW="${QITS_MAVEN_AUTH_PSW-}" \

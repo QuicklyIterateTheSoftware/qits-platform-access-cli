@@ -14,7 +14,7 @@ application: qits-platform-access-mcp-service
 # HTTP space: no quarkus.http.root-path.
 routes: /mcp
 
-# THE PUBLIC NAME, mcp.<env>.<domain> (mcp.qits.wohlben.eu on the flat `qits` project). Spelled,
+# THE PUBLIC NAME, mcp.<env>.<domain> (mcp.qits.<QITS_DOMAIN> on the flat `qits` project). Spelled,
 # because the derived label would be the application name minus `qits-`, and no navigation entry:
 # this is not a page.
 host: mcp

@@ -30,7 +30,7 @@ final class ArtifactsReleases implements Releases {
     private final PlatformClient client;
     private final String origin;
 
-    /** @param origin qits-artifacts' base URL, {@code https://registry.qits.wohlben.eu} */
+    /** @param origin qits-artifacts' base URL, {@code https://registry.qits.<QITS_DOMAIN>} */
     ArtifactsReleases(PlatformClient client, String origin) {
         this.client = client;
         this.origin = origin;

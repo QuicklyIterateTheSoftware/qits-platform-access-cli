@@ -115,7 +115,7 @@
         <!-- Where the golden masters jar is resolved from: the platform's hosted Maven. The default
              is the public address; a CI step passes the in-network one, and the exact-id mirror in
              .qits-maven-settings.xml (and a workspace's settings) reroutes `qits-maven` anyway. -->
-        <qits.maven.repository.url>https://registry.qits.wohlben.eu/artifacts/maven/maven</qits.maven.repository.url>
+        <qits.maven.repository.url>https://registry.qits.${env.QITS_DOMAIN}/artifacts/maven/maven</qits.maven.repository.url>
     </properties>
 
     <dependencyManagement>
