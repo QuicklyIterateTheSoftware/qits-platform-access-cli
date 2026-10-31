@@ -126,6 +126,23 @@ public final class ProjectsContract {
     static final String SUPERSEDED_ITEMS = "an item that other items name as their supersededBy";
 
     /**
+     * {@code qits repositories archive} and {@code unarchive} (qits-1784): the doors are live on the
+     * provider ({@code archiveRepository}, {@code unarchiveRepository}), but the golden masters
+     * pinned in the root pom record no state for them yet, so both rows are skipped with this state
+     * and their door, and stay out of the pact file. They go live with no change here once
+     * qits-maintenance bumps {@code qits.qits-projects-golden-masters.version} past the release that
+     * records this state under the operation ids {@link #ARCHIVE_OPERATION} and {@link
+     * #UNARCHIVE_OPERATION}: write the pact again with {@code -Dgolden.update=true} on that bump. If
+     * the provider records either under another state or operation id, the names here follow.
+     */
+    static final String ARCHIVABLE_REPOSITORY = "a repository to archive";
+    static final String ARCHIVE_OPERATION = "archiveRepository";
+    static final String UNARCHIVE_OPERATION = "unarchiveRepository";
+
+    /** What {@code archive} and {@code unarchive} print: the table shows exactly these, nothing else. */
+    static final List<String> ARCHIVE_ANSWER = List.of("outcome", "archived", "branch", "qualifiedId", "detail");
+
+    /**
      * {@code qits ideas} (epic qits-888): the provider records the idea doors in this state, and
      * {@code createIdea} in {@link #NO_WORK} too. Pending until qits-maintenance bumps {@code
      * qits.projects-golden-masters.version} to a release that records it (qits-projects-service
@@ -1051,6 +1068,22 @@ public final class ProjectsContract {
         });
     };
 
+    /** {@code qits repositories archive}: outcome, whether it is now archived, branch, request and detail. */
+    private static final Call ARCHIVE_REPOSITORY = (api, params, recorded) -> {
+        JsonNode answer = api.archiveRepository(params.get("repositoryId"));
+        assertThat(ProjectsApi.text(answer, "outcome")).isNotBlank();
+        assertThat(answer.path("archived").isBoolean()).isTrue();
+        assertThat(ProjectsApi.text(answer, "detail")).isNotBlank();
+    };
+
+    /** {@link #ARCHIVE_REPOSITORY}'s mirror. */
+    private static final Call UNARCHIVE_REPOSITORY = (api, params, recorded) -> {
+        JsonNode answer = api.unarchiveRepository(params.get("repositoryId"));
+        assertThat(ProjectsApi.text(answer, "outcome")).isNotBlank();
+        assertThat(answer.path("archived").isBoolean()).isTrue();
+        assertThat(ProjectsApi.text(answer, "detail")).isNotBlank();
+    };
+
     /** `design` asks the item for its refinement first; an item with none answers null. */
     private static final Call NO_REFINEMENT = (api, params, recorded) ->
             assertThat(api.workRefinement(params.get("qualifiedId")).path("refinement").isNull()).isTrue();
@@ -1141,6 +1174,7 @@ public final class ProjectsContract {
     static final List<String> PROJECT_SCOPED = List.of("qits repositories list", "qits repositories create",
             "qits repositories remote-login", "qits repositories branches", "qits repositories commits",
             "qits repositories commit-changes", "qits repositories commit-diff", "qits repositories commit-subjects",
+            "qits repositories archive", "qits repositories unarchive",
             "qits release-request list", "qits release-request create", "qits release-request join",
             "qits release-request move", "qits release-request withdraw", "qits release-request regenerate", "qits release-request override",
             "qits release-request rerun",
@@ -1256,6 +1290,14 @@ public final class ProjectsContract {
         rows.add(row("qits repositories commit-subjects", AWAITING_REQUEST, "measureCommitSubjects", "commitSubjects",
                 COMMIT_SUBJECTS).consumes("branch", "guardEnabled", "counts", "nonComplying[].shortHash",
                 "nonComplying[].authorName", "nonComplying[].subject"));
+        rows.add(row("qits repositories archive", ARCHIVABLE_REPOSITORY, ARCHIVE_OPERATION, "archiveRepository",
+                ARCHIVE_REPOSITORY)
+                .consumes(held(ARCHIVABLE_REPOSITORY, ARCHIVE_OPERATION, ARCHIVE_ANSWER))
+                .request("POST /projects/api/repositories/{repositoryId}/archive"));
+        rows.add(row("qits repositories unarchive", ARCHIVABLE_REPOSITORY, UNARCHIVE_OPERATION,
+                "unarchiveRepository", UNARCHIVE_REPOSITORY)
+                .consumes(held(ARCHIVABLE_REPOSITORY, UNARCHIVE_OPERATION, ARCHIVE_ANSWER))
+                .request("POST /projects/api/repositories/{repositoryId}/unarchive"));
 
         // qits release-request
         rows.add(row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",

@@ -9,6 +9,7 @@ import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.platform.PlatformCommand;
 import eu.wohlben.qits.cli.access.platform.Table;
 import eu.wohlben.qits.cli.access.complete.ProjectSource;
+import eu.wohlben.qits.cli.access.complete.RepositorySource;
 import eu.wohlben.qits.cli.tui.api.Completes;
 import picocli.CommandLine;
 
@@ -19,6 +20,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 @CommandLine.Command(name = "repositories", mixinStandardHelpOptions = true,
         subcommands = {RepositoriesCommand.ListCommand.class, RepositoriesCommand.CreateCommand.class,
+                RepositoriesCommand.ArchiveCommand.class, RepositoriesCommand.UnarchiveCommand.class,
                 RepositoryGitCommands.BranchesCommand.class, RepositoryGitCommands.CommitsCommand.class,
                 RepositoryGitCommands.CommitChangesCommand.class, RepositoryGitCommands.CommitDiffCommand.class,
                 RepositoryGitCommands.CommitSubjectsCommand.class, RemoteLoginCommand.class},
@@ -26,6 +28,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 + "requests take a repository's id or name as --repository.",
                 "branches, commits, commit-changes, commit-diff and commit-subjects read one repository's git "
                         + "history; each takes the repository as --repository <id or name>.",
+                "archive and unarchive ask for repository.archived in the repository's "
+                        + ".config/qits/repository.yml, released through its own release request.",
                 "remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for "
                         + "the credentials the project's backups push with.",
                 "A repository's archetype is read off its name's role suffix, so the name is what says what kind "
@@ -209,6 +213,130 @@ public class RepositoriesCommand implements Runnable {
                         CliFailure.FAILED);
             }
             return refused;
+        }
+    }
+
+    /**
+     * Shared by {@link ArchiveCommand} and {@link UnarchiveCommand}: the {@code --repository}
+     * option and the resolve-then-call-then-print shape, which is the whole of each command but
+     * for which door it calls.
+     */
+    abstract static class ArchiveAction extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        RepositoriesCommand parent;
+
+        @Completes(RepositorySource.class)
+        @CommandLine.Option(names = "--repository", paramLabel = "<repository>",
+                description = "The repository (required): its id or name.")
+        String repository;
+
+        abstract JsonNode call(ProjectsApi api, String repoId) throws CliFailure, InterruptedException;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            boolean json = json(parent.options.output);
+            String wantedProject = required(parent.project, NAME_THE_PROJECT);
+            String wantedRepository = required(repository, "Name the repository: --repository <id or name>.");
+            ProjectsApi api = ProjectsApi.connect(context, parent.options.projectsUrl);
+            JsonNode repo = api.repository(api.project(wantedProject), wantedRepository);
+            JsonNode answer = call(api, text(repo, "id"));
+            if (json) {
+                ProjectsApi.printJson(context.out(), answer);
+                return 0;
+            }
+            print(context, answer);
+            return 0;
+        }
+
+        /** outcome, archived, the branch and release request it opened (if any), and the detail. */
+        private static void print(CliContext context, JsonNode answer) {
+            List<List<String>> rows = new ArrayList<>(List.of(
+                    List.of("outcome", Table.cell(text(answer, "outcome"), 20)),
+                    List.of("archived", answer.path("archived").asBoolean() ? "yes" : "no")));
+            String branch = text(answer, "branch");
+            if (!branch.isEmpty()) {
+                rows.add(List.of("branch", Table.cell(branch, 120)));
+            }
+            String qualifiedId = text(answer, "qualifiedId");
+            if (!qualifiedId.isEmpty()) {
+                rows.add(List.of("release request", Table.cell(qualifiedId, 60)));
+            }
+            String detail = text(answer, "detail");
+            if (!detail.isEmpty()) {
+                rows.add(List.of("detail", Table.cell(detail, 200)));
+            }
+            Table.print(context.out(), "  ", null, rows);
+        }
+    }
+
+    /**
+     * Asks for {@code repository.archived: true} in the repository's own {@code
+     * .config/qits/repository.yml}, as a commit on {@code archive/<name>} released through the
+     * repository's release request. Never a push to main: see {@link ProjectsApi#archiveRepository}.
+     */
+    @CommandLine.Command(name = "archive", mixinStandardHelpOptions = true,
+            description = {"Archive a repository: ask for repository.archived: true in its "
+                    + ".config/qits/repository.yml, on the branch archive/<repository name> (an absent file is "
+                    + "created). Never a push to main.",
+                    "Reads the file at main first: when it already says archived: true nothing is opened and the "
+                            + "outcome is unchanged (HTTP 200). Otherwise the edit is committed onto archive/<name> "
+                            + "(the branch is created at main, or brought up to date with it) and the branch is "
+                            + "asked for through POST .../release-requests, which creates or joins the repository's "
+                            + "open request (HTTP 202, outcome requested).",
+                    "qits-maintenance stops bumping an archived repository's dependencies unless its "
+                            + "maintenance.yml sets dependency-bumps: true.",
+                    "POST /projects/api/repositories/{id}/archive."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits repositories --project qits archive --repository qits-ci-service",
+                    "",
+                    "- Needs qits:admin, qits:admin-agent, qits:desk-admin, or qits:desk bound to its own project; "
+                            + "qits:agent alone is refused (HTTP 403)."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The repository already said archived: true (outcome unchanged), or the edit landed "
+                    + "and a release request was asked for (outcome requested).",
+                    "1:The platform refused (for example a conflicting branch or a repository with no name, HTTP "
+                            + "409, or the file cannot be edited safely, HTTP 422), or cannot be reached (HTTP 502 "
+                            + "or 503).",
+                    HelpText.USAGE})
+    public static class ArchiveCommand extends ArchiveAction {
+
+        @Override
+        JsonNode call(ProjectsApi api, String repoId) throws CliFailure, InterruptedException {
+            return api.archiveRepository(repoId);
+        }
+    }
+
+    /**
+     * {@link ArchiveCommand}'s mirror: removes {@code repository.archived} the same way. See
+     * {@link ProjectsApi#unarchiveRepository}.
+     */
+    @CommandLine.Command(name = "unarchive", mixinStandardHelpOptions = true,
+            description = {"Take a repository out of the archive: ask for repository.archived to be removed from "
+                    + "its .config/qits/repository.yml, on the branch unarchive/<repository name>.",
+                    "Reads the file at main first: when it does not say archived: true nothing is opened and the "
+                            + "outcome is unchanged (HTTP 200); a file that is absent is already unarchived. "
+                            + "Otherwise the edit is committed onto unarchive/<name> and the branch is asked for "
+                            + "through POST .../release-requests, which creates or joins the repository's open "
+                            + "request (HTTP 202, outcome requested).",
+                    "POST /projects/api/repositories/{id}/unarchive."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {"  qits repositories --project qits unarchive --repository qits-ci-service",
+                    "",
+                    "- Needs qits:admin, qits:admin-agent, qits:desk-admin, or qits:desk bound to its own project; "
+                            + "qits:agent alone is refused (HTTP 403)."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The repository already did not say archived: true (outcome unchanged), or the edit "
+                    + "landed and a release request was asked for (outcome requested).",
+                    "1:The platform refused (for example a conflicting branch or a repository with no name, HTTP "
+                            + "409, or the file cannot be edited safely, HTTP 422), or cannot be reached (HTTP 502 "
+                            + "or 503).",
+                    HelpText.USAGE})
+    public static class UnarchiveCommand extends ArchiveAction {
+
+        @Override
+        JsonNode call(ProjectsApi api, String repoId) throws CliFailure, InterruptedException {
+            return api.unarchiveRepository(repoId);
         }
     }
 }

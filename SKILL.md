@@ -307,6 +307,8 @@ The repositories of one project: list shows them, create stands a new one up. Re
 
 branches, commits, commit-changes, commit-diff and commit-subjects read one repository's git history; each takes the repository as --repository <id or name>.
 
+archive and unarchive ask for repository.archived in the repository's .config/qits/repository.yml, released through its own release request.
+
 remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for the credentials the project's backups push with.
 
 A repository's archetype is read off its name's role suffix, so the name is what says what kind of component it is. There is no flag for the archetype, on purpose.
@@ -374,6 +376,74 @@ qits repositories --project qits create qits-docs-app -o json
 
 - `0` The repository exists and the wrapper names it.
 - `1` The platform refused (the message names the status and what to do next), or cannot be reached.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories archive
+
+Archive a repository: ask for repository.archived: true in its .config/qits/repository.yml, on the branch archive/<repository name> (an absent file is created). Never a push to main.
+
+Reads the file at main first: when it already says archived: true nothing is opened and the outcome is unchanged (HTTP 200). Otherwise the edit is committed onto archive/<name> (the branch is created at main, or brought up to date with it) and the branch is asked for through POST .../release-requests, which creates or joins the repository's open request (HTTP 202, outcome requested).
+
+qits-maintenance stops bumping an archived repository's dependencies unless its maintenance.yml sets dependency-bumps: true.
+
+POST /projects/api/repositories/{id}/archive.
+
+```
+qits repositories archive [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits archive --repository qits-ci-service
+```
+
+- Needs qits:admin, qits:admin-agent, qits:desk-admin, or qits:desk bound to its own project; qits:agent alone is refused (HTTP 403).
+
+### Exit codes
+
+- `0` The repository already said archived: true (outcome unchanged), or the edit landed and a release request was asked for (outcome requested).
+- `1` The platform refused (for example a conflicting branch or a repository with no name, HTTP 409, or the file cannot be edited safely, HTTP 422), or cannot be reached (HTTP 502 or 503).
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories unarchive
+
+Take a repository out of the archive: ask for repository.archived to be removed from its .config/qits/repository.yml, on the branch unarchive/<repository name>.
+
+Reads the file at main first: when it does not say archived: true nothing is opened and the outcome is unchanged (HTTP 200); a file that is absent is already unarchived. Otherwise the edit is committed onto unarchive/<name> and the branch is asked for through POST .../release-requests, which creates or joins the repository's open request (HTTP 202, outcome requested).
+
+POST /projects/api/repositories/{id}/unarchive.
+
+```
+qits repositories unarchive [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits unarchive --repository qits-ci-service
+```
+
+- Needs qits:admin, qits:admin-agent, qits:desk-admin, or qits:desk bound to its own project; qits:agent alone is refused (HTTP 403).
+
+### Exit codes
+
+- `0` The repository already did not say archived: true (outcome unchanged), or the edit landed and a release request was asked for (outcome requested).
+- `1` The platform refused (for example a conflicting branch or a repository with no name, HTTP 409, or the file cannot be edited safely, HTTP 422), or cannot be reached (HTTP 502 or 503).
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits repositories branches
