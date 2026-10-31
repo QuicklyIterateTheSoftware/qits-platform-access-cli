@@ -33,8 +33,8 @@ Show
 Sleep 1s
 
 Hide
-Down 8
-Wait+Screen / maintenance +▸/
+Type "/maintenance "
+Wait+Screen /(?s)\/maintenance  ┐.*│ . maintenance +▸/
 Show
 Sleep 1s
 
@@ -45,7 +45,12 @@ Show
 Sleep 1s
 
 Hide
-Type "/automations"
+Type "/automations "
+Wait+Screen /(?s)\/automations  ┐.*│ . automations +▸/
+Show
+Sleep 1s
+
+Hide
 Enter
 Wait+Screen /┌ maintenance ▸ automations ─/
 Show

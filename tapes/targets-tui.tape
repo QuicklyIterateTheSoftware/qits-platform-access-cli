@@ -32,8 +32,8 @@ Show
 Sleep 1s
 
 Hide
-Down 14
-Wait+Screen / targets +▸/
+Type "/targets "
+Wait+Screen /(?s)\/targets  ┐.*│ . targets +▸/
 Show
 Sleep 1s
 
@@ -44,7 +44,12 @@ Show
 Sleep 1s
 
 Hide
-Type "/list"
+Type "/list "
+Wait+Screen /(?s)\/list  ┐.*│ . list +▸/
+Show
+Sleep 1s
+
+Hide
 Enter
 Wait+Screen /┌ targets ▸ list ─/
 Show

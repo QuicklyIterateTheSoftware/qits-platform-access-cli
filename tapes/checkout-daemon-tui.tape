@@ -43,8 +43,8 @@ Show
 Sleep 1s
 
 Hide
-Down 2
-Wait+Screen / checkout-daemon +▸/
+Type "/checkout-daemon "
+Wait+Screen /(?s)\/checkout-daemon  ┐.*│ . checkout-daemon +▸/
 Show
 Sleep 1s
 

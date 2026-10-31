@@ -33,8 +33,8 @@ Show
 Sleep 1s
 
 Hide
-Down 4
-Wait+Screen / repositories +▸/
+Type "/repositories "
+Wait+Screen /(?s)\/repositories  ┐.*│ . repositories +▸/
 Show
 Sleep 1s
 
@@ -45,7 +45,12 @@ Show
 Sleep 1s
 
 Hide
-Type "/list"
+Type "/list "
+Wait+Screen /(?s)\/list  ┐.*│ . list +▸/
+Show
+Sleep 1s
+
+Hide
 Enter
 Wait+Screen /┌ repositories ▸ list ─/
 Show

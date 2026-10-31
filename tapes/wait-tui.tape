@@ -32,8 +32,9 @@ Show
 Sleep 1s
 
 Hide
-Down 12
-Wait+Screen / wait +▸/
+Type "/wait "
+Down 1
+Wait+Screen /(?s)\/wait  ┐.*│ . wait +▸/
 Show
 Sleep 1s
 
@@ -44,7 +45,12 @@ Show
 Sleep 1s
 
 Hide
-Type "/list"
+Type "/list "
+Wait+Screen /(?s)\/list  ┐.*│ . list +▸/
+Show
+Sleep 1s
+
+Hide
 Enter
 Wait+Screen /┌ wait ▸ list ─/
 Show

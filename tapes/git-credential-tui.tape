@@ -33,8 +33,8 @@ Show
 Sleep 1s
 
 Hide
-Down 16
-Wait+Screen / git-credential +▸/
+Type "/git-credential "
+Wait+Screen /(?s)\/git-credential  ┐.*│ . git-credential +▸/
 Show
 Sleep 1s
 

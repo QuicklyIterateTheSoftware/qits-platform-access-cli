@@ -32,8 +32,8 @@ Show
 Sleep 1s
 
 Hide
-Down 9
-Wait+Screen / users +▸/
+Type "/users "
+Wait+Screen /(?s)\/users  ┐.*│ . users +▸/
 Show
 Sleep 1s
 
@@ -44,7 +44,12 @@ Show
 Sleep 1s
 
 Hide
-Type "/list"
+Type "/list "
+Wait+Screen /(?s)\/list  ┐.*│ . list +▸/
+Show
+Sleep 1s
+
+Hide
 Enter
 Wait+Screen /┌ users ▸ list ─/
 Show

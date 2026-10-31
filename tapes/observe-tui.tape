@@ -38,8 +38,8 @@ Show
 Sleep 1s
 
 Hide
-Down 11
-Wait+Screen / observe +▸/
+Type "/observe "
+Wait+Screen /(?s)\/observe  ┐.*│ . observe +▸/
 Show
 Sleep 1s
 

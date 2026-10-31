@@ -37,8 +37,8 @@ Show
 Sleep 1s
 
 Hide
-Down 10
-Wait+Screen / events +▸/
+Type "/events "
+Wait+Screen /(?s)\/events  ┐.*│ . events +▸/
 Show
 Sleep 1s
 

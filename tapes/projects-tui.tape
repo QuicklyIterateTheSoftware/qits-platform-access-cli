@@ -32,8 +32,8 @@ Show
 Sleep 1s
 
 Hide
-Down 3
-Wait+Screen / projects +▸/
+Type "/projects "
+Wait+Screen /(?s)\/projects  ┐.*│ . projects +▸/
 Show
 Sleep 1s
 
@@ -44,7 +44,12 @@ Show
 Sleep 1s
 
 Hide
-Type "/list"
+Type "/list "
+Wait+Screen /(?s)\/list  ┐.*│ . list +▸/
+Show
+Sleep 1s
+
+Hide
 Enter
 Wait+Screen /┌ projects ▸ list ─/
 Show

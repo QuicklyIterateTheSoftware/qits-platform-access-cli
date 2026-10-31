@@ -33,8 +33,9 @@ Show
 Sleep 1s
 
 Hide
-Down 20
-Wait+Screen / update +▸/
+Type "/update "
+Down 2
+Wait+Screen /(?s)\/update  ┐.*│ . update +▸/
 Show
 Sleep 1s
 
