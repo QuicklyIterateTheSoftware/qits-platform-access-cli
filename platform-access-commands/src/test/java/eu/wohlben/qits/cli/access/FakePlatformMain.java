@@ -52,6 +52,8 @@ public final class FakePlatformMain {
     static final String SERVICE_REPOSITORY = "00000000-0000-4000-8000-000000000005";
     /** {@code contract-service-rr-1} in the repository's recorded release requests. */
     static final String RELEASE_REQUEST = "00000000-0000-4000-8000-000000000004";
+    /** {@code Faster builds}, the first idea of {@code a project with ideas}. */
+    static final String IDEA = "00000000-0000-4000-8000-000000000003";
     static final String RUN = "00000000-0000-4000-8000-000000000004";
     /** The agent {@code qits wait} acts for: {@code QITS_AGENT_ID} in {@code tapes/prepare.sh}. */
     static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
@@ -94,8 +96,11 @@ public final class FakePlatformMain {
         projects();
         repositories();
         work();
+        ideas();
+        agentMcp();
         releaseRequests();
         ci();
+        deployments();
         maintenance();
         users();
         workspaces();
@@ -131,6 +136,18 @@ public final class FakePlatformMain {
         refuse("POST", "/projects/api/work/" + PROJECT_SLUG + "-1/blocked");
     }
 
+    private void ideas() {
+        platform.answer("GET", "/projects/api/ideas", projects("a project with ideas", "listIdeas"));
+        refuse("POST", "/projects/api/ideas/" + IDEA + "/archive");
+    }
+
+    /** No recording yet (AgentMcpContract's rows are pending): a fixture. */
+    private void agentMcp() {
+        String credentials = "/projects/api/agent-mcp-catalog/credentials";
+        platform.answer("GET", credentials, fixture("agent-mcp-credentials.json"));
+        refuse("DELETE", credentials + "/env.GITHUB_TOKEN");
+    }
+
     private void releaseRequests() {
         platform.answer("GET", "/projects/api/projects/" + PROJECT + "/release-requests",
                 projects("a project with release requests in every state", "listProjectReleaseRequests"));
@@ -147,6 +164,12 @@ public final class FakePlatformMain {
         platform.answer("GET", "/ci/api/runs", golden("qits-ci-service", "qits-ci",
                 "a repository with its 30 most recent runs", "listRuns"));
         refuse("POST", "/ci/api/runs/" + RUN + "/retry");
+    }
+
+    /** No recording of the settings doors yet (DeploymentsContract's rows are pending): a fixture. */
+    private void deployments() {
+        platform.answer("GET", "/deployments/api/settings", fixture("deployment-settings.json"));
+        refuse("DELETE", "/deployments/api/settings/qits-ci/dev/WEBHOOK_URL");
     }
 
     private void maintenance() {

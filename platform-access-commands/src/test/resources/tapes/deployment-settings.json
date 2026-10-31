@@ -1,0 +1,4 @@
+{"settings":[{"application":"qits-ci","environment":"dev","key":"API_TOKEN","value":null,"secret":true,
+              "updatedAt":"2026-01-01T09:00:00Z","updatedBy":"admin"},
+             {"application":"qits-ci","environment":"dev","key":"WEBHOOK_URL","value":"https://hooks.example.org",
+              "secret":false,"updatedAt":"2026-01-01T09:01:00Z","updatedBy":"ops"}]}
