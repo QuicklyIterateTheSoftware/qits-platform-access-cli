@@ -2533,6 +2533,138 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "reprioritizeIdea"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ideas rank",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ideas rank: reprioritizeIdea",
+      "key": "2ae5e796",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with three ideas, one with a priority",
+          "params": {
+            "anchor": "00000000-0000-4000-8000-000000000001",
+            "ideaId": "00000000-0000-4000-8000-000000000002",
+            "projectId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "below": "00000000-0000-4000-8000-000000000001"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.below": {
+              "dataType": "STRING",
+              "expression": "${anchor}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/ideas/${ideaId}/priority",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.below": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "PUT",
+        "path": "/projects/api/ideas/00000000-0000-4000-8000-000000000002/priority"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "items": [
+              {
+                "id": "00000000-0000-4000-8000-000000000001",
+                "priority": 2
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.items": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.items[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.items[*].priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "createWork"
           },
           "qits-trigger": {
@@ -3000,6 +3132,143 @@
                 {
                   "match": "regex",
                   "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "patchIdea"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits ideas update",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits ideas update: patchIdea",
+      "key": "b678ddf",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a project with three ideas, one with a priority",
+          "params": {
+            "anchor": "00000000-0000-4000-8000-000000000001",
+            "ideaId": "00000000-0000-4000-8000-000000000002",
+            "projectId": "00000000-0000-4000-8000-000000000003"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "priority": 5
+          },
+          "contentType": "application/merge-patch+json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/ideas/${ideaId}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/merge-patch+json"
+          ]
+        },
+        "method": "PATCH",
+        "path": "/projects/api/ideas/00000000-0000-4000-8000-000000000002"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "archived": false,
+            "id": "00000000-0000-4000-8000-000000000002",
+            "priority": 5,
+            "status": "PLANNED",
+            "title": "Smaller images",
+            "updatedAt": "2026-01-01T00:00:00Z"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.archived": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.priority": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
