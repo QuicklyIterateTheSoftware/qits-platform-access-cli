@@ -74,8 +74,9 @@ class AccessCliTest {
     @Test
     @Launch({"git-login", "--help"})
     void gitLoginHasItsOptions(LaunchResult result) {
-        assertThat(result.getOutput()).contains("--idp-url").contains("--git-host").contains("--audience")
-                .contains("--timeout").contains("--no-browser").contains("--configure");
+        assertThat(result.getOutput()).contains("--idp-url").contains("--git-host")
+                .contains("--timeout").contains("--no-browser").contains("--configure")
+                .doesNotContain("--audience");
     }
 
     @Test

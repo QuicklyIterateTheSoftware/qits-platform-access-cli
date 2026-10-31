@@ -13,7 +13,7 @@ import eu.wohlben.qits.cli.access.session.TokenClaims;
  */
 final class AgentToken {
 
-    /** The audience every agent's token carries, and every qits service accepts beside its own name. */
+    /** The audience every agent's token carries, and the one every qits service accepts. */
     static final String DEFAULT_AUDIENCE = "qits-platform";
 
     /** The role every agent's token carries: it reads across the estate and writes nowhere. */
@@ -28,9 +28,8 @@ final class AgentToken {
      * credential cannot open is granted the audience, not given a header.
      * <p>
      * <b>401</b> names the audience the token carries and nothing more. The audience is never judged
-     * here before dialling: every qits service accepts {@code qits-platform} beside its own name
-     * ({@code quarkus.oidc.token.audience=${qits.auth.machine.audience},qits-platform}), and an
-     * agent's token carries exactly that, so only the service can say no — and when it does, this
+     * here before dialling: every qits service accepts the one audience {@code qits-platform}, and
+     * an agent's token carries exactly that, so only the service can say no — and when it does, this
      * line names what was sent.
      */
     static String explain(int status, String audience) {

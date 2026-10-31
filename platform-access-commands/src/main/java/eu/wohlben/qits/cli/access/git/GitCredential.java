@@ -12,6 +12,9 @@ import java.time.temporal.ChronoUnit;
  * One Git sign-in in {@code git.json}, for one git origin. The access token may be absent: Git's
  * {@code erase} drops it and keeps the refresh token.
  * <p>
+ * There is no audience: every token is for {@code qits-platform}. An older file's {@code audience}
+ * field is read past and dropped on the next write.
+ * <p>
  * {@link #toString()} leaves both tokens out.
  */
 @RegisterForReflection
@@ -19,7 +22,6 @@ import java.time.temporal.ChronoUnit;
 public record GitCredential(
         String idpUrl,
         String clientId,
-        String audience,
         String gitOrigin,
         String accessToken,
         Instant accessExpiresAt,
@@ -27,10 +29,9 @@ public record GitCredential(
         Instant refreshExpiresAt) {
 
     /** The expiry times count from when the answer arrived, rounded down to the second. */
-    static GitCredential from(String idpUrl, String audience, String gitOrigin, TokenClient.TokenResponse token,
-                              Instant receivedAt) {
+    static GitCredential from(String idpUrl, String gitOrigin, TokenClient.TokenResponse token, Instant receivedAt) {
         Instant now = receivedAt.truncatedTo(ChronoUnit.SECONDS);
-        return new GitCredential(idpUrl, GitLoginFlow.CLIENT_ID, audience, gitOrigin, token.accessToken(),
+        return new GitCredential(idpUrl, GitLoginFlow.CLIENT_ID, gitOrigin, token.accessToken(),
                 now.plusSeconds(token.expiresIn()), token.refreshToken(), now.plusSeconds(token.refreshExpiresIn()));
     }
 
@@ -41,12 +42,12 @@ public record GitCredential(
     }
 
     GitCredential withoutAccessToken() {
-        return new GitCredential(idpUrl, clientId, audience, gitOrigin, null, null, refreshToken, refreshExpiresAt);
+        return new GitCredential(idpUrl, clientId, gitOrigin, null, null, refreshToken, refreshExpiresAt);
     }
 
     @Override
     public String toString() {
-        return "GitCredential[gitOrigin=" + gitOrigin + ", idpUrl=" + idpUrl + ", audience=" + audience
-                + ", accessExpiresAt=" + accessExpiresAt + ", refreshExpiresAt=" + refreshExpiresAt + "]";
+        return "GitCredential[gitOrigin=" + gitOrigin + ", idpUrl=" + idpUrl + ", accessExpiresAt=" + accessExpiresAt
+                + ", refreshExpiresAt=" + refreshExpiresAt + "]";
     }
 }

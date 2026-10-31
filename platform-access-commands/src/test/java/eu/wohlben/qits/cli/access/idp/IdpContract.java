@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *       {@code SessionRefresh}.</li>
  *   <li><b>Git's session</b> ({@link TokenClient}, client {@code qits-git-workstation}): {@code qits
  *       git-login} exchanges the loopback callback's code, {@code qits git-credential} refreshes it
- *       for the audience it was signed in for.</li>
+ *       for {@code qits-platform}.</li>
  * </ul>
  * Every request goes as a form, compared field by field with the recording, so each row's call
  * sends the state's own values. The one exception is {@code qits login}'s exchange: its {@code

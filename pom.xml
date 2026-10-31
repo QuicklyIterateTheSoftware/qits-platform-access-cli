@@ -49,7 +49,7 @@
          commands jar the program is built from. -->
     <groupId>eu.wohlben</groupId>
     <artifactId>qits</artifactId>
-    <version>2026.1031.51139</version>
+    <version>2026.1031.103203</version>
     <packaging>pom</packaging>
     <name>qits-platform-access-cli</name>
 
@@ -94,7 +94,7 @@
         <qits.workspaces-golden-masters.version>2026.1029.225748</qits.workspaces-golden-masters.version>
         <qits.workspace-daemon-golden-masters.version>2026.1029.165821</qits.workspace-daemon-golden-masters.version>
         <qits.artifacts-golden-masters.version>2026.1029.125556</qits.artifacts-golden-masters.version>
-        <qits.ci-golden-masters.version>2026.1026.163551</qits.ci-golden-masters.version>
+        <qits.ci-golden-masters.version>2026.1031.93847</qits.ci-golden-masters.version>
         <qits.idp-golden-masters.version>2026.1027.165632</qits.idp-golden-masters.version>
         <qits.events-golden-masters.version>2026.1023.82831</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1031.22002</qits.maintenance-golden-masters.version>

@@ -21,8 +21,8 @@ import java.util.function.Consumer;
  * <p>
  * The client is {@code qits-git-workstation}, not {@code qits-cli}. Its token carries {@code
  * groups=[qits:git:external]} and a ref pattern, so the git host lets it push {@code
- * refs/heads/external/*} and nothing else. The {@code audience} names the git host of one
- * environment.
+ * refs/heads/external/*} and nothing else. Its audience is {@code qits-platform}, like every
+ * other token.
  * <p>
  * <b>Nothing here prints a token, the code or the verifier.</b>
  */
@@ -33,7 +33,6 @@ public final class GitLoginFlow {
     private final TokenClient idp;
     private final GitCredentialFile store;
     private final String gitOrigin;
-    private final String audience;
     private final PrintStream out;
     private final PrintStream err;
     private final Clock clock;
@@ -41,12 +40,11 @@ public final class GitLoginFlow {
     private final Duration timeout;
 
     /** @param browser opens the sign-in address, or null to only print it */
-    public GitLoginFlow(TokenClient idp, GitCredentialFile store, String gitOrigin, String audience, PrintStream out,
-                        PrintStream err, Clock clock, Consumer<String> browser, Duration timeout) {
+    public GitLoginFlow(TokenClient idp, GitCredentialFile store, String gitOrigin, PrintStream out, PrintStream err,
+                        Clock clock, Consumer<String> browser, Duration timeout) {
         this.idp = idp;
         this.store = store;
         this.gitOrigin = gitOrigin;
-        this.audience = audience;
         this.out = out;
         this.err = err;
         this.clock = clock;
@@ -60,7 +58,7 @@ public final class GitLoginFlow {
         String state = Pkce.state();
         try (LoopbackCallback callback = LoopbackCallback.open()) {
             Map<String, String> extra = new LinkedHashMap<>();
-            extra.put("audience", audience);
+            extra.put("audience", GitLoginCommand.AUDIENCE);
             extra.put("state", state);
             String address = idp.authorizeUrl(pkce.challenge(), callback.redirectUri(), extra);
             out.println("Open this address in your browser and sign in:");
@@ -103,7 +101,7 @@ public final class GitLoginFlow {
                 err.println(e.getMessage() + ". Nothing was saved. Run `qits git-login` again.");
                 return 1;
             }
-            GitCredential credential = GitCredential.from(idp.idpUrl(), audience, gitOrigin, token, clock.instant());
+            GitCredential credential = GitCredential.from(idp.idpUrl(), gitOrigin, token, clock.instant());
             try (ExclusiveLock ignored = store.lock()) {
                 store.put(credential);
             }

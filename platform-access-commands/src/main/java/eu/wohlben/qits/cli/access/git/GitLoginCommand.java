@@ -42,8 +42,8 @@ import java.util.Optional;
 public class GitLoginCommand extends PlatformCommand {
 
     /**
-     * The audience every platform service accepts, and the one the git host validates. The idp
-     * grants it to the workstation client, so it needs nothing from the idp's address.
+     * The one audience every platform service accepts, the git host included. Sign-in and refresh
+     * always ask for it.
      */
     static final String AUDIENCE = "qits-platform";
 
@@ -56,11 +56,6 @@ public class GitLoginCommand extends PlatformCommand {
             description = "The git host's address. Default: QITS_GIT_HOST_URL, else the idp's host with `idp` "
                     + "swapped for `githost` (https://githost.qits.<QITS_DOMAIN>).")
     String gitHost;
-
-    @CommandLine.Option(names = "--audience", paramLabel = "<audience>",
-            description = "The audience of the token. Default: qits-platform, the one audience every platform "
-                    + "service accepts.")
-    String audience;
 
     @CommandLine.Option(names = "--timeout", paramLabel = "<seconds>", defaultValue = "300",
             description = "How long to wait for the browser to come back. Default: ${DEFAULT-VALUE}.")
@@ -88,14 +83,11 @@ public class GitLoginCommand extends PlatformCommand {
         } catch (IllegalArgumentException e) {
             throw new CliFailure("The " + e.getMessage() + ".", CliFailure.USAGE);
         }
-        String resolvedAudience = audience != null && !audience.isBlank()
-                ? audience.strip()
-                : AUDIENCE;
 
         int result;
         try {
             result = new GitLoginFlow(new TokenClient(idp, GitLoginFlow.CLIENT_ID), GitCredentialFile.fromEnvironment(env),
-                    origin, resolvedAudience, context.out(), context.err(), context.clock(),
+                    origin, context.out(), context.err(), context.clock(),
                     noBrowser ? null : url -> Browser.open(url, env), Duration.ofSeconds(timeoutSeconds)).run();
         } catch (IOException e) {
             throw new CliFailure("Cannot complete the sign-in: " + e.getMessage(), CliFailure.FAILED);

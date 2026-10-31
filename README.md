@@ -451,14 +451,13 @@ is no browser and nobody to sign in, and there are two ways in, decided once at 
 - an agent's token is `qits:agent`. Every read door answers and an operator write answers `403`,
   which is correct behaviour and is worded as such;
 - **nothing is refused before the call.** The audience a command dials is not the CLI's to judge:
-  every qits service accepts `qits-platform` beside its own name
-  (`quarkus.oidc.token.audience=${qits.auth.machine.audience},qits-platform`, in all fourteen
-  services that carry the setting), and an agent's token carries exactly that. A service that
+  every qits service accepts the one audience `qits-platform`, and an agent's token carries
+  exactly that. A service that
   really does refuse the token answers `401`, and only then does the CLI add a sentence of its own.
 
 This used to work the other way round, and it was wrong. The CLI read the token's `aud` claim and
-refused any service the claim did not name — a false negative, because the claim names each
-service's own audience and not the fleet-wide one every service also accepts. It cost
+refused any service the claim did not name — a false negative, because every service accepted the
+fleet-wide `qits-platform` the token carried, whatever else the claim named. It cost
 `qits observe` its entire reason for existing in a container: qits-observability grants `qits:agent`
 read access **on purpose** (its `AgentReadAccessTest` asserts that an agent reads the telemetry API
 and opens the live stream), and the CLI was the only thing saying no. Measured from a workspace
@@ -1805,8 +1804,8 @@ it asks for the code on stdin and posts it with `POST .../sign-ins/{id}/code`; w
 
 ## Git pushes from this workstation
 
-    qits git-login [--idp-url <url>] [--git-host <url>] [--audience <audience>]
-                   [--timeout <seconds>] [--no-browser] [--configure]
+    qits git-login [--idp-url <url>] [--git-host <url>] [--timeout <seconds>] [--no-browser]
+                   [--configure]
     qits git-credential <get|store|erase>      Git runs this; a person does not
 
 `qits git-login` signs this workstation in for Git pushes to the platform's git host. The sign-in
@@ -1828,8 +1827,9 @@ Which platform:
   `qits login` finds it.
 - git host: `--git-host`, else `QITS_GIT_HOST_URL`, else the idp's host with `idp` swapped for
   `githost` (`https://githost.qits.<QITS_DOMAIN>`).
-- audience: `--audience`, else `qits-platform`, the one audience every platform service accepts
-  and the one the git host validates.
+- audience: always `qits-platform`, the one audience every platform service accepts, the git host
+  included. Sign-in and every refresh ask for it; an `audience` an older `git.json` still holds is
+  ignored.
 
 The OAuth client is `qits-git-workstation` (PKCE, no secret), not the `qits-cli` of `qits login`.
 

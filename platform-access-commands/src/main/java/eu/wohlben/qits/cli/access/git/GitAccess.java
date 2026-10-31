@@ -61,7 +61,8 @@ public final class GitAccess {
             String clientId = credential.clientId() == null ? GitLoginFlow.CLIENT_ID : credential.clientId();
             TokenClient.TokenResponse token;
             try {
-                token = new TokenClient(credential.idpUrl(), clientId).refresh(credential.refreshToken(), credential.audience());
+                token = new TokenClient(credential.idpUrl(), clientId).refresh(credential.refreshToken(),
+                        GitLoginCommand.AUDIENCE);
             } catch (IdpException.Unreachable e) {
                 err.println("Cannot refresh the Git sign-in: " + e.getMessage());
                 return Optional.empty();
@@ -70,8 +71,7 @@ public final class GitAccess {
                 return Optional.empty();
             }
             // Write first: the idp has spent the old refresh token.
-            GitCredential next = GitCredential.from(credential.idpUrl(), credential.audience(), gitOrigin, token,
-                    clock.instant());
+            GitCredential next = GitCredential.from(credential.idpUrl(), gitOrigin, token, clock.instant());
             store.put(next);
             return Optional.of(next.accessToken());
         }
