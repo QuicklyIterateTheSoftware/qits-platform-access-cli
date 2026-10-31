@@ -55,7 +55,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footer = {
                 "- --entity, --output and --projects-url may come before or after the command.",
                 "- --entity is the idea's id, as list and create print it.",
-                "- Reading takes qits:admin or qits:agent; so does writing. An agent writes only in its own project."})
+                "- Reading takes qits:admin or qits:agent. Writing (create, update, archive, unarchive, spawn) "
+                        + "takes the project's delivery desk, in its own project, or an admin.",
+                "- An agent does not write ideas: it files a ticket or an epic with qits work create, and asks the "
+                        + "desk with an @desk comment to file or link an idea."})
 public class IdeasCommand implements Runnable {
 
     static final String NAME_THE_IDEA = "Name the idea: --entity <id>.";
@@ -202,8 +205,8 @@ public class IdeasCommand implements Runnable {
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The idea is written, or nothing was put in and the schema is printed.",
                     "1:The platform refused (for example a title, description or enabledBy breaking its rule, HTTP "
-                            + "400, another project, HTTP 403, or a project it does not know, HTTP 404), or cannot "
-                            + "be reached.",
+                            + "400, an agent, or the desk in another project, HTTP 403, or a project it does not "
+                            + "know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example a payload that is not a JSON object), not signed in, or the session "
                             + "ended."})
     @TuiCommand(input = Input.PAYLOAD)
@@ -245,8 +248,9 @@ public class IdeasCommand implements Runnable {
                     "  echo '{\"enabledBy\":null}' | qits ideas update --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The idea is edited, or nothing was put in and the schema is printed.",
-                    "1:The platform refused (for example a patch it does not take, HTTP 400, another project, HTTP "
-                            + "403, or an idea it does not know, HTTP 404), or cannot be reached.",
+                    "1:The platform refused (for example a patch it does not take, HTTP 400, an agent, or the desk "
+                            + "in another project, HTTP 403, or an idea it does not know, HTTP 404), or cannot be "
+                            + "reached.",
                     "2:Used wrongly (for example no --entity, or a patch that is not a JSON object), not signed in, "
                             + "or the session ended."})
     @TuiCommand(input = Input.PAYLOAD)
@@ -281,8 +285,8 @@ public class IdeasCommand implements Runnable {
                     + "--reason 'Folded into the cache epic.'"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The idea is archived.",
-                    "1:The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP "
-                            + "404), or cannot be reached.",
+                    "1:The platform refused (for example an agent, or the desk in another project, HTTP 403, or an "
+                            + "idea it does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity or no --reason), not signed in, or the session ended."})
     public static class ArchiveCommand extends PlatformCommand {
 
@@ -311,8 +315,8 @@ public class IdeasCommand implements Runnable {
             footer = {"  qits ideas --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 unarchive"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The idea is not archived.",
-                    "1:The platform refused (for example another project, HTTP 403, or an idea it does not know, HTTP "
-                            + "404), or cannot be reached.",
+                    "1:The platform refused (for example an agent, or the desk in another project, HTTP 403, or an "
+                            + "idea it does not know, HTTP 404), or cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
     public static class UnarchiveCommand extends PlatformCommand {
 
@@ -353,7 +357,8 @@ public class IdeasCommand implements Runnable {
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item is filed, or nothing was put in and the schema is printed.",
                     "1:The platform refused (for example an idea it does not know, HTTP 404, a payload it does not "
-                            + "take, HTTP 400, or another project, HTTP 403), or cannot be reached.",
+                            + "take, HTTP 400, or an agent, or the desk in another project, HTTP 403), or cannot be "
+                            + "reached.",
                     "2:Used wrongly (for example no --entity, an --archetype that is neither EPIC nor TICKET, or a "
                             + "payload that is not a JSON object), not signed in, or the session ended."})
     @TuiCommand(input = Input.PAYLOAD)
