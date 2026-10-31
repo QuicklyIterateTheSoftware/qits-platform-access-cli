@@ -43,7 +43,8 @@ public final class EventsContract {
     static final List<CliRow> ROWS = List.of(
             CliRow.of("qits events query", A_WINDOW, "listEvents", "EventsQueryCommand#execute", QUERY)
                     .consumes("events[].id", "events[].name", "events[].occurredAt", "events[].payload",
-                            "events[].description", "events[].parentId", "events[].environment", "nextCursor")
+                            "events[].description", "events[].parentId", "events[].environment",
+                            "events[].publisher", "nextCursor")
                     .request("GET /events/api/events?since={since}&order=desc&limit={limit}&cursor={cursor}"));
 
     public static final CliPact CONTRACT = CliPact.of("qits-events-service", "qits-events")

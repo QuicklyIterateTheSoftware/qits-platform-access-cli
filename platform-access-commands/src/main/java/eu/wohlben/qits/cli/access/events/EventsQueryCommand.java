@@ -66,7 +66,7 @@ public class EventsQueryCommand extends PlatformCommand {
 
     /** The fields the live stream's frame carries; the log's own row times are not part of a line. */
     private static final List<String> LIVE_FIELDS =
-            List.of("id", "name", "occurredAt", "payload", "description", "parentId", "environment");
+            List.of("id", "name", "occurredAt", "payload", "description", "parentId", "environment", "publisher");
 
     @CommandLine.Option(names = "--filter", paramLabel = "<names>", defaultValue = "*",
             description = "Which events: exact event names, comma-separated (for example BuildSuccessful,BuildFailed), "
