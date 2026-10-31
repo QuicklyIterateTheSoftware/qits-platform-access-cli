@@ -49,7 +49,7 @@ import java.util.Optional;
                         + "writes no file and exits 0, so Git asks its other helpers."},
         footerHeading = HelpText.EXAMPLES,
         footer = {
-                "  git config --global --get-all credential.https://githost.qits.example.com.helper",
+                "  git config --global --get-all credential.https://githost.qits.<QITS_DOMAIN>.helper",
                 "",
                 "The example shows the workstation setup. Do not run `get` yourself: it prints a token on stdout, "
                         + "because that is Git's helper protocol."},

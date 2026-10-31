@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
         footerHeading = HelpText.EXAMPLES,
         footer = {
                 "  qits login",
-                "  qits login --idp-url https://idp.qits.example.com/idp",
+                "  qits login --idp-url https://idp.qits.<QITS_DOMAIN>/idp",
                 "  qits login --no-browser",
                 "",
                 "Over SSH, use --no-browser and open the printed address on a machine with a browser."},

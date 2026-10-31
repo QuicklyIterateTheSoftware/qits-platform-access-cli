@@ -387,7 +387,7 @@ the options of the one you chose, required first and marked `*`; the line betwee
 command your choices have built, so the screen also teaches the command line; the lower half is what
 the last run printed.
 
-     qits tui · qits.example.com · signed in as jan
+     qits tui · qits.<QITS_DOMAIN> · signed in as jan
      ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────┐
      │ * --project        qits                                                     │
      │ * --repository     ▸ qits-ci-service                                        │
@@ -535,7 +535,7 @@ the project `qits` and has no environments, so `QITS_ENV_NAME` is not read.
 
 Naming the platform explicitly:
 
-    qits login --idp-url https://idp.qits.example.com/idp
+    qits login --idp-url https://idp.qits.<QITS_DOMAIN>/idp
 
 `--no-browser` only prints the address. Use it over SSH.
 
@@ -548,7 +548,7 @@ stay behind and are harmless: Git never asks that host again.
 ### The session file
 
     {
-      "idpUrl" : "https://idp.qits.example.com/idp",
+      "idpUrl" : "https://idp.qits.<QITS_DOMAIN>/idp",
       "clientId" : "qits-cli",
       "accessToken" : "…",
       "accessExpiresAt" : "2026-09-11T20:15:00Z",
@@ -731,9 +731,9 @@ refuses prints `Session ended — run `qits login`.` and exits with 2.
 ### Which address
 
 A service lives at `<app>.qits.<domain>`. The commands take the session's idp address and swap
-its first label: `https://idp.qits.example.com/idp` gives `https://projects.qits.example.com`,
-`https://ci.qits.example.com`, `https://events.qits.example.com` and
-`https://observability.qits.example.com`. To name the address yourself (a base URL, without
+its first label: `https://idp.qits.<QITS_DOMAIN>/idp` gives `https://projects.qits.<QITS_DOMAIN>`,
+`https://ci.qits.<QITS_DOMAIN>`, `https://events.qits.<QITS_DOMAIN>` and
+`https://observability.qits.<QITS_DOMAIN>`. To name the address yourself (a base URL, without
 `/projects`, `/ci`, `/events` or `/observability`):
 
 - projects: `--projects-url`, else `QITS_PROJECTS_URL`
@@ -1839,8 +1839,8 @@ On a workstation Git asks `qits git-credential` for the git host and for no othe
 helper (for example Git Credential Manager for GitHub) stays as it is. The empty value first clears
 the helper list for this host:
 
-    git config --global --replace-all credential.https://githost.qits.example.com.helper ''
-    git config --global --add credential.https://githost.qits.example.com.helper '!/home/you/.local/bin/qits git-credential'
+    git config --global --replace-all credential.https://githost.qits.<QITS_DOMAIN>.helper ''
+    git config --global --add credential.https://githost.qits.<QITS_DOMAIN>.helper '!/home/you/.local/bin/qits git-credential'
 
 `qits git-login` prints these two lines with the git host and its own path. `--configure` runs them.
 Running them again changes nothing.
@@ -1991,7 +1991,7 @@ hidden `--refresh` in a session of its own, which asks the projects service with
 credential. Until the first refresh is done only `qits` ids are linked.
 
 The landing app is the platform's bare domain: on a workstation the session's idp address without
-`idp.` (`https://qits.example.com`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
+`idp.` (`https://qits.<QITS_DOMAIN>`), elsewhere `https://qits.<QITS_DOMAIN>`. `--landing-url` or
 `QITS_LANDING_URL` sets it. `--style osc8` or `QITS_LINK_STYLE=osc8` writes a terminal hyperlink
 instead of a markdown link, and `QITS_LINK_PROJECTS` (comma-separated slugs) replaces the cache.
 

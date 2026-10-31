@@ -74,8 +74,8 @@ public class CiCommand implements Runnable {
 
     @CommandLine.Option(names = "--ci-url", paramLabel = "<url>", scope = CommandLine.ScopeType.INHERIT,
             description = "The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp "
-                    + "address with `idp` swapped for `ci` (https://idp.qits.example.com/idp gives "
-                    + "https://ci.qits.example.com).")
+                    + "address with `idp` swapped for `ci` (https://idp.qits.<QITS_DOMAIN>/idp gives "
+                    + "https://ci.qits.<QITS_DOMAIN>).")
     String ciUrl;
 
     @CommandLine.Option(names = "--projects-url", paramLabel = "<url>", scope = CommandLine.ScopeType.INHERIT,

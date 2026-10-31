@@ -20,8 +20,8 @@ import java.util.Set;
  *
  * <h2>The one input</h2>
  *
- * <p>{@code QITS_DOMAIN}, the bare public domain ({@code <QITS_DOMAIN>}, for example {@code
- * example.com}), folded the way qits-ci folds it: trimmed, lower-cased, leading and trailing dots
+ * <p>{@code QITS_DOMAIN}, the bare public domain ({@code <QITS_DOMAIN>}),
+ * folded the way qits-ci folds it: trimmed, lower-cased, leading and trailing dots
  * dropped. Absent, blank, undotted or a {@code *.localhost} name, it is a usage failure naming
  * {@code QITS_DOMAIN}: there is no default, because any default is one install's domain. qits-ci
  * sets it in every step. <b>Never an internal address</b>:
