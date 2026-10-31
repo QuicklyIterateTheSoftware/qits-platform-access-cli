@@ -1,0 +1,964 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ──────────────────────────────────────────────────────────────────────────────── /targets  ┐
+ │   targets           ▸ The execution targets qits-system-runner runs on, and their leases: list  │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ──────────────────────────────────────────────────────────────────────────────── /targets  ┐
+ │   targets           ▸ The execution targets qits-system-runner runs on, and their leases: list  │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   list              ▸ Every target, by name: connected or not, version, slots, login and quaran │
+ │   show                One target in full: its slots and reservations, its login state for claud │
+ │   create              Declare a target and print the line that installs its runner, with a one- │
+ │   rotate-token        Mint a new registration token and print the line that installs its runner │
+ │   update              Change a target's description or slot reservations. Only what is given is │
+ │   greenlight          Lift a target's quarantine. The service quarantines a target itself, afte │
+ │   healthcheck         Ask a connected target for a health check now. The result arrives with a  │
+ │   login-check         Ask a connected target to probe its credential volume's sign-in again. Th │
+ │   delete              Decommission a target: retire its runner and give its credentials back.   │
+ │   leases              Leases, oldest first: filter by target, slot type (ci, workspace or desk) │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   list              ▸ Every target, by name: connected or not, version, slots, login and quaran │
+ │   show                One target in full: its slots and reservations, its login state for claud │
+ │   create              Declare a target and print the line that installs its runner, with a one- │
+ │   rotate-token        Mint a new registration token and print the line that installs its runner │
+ │   update              Change a target's description or slot reservations. Only what is given is │
+ │   greenlight          Lift a target's quarantine. The service quarantines a target itself, afte │
+ │   healthcheck         Ask a connected target for a health check now. The result arrives with a  │
+ │   login-check         Ask a connected target to probe its credential volume's sign-in again. Th │
+ │   delete              Decommission a target: retire its runner and give its credentials back.   │
+ │   leases              Leases, oldest first: filter by target, slot type (ci, workspace or desk) │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ──────────────────────────────────────────────────────────────────────────────── /list  ┐
+ │   list              ▸ Every target, by name: connected or not, version, slots, login and quaran │
+ │   docker              A target's own docker containers and volumes: list and inspect them, read │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ──────────────────────────────────────────────────────────────────────────────── /list  ┐
+ │   list              ▸ Every target, by name: connected or not, version, slots, login and quaran │
+ │   docker              A target's own docker containers and volumes: list and inspect them, read │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ▸ list ─────────────────────────────────────────────────────────────────────────────────┐
+ │   --system-url      ▸ (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ▸ list ─────────────────────────────────────────────────────────────────────────────────┐
+ │   --system-url      ▸ (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ▸ list ─────────────────────────────────────────────────────────────────────────────────┐
+ │   --system-url      ▸ (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets list
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ NAME  CONNECTED  VERSION         SLOTS (used/reserved, total used/total)  LOGIN                 │
+ │ lab   yes        frozen-token-1  ci 1/2, ws 1/2, desk 0/1, total 2/6      claude:PRESENT kimi:A │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ targets ▸ list ─────────────────────────────────────────────────────────────────────────────────┐
+ │   --system-url      ▸ (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits targets list
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ NAME  CONNECTED  VERSION         SLOTS (used/reserved, total used/total)  LOGIN                 │
+ │ lab   yes        frozen-token-1  ci 1/2, ws 1/2, desk 0/1, total 2/6      claude:PRESENT kimi:A │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,840 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────── /events  ┐
+ │   events            ▸ Print qits-events domain events as they happen, one JSON object per line  │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────── /events  ┐
+ │   events            ▸ Print qits-events domain events as they happen, one JSON object per line  │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ events ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the qits-events domain events that already happened in a window of  │
+ │   --filter            *                                                                         │
+ │   --events-url        (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits events
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ events ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the qits-events domain events that already happened in a window of  │
+ │   --filter            *                                                                         │
+ │   --events-url        (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits events
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ events ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the qits-events domain events that already happened in a window of  │
+ │   --filter            *                                                                         │
+ │   --events-url        (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ⌃C stop · ↑↓ move · ⏎ choose · ␛ back · q quit                                                  │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits events
+ ┌ output ────────────────────────────────────────────────────────────────────────────── streaming ┐
+ │ {"id":"00000000-0000-4000-8000-000000000104","name":"ReleaseRequestChanged","occurredAt":"2026- │
+ │ {"id":"00000000-0000-4000-8000-000000000105","name":"DeploymentActive","occurredAt":"2026-01-01 │
+ │ {"id":"00000000-0000-4000-8000-000000000106","name":"TicketReported","occurredAt":"2026-01-01T1 │
+ │ {"id":"00000000-0000-4000-8000-000000000107","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000108","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000109","name":"ReleaseRequestChanged","occurredAt":"2026- │
+ │ {"id":"00000000-0000-4000-8000-000000000110","name":"TicketReported","occurredAt":"2026-01-01T1 │
+ │ {"id":"00000000-0000-4000-8000-000000000111","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000112","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000113","name":"DeploymentActive","occurredAt":"2026-01-01 │
+ │ {"id":"00000000-0000-4000-8000-000000000114","name":"ReleaseRequestStateChanged","occurredAt":" │
+ │ {"id":"00000000-0000-4000-8000-000000000115","name":"TicketReported","occurredAt":"2026-01-01T1 │
+ │ {"id":"00000000-0000-4000-8000-000000000116","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ events ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the qits-events domain events that already happened in a window of  │
+ │   --filter            *                                                                         │
+ │   --events-url        (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ⌃C stop · ↑↓ move · ⏎ choose · ␛ back · q quit                                                  │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits events
+ ┌ output ────────────────────────────────────────────────────────────────────────────── streaming ┐
+ │ {"id":"00000000-0000-4000-8000-000000000104","name":"ReleaseRequestChanged","occurredAt":"2026- │
+ │ {"id":"00000000-0000-4000-8000-000000000105","name":"DeploymentActive","occurredAt":"2026-01-01 │
+ │ {"id":"00000000-0000-4000-8000-000000000106","name":"TicketReported","occurredAt":"2026-01-01T1 │
+ │ {"id":"00000000-0000-4000-8000-000000000107","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000108","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000109","name":"ReleaseRequestChanged","occurredAt":"2026- │
+ │ {"id":"00000000-0000-4000-8000-000000000110","name":"TicketReported","occurredAt":"2026-01-01T1 │
+ │ {"id":"00000000-0000-4000-8000-000000000111","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000112","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ │ {"id":"00000000-0000-4000-8000-000000000113","name":"DeploymentActive","occurredAt":"2026-01-01 │
+ │ {"id":"00000000-0000-4000-8000-000000000114","name":"ReleaseRequestStateChanged","occurredAt":" │
+ │ {"id":"00000000-0000-4000-8000-000000000115","name":"TicketReported","occurredAt":"2026-01-01T1 │
+ │ {"id":"00000000-0000-4000-8000-000000000116","name":"BuildStatusChanged","occurredAt":"2026-01- │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

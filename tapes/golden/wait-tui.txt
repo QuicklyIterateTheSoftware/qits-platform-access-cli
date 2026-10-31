@@ -1,0 +1,964 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ─────────────────────────────────────────────────────────────────────────────────── /wait  ┐
+ │   events              Print qits-events domain events as they happen, one JSON object per line  │
+ │   wait              ▸ Declare what this holder waits on: a domain event that fits a selection.  │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ─────────────────────────────────────────────────────────────────────────────────── /wait  ┐
+ │   events              Print qits-events domain events as they happen, one JSON object per line  │
+ │   wait              ▸ Declare what this holder waits on: a domain event that fits a selection.  │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   branch            ▸ Wait until a branch is joined, released or live, or fails, in one reposit │
+ │   release-request     Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN │
+ │   work                Wait until a work item reaches a status.                                  │
+ │   ci-run              Wait until a CI run ends: SUCCESS, FAILED, CANCELLED, CONFIG_ERROR or TIM │
+ │   list                The holder's waits: id, state, event, label, when it was declared and whe │
+ │   cancel              End one of the holder's open waits. An agent holder gets no turn for it.  │
+ │   --event             (any)                                                                     │
+ │   --when              (any)                                                                     │
+ │   --timeout           (any)                                                                     │
+ │   --label             (any)                                                                     │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   branch            ▸ Wait until a branch is joined, released or live, or fails, in one reposit │
+ │   release-request     Wait until a release request ends: FINALIZED, REJECTED, FAILED, WITHDRAWN │
+ │   work                Wait until a work item reaches a status.                                  │
+ │   ci-run              Wait until a CI run ends: SUCCESS, FAILED, CANCELLED, CONFIG_ERROR or TIM │
+ │   list                The holder's waits: id, state, event, label, when it was declared and whe │
+ │   cancel              End one of the holder's open waits. An agent holder gets no turn for it.  │
+ │   --event             (any)                                                                     │
+ │   --when              (any)                                                                     │
+ │   --timeout           (any)                                                                     │
+ │   --label             (any)                                                                     │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ─────────────────────────────────────────────────────────────────────────────────── /list  ┐
+ │   list              ▸ The holder's waits: id, state, event, label, when it was declared and whe │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ─────────────────────────────────────────────────────────────────────────────────── /list  ┐
+ │   list              ▸ The holder's waits: id, state, event, label, when it was declared and whe │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --state           ▸ (any)                                                                     │
+ │   --agent             (any)                                                                     │
+ │   --desk              (any)                                                                     │
+ │   --workspaces-url    (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --state           ▸ (any)                                                                     │
+ │   --agent             (any)                                                                     │
+ │   --desk              (any)                                                                     │
+ │   --workspaces-url    (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --state           ▸ (any)                                                                     │
+ │   --agent             (any)                                                                     │
+ │   --desk              (any)                                                                     │
+ │   --workspaces-url    (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait list
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ ID                                    STATE  EVENT                       LABEL                  │
+ │ 00000000-0000-4000-8000-0000000000b1  OPEN   ReleaseRequestStateChanged  release-request 000000 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ wait ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --state           ▸ (any)                                                                     │
+ │   --agent             (any)                                                                     │
+ │   --desk              (any)                                                                     │
+ │   --workspaces-url    (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits wait list
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ ID                                    STATE  EVENT                       LABEL                  │
+ │ 00000000-0000-4000-8000-0000000000b1  OPEN   ReleaseRequestStateChanged  release-request 000000 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

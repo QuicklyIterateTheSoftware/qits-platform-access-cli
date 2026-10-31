@@ -1,0 +1,716 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits ci runs --project contract-00000001 --repository contract-service
+ID        STATUS   BRANCH                                        COMMIT    REQUEST               CRE
+ATED                  TOOK
+00000000  SUCCESS  release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5  202
+6-01-01 00:00:00 UTC  0s
+00000000  FAILED   release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5  202
+6-01-01 00:00:00 UTC  0s
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits ci runs --project contract-00000001 --repository contract-service
+ID        STATUS   BRANCH                                        COMMIT    REQUEST               CRE
+ATED                  TOOK
+00000000  SUCCESS  release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5  202
+6-01-01 00:00:00 UTC  0s
+00000000  FAILED   release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5  202
+6-01-01 00:00:00 UTC  0s
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits ci runs --project contract-00000001 --repository contract-service -o json
+{
+  "runs" : [ {
+    "id" : "00000000-0000-4000-8000-000000000004",
+    "repoId" : "00000000-0000-4000-8000-000000000003",
+    "projectId" : "contract-project",
+    "repoName" : "contract-service",
+    "branch" : "release/00000000-0000-4000-8000-000000000002",
+    "commitSha" : "0000000000000000000000000000000000000002",
+    "status" : "SUCCESS",
+    "createdAt" : "2026-01-01T00:00:00Z",
+    "startedAt" : "2026-01-01T00:00:00Z",
+    "finishedAt" : "2026-01-01T00:00:00Z",
+    "cancellationReason" : null,
+    "supersededByRunId" : null,
+    "daemonVersion" : null,
+    "triggerType" : "EVENT",
+    "triggerEventId" : "contract-event-2",
+    "triggerEventName" : "ReleaseRequestChanged",
+    "releaseRequestId" : "00000000-0000-4000-8000-000000000002",
+    "releaseRequestQualifiedId" : "qits-ci-service-rr-5",
+    "retryOfRunId" : null,
+    "configPath" : ".config/qits/release-request.yml",
+    "archetypeName" : null,
+    "archetypeConfigPath" : null,
+    "archetypeRev" : null,
+    "archetypeVersion" : null,
+    "priority" : null,
+    "expectedStepDurationsMillis" : null,
+    "steps" : [ ],
+────────────────────────────────────────────────────────────────────────────────
+$ qits ci runs --project contract-00000001 --repository contract-service -o json
+{
+  "runs" : [ {
+    "id" : "00000000-0000-4000-8000-000000000004",
+    "repoId" : "00000000-0000-4000-8000-000000000003",
+    "projectId" : "contract-project",
+    "repoName" : "contract-service",
+    "branch" : "release/00000000-0000-4000-8000-000000000002",
+    "commitSha" : "0000000000000000000000000000000000000002",
+    "status" : "SUCCESS",
+    "createdAt" : "2026-01-01T00:00:00Z",
+    "startedAt" : "2026-01-01T00:00:00Z",
+    "finishedAt" : "2026-01-01T00:00:00Z",
+    "cancellationReason" : null,
+    "supersededByRunId" : null,
+    "daemonVersion" : null,
+    "triggerType" : "EVENT",
+    "triggerEventId" : "contract-event-2",
+    "triggerEventName" : "ReleaseRequestChanged",
+    "releaseRequestId" : "00000000-0000-4000-8000-000000000002",
+    "releaseRequestQualifiedId" : "qits-ci-service-rr-5",
+    "retryOfRunId" : null,
+    "configPath" : ".config/qits/release-request.yml",
+    "archetypeName" : null,
+    "archetypeConfigPath" : null,
+    "archetypeRev" : null,
+    "archetypeVersion" : null,
+    "priority" : null,
+    "expectedStepDurationsMillis" : null,
+    "steps" : [ ],
+────────────────────────────────────────────────────────────────────────────────
+$ qits ci retry 00000000-0000-4000-8000-000000000004
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/ci/api/runs/00000000-0000-4000-
+8000-000000000004/retry
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits ci retry 00000000-0000-4000-8000-000000000004
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/ci/api/runs/00000000-0000-4000-
+8000-000000000004/retry
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

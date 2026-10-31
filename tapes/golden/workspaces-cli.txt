@@ -1,0 +1,716 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits workspaces list --project contract-00000001 --repository contract-service
+SLOT  WORKSPACE    CONTAINER  PLACEMENT  ADMIN  QUEUED
+1     ws-contract  RUNNING    TARGET     false  -
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits workspaces list --project contract-00000001 --repository contract-service
+SLOT  WORKSPACE    CONTAINER  PLACEMENT  ADMIN  QUEUED
+1     ws-contract  RUNNING    TARGET     false  -
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits workspaces list --project contract-00000001 --repository contract-service -o json
+{
+  "entries" : [ {
+    "workspace" : {
+      "id" : 1,
+      "workspaceId" : "ws-contract",
+      "parent" : null,
+      "branch" : null,
+      "repositoryMainBranch" : "master",
+      "ahead" : 0,
+      "behind" : 0,
+      "conflictsWithParent" : false,
+      "status" : "ACTIVE",
+      "runtimeStatus" : "RUNNING",
+      "runtimeError" : null,
+      "clean" : null,
+      "agentActivity" : null,
+      "preamble" : null,
+      "ticketId" : null,
+      "epicId" : null,
+      "result" : null,
+      "createdAt" : "2026-01-01T00:00:00Z",
+      "resolvedAt" : null,
+      "daemonConnectedAt" : null,
+      "daemonVersion" : null,
+      "daemonBuildTime" : null,
+      "daemonOutdated" : null,
+      "admin" : false,
+      "placement" : "TARGET",
+      "leaseId" : "00000000-0000-4000-8000-000000000023",
+────────────────────────────────────────────────────────────────────────────────
+$ qits workspaces list --project contract-00000001 --repository contract-service -o json
+{
+  "entries" : [ {
+    "workspace" : {
+      "id" : 1,
+      "workspaceId" : "ws-contract",
+      "parent" : null,
+      "branch" : null,
+      "repositoryMainBranch" : "master",
+      "ahead" : 0,
+      "behind" : 0,
+      "conflictsWithParent" : false,
+      "status" : "ACTIVE",
+      "runtimeStatus" : "RUNNING",
+      "runtimeError" : null,
+      "clean" : null,
+      "agentActivity" : null,
+      "preamble" : null,
+      "ticketId" : null,
+      "epicId" : null,
+      "result" : null,
+      "createdAt" : "2026-01-01T00:00:00Z",
+      "resolvedAt" : null,
+      "daemonConnectedAt" : null,
+      "daemonVersion" : null,
+      "daemonBuildTime" : null,
+      "daemonOutdated" : null,
+      "admin" : false,
+      "placement" : "TARGET",
+      "leaseId" : "00000000-0000-4000-8000-000000000023",
+────────────────────────────────────────────────────────────────────────────────
+$ qits workspaces stop 1
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/workspaces/api/workspaces/1/sto
+p-container
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits workspaces stop 1
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/workspaces/api/workspaces/1/sto
+p-container
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

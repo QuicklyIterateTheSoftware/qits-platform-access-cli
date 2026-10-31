@@ -1,0 +1,716 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits targets list
+NAME  CONNECTED  VERSION         SLOTS (used/reserved, total used/total)  LOGIN
+  QUARANTINED
+lab   yes        frozen-token-1  ci 1/2, ws 1/2, desk 0/1, total 2/6      claude:PRESENT kimi:ABSENT
+  no
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits targets list
+NAME  CONNECTED  VERSION         SLOTS (used/reserved, total used/total)  LOGIN
+  QUARANTINED
+lab   yes        frozen-token-1  ci 1/2, ws 1/2, desk 0/1, total 2/6      claude:PRESENT kimi:ABSENT
+  no
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits targets list -o json
+[ {
+  "id" : "00000000-0000-4000-8000-000000000001",
+  "name" : "lab",
+  "description" : "the lab box",
+  "slotsTotal" : 6,
+  "reservations" : {
+    "ci" : 2,
+    "workspace" : 2,
+    "desk" : 1
+  },
+  "used" : {
+    "ci" : 1,
+    "workspace" : 1,
+    "desk" : 0
+  },
+  "login" : {
+    "claude" : "PRESENT",
+    "kimi" : "ABSENT",
+    "checkedAt" : "2026-01-01T00:00:00Z"
+  },
+  "credentialVolume" : "qits-system-runner-dot-claude-00000000",
+  "loginCommand" : null,
+  "kimiLoginCommand" : null,
+  "connected" : true,
+  "connectedSince" : "2026-01-01T00:00:00Z",
+  "quarantined" : false,
+  "quarantineReason" : null,
+  "quarantinedAt" : null,
+  "runnerVersion" : "frozen-token-1",
+────────────────────────────────────────────────────────────────────────────────
+$ qits targets list -o json
+[ {
+  "id" : "00000000-0000-4000-8000-000000000001",
+  "name" : "lab",
+  "description" : "the lab box",
+  "slotsTotal" : 6,
+  "reservations" : {
+    "ci" : 2,
+    "workspace" : 2,
+    "desk" : 1
+  },
+  "used" : {
+    "ci" : 1,
+    "workspace" : 1,
+    "desk" : 0
+  },
+  "login" : {
+    "claude" : "PRESENT",
+    "kimi" : "ABSENT",
+    "checkedAt" : "2026-01-01T00:00:00Z"
+  },
+  "credentialVolume" : "qits-system-runner-dot-claude-00000000",
+  "loginCommand" : null,
+  "kimiLoginCommand" : null,
+  "connected" : true,
+  "connectedSince" : "2026-01-01T00:00:00Z",
+  "quarantined" : false,
+  "quarantineReason" : null,
+  "quarantinedAt" : null,
+  "runnerVersion" : "frozen-token-1",
+────────────────────────────────────────────────────────────────────────────────
+$ qits targets greenlight --target lab
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/system/api/targets/00000000-000
+0-4000-8000-000000000001/greenlight
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits targets greenlight --target lab
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/system/api/targets/00000000-000
+0-4000-8000-000000000001/greenlight
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

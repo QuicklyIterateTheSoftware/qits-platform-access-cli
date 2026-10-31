@@ -1,0 +1,902 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe --filter service=qits-example 2> /tmp/qits-tapes/observe.log
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]
+00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]
+00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]
+00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]
+00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]
+00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]
+00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]
+00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe --filter service=qits-example 2> /tmp/qits-tapes/observe.log
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]
+00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]
+00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]
+00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]
+00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]
+00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]
+00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]
+00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe --filter service=qits-example 2> /tmp/qits-tapes/observe.log
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]
+00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]
+00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]
+00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]
+00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]
+00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]
+00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]
+00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+^C$
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe --filter service=qits-example 2> /tmp/qits-tapes/observe.log
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]
+00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]
+00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]
+00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]
+00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]
+00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]
+00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]
+00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+^C$
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe --filter service=qits-example 2> /tmp/qits-tapes/observe.log
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]
+00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]
+00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]
+00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]
+00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]
+00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]
+00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]
+00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+^C$ cut -d' ' -f2- /tmp/qits-tapes/observe.log
+qits observe: connected to ws://127.0.0.1:47081/observability/stream
+qits observe: stopped
+$
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe --filter service=qits-example 2> /tmp/qits-tapes/observe.log
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]
+00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]
+00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]
+00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]
+00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]
+00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]
+00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]
+00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]
+^C$ cut -d' ' -f2- /tmp/qits-tapes/observe.log
+qits observe: connected to ws://127.0.0.1:47081/observability/stream
+qits observe: stopped
+$
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe query --filter service=qits-example --since 2026-01-01T00:00:00Z --until 2026-01-01T0
+1:00:00Z
+window: 2026-01-01T00:00:00Z .. 2026-01-01T01:00:00Z
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe query --filter service=qits-example --since 2026-01-01T00:00:00Z --until 2026-01-01T0
+1:00:00Z
+window: 2026-01-01T00:00:00Z .. 2026-01-01T01:00:00Z
+00:00:00.000 span   qits-example ERROR GET /invoices  [6a1f0c2b]
+00:00:00.010 log    qits-example INFO  listing invoices  [6a1f0c2b]
+00:00:00.050 span   qits-example UNSET SELECT invoices  [6a1f0c2b]
+00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]
+00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]
+00:00:01.000 metric qits-example 150000000 By jvm.memory.used
+00:00:01.000 metric qits-example 3     http.server.requests
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe query --filter service=qits-example --since 2026-01-01T00:00:00Z --until 2026-01-01T0
+1:00:00Z -o json
+{"records":[{"kind":"span","receivedAtMillis":1767225602000,"source":"_service/qits-example","record
+":{"traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","spanId":"7b2e1d3c4f5a6b01","parentSpanId":"","servi
+ceName":"qits-example","scopeName":"test-instrumentation","name":"GET /invoices","kind":"SERVER","st
+artEpochNanos":1767225600000000000,"durationMs":750,"status":"ERROR","statusMessage":"invoice store
+unreachable","attributes":{"http.route":"/invoices"},"events":[{"name":"exception","epochNanos":1767
+225600700000000,"attributes":{"exception.type":"java.lang.IllegalStateException","exception.message"
+:"invoice store unreachable","exception.stacktrace":"java.lang.IllegalStateException: invoice store
+unreachable\n\tat eu.example.InvoiceResource.list(InvoiceResource.java:42)\n"},"exception":true}],"r
+esourceAttributes":{"service.name":"qits-example","service.version":"2026.1231.120000","deployment.e
+nvironment.name":"dev"}}},{"kind":"log","receivedAtMillis":1767225602000,"source":"_service/qits-exa
+mple","record":{"epochNanos":1767225600010000000,"severityNumber":9,"severityText":"INFO","body":"li
+sting invoices","traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","spanId":"7b2e1d3c4f5a6b01","serviceNam
+e":"qits-example","attributes":{},"resourceAttributes":{"service.name":"qits-example","service.versi
+on":"2026.1231.120000","deployment.environment.name":"dev"}}},{"kind":"span","receivedAtMillis":1767
+225602000,"source":"_service/qits-example","record":{"traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","s
+panId":"7b2e1d3c4f5a6b02","parentSpanId":"7b2e1d3c4f5a6b01","serviceName":"qits-example","scopeName"
+:"test-instrumentation","name":"SELECT invoices","kind":"CLIENT","startEpochNanos":17672256000500000
+00,"durationMs":600,"status":"UNSET","statusMessage":"","attributes":{},"events":[],"resourceAttribu
+tes":{"service.name":"qits-example","service.version":"2026.1231.120000","deployment.environment.nam
+e":"dev"}}},{"kind":"log","receivedAtMillis":1767225602000,"source":"_service/qits-example","record"
+:{"epochNanos":1767225600700000000,"severityNumber":17,"severityText":"ERROR","body":"invoice store
+unreachable","traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","spanId":"7b2e1d3c4f5a6b01","serviceName":
+"qits-example","attributes":{"exception.type":"java.lang.IllegalStateException","exception.message":
+"invoice store unreachable"},"resourceAttributes":{"service.name":"qits-example","service.version":"
+2026.1231.120000","deployment.environment.name":"dev"}}},{"kind":"span","receivedAtMillis":176722560
+2000,"source":"_service/qits-example","record":{"traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a02","spanId
+":"7b2e1d3c4f5a6b03","parentSpanId":"","serviceName":"qits-example","scopeName":"test-instrumentatio
+n","name":"GET /health","kind":"SERVER","startEpochNanos":1767225601000000000,"durationMs":5,"status
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe query --filter service=qits-example --since 2026-01-01T00:00:00Z --until 2026-01-01T0
+1:00:00Z -o json
+{"records":[{"kind":"span","receivedAtMillis":1767225602000,"source":"_service/qits-example","record
+":{"traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","spanId":"7b2e1d3c4f5a6b01","parentSpanId":"","servi
+ceName":"qits-example","scopeName":"test-instrumentation","name":"GET /invoices","kind":"SERVER","st
+artEpochNanos":1767225600000000000,"durationMs":750,"status":"ERROR","statusMessage":"invoice store
+unreachable","attributes":{"http.route":"/invoices"},"events":[{"name":"exception","epochNanos":1767
+225600700000000,"attributes":{"exception.type":"java.lang.IllegalStateException","exception.message"
+:"invoice store unreachable","exception.stacktrace":"java.lang.IllegalStateException: invoice store
+unreachable\n\tat eu.example.InvoiceResource.list(InvoiceResource.java:42)\n"},"exception":true}],"r
+esourceAttributes":{"service.name":"qits-example","service.version":"2026.1231.120000","deployment.e
+nvironment.name":"dev"}}},{"kind":"log","receivedAtMillis":1767225602000,"source":"_service/qits-exa
+mple","record":{"epochNanos":1767225600010000000,"severityNumber":9,"severityText":"INFO","body":"li
+sting invoices","traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","spanId":"7b2e1d3c4f5a6b01","serviceNam
+e":"qits-example","attributes":{},"resourceAttributes":{"service.name":"qits-example","service.versi
+on":"2026.1231.120000","deployment.environment.name":"dev"}}},{"kind":"span","receivedAtMillis":1767
+225602000,"source":"_service/qits-example","record":{"traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","s
+panId":"7b2e1d3c4f5a6b02","parentSpanId":"7b2e1d3c4f5a6b01","serviceName":"qits-example","scopeName"
+:"test-instrumentation","name":"SELECT invoices","kind":"CLIENT","startEpochNanos":17672256000500000
+00,"durationMs":600,"status":"UNSET","statusMessage":"","attributes":{},"events":[],"resourceAttribu
+tes":{"service.name":"qits-example","service.version":"2026.1231.120000","deployment.environment.nam
+e":"dev"}}},{"kind":"log","receivedAtMillis":1767225602000,"source":"_service/qits-example","record"
+:{"epochNanos":1767225600700000000,"severityNumber":17,"severityText":"ERROR","body":"invoice store
+unreachable","traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a01","spanId":"7b2e1d3c4f5a6b01","serviceName":
+"qits-example","attributes":{"exception.type":"java.lang.IllegalStateException","exception.message":
+"invoice store unreachable"},"resourceAttributes":{"service.name":"qits-example","service.version":"
+2026.1231.120000","deployment.environment.name":"dev"}}},{"kind":"span","receivedAtMillis":176722560
+2000,"source":"_service/qits-example","record":{"traceId":"6a1f0c2b9d8e47f3a5b4c3d2e1f00a02","spanId
+":"7b2e1d3c4f5a6b03","parentSpanId":"","serviceName":"qits-example","scopeName":"test-instrumentatio
+n","name":"GET /health","kind":"SERVER","startEpochNanos":1767225601000000000,"durationMs":5,"status
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe
+Missing required option: '--filter=<conditions>'
+$ echo $?
+2
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits observe
+Missing required option: '--filter=<conditions>'
+$ echo $?
+2
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

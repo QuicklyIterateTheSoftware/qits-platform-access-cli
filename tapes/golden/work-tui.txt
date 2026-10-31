@@ -1,0 +1,1212 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ─────────────────────────────────────────────────────────────────────────────────── /work  ┐
+ │   work              ▸ Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ─────────────────────────────────────────────────────────────────────────────────── /work  ┐
+ │   work              ▸ Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   list              ▸ A project's work items, every archetype, in the service's order: id (qual │
+ │   details             One work item: its fields, its description, its comment thread, its child │
+ │   create              File a new work item of an archetype.                                     │
+ │   update              Edit a work item's fields.                                                │
+ │   transition          Reshape a work item into another archetype (a ticket into an epic, a feat │
+ │   status              Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, I │
+ │   block               Block a ticket, an epic or a campaign: say that the phase its status star │
+ │   unblock             Unblock a ticket, an epic or a campaign: say that what was in the way is  │
+ │   delete              Delete a work item, its children and their comment threads. The audit log │
+ │   progress            How a campaign is doing: each member in order with its state (DROPPED, DO │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   list              ▸ A project's work items, every archetype, in the service's order: id (qual │
+ │   details             One work item: its fields, its description, its comment thread, its child │
+ │   create              File a new work item of an archetype.                                     │
+ │   update              Edit a work item's fields.                                                │
+ │   transition          Reshape a work item into another archetype (a ticket into an epic, a feat │
+ │   status              Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, I │
+ │   block               Block a ticket, an epic or a campaign: say that the phase its status star │
+ │   unblock             Unblock a ticket, an epic or a campaign: say that what was in the way is  │
+ │   delete              Delete a work item, its children and their comment threads. The audit log │
+ │   progress            How a campaign is doing: each member in order with its state (DROPPED, DO │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ─────────────────────────────────────────────────────────────────────────────────── /list  ┐
+ │   list              ▸ A project's work items, every archetype, in the service's order: id (qual │
+ │   dossier             The dossier of an epic or a ticket: Markdown pages in reading order, for  │
+ │   members             The members of a campaign: the epics and tickets it runs, in order, each  │
+ │   design              The HTML designs of an epic's or a ticket's refinement: the documents a p │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ─────────────────────────────────────────────────────────────────────────────────── /list  ┐
+ │   list              ▸ A project's work items, every archetype, in the service's order: id (qual │
+ │   dossier             The dossier of an epic or a ticket: Markdown pages in reading order, for  │
+ │   members             The members of a campaign: the epics and tickets it runs, in order, each  │
+ │   design              The HTML designs of an epic's or a ticket's refinement: the documents a p │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --project         ▸ (any)                                                                     │
+ │   --archetype         (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --parent            (any)                                                                     │
+ │   --outcome           (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │   --entity            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --project         ▸ (any)                                                                     │
+ │   --archetype         (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --parent            (any)                                                                     │
+ │   --outcome           (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │   --entity            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ─────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ─────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --project ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ contract-00000001 Contract project                                                          │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to search · ↑↓ move · ⏎ take · ⌃L refetch · ␛ leave unchanged                              │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --project ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ contract-00000001 Contract project                                                          │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to search · ↑↓ move · ⏎ take · ⌃L refetch · ␛ leave unchanged                              │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ─────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ contract-00000001                                                         │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ─────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ contract-00000001                                                         │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --project         ▸ contract-00000001                                                         │
+ │   --archetype         (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --parent            (any)                                                                     │
+ │   --outcome           (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │   --entity            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --project         ▸ contract-00000001                                                         │
+ │   --archetype         (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --parent            (any)                                                                     │
+ │   --outcome           (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │   --entity            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --project         ▸ contract-00000001                                                         │
+ │   --archetype         (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --parent            (any)                                                                     │
+ │   --outcome           (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │   --entity            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list --project contract-00000001
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ contract-00000001-9   EPIC       IMPLEMENTED         Implemented epic      2026-01-01 00:00:00  │
+ │ contract-00000001-10  TICKET     IMPLEMENTED         Implemented ticket    2026-01-01 00:00:00  │
+ │ contract-00000001-11  EPIC       VERIFYING           Verifying epic        2026-01-01 00:00:00  │
+ │ contract-00000001-12  TICKET     VERIFYING           Verifying ticket      2026-01-01 00:00:00  │
+ │ contract-00000001-13  EPIC       VERIFIED            Verified epic         2026-01-01 00:00:00  │
+ │ contract-00000001-14  TICKET     VERIFIED            Verified ticket       2026-01-01 00:00:00  │
+ │ contract-00000001-15  EPIC       DONE                Done epic             2026-01-01 00:00:00  │
+ │ contract-00000001-16  TICKET     DONE                Done ticket           2026-01-01 00:00:00  │
+ │ contract-00000001-17  EPIC       DROPPED (OBSOLETE)  Dropped epic          2026-01-01 00:00:00  │
+ │ contract-00000001-18  TICKET     DROPPED (OBSOLETE)  Dropped ticket        2026-01-01 00:00:00  │
+ │ contract-00000001-19  EPIC       IMPLEMENTING        Started epic          2026-01-01 00:00:00  │
+ │ contract-00000001-20  FEATURE    IMPLEMENTING        Started feature       2026-01-01 00:00:00  │
+ │ contract-00000001-21  TASK       IMPLEMENTING        Started task          2026-01-01 00:00:00  │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ work ▸ list ────────────────────────────────────────────────────────────────────────────────────┐
+ │   --project         ▸ contract-00000001                                                         │
+ │   --archetype         (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --parent            (any)                                                                     │
+ │   --outcome           (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │   --entity            (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits work list --project contract-00000001
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ contract-00000001-9   EPIC       IMPLEMENTED         Implemented epic      2026-01-01 00:00:00  │
+ │ contract-00000001-10  TICKET     IMPLEMENTED         Implemented ticket    2026-01-01 00:00:00  │
+ │ contract-00000001-11  EPIC       VERIFYING           Verifying epic        2026-01-01 00:00:00  │
+ │ contract-00000001-12  TICKET     VERIFYING           Verifying ticket      2026-01-01 00:00:00  │
+ │ contract-00000001-13  EPIC       VERIFIED            Verified epic         2026-01-01 00:00:00  │
+ │ contract-00000001-14  TICKET     VERIFIED            Verified ticket       2026-01-01 00:00:00  │
+ │ contract-00000001-15  EPIC       DONE                Done epic             2026-01-01 00:00:00  │
+ │ contract-00000001-16  TICKET     DONE                Done ticket           2026-01-01 00:00:00  │
+ │ contract-00000001-17  EPIC       DROPPED (OBSOLETE)  Dropped epic          2026-01-01 00:00:00  │
+ │ contract-00000001-18  TICKET     DROPPED (OBSOLETE)  Dropped ticket        2026-01-01 00:00:00  │
+ │ contract-00000001-19  EPIC       IMPLEMENTING        Started epic          2026-01-01 00:00:00  │
+ │ contract-00000001-20  FEATURE    IMPLEMENTING        Started feature       2026-01-01 00:00:00  │
+ │ contract-00000001-21  TASK       IMPLEMENTING        Started task          2026-01-01 00:00:00  │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

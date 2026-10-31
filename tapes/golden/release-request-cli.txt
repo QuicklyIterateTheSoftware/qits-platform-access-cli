@@ -1,0 +1,716 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits release-request --project contract-00000001 list
+ID                       REPOSITORY          STATE       FREEZE  APPROVAL      PRIORITY  ITEMS
+            VERSION          UPDATED
+contract-suite-app-rr-1  contract-suite-app  PENDING     0/3     WAITING       BLOCKING  bump/contra
+ct-service  -                2026-01-01 00:00:00 UTC
+contract-service-rr-3    contract-service    READY       0/3     NOT_REQUIRED  MEDIUM    -
+            -                2026-01-01 00:00:00 UTC
+contract-service-rr-2    contract-service    REJECTED    0/3     NOT_REQUIRED  MEDIUM    -
+            -                2026-01-01 00:00:00 UTC
+contract-frontend-rr-3   contract-frontend   CONFLICTED  0/3     NOT_REQUIRED  MEDIUM    2026.101.10
+0200        -                2026-01-01 00:00:00 UTC
+contract-frontend-rr-2   contract-frontend   FAILED      0/3     NOT_REQUIRED  MEDIUM    2026.101.10
+0200        -                2026-01-01 00:00:00 UTC
+contract-frontend-rr-1   contract-frontend   RELEASED    0/3     NOT_REQUIRED  MEDIUM    2026.101.10
+0200        2026.101.100200  2026-01-01 00:00:00 UTC
+contract-service-rr-1    contract-service    FINALIZED   0/3     NOT_REQUIRED  MEDIUM    -
+            2026.101.100100  2026-01-01 00:00:00 UTC
+$
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits release-request --project contract-00000001 list
+ID                       REPOSITORY          STATE       FREEZE  APPROVAL      PRIORITY  ITEMS
+            VERSION          UPDATED
+contract-suite-app-rr-1  contract-suite-app  PENDING     0/3     WAITING       BLOCKING  bump/contra
+ct-service  -                2026-01-01 00:00:00 UTC
+contract-service-rr-3    contract-service    READY       0/3     NOT_REQUIRED  MEDIUM    -
+            -                2026-01-01 00:00:00 UTC
+contract-service-rr-2    contract-service    REJECTED    0/3     NOT_REQUIRED  MEDIUM    -
+            -                2026-01-01 00:00:00 UTC
+contract-frontend-rr-3   contract-frontend   CONFLICTED  0/3     NOT_REQUIRED  MEDIUM    2026.101.10
+0200        -                2026-01-01 00:00:00 UTC
+contract-frontend-rr-2   contract-frontend   FAILED      0/3     NOT_REQUIRED  MEDIUM    2026.101.10
+0200        -                2026-01-01 00:00:00 UTC
+contract-frontend-rr-1   contract-frontend   RELEASED    0/3     NOT_REQUIRED  MEDIUM    2026.101.10
+0200        2026.101.100200  2026-01-01 00:00:00 UTC
+contract-service-rr-1    contract-service    FINALIZED   0/3     NOT_REQUIRED  MEDIUM    -
+            2026.101.100100  2026-01-01 00:00:00 UTC
+$
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits release-request --project contract-00000001 list -o json
+{
+  "requests" : [ {
+    "id" : "00000000-0000-4000-8000-000000000003",
+    "qualifiedId" : "contract-suite-app-rr-1",
+    "repoId" : "00000000-0000-4000-8000-000000000002",
+    "repoName" : "contract-suite-app",
+    "backingBranch" : "release/contract-suite-app-rr-1",
+    "sources" : [ {
+      "kind" : "BRANCH",
+      "name" : "main",
+      "ref" : "refs/heads/main",
+      "implicit" : false,
+      "priority" : "MEDIUM",
+      "addedBy" : "contract-seeder",
+      "feature" : false,
+      "explicitJoin" : false
+    }, {
+      "kind" : "BRANCH",
+      "name" : "bump/contract-service",
+      "ref" : "refs/heads/bump/contract-service",
+      "implicit" : false,
+      "priority" : "BLOCKING",
+      "addedBy" : "contract-seeder",
+      "feature" : false,
+      "explicitJoin" : false
+    } ],
+    "priority" : "BLOCKING",
+    "mergedSha" : "0000000000000000000000000000000000000007",
+    "state" : "PENDING",
+────────────────────────────────────────────────────────────────────────────────
+$ qits release-request --project contract-00000001 list -o json
+{
+  "requests" : [ {
+    "id" : "00000000-0000-4000-8000-000000000003",
+    "qualifiedId" : "contract-suite-app-rr-1",
+    "repoId" : "00000000-0000-4000-8000-000000000002",
+    "repoName" : "contract-suite-app",
+    "backingBranch" : "release/contract-suite-app-rr-1",
+    "sources" : [ {
+      "kind" : "BRANCH",
+      "name" : "main",
+      "ref" : "refs/heads/main",
+      "implicit" : false,
+      "priority" : "MEDIUM",
+      "addedBy" : "contract-seeder",
+      "feature" : false,
+      "explicitJoin" : false
+    }, {
+      "kind" : "BRANCH",
+      "name" : "bump/contract-service",
+      "ref" : "refs/heads/bump/contract-service",
+      "implicit" : false,
+      "priority" : "BLOCKING",
+      "addedBy" : "contract-seeder",
+      "feature" : false,
+      "explicitJoin" : false
+    } ],
+    "priority" : "BLOCKING",
+    "mergedSha" : "0000000000000000000000000000000000000007",
+    "state" : "PENDING",
+────────────────────────────────────────────────────────────────────────────────
+$ qits release-request --project contract-00000001 --repository contract-00000001-contract-00000001
+create --branch feature/export
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/projects/api/repositories/00000
+000-0000-4000-8000-000000000002/release-requests
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits release-request --project contract-00000001 --repository contract-00000001-contract-00000001
+create --branch feature/export
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/projects/api/repositories/00000
+000-0000-4000-8000-000000000002/release-requests
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

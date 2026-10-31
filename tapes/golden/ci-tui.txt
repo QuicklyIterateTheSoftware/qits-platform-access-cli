@@ -1,0 +1,1460 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────── /ci  ┐
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                ▸ The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   artifacts           The platform's artifacts store. `qits artifacts publish` is a CI release  │
+ │   changelog           Release changelogs, as the docs store keeps them (@changelog/<repository> │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────── /ci  ┐
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                ▸ The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   artifacts           The platform's artifacts store. `qits artifacts publish` is a CI release  │
+ │   changelog           Release changelogs, as the docs store keeps them (@changelog/<repository> │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ─────────────────────────────────────────────────────────────────────────────────────────────┐
+ │   runs              ▸ List a repository's CI runs, newest first.                                │
+ │   run                 Show one CI run: what it built, its status, and its steps with their exit │
+ │   retry               Run a finished CI run again: the same commit, the same pipeline, the same │
+ │   cancel              Stop a queued or running CI run, then show it.                            │
+ │   report              Release reports: what a release request's QA run found, beside its verdic │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ─────────────────────────────────────────────────────────────────────────────────────────────┐
+ │   runs              ▸ List a repository's CI runs, newest first.                                │
+ │   run                 Show one CI run: what it built, its status, and its steps with their exit │
+ │   retry               Run a finished CI run again: the same commit, the same pipeline, the same │
+ │   cancel              Stop a queued or running CI run, then show it.                            │
+ │   report              Release reports: what a release request's QA run found, beside its verdic │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ───────────────────────────────────────────────────────────────────────────────────── /runs  ┐
+ │   runs              ▸ List a repository's CI runs, newest first.                                │
+ │   report              Release reports: what a release request's QA run found, beside its verdic │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ───────────────────────────────────────────────────────────────────────────────────── /runs  ┐
+ │   runs              ▸ List a repository's CI runs, newest first.                                │
+ │   report              Release reports: what a release request's QA run found, beside its verdic │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           (any)                                                                     │
+ │   --repository        (any)                                                                     │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           (any)                                                                     │
+ │   --repository        (any)                                                                     │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ───────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ───────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --project ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ contract-00000001 Contract project                                                          │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to search · ↑↓ move · ⏎ take · ⌃L refetch · ␛ leave unchanged                              │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --project ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ contract-00000001 Contract project                                                          │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to search · ↑↓ move · ⏎ take · ⌃L refetch · ␛ leave unchanged                              │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ───────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ contract-00000001                                                         │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ───────────────────────────────────────────────────────────────────────── /--project  ┐
+ │   --project         ▸ contract-00000001                                                         │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           contract-00000001                                                         │
+ │   --repository        (any)                                                                     │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           contract-00000001                                                         │
+ │   --repository        (any)                                                                     │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ────────────────────────────────────────────────────────────────────── /--repository  ┐
+ │   --repository      ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ────────────────────────────────────────────────────────────────────── /--repository  ┐
+ │   --repository      ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --repository ───────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ contract-00000001-contract-00000001 PROJECT                                                 │
+ │     contract-daemon DAEMON                                                                      │
+ │     contract-frontend FRONTEND                                                                  │
+ │     contract-service SERVICE                                                                    │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to search · ↑↓ move · ⏎ take · ⌃L refetch · ␛ leave unchanged                              │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --repository ───────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ contract-00000001-contract-00000001 PROJECT                                                 │
+ │     contract-daemon DAEMON                                                                      │
+ │     contract-frontend FRONTEND                                                                  │
+ │     contract-service SERVICE                                                                    │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to search · ↑↓ move · ⏎ take · ⌃L refetch · ␛ leave unchanged                              │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ────────────────────────────────────────────────────────────────────── /--repository  ┐
+ │   --repository      ▸ contract-service                                                          │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001 --repository contract-service
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ────────────────────────────────────────────────────────────────────── /--repository  ┐
+ │   --repository      ▸ contract-service                                                          │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001 --repository contract-service
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           contract-00000001                                                         │
+ │   --repository        contract-service                                                          │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001 --repository contract-service
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           contract-00000001                                                         │
+ │   --repository        contract-service                                                          │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001 --repository contract-service
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           contract-00000001                                                         │
+ │   --repository        contract-service                                                          │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001 --repository contract-service
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ ID        STATUS   BRANCH                                        COMMIT    REQUEST              │
+ │ 00000000  SUCCESS  release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5 │
+ │ 00000000  FAILED   release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ ci ▸ runs ──────────────────────────────────────────────────────────────────────────────────────┐
+ │   --branch          ▸ (any)                                                                     │
+ │   --status            (any)                                                                     │
+ │   --limit             20                                                                        │
+ │   --project           contract-00000001                                                         │
+ │   --repository        contract-service                                                          │
+ │   --release-request   (any)                                                                     │
+ │   --ci-url            (any)                                                                     │
+ │   --projects-url      (any)                                                                     │
+ │   --output            (any)                                                                     │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits ci runs --project contract-00000001 --repository contract-service
+ ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
+ │ ID        STATUS   BRANCH                                        COMMIT    REQUEST              │
+ │ 00000000  SUCCESS  release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5 │
+ │ 00000000  FAILED   release/00000000-0000-4000-8000-000000000002  00000000  qits-ci-service-rr-5 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,1088 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ───────────────────────────────────────────────────────────────────────────────────────────┐
+ │   login             ▸ Sign in through the browser and store the session. Run it first, and agai │
+ │   session-daemon      Keep the session from `qits login` fresh for as long as this runs. Start  │
+ │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
+ │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
+ │   repositories        The repositories of one project: list shows them, create stands a new one │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and campa │
+ │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   release-request     Release requests: the one way to release a repository. list shows them (o │
+ │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ──────────────────────────────────────────────────────────────────────────────── /observe  ┐
+ │   observe           ▸ Print what qits-observability takes in (logs, spans with their events, me │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ qits ──────────────────────────────────────────────────────────────────────────────── /observe  ┐
+ │   observe           ▸ Print what qits-observability takes in (logs, spans with their events, me │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the logs, spans and metrics qits-observability still holds for a wi │
+ │   sources             List the buckets qits-observability holds telemetry in: each one's key, k │
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   slow-spans          Spans in one bucket that took at least --threshold-ms, slowest first: dur │
+ │   metrics             The latest value of every metric series in one bucket: name, value, unit, │
+ │   --filter            (any)                                                                     │
+ │   --observability-url  (any)                                                                    │
+ │   --output            text                                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the logs, spans and metrics qits-observability still holds for a wi │
+ │   sources             List the buckets qits-observability holds telemetry in: each one's key, k │
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   slow-spans          Spans in one bucket that took at least --threshold-ms, slowest first: dur │
+ │   metrics             The latest value of every metric series in one bucket: name, value, unit, │
+ │   --filter            (any)                                                                     │
+ │   --observability-url  (any)                                                                    │
+ │   --output            text                                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ──────────────────────────────────────────────────────────────────────────── /--filter  ┐
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   --filter          ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ──────────────────────────────────────────────────────────────────────────── /--filter  ┐
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   --filter          ▸ (any)                                                                     │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --filter ───────────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ _                                                                                           │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type the value · ⏎ accept · ␛ leave unchanged                                                   │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ --filter ───────────────────────────────────────────────────────────────────────────────────────┐
+ │   ▸ _                                                                                           │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type the value · ⏎ accept · ␛ leave unchanged                                                   │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ──────────────────────────────────────────────────────────────────────────── /--filter  ┐
+ │   errors            ▸ Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   --filter            service=qits-example                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe --filter service=qits-example
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ──────────────────────────────────────────────────────────────────────────── /--filter  ┐
+ │   errors            ▸ Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   --filter            service=qits-example                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ type to filter · ⏎ choose · ␛ clear                                                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe --filter service=qits-example
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the logs, spans and metrics qits-observability still holds for a wi │
+ │   sources             List the buckets qits-observability holds telemetry in: each one's key, k │
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   slow-spans          Spans in one bucket that took at least --threshold-ms, slowest first: dur │
+ │   metrics             The latest value of every metric series in one bucket: name, value, unit, │
+ │   --filter            service=qits-example                                                      │
+ │   --observability-url  (any)                                                                    │
+ │   --output            text                                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe --filter service=qits-example
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the logs, spans and metrics qits-observability still holds for a wi │
+ │   sources             List the buckets qits-observability holds telemetry in: each one's key, k │
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   slow-spans          Spans in one bucket that took at least --threshold-ms, slowest first: dur │
+ │   metrics             The latest value of every metric series in one bucket: name, value, unit, │
+ │   --filter            service=qits-example                                                      │
+ │   --observability-url  (any)                                                                    │
+ │   --output            text                                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe --filter service=qits-example
+ ┌ output ─────────────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ │                                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the logs, spans and metrics qits-observability still holds for a wi │
+ │   sources             List the buckets qits-observability holds telemetry in: each one's key, k │
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   slow-spans          Spans in one bucket that took at least --threshold-ms, slowest first: dur │
+ │   metrics             The latest value of every metric series in one bucket: name, value, unit, │
+ │   --filter            service=qits-example                                                      │
+ │   --observability-url  (any)                                                                    │
+ │   --output            text                                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ⌃C stop · ↑↓ move · ⏎ choose · ␛ back · q quit                                                  │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe --filter service=qits-example
+ ┌ output ────────────────────────────────────────────────────────────────────────────── streaming ┐
+ │ 00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]                    │
+ │ 00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]                                  │
+ │ 00:00:01.000 metric qits-example 150000000 By jvm.memory.used                                   │
+ │ 00:00:01.000 metric qits-example 3     http.server.requests                                     │
+ │ 00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]                             │
+ │ 00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]                           │
+ │ 00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]                    │
+ │ 00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]       │
+ │ 00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]                   │
+ │ 00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]                │
+ │ 00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]                     │
+ │ 00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]                             │
+ │ 00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+ qits tui · qits.example.test · agent (qits:agent) via token tapes
+ ┌ observe ────────────────────────────────────────────────────────────────────────────────────────┐
+ │   query             ▸ Print the logs, spans and metrics qits-observability still holds for a wi │
+ │   sources             List the buckets qits-observability holds telemetry in: each one's key, k │
+ │   errors              Recent errors in one bucket, grouped by trace: spans with an error status │
+ │   slow-spans          Spans in one bucket that took at least --threshold-ms, slowest first: dur │
+ │   metrics             The latest value of every metric series in one bucket: name, value, unit, │
+ │   --filter            service=qits-example                                                      │
+ │   --observability-url  (any)                                                                    │
+ │   --output            text                                                                      │
+ │                                                                                                 │
+ │                                                                                                 │
+ │ ⌃C stop · ↑↓ move · ⏎ choose · ␛ back · q quit                                                  │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+ $ qits observe --filter service=qits-example
+ ┌ output ────────────────────────────────────────────────────────────────────────────── streaming ┐
+ │ 00:00:00.700 log    qits-example ERROR invoice store unreachable  [6a1f0c2b]                    │
+ │ 00:00:01.000 span   qits-example UNSET GET /health  [6a1f0c2b]                                  │
+ │ 00:00:01.000 metric qits-example 150000000 By jvm.memory.used                                   │
+ │ 00:00:01.000 metric qits-example 3     http.server.requests                                     │
+ │ 00:00:02.000 log    qits-example INFO  listing invoices  [6a1f0c2b]                             │
+ │ 00:00:02.500 log    qits-example INFO  listed 12 invoices  [6a1f0c2b]                           │
+ │ 00:00:03.000 log    qits-example WARN  invoice 7 has no customer  [6a1f0c2b]                    │
+ │ 00:00:03.500 log    qits-example INFO  exporting invoices for the accountants  [6a1f0c2b]       │
+ │ 00:00:04.000 log    qits-example INFO  wrote invoices-2026-01.csv  [6a1f0c2b]                   │
+ │ 00:00:04.500 log    qits-example ERROR mail relay refused the export  [6a1f0c2b]                │
+ │ 00:00:05.000 log    qits-example INFO  retrying the export mail  [6a1f0c2b]                     │
+ │ 00:00:05.500 log    qits-example INFO  export mail sent  [6a1f0c2b]                             │
+ │ 00:00:06.000 log    qits-example INFO  listing invoices  [6a1f0c2b]                             │
+ └─────────────────────────────────────────────────────────────────────────────────────────────────┘
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits tui
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────

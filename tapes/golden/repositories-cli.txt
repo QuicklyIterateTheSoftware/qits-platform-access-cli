@@ -1,0 +1,716 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits repositories --project contract-00000001 list
+NAME                                 ARCHETYPE  COMPONENT          ID
+contract-00000001-contract-00000001  PROJECT    -                  00000000-0000-4000-8000-000000000
+002
+contract-daemon                      DAEMON     contract-daemon    00000000-0000-4000-8000-000000000
+003
+contract-frontend                    FRONTEND   contract-frontend  00000000-0000-4000-8000-000000000
+004
+contract-service                     SERVICE    contract-service   00000000-0000-4000-8000-000000000
+005
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits repositories --project contract-00000001 list
+NAME                                 ARCHETYPE  COMPONENT          ID
+contract-00000001-contract-00000001  PROJECT    -                  00000000-0000-4000-8000-000000000
+002
+contract-daemon                      DAEMON     contract-daemon    00000000-0000-4000-8000-000000000
+003
+contract-frontend                    FRONTEND   contract-frontend  00000000-0000-4000-8000-000000000
+004
+contract-service                     SERVICE    contract-service   00000000-0000-4000-8000-000000000
+005
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits repositories --project contract-00000001 list -o json
+{
+  "entries" : [ {
+    "repository" : {
+      "id" : "00000000-0000-4000-8000-000000000002",
+      "name" : "contract-00000001-contract-00000001",
+      "backupUrl" : null,
+      "mainBranch" : "main",
+      "archetype" : "PROJECT",
+      "component" : null,
+      "projectId" : "00000000-0000-4000-8000-000000000001",
+      "lastBackup" : null,
+      "cloneUrl" : "https://githost.example.test/git/contract-00000001/contract-00000001-contract-00
+000001"
+    },
+    "declared" : true
+  }, {
+    "repository" : {
+      "id" : "00000000-0000-4000-8000-000000000003",
+      "name" : "contract-daemon",
+      "backupUrl" : null,
+      "mainBranch" : "main",
+      "archetype" : "DAEMON",
+      "component" : "contract-daemon",
+      "projectId" : "00000000-0000-4000-8000-000000000001",
+      "lastBackup" : null,
+      "cloneUrl" : "https://githost.example.test/git/contract-00000001/contract-daemon"
+    },
+    "declared" : true
+  }, {
+────────────────────────────────────────────────────────────────────────────────
+$ qits repositories --project contract-00000001 list -o json
+{
+  "entries" : [ {
+    "repository" : {
+      "id" : "00000000-0000-4000-8000-000000000002",
+      "name" : "contract-00000001-contract-00000001",
+      "backupUrl" : null,
+      "mainBranch" : "main",
+      "archetype" : "PROJECT",
+      "component" : null,
+      "projectId" : "00000000-0000-4000-8000-000000000001",
+      "lastBackup" : null,
+      "cloneUrl" : "https://githost.example.test/git/contract-00000001/contract-00000001-contract-00
+000001"
+    },
+    "declared" : true
+  }, {
+    "repository" : {
+      "id" : "00000000-0000-4000-8000-000000000003",
+      "name" : "contract-daemon",
+      "backupUrl" : null,
+      "mainBranch" : "main",
+      "archetype" : "DAEMON",
+      "component" : "contract-daemon",
+      "projectId" : "00000000-0000-4000-8000-000000000001",
+      "lastBackup" : null,
+      "cloneUrl" : "https://githost.example.test/git/contract-00000001/contract-daemon"
+    },
+    "declared" : true
+  }, {
+────────────────────────────────────────────────────────────────────────────────
+$ qits repositories --project contract-00000001 create contract-docs-app
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/projects/api/projects/00000000-
+0000-4000-8000-000000000001/repositories
+Creating a repository needs qits:admin or qits:agent. A 403 on an agent credential means the service
+ has not been released with that role on this door yet.
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits repositories --project contract-00000001 create contract-docs-app
+403 - this credential is qits:agent, which reads but does not write
+Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/projects/api/projects/00000000-
+0000-4000-8000-000000000001/repositories
+Creating a repository needs qits:admin or qits:agent. A 403 on an agent credential means the service
+ has not been released with that role on this door yet.
+$ echo $?
+1
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
