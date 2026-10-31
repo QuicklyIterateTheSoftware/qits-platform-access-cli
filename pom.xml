@@ -96,7 +96,7 @@
         <qits.artifacts-golden-masters.version>2026.1029.125556</qits.artifacts-golden-masters.version>
         <qits.ci-golden-masters.version>2026.1031.93847</qits.ci-golden-masters.version>
         <qits.idp-golden-masters.version>2026.1027.165632</qits.idp-golden-masters.version>
-        <qits.events-golden-masters.version>2026.1023.82831</qits.events-golden-masters.version>
+        <qits.events-golden-masters.version>2026.1031.124054</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1031.22002</qits.maintenance-golden-masters.version>
         <qits.observability-golden-masters.version>2026.1018.155850</qits.observability-golden-masters.version>
         <!-- qits-system's recordings, for the targets the VHS tapes' fake platform answers with
