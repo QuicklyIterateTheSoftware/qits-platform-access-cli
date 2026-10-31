@@ -654,14 +654,14 @@
 ────────────────────────────────────────────────────────────────────────────────
  qits tui · qits.example.test · agent (qits:agent) via token tapes
  ┌ ideas ──────────────────────────────────────────────────────────────────────────────────────────┐
- │   list              ▸ A project's ideas, oldest first: id, status, whether archived, title and  │
+ │   list              ▸ A project's ideas in rank order: the highest priority first, the unranked │
  │   details             One idea: its title, status, whether it is archived and why, the idea ena │
  │   create              Write a new idea of a project.                                            │
- │   update              Edit an idea's title, description or enabledBy.                           │
+ │   update              Edit an idea's title, description, enabledBy or priority.                 │
  │   archive             Archive an idea: hide it from the list, and say why. Ideas are never dele │
  │   unarchive           Take an idea out of the archive, so the list shows it again.              │
+ │   rank                Move an idea in its project's rank order: directly above or directly belo │
  │   spawn               File an epic or a ticket inspired by an idea.                             │
- │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
@@ -685,16 +685,16 @@
 ────────────────────────────────────────────────────────────────────────────────
  qits tui · qits.example.test · agent (qits:agent) via token tapes
  ┌ ideas ──────────────────────────────────────────────────────────────────────────────────────────┐
- │   list              ▸ A project's ideas, oldest first: id, status, whether archived, title and  │
+ │   list              ▸ A project's ideas in rank order: the highest priority first, the unranked │
  │   details             One idea: its title, status, whether it is archived and why, the idea ena │
  │   create              Write a new idea of a project.                                            │
- │   update              Edit an idea's title, description or enabledBy.                           │
+ │   update              Edit an idea's title, description, enabledBy or priority.                 │
  │   archive             Archive an idea: hide it from the list, and say why. Ideas are never dele │
  │   unarchive           Take an idea out of the archive, so the list shows it again.              │
+ │   rank                Move an idea in its project's rank order: directly above or directly belo │
  │   spawn               File an epic or a ticket inspired by an idea.                             │
  │                                                                                                 │
  │                                                                                                 │
- │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits ideas
@@ -716,7 +716,7 @@
 ────────────────────────────────────────────────────────────────────────────────
  qits tui · qits.example.test · agent (qits:agent) via token tapes
  ┌ ideas ────────────────────────────────────────────────────────────────────────────────── /list  ┐
- │   list              ▸ A project's ideas, oldest first: id, status, whether archived, title and  │
+ │   list              ▸ A project's ideas in rank order: the highest priority first, the unranked │
  │   unarchive           Take an idea out of the archive, so the list shows it again.              │
  │                                                                                                 │
  │                                                                                                 │
@@ -747,7 +747,7 @@
 ────────────────────────────────────────────────────────────────────────────────
  qits tui · qits.example.test · agent (qits:agent) via token tapes
  ┌ ideas ────────────────────────────────────────────────────────────────────────────────── /list  ┐
- │   list              ▸ A project's ideas, oldest first: id, status, whether archived, title and  │
+ │   list              ▸ A project's ideas in rank order: the highest priority first, the unranked │
  │   unarchive           Take an idea out of the archive, so the list shows it again.              │
  │                                                                                                 │
  │                                                                                                 │
@@ -1102,9 +1102,9 @@
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits ideas list --project contract-00000001
  ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
- │ ID                                    STATUS   ARCHIVED  TITLE                  UPDATED         │
- │ 00000000-0000-4000-8000-000000000003  QUEUED   -         Faster builds          2026-01-01 00:0 │
- │ 00000000-0000-4000-8000-000000000002  PLANNED  -         Share the build cache  2026-01-01 00:0 │
+ │ ID                                    STATUS   ARCHIVED  PRIORITY  TITLE                  UPDAT │
+ │ 00000000-0000-4000-8000-000000000003  QUEUED   -                   Faster builds          2026- │
+ │ 00000000-0000-4000-8000-000000000002  PLANNED  -                   Share the build cache  2026- │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
@@ -1133,9 +1133,9 @@
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits ideas list --project contract-00000001
  ┌ output ───────────────────────────────────────────────────────────────────────────────── exit 0 ┐
- │ ID                                    STATUS   ARCHIVED  TITLE                  UPDATED         │
- │ 00000000-0000-4000-8000-000000000003  QUEUED   -         Faster builds          2026-01-01 00:0 │
- │ 00000000-0000-4000-8000-000000000002  PLANNED  -         Share the build cache  2026-01-01 00:0 │
+ │ ID                                    STATUS   ARCHIVED  PRIORITY  TITLE                  UPDAT │
+ │ 00000000-0000-4000-8000-000000000003  QUEUED   -                   Faster builds          2026- │
+ │ 00000000-0000-4000-8000-000000000002  PLANNED  -                   Share the build cache  2026- │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
