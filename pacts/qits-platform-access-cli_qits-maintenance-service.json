@@ -8,6 +8,160 @@
         "references": {
           "qits-call": {
             "app": "qits-maintenance-service",
+            "operationId": "listDeployedPacts"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-cli",
+            "command": "qits artifacts fetch deployed-pacts",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits artifacts fetch deployed-pacts: listDeployedPacts",
+      "key": "2d3b1037",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a provider whose deployed consumers publish pacts",
+          "params": {
+            "provider": "contract-provider-service"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "query": {
+            "provider": {
+              "dataType": "RAW",
+              "expression": "${provider}",
+              "type": "ProviderState"
+            }
+          }
+        },
+        "method": "GET",
+        "path": "/maintenance/api/deployed-pacts",
+        "query": {
+          "provider": [
+            "contract-provider-service"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "content": {
+            "pacts": [
+              {
+                "artifactId": "contract-service-pacts-contract-provider-service",
+                "consumerRepository": "contract-service",
+                "deployedVersions": [
+                  "2026.1030.192107"
+                ],
+                "groupId": "eu.wohlben.qits",
+                "pactVersion": "2026.1028.235307"
+              },
+              {
+                "artifactId": "contract-service-pacts-contract-provider-service",
+                "consumerRepository": "contract-service",
+                "deployedVersions": [
+                  "2026.1030.192107"
+                ],
+                "groupId": "eu.wohlben.qits",
+                "pactVersion": "2026.1028.235307"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.pacts": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.pacts[*].artifactId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.pacts[*].consumerRepository": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.pacts[*].deployedVersions": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 1
+                }
+              ]
+            },
+            "$.pacts[*].deployedVersions[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.pacts[*].groupId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.pacts[*].pactVersion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-maintenance-service",
             "operationId": "runReleaseRequestAutomation"
           },
           "qits-trigger": {
