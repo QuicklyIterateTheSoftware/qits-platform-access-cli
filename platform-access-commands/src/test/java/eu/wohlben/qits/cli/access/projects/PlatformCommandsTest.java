@@ -362,6 +362,90 @@ class PlatformCommandsTest {
         assertThat(platform.requests("POST", REPOSITORIES)).isEmpty();
     }
 
+    // --- archiving a repository ---
+
+    @Test
+    void archiveSendsNoBodyAndPrintsTheRequestedOutcome() {
+        String path = "/projects/api/repositories/" + CI + "/archive";
+        platform.answer("POST", path, 202, """
+                {"outcome":"requested","archived":true,"branch":"archive/qits-ci-service","commit":"abc123",
+                 "releaseRequestId":"66666666-2222-3333-4444-555555555555","qualifiedId":"qits-ci-service-rr-9",
+                 "detail":"The edit was committed and a release request was asked for."}
+                """);
+
+        Result r = run("repositories", "--project", "qits", "archive", "--repository", "qits-ci-service");
+
+        assertThat(r.exit()).isZero();
+        List<FakePlatform.Request> sent = platform.requests("POST", path);
+        assertThat(sent).hasSize(1);
+        assertThat(sent.getFirst().body()).isEmpty();
+        assertThat(r.out().lines().toList()).containsExactly(
+                "  outcome          requested",
+                "  archived         yes",
+                "  branch           archive/qits-ci-service",
+                "  release request  qits-ci-service-rr-9",
+                "  detail           The edit was committed and a release request was asked for.");
+    }
+
+    @Test
+    void archiveAlreadyArchivedAnswersUnchangedAndOpensNothing() {
+        String path = "/projects/api/repositories/" + CI + "/archive";
+        platform.answer("POST", path, 200, """
+                {"outcome":"unchanged","archived":true,"detail":"main already says repository.archived: true"}
+                """);
+
+        Result r = run("repositories", "--project", "qits", "archive", "--repository", "qits-ci-service");
+
+        assertThat(r.exit()).isZero();
+        assertThat(r.out().lines().toList()).containsExactly(
+                "  outcome   unchanged",
+                "  archived  yes",
+                "  detail    main already says repository.archived: true");
+    }
+
+    @Test
+    void unarchiveSendsToItsOwnDoorAndPrintsJsonAsItCame() throws Exception {
+        String path = "/projects/api/repositories/" + CI + "/unarchive";
+        platform.answer("POST", path, 202, """
+                {"outcome":"requested","archived":false,"branch":"unarchive/qits-ci-service","commit":"def456",
+                 "releaseRequestId":"66666666-2222-3333-4444-555555555555","qualifiedId":"qits-ci-service-rr-10",
+                 "detail":"d"}
+                """);
+
+        Result r = run("repositories", "--project", "qits", "unarchive", "--repository", "qits-ci-service",
+                "-o", "json");
+
+        assertThat(r.exit()).isZero();
+        JsonNode printed = JSON.readTree(r.out());
+        assertThat(printed.path("branch").asText()).isEqualTo("unarchive/qits-ci-service");
+        assertThat(printed.path("qualifiedId").asText()).isEqualTo("qits-ci-service-rr-10");
+        assertThat(platform.requests("POST", path)).hasSize(1);
+        assertThat(platform.requests("POST", "/projects/api/repositories/" + CI + "/archive")).isEmpty();
+    }
+
+    @Test
+    void anArchiveRefusalPrintsTheServiceMessageAndExitsNonZero() {
+        String path = "/projects/api/repositories/" + CI + "/archive";
+        platform.answer("POST", path, 422, "{\"message\":\"the file cannot be edited safely\"}");
+
+        Result r = run("repositories", "--project", "qits", "archive", "--repository", "qits-ci-service");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("HTTP 422").contains("the file cannot be edited safely");
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void archivingNeedsTheProjectAndTheRepository() {
+        Result noProject = run("repositories", "archive", "--repository", "qits-ci-service");
+        assertThat(noProject.exit()).isEqualTo(2);
+        assertThat(noProject.err()).contains("Name the project: --project <id, slug or name>.");
+
+        Result noRepository = run("repositories", "--project", "qits", "archive");
+        assertThat(noRepository.exit()).isEqualTo(2);
+        assertThat(noRepository.err()).contains("Name the repository: --repository <id or name>.");
+    }
+
     // --- release requests ---
 
     @Test
