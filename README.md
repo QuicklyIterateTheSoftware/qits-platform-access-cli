@@ -336,6 +336,11 @@ token home with a token that is no token (`QITS_TOKEN=qits-tapes-not-a-token`,
 `XDG_CONFIG_HOME`, after dropping every `QITS_*` variable the shell had. Nothing a tape shows
 depends on the clock, a random port or a temporary path, because a golden must be the same on
 every play: each command is typed while the tape is hidden and shown once its prompt is back.
+A TUI tape reaches a command with the screen's filter, `/<name> ` — a row's text is its name, a
+space and its description, so that matches the name and only a description that says `<name> ` too
+— and steps Down past such rows; it never counts its way down the list, so a new command shifts no
+tape unless its description names another command that way. Each wait checks that the row it lands
+on is the one named, so a shift fails loudly rather than running the wrong command.
 
 **Playing a tape by hand.** `tapes/prepare.sh` builds the Dockerfile's `tapes-kit` target with
 `buildctl`, the way QA does; off the platform, export the kit yourself and name it:
