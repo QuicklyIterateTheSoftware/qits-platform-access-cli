@@ -529,11 +529,11 @@
 
 ────────────────────────────────────────────────────────────────────────────────
 $ qits ideas list --project contract-00000001
-ID                                    STATUS   ARCHIVED  TITLE                  UPDATED
-00000000-0000-4000-8000-000000000003  QUEUED   -         Faster builds          2026-01-01 00:00:00
-UTC
-00000000-0000-4000-8000-000000000002  PLANNED  -         Share the build cache  2026-01-01 00:00:00
-UTC
+ID                                    STATUS   ARCHIVED  PRIORITY  TITLE                  UPDATED
+00000000-0000-4000-8000-000000000003  QUEUED   -                   Faster builds          2026-01-01
+ 00:00:00 UTC
+00000000-0000-4000-8000-000000000002  PLANNED  -                   Share the build cache  2026-01-01
+ 00:00:00 UTC
 $
 
 
@@ -560,11 +560,11 @@ $
 
 ────────────────────────────────────────────────────────────────────────────────
 $ qits ideas list --project contract-00000001
-ID                                    STATUS   ARCHIVED  TITLE                  UPDATED
-00000000-0000-4000-8000-000000000003  QUEUED   -         Faster builds          2026-01-01 00:00:00
-UTC
-00000000-0000-4000-8000-000000000002  PLANNED  -         Share the build cache  2026-01-01 00:00:00
-UTC
+ID                                    STATUS   ARCHIVED  PRIORITY  TITLE                  UPDATED
+00000000-0000-4000-8000-000000000003  QUEUED   -                   Faster builds          2026-01-01
+ 00:00:00 UTC
+00000000-0000-4000-8000-000000000002  PLANNED  -                   Share the build cache  2026-01-01
+ 00:00:00 UTC
 $
 
 
@@ -602,6 +602,7 @@ $ qits ideas list --project contract-00000001 -o json
     "archived" : false,
     "archiveReason" : null,
     "archivedAt" : null,
+    "priority" : null,
     "createdAt" : "2026-01-01T00:00:00Z",
     "updatedAt" : "2026-01-01T00:00:00Z"
   }, {
@@ -614,12 +615,11 @@ $ qits ideas list --project contract-00000001 -o json
     "archived" : false,
     "archiveReason" : null,
     "archivedAt" : null,
+    "priority" : null,
     "createdAt" : "2026-01-01T00:00:00Z",
     "updatedAt" : "2026-01-01T00:00:00Z"
   } ]
 }
-$
-
 ────────────────────────────────────────────────────────────────────────────────
 $ qits ideas list --project contract-00000001 -o json
 {
@@ -633,6 +633,7 @@ $ qits ideas list --project contract-00000001 -o json
     "archived" : false,
     "archiveReason" : null,
     "archivedAt" : null,
+    "priority" : null,
     "createdAt" : "2026-01-01T00:00:00Z",
     "updatedAt" : "2026-01-01T00:00:00Z"
   }, {
@@ -645,12 +646,11 @@ $ qits ideas list --project contract-00000001 -o json
     "archived" : false,
     "archiveReason" : null,
     "archivedAt" : null,
+    "priority" : null,
     "createdAt" : "2026-01-01T00:00:00Z",
     "updatedAt" : "2026-01-01T00:00:00Z"
   } ]
 }
-$
-
 ────────────────────────────────────────────────────────────────────────────────
 $ qits ideas --entity 00000000-0000-4000-8000-000000000003 archive --reason 'Folded into the cache e
 pic.'
@@ -691,6 +691,68 @@ Your roles do not allow this (HTTP 403): POST http://127.0.0.1:47080/projects/ap
 $ echo $?
 1
 $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits ideas --entity 00000000-0000-4000-8000-000000000003 rank
+Say where the idea goes: exactly one of --above <idea> and --below <idea>. Nothing was sent.
+$ echo $?
+2
+$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+$ qits ideas --entity 00000000-0000-4000-8000-000000000003 rank
+Say where the idea goes: exactly one of --above <idea> and --below <idea>. Nothing was sent.
+$ echo $?
+2
+$
+
+
+
 
 
 
