@@ -391,7 +391,8 @@ public final class ProjectsApi {
     }
 
     /**
-     * {@code {"ideas":[…]}}, oldest first. {@code project} is its id or its slug. {@code archived}
+     * {@code {"ideas":[…]}}, in rank order: priority highest first, the unranked after, then oldest
+     * first (qits-1791). {@code project} is its id or its slug. {@code archived}
      * adds the archived ideas beside the others (it does not narrow to them), so the query says it
      * only when it is true; {@code status} (PLANNED, QUEUED or DONE) narrows, left out when null.
      */
@@ -431,6 +432,19 @@ public final class ProjectsApi {
     /** The idea, out of the archive. No body. */
     public JsonNode unarchiveIdea(String idea) throws CliFailure, InterruptedException {
         return client.post(uri(ideaPath(idea) + "/unarchive"));
+    }
+
+    /**
+     * {@code {"items":[{"id","priority"},…]}}: the ideas a drop renumbered, highest first
+     * (qits-1791). {@code where} is {@code above} or {@code below}, and {@code anchor} the idea the
+     * dropped one now sits directly above or below; the body is {@code {"above":"<id>"}} or {@code
+     * {"below":"<id>"}}, exactly one of them.
+     */
+    public JsonNode reprioritizeIdea(String idea, String where, String anchor)
+            throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put(where, anchor);
+        return client.put(uri(ideaPath(idea) + "/priority"), body);
     }
 
     // --- dossier ---

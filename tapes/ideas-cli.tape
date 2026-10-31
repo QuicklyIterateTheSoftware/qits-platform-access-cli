@@ -1,6 +1,7 @@
-# qits ideas, on the command line: a project's ideas, as a table and as JSON, and a write the
-# platform refuses - archiving an idea, which a qits:agent token may not do (403, exit 1). The
-# answers are qits-projects' golden masters.
+# qits ideas, on the command line: a project's ideas in rank order, as a table and as JSON, a write
+# the platform refuses - archiving an idea, which a qits:agent token may not do (403, exit 1) - and
+# a rank that names no anchor, which the CLI refuses before sending anything (exit 2). The answers
+# are qits-projects' golden masters.
 #
 # Against the fake platform tapes/prepare.sh starts (FakePlatformMain). Each command is typed while
 # hidden and shown once its prompt is back, so every frame of the text golden is a finished screen
@@ -47,6 +48,19 @@ Type "clear"
 Enter
 Wait /^\$$/
 Type "qits ideas --entity 00000000-0000-4000-8000-000000000003 archive --reason 'Folded into the cache epic.'"
+Enter
+Wait /^\$$/
+Type "echo $?"
+Enter
+Wait /^\$$/
+Show
+Sleep 2s
+
+Hide
+Type "clear"
+Enter
+Wait /^\$$/
+Type "qits ideas --entity 00000000-0000-4000-8000-000000000003 rank"
 Enter
 Wait /^\$$/
 Type "echo $?"

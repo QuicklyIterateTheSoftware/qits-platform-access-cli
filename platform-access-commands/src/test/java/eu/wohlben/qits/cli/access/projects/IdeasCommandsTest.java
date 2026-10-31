@@ -33,7 +33,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * qits ideas list|details|create|update|archive|unarchive|spawn (epic qits-888), as a person types
+ * qits ideas list|details|create|update|archive|unarchive|rank|spawn (epic qits-888, qits-1791), as a person types
  * them, in this process, against a fake platform and a fake idp.
  */
 class IdeasCommandsTest {
@@ -53,14 +53,14 @@ class IdeasCommandsTest {
     /** An idea as the list and the writes answer it. Its title carries an escape sequence, as anybody can write one. */
     private static final String IDEA_ROW = """
             {"id":"%s","projectId":"%s","title":"Faster \\u001b[2Jbuilds","description":"Cache the dependencies.",
-             "enabledBy":"%s","status":"QUEUED","archived":false,"archiveReason":null,"archivedAt":null,
+             "enabledBy":"%s","status":"QUEUED","archived":false,"archiveReason":null,"archivedAt":null,"priority":7,
              "createdAt":"2026-10-30T08:00:00Z","updatedAt":"2026-10-30T09:00:00Z"}
             """.formatted(IDEA, PROJECT, ENABLER);
 
     private static final String ARCHIVED_ROW = """
             {"id":"%s","projectId":"%s","title":"Nightly rebuilds","description":null,"enabledBy":null,
              "status":"PLANNED","archived":true,"archiveReason":"Not worth it.","archivedAt":"2026-10-30T09:30:00Z",
-             "createdAt":"2026-10-30T08:00:00Z","updatedAt":"2026-10-30T09:30:00Z"}
+             "priority":null,"createdAt":"2026-10-30T08:00:00Z","updatedAt":"2026-10-30T09:30:00Z"}
             """.formatted(ENABLER, PROJECT);
 
     /** The idea in detail: its enabler is archived, it enables one idea and inspired one epic. */
@@ -73,6 +73,11 @@ class IdeasCommandsTest {
                "title":"Cache the build dependencies","status":"REPORTED","archetype":"EPIC"}],
              "enables":[{"id":"%s","title":"Share the build cache","status":"PLANNED","archived":false}]}
             """.formatted(IDEA, PROJECT, ENABLER, ENABLER, ENABLED);
+
+    /** What a drop answers: every row it wrote, highest first. */
+    private static final String PRIORITIES = """
+            {"items":[{"id":"%s","priority":2},{"id":"%s","priority":1}]}
+            """.formatted(ENABLED, IDEA);
 
     private static final String EPIC_ROW = """
             {"id":"66666666-0000-4000-8000-000000000006","archetype":"EPIC","projectId":"%s","qualifiedId":"qits-901",
@@ -138,6 +143,7 @@ class IdeasCommandsTest {
         platform.answer("PATCH", IDEAS + "/" + IDEA, IDEA_ROW);
         platform.answer("POST", IDEAS + "/" + IDEA + "/archive", ARCHIVED_ROW.replace(ENABLER, IDEA));
         platform.answer("POST", IDEAS + "/" + ENABLER + "/unarchive", IDEA_ROW.replace(IDEA, ENABLER));
+        platform.answer("PUT", IDEAS + "/" + IDEA + "/priority", PRIORITIES);
         platform.answer("GET", OPENAPI, DOCUMENT);
         platform.answer("GET", WORK + "/archetypes/EPIC/schemas/create", EPIC_CREATE);
         platform.answer("GET", WORK + "/archetypes/TICKET/schemas/create", TICKET_CREATE);
@@ -208,6 +214,31 @@ class IdeasCommandsTest {
                 .contains("TITLE");
         assertThat(r.out()).contains(IDEA).contains("QUEUED").contains("Faster").contains("Nightly rebuilds")
                 .doesNotContain(String.valueOf(ESC));
+    }
+
+    @Test
+    void listShowsThePriorityAndLeavesItEmptyForAnUnrankedIdea() {
+        Result r = run("ideas", "list", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        List<String> lines = r.out().lines().toList();
+        String header = lines.getFirst();
+        int column = header.indexOf("PRIORITY");
+        assertThat(column).isGreaterThan(header.indexOf("ARCHIVED")).isLessThan(header.indexOf("TITLE"));
+        String ranked = lines.stream().filter(l -> l.startsWith(IDEA)).findFirst().orElseThrow();
+        String unranked = lines.stream().filter(l -> l.startsWith(ENABLER)).findFirst().orElseThrow();
+        assertThat(ranked.substring(column, column + "PRIORITY".length()).strip()).isEqualTo("7");
+        assertThat(unranked.substring(column, column + "PRIORITY".length()).strip()).isEmpty();
+    }
+
+    @Test
+    void listAsJsonIsTheServicesAnswerWithItsPriorities() throws Exception {
+        Result r = run("ideas", "list", "--project", "qits", "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        JsonNode ideas = JSON.readTree(r.out()).path("ideas");
+        assertThat(ideas.path(0).path("priority").asInt()).isEqualTo(7);
+        assertThat(ideas.path(1).path("priority").isNull()).isTrue();
     }
 
     @Test
@@ -368,6 +399,66 @@ class IdeasCommandsTest {
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(platform.requests("POST", IDEAS + "/" + ENABLER + "/unarchive")).hasSize(1);
         assertThat(r.out()).contains("\"archived\" : false").doesNotContain(String.valueOf(ESC));
+    }
+
+    // --- rank ---
+
+    @Test
+    void rankAboveSendsTheAnchorAndPrintsTheWrittenRows() throws Exception {
+        Result r = run("ideas", "--entity", IDEA, "rank", "--above", ENABLED);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(sent("PUT", IDEAS + "/" + IDEA + "/priority"))
+                .isEqualTo(JSON.readTree("{\"above\":\"" + ENABLED + "\"}"));
+        List<String> lines = r.out().lines().toList();
+        assertThat(lines.getFirst()).startsWith("ID").contains("PRIORITY");
+        assertThat(lines).hasSize(3);
+        assertThat(lines.get(1).strip()).startsWith(ENABLED).endsWith(" 2");
+        assertThat(lines.get(2).strip()).startsWith(IDEA).endsWith(" 1");
+    }
+
+    @Test
+    void rankBelowSendsTheAnchorAndPrintsTheAnswerAsJson() throws Exception {
+        Result r = run("ideas", "rank", "--entity", IDEA, "--below", ENABLED, "-o", "json");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(sent("PUT", IDEAS + "/" + IDEA + "/priority"))
+                .isEqualTo(JSON.readTree("{\"below\":\"" + ENABLED + "\"}"));
+        assertThat(JSON.readTree(r.out())).isEqualTo(JSON.readTree(PRIORITIES));
+    }
+
+    @Test
+    void rankWithNeitherOrBothAnchorsIsAUsageErrorWithNoRequest() {
+        Result neither = run("ideas", "--entity", IDEA, "rank");
+        Result both = run("ideas", "--entity", IDEA, "rank", "--above", ENABLED, "--below", ENABLER);
+        Result blank = run("ideas", "--entity", IDEA, "rank", "--above", " ");
+
+        assertThat(neither.exit()).isEqualTo(2);
+        assertThat(neither.err()).contains("--above").contains("--below").contains("Nothing was sent.");
+        assertThat(both.exit()).isEqualTo(2);
+        assertThat(both.err()).contains("exactly one of --above");
+        assertThat(blank.exit()).isEqualTo(2);
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void rankWithoutAnEntityIsAUsageErrorWithNoRequest() {
+        Result r = run("ideas", "rank", "--above", ENABLED);
+
+        assertThat(r.exit()).isEqualTo(2);
+        assertThat(r.err()).contains("--entity");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void aRefusedRankIsTheServicesAnswer() {
+        platform.answer("PUT", IDEAS + "/" + IDEA + "/priority", 409,
+                "{\"message\":\"An archived idea has no rank.\"}");
+
+        Result r = run("ideas", "--entity", IDEA, "rank", "--below", ENABLED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("HTTP 409").contains("An archived idea has no rank.");
     }
 
     // --- spawn ---
