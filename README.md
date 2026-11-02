@@ -1469,11 +1469,22 @@ commit into whatever branch the submodule sits on and leaves it there, at that b
 than at the commit the release recorded. `--no-submodules` holds the root alone. A gitlink
 `.gitmodules` declares but the released tree does not carry is skipped with a note, not a failure.
 
-- **A checkout with local changes is never touched.** Before anything it runs
-  `git status --porcelain --ignore-submodules=none`; anything at all there and it says so, names
-  the path, and leaves the checkout as it is. It never stashes, resets or merges away somebody's
-  work. With `--once` that is exit code 1; while watching it keeps watching, and the next release
-  tries again.
+- **A checkout with local changes is never touched.** Before anything it asks the root for its
+  tracked state alone (`git status --porcelain --untracked-files=no --ignore-submodules=all`, and
+  the staged paths, which catches a staged gitlink), then asks every initialised submodule
+  `.gitmodules` declares on its own: a modified or staged file there (`--ignore-submodules=none`
+  inside it, so nested submodules count), or a `HEAD` away from its gitlink that no branch, remote
+  branch or tag holds, which the move would leave behind. A `HEAD` at the gitlink is held by the
+  wrapper's own history, even when it was fetched by its id and nothing in the submodule names it. An untracked file, at the root or in a submodule, is not a
+  local change, and neither is a clean submodule at another commit than its gitlink — a clone whose
+  submodules follow `main` — which is simply moved to the gitlink. When there is a local change it
+  names every such path and why, and leaves the checkout as it is. It never stashes, resets or
+  merges away somebody's work. With `--once` that is exit code 1; while watching it keeps watching,
+  and the next release tries again.
+- **"Already at" means the submodules too.** When the root is at the release already, it says
+  `already at <version>` only if every initialised submodule is at the gitlink the release recorded
+  as well. Otherwise it runs the same check and moves the submodules, and the release counts as
+  held (one line on stdout). With `--no-submodules` the root alone decides.
 - **Git authentication stays the credential helper's.** No token is put in a URL or an
   `http.extraHeader`: the helper is pinned to one host on purpose, and a machine credential handed
   to a submodule remote somebody else authored is a way out for it. At the start it checks Git has

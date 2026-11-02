@@ -303,7 +303,8 @@ class CheckoutDaemonTest {
 
         assertThat(head(work)).isEqualTo(before);
         assertThat(Files.readString(work.resolve("README.md"))).isEqualTo("somebody is working here");
-        assertThat(err()).contains("has local changes").contains(work.toString());
+        assertThat(err()).contains("has local changes").contains(work.toString())
+                .contains("README.md (a tracked change)");
         assertThat(err().lines()).allMatch(l -> l.matches("^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d.*"
                 + " qits checkout-daemon: .*"));
     }
@@ -342,7 +343,7 @@ class CheckoutDaemonTest {
         assertThat(run("--once")).isEqualTo(1);
 
         assertThat(head(work)).isEqualTo(before);
-        assertThat(err()).contains("has local changes").contains(work.toString());
+        assertThat(err()).contains("has local changes").contains(work.toString()).contains("new.txt (a tracked change)");
     }
 
     /**
@@ -362,7 +363,163 @@ class CheckoutDaemonTest {
 
         assertThat(head(work)).isEqualTo(before);
         assertThat(Files.readString(checkedOut.resolve("lib.txt"))).isEqualTo("somebody is working in the submodule");
-        assertThat(err()).contains("has local changes").contains(work.toString());
+        assertThat(err()).contains("has local changes").contains(work.toString())
+                .contains("components/demo/" + SUB + " (changes in the submodule)");
+    }
+
+    /**
+     * A workstation clone: the submodule follows {@code main}, which is a commit past the gitlink,
+     * and nothing in it is uncommitted. That is not work the move can lose, because {@code main}
+     * still holds the commit, so the release is followed and the submodule put back at the gitlink.
+     */
+    @Test
+    void aCleanSubmoduleOnMainAheadOfItsGitlinkIsMovedToTheGitlink() throws Exception {
+        Path checkedOut = addSubmodule();
+        String pinned = head(checkedOut);
+        String ahead = aheadOnMain(checkedOut);
+        String released = release(VERSION);
+        announced(payload("repoName", REPO));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(head(checkedOut)).as("the gitlink the release recorded").isEqualTo(pinned).isNotEqualTo(ahead);
+        assertThat(git(checkedOut, "rev-parse", "main")).as("main still holds the later commit").isEqualTo(ahead);
+        assertThat(err()).doesNotContain("has local changes");
+    }
+
+    /** {@code --untracked-files=no} does not reach into a submodule, so the submodule is asked itself. */
+    @Test
+    void anUntrackedFileInASubmoduleIsNotALocalChangeAndTheCheckoutStillMoves() throws Exception {
+        Path checkedOut = addSubmodule();
+        String released = release(VERSION);
+        announced(payload("repoName", REPO));
+        Files.writeString(checkedOut.resolve("scratch.txt"), "nobody tracked this");
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(Files.readString(checkedOut.resolve("scratch.txt"))).isEqualTo("nobody tracked this");
+        assertThat(err()).doesNotContain("has local changes");
+    }
+
+    /**
+     * The root is at the release already, but the submodule is not at the gitlink. That is not
+     * "already at": the submodule is moved, and the release is printed as held.
+     */
+    @Test
+    void aRootAtTheReleaseStillHasItsSubmodulesMovedToTheirGitlinks() throws Exception {
+        Path checkedOut = addSubmodule();
+        String pinned = head(checkedOut);
+        String released = release(VERSION);
+        git(work, "fetch", "-q", "origin", "refs/tags/" + VERSION + ":refs/tags/" + VERSION);
+        git(work, "checkout", "-q", "--detach", VERSION);
+        aheadOnMain(checkedOut);
+        announced(payload("repoName", REPO));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(head(checkedOut)).isEqualTo(pinned);
+        assertThat(err()).doesNotContain("already at").contains("moved the submodules");
+        assertThat(out().lines()).containsExactly(VERSION);
+    }
+
+    /** With every submodule at its gitlink too, a root at the release is left alone. */
+    @Test
+    void aRootAndSubmodulesAtTheReleaseAreAlreadyThere() throws Exception {
+        Path checkedOut = addSubmodule();
+        String pinned = head(checkedOut);
+        release(VERSION);
+        git(work, "fetch", "-q", "origin", "refs/tags/" + VERSION + ":refs/tags/" + VERSION);
+        git(work, "checkout", "-q", "--detach", VERSION);
+        announced(payload("repoName", REPO));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(checkedOut)).isEqualTo(pinned);
+        assertThat(err()).contains("already at " + VERSION);
+        assertThat(out()).isEmpty();
+    }
+
+    /**
+     * A commit made on a detached submodule is held by no branch or tag. Moving the submodule would
+     * leave it to the reflog, so that is work, and the message says where.
+     */
+    @Test
+    void aSubmoduleCommitNoRefHoldsIsRefusedAndNamed() throws Exception {
+        Path checkedOut = addSubmodule();
+        release(VERSION);
+        announced(payload("repoName", REPO));
+        String before = head(work);
+        git(checkedOut, "config", "user.email", "test@example.invalid");
+        git(checkedOut, "config", "user.name", "Test");
+        git(checkedOut, "checkout", "-q", "--detach");
+        String orphan = commit(checkedOut, "lib.txt", "committed, but on no branch");
+
+        assertThat(run("--once")).isEqualTo(1);
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(head(checkedOut)).isEqualTo(orphan);
+        assertThat(err()).contains("has local changes").contains(work.toString())
+                .contains("components/demo/" + SUB + " (a commit in the submodule that no branch or tag holds)");
+    }
+
+    /**
+     * A project agent container: the submodule sits detached at its gitlink, a commit fetched by
+     * its id that no ref in the submodule holds. The wrapper's history holds it, so that is not work
+     * the move could lose, and the release is followed.
+     */
+    @Test
+    void aSubmoduleAtItsGitlinkThatNoRefHoldsStillMoves() throws Exception {
+        Path checkedOut = addSubmodule();
+        String pinned = head(checkedOut);
+        String released = release(VERSION);
+        announced(payload("repoName", REPO));
+        git(checkedOut, "checkout", "-q", "--detach");
+        for (String ref : git(checkedOut, "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes",
+                "refs/tags").lines().filter(line -> !line.isBlank()).toList()) {
+            git(checkedOut, "update-ref", "-d", ref);
+        }
+        assertThat(git(checkedOut, "for-each-ref", "--contains", "HEAD", "refs/heads", "refs/remotes", "refs/tags"))
+                .as("no ref in the submodule holds its HEAD").isEmpty();
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(head(checkedOut)).isEqualTo(pinned);
+        assertThat(err()).doesNotContain("has local changes");
+    }
+
+    /**
+     * {@code --ignore-submodules=all} hides a staged gitlink at the root, and {@code git add -A}
+     * stages one without a word under {@code ignore = all}. It is still a change at the root.
+     */
+    @Test
+    void aStagedGitlinkAtTheRootIsALocalChange() throws Exception {
+        Path checkedOut = addSubmodule();
+        release(VERSION);
+        announced(payload("repoName", REPO));
+        String before = head(work);
+        aheadOnMain(checkedOut);
+        git(work, "add", "components/demo/" + SUB);
+
+        assertThat(run("--once")).isEqualTo(1);
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(err()).contains("components/demo/" + SUB + " (a tracked change)");
+    }
+
+    /**
+     * One commit in the submodule's own repository, and the checked-out submodule on {@code main}
+     * at it: where a workstation clone that follows {@code main} sits. Answers the commit.
+     */
+    private String aheadOnMain(Path checkedOut) throws Exception {
+        String ahead = commit(tmp.resolve("git").resolve(PROJECT).resolve(SUB), "lib.txt", "ahead of the gitlink");
+        git(checkedOut, "fetch", "-q", "origin");
+        git(checkedOut, "checkout", "-q", "-B", "main", "origin/main");
+        assertThat(head(checkedOut)).isEqualTo(ahead);
+        return ahead;
     }
 
     /**
