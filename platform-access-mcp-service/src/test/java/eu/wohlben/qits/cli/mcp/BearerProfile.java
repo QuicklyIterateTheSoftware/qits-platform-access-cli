@@ -44,13 +44,18 @@ public class BearerProfile implements QuarkusTestProfile {
 
     /** The same, with the {@code agent} claim that names the caller's agent, when {@code agent} is not null. */
     static String agentToken(String audience, String agent) {
+        return agentToken(audience, agent, "http://dev-qits-idp:8080/idp");
+    }
+
+    /** The same, issued by {@code issuer}: {@code BearerIssuerTest} holds the tenant to the published one. */
+    static String agentToken(String audience, String agent, String issuer) {
         try {
             var claims = Jwt.claims();
             if (agent != null) {
                 claims.claim("agent", agent);
             }
             return claims
-                    .issuer("http://dev-qits-idp:8080/idp")
+                    .issuer(issuer)
                     .subject("workspace-7f3a")
                     .audience(Set.of(audience))
                     .groups(Set.of("qits:agent"))
@@ -63,7 +68,7 @@ public class BearerProfile implements QuarkusTestProfile {
         }
     }
 
-    private static String pem(String resource) {
+    static String pem(String resource) {
         try (InputStream in = BearerProfile.class.getResourceAsStream(resource)) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {

@@ -2,9 +2,20 @@ package eu.wohlben.qits.cli.access.idp;
 
 import eu.wohlben.qits.cli.access.contracts.CliPact;
 import eu.wohlben.qits.cli.access.contracts.CliRow;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.wohlben.qits.cli.access.users.IdpUsersContract;
+import eu.wohlben.qits.pact.consumer.Trigger;
 
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.security.KeyFactory;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +56,13 @@ public final class IdpContract {
     static final String SESSION = "a session to refresh";
     static final String GIT_SESSION = "a git session to refresh";
     static final String SPENT_SESSION = "no session with the given refresh token";
+    /** The idp state that records the discovery document and the JWKS, its key named {@code kid}. */
+    static final String SIGNING_KEY = "a published signing key";
+
+    /** The MCP service's quarkus-oidc tenant, which reads the idp when the service starts. */
+    public static final Trigger MCP_TENANT = Trigger.event("StartupEvent").from("qits-platform-access-mcp-service");
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @FunctionalInterface
     interface Call {
@@ -84,6 +102,46 @@ public final class IdpContract {
             assertThatThrownBy(() -> new TokenClient(idp).refresh(params.get("refreshToken")))
                     .isInstanceOf(IdpException.InvalidGrant.class).hasMessageContaining("invalid_grant");
 
+    /**
+     * The discovery document, as the tenant reads it: the issuer, compared with the recorded one by
+     * value, and the two addresses it takes from it.
+     */
+    private static final CliRow.Call DISCOVERY = (url, recorded) -> {
+        JsonNode document = JSON.readTree(get(url + recorded.path()));
+        assertThat(document.path("issuer").asText()).as("the issuer every bearer's iss is checked against")
+                .isEqualTo(IdpContract.CONTRACT.masters().json(SIGNING_KEY, "getOpenIdConfiguration").path("issuer").asText());
+        assertThat(URI.create(document.path("jwks_uri").asText()).isAbsolute()).isTrue();
+        assertThat(URI.create(document.path("token_endpoint").asText()).isAbsolute()).isTrue();
+    };
+
+    /** The JWKS: the state's key, an RSA signing key for RS256 that a public key can be built from. */
+    private static final CliRow.Call JWKS = (url, recorded) -> {
+        JsonNode keys = JSON.readTree(get(url + recorded.path())).path("keys");
+        JsonNode key = null;
+        for (JsonNode k : keys) {
+            if (recorded.params().get("kid").equals(k.path("kid").asText())) {
+                key = k;
+            }
+        }
+        assertThat(key).as("the key named by the state's kid in %s", keys).isNotNull();
+        assertThat(key.path("kty").asText()).isEqualTo("RSA");
+        assertThat(key.path("use").asText()).isEqualTo("sig");
+        assertThat(key.path("alg").asText()).isEqualTo("RS256");
+        Base64.Decoder b64 = Base64.getUrlDecoder();
+        KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(
+                new BigInteger(1, b64.decode(key.path("n").asText())),
+                new BigInteger(1, b64.decode(key.path("e").asText()))));
+    };
+
+    /** A plain GET, as quarkus-oidc's own reads are: 200 and the body. */
+    private static String get(String url) throws Exception {
+        HttpResponse<String> answer = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create(url)).header("Accept", "application/json").build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(answer.statusCode()).as(answer.body()).isEqualTo(200);
+        return answer.body();
+    }
+
     static final List<CliRow> ROWS = rows();
 
     public static final CliPact CONTRACT = CliPact.of("qits-idp-service", "qits-idp")
@@ -111,6 +169,12 @@ public final class IdpContract {
         rows.add(CliRow.of("qits git-credential", GIT_SESSION, "issueToken", "TokenClient#refresh", idp(GIT_REFRESH))
                 .consumes(SESSION_TOKENS));
         rows.addAll(IdpUsersContract.ROWS);
+        // The MCP service's quarkus-oidc tenant (qits-708): the discovery document read from
+        // auth-server-url at startup, then the JWKS at the jwks_uri it names.
+        rows.add(CliRow.framework(MCP_TENANT, SIGNING_KEY, "getOpenIdConfiguration", DISCOVERY)
+                .consumes("issuer", "jwks_uri", "token_endpoint").exact("issuer"));
+        rows.add(CliRow.framework(MCP_TENANT, SIGNING_KEY, "getJwks", JWKS)
+                .consumes("keys[].kid", "keys[].kty", "keys[].n", "keys[].e", "keys[].alg", "keys[].use"));
         return List.copyOf(rows);
     }
 
