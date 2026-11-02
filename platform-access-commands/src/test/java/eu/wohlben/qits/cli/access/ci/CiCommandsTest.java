@@ -379,6 +379,23 @@ class CiCommandsTest {
         assertThat(r.out()).isEmpty();
     }
 
+    /** qits-1816: an automation's run is refused with the service's sentence, which names regenerate. */
+    @Test
+    void retryingAnAutomationRunNamesRegenerate() {
+        platform.answer("POST", RUNS + "/" + FAILED + "/retry", 409,
+                "{\"message\":\"CI run " + FAILED + " is the dependency-bump automation's run for a release request"
+                        + " — a retry would not count for the request; run it again with: qits release-request"
+                        + " regenerate --kind dependency-bump\"}");
+
+        Result r = run("ci", "retry", FAILED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("qits release-request regenerate --kind dependency-bump (HTTP 409).");
+        assertThat(r.err()).doesNotContain("has not finished yet");
+        assertThat(r.err()).doesNotContain("answered HTTP");
+        assertThat(r.out()).isEmpty();
+    }
+
     @Test
     void retryingAnUnknownRunOrWithoutTheRoleIsRefused() {
         Result unknown = run("ci", "retry", NEXT);
