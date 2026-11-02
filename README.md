@@ -873,7 +873,12 @@ beside a dropped item's status, and its `supersededBy` labelled `duplicate of`, 
 an epic's features, a feature's tasks) and what it closes: the items naming it as their
 `supersededBy`, read from `GET /projects/api/projects/{projectId}/work?supersededBy={id}` and
 filtered again for the same reason. When that read is refused, stderr says so and the item is still
-printed. `-o json` prints `{"entity": …, "comments": […], "children": […], "supersedes": […]}`.
+printed. A campaign also shows its members (`…/members`, a relation of their own, not its children),
+in position order, each with the condition it waits on: `waits on nothing`, or each group (`waits
+on:`, then `or:` for the next) with its criteria under it, `[x]` for one that has held and `[ ]` for
+one that has not; an `ENTITY_STATUS` criterion names the member by its qualified id. No other
+archetype asks for members. `-o json` prints `{"entity": …, "comments": […], "children": […],
+"supersedes": […]}`, and a campaign's adds `"members": […]` as `members list` reads it.
 
 **Writes read a JSON payload on stdin.** A payload that is not one JSON object is a usage error
 (exit code 2), and nothing is sent. With nothing put in - stdin a terminal, or empty, as with

@@ -237,11 +237,12 @@ final class WorkEntities {
     }
 
     /**
-     * One item in full: its fields, its description, its thread, its children and what it closes
-     * (the items naming it as their {@code supersededBy}; null when that could not be read).
+     * One item in full: its fields, its description, its thread, its children, a campaign's members
+     * in position order (null for any other archetype, and nothing is printed for them) and what it
+     * closes (the items naming it as their {@code supersededBy}; null when that could not be read).
      */
     static void printDetails(PrintStream out, JsonNode e, List<JsonNode> comments, List<JsonNode> children,
-            List<JsonNode> closes) {
+            List<JsonNode> members, List<JsonNode> closes) {
         out.println(SafeText.line(text(e, "archetype")) + " " + SafeText.line(label(e)) + "  ("
                 + SafeText.line(text(e, "id")) + ")");
         List<List<String>> rows = new ArrayList<>();
@@ -290,6 +291,9 @@ final class WorkEntities {
             out.println("Children (" + children.size() + "):");
             printRows(out, "  ", children);
         }
+        if (members != null) {
+            printMembers(out, members);
+        }
         if (closes == null) {
             out.println("Closes: could not be read.");
         } else if (closes.isEmpty()) {
@@ -297,6 +301,24 @@ final class WorkEntities {
         } else {
             out.println("Closes (" + closes.size() + "), the items naming this one as their supersededBy:");
             printRows(out, "  ", closes);
+        }
+    }
+
+    /** A member a line, with what it waits on under it. */
+    private static void printMembers(PrintStream out, List<JsonNode> members) {
+        if (members.isEmpty()) {
+            out.println("Members: none.");
+            return;
+        }
+        out.println("Members (" + members.size() + "):");
+        Map<String, String> qualifiedIds = WorkMembersCommand.qualifiedIds(members);
+        for (JsonNode m : members) {
+            JsonNode member = m.path("entity");
+            out.println("  " + m.path("position").asText() + "  " + cell(label(member), 40) + "  "
+                    + cell(text(member, "archetype"), 9) + "  " + cell(text(member, "status"), 30) + "  "
+                    + cell(text(member, "title"), 70) + (m.path("joinedRunning").asBoolean(false)
+                    ? "  joined in flight" : ""));
+            WorkMembersCommand.condition(m, qualifiedIds).forEach(line -> out.println("    " + line));
         }
     }
 

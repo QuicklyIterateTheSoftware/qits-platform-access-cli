@@ -4,6 +4,7 @@ import eu.wohlben.qits.cli.tui.api.Effect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import eu.wohlben.qits.cli.access.observe.SafeText;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
 import eu.wohlben.qits.cli.access.platform.HelpText;
@@ -15,7 +16,10 @@ import picocli.CommandLine;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
@@ -283,6 +287,76 @@ public class WorkMembersCommand implements Runnable {
             return;
         }
         Table.print(out, "", HEADERS, List.of(row(answer.path("member"))));
+    }
+
+    /** The members of a members answer, {@code {"members":[…]}}, in position order. */
+    static List<JsonNode> members(JsonNode answer) {
+        List<JsonNode> all = new ArrayList<>();
+        answer.path("members").forEach(m -> {
+            if (m.isObject()) {
+                all.add(m);
+            }
+        });
+        all.sort(Comparator.comparingInt(m -> m.path("position").asInt(Integer.MAX_VALUE)));
+        return all;
+    }
+
+    /** Each member's item id to its qualified id, so a criterion naming another member reads as a person types it. */
+    static Map<String, String> qualifiedIds(List<JsonNode> members) {
+        Map<String, String> names = new HashMap<>();
+        for (JsonNode m : members) {
+            JsonNode e = m.path("entity");
+            if (!text(e, "id").isEmpty() && !text(e, "qualifiedId").isEmpty()) {
+                names.put(text(e, "id"), text(e, "qualifiedId"));
+            }
+        }
+        return names;
+    }
+
+    /**
+     * What a member waits on, a line each, not indented: {@code waits on nothing}, or each group
+     * ({@code waits on:} for the first, {@code or:} for the others) with its criteria two spaces in,
+     * {@code [x]} for one that has held and {@code [ ]} for one that has not.
+     */
+    static List<String> condition(JsonNode member, Map<String, String> qualifiedIds) {
+        List<String> lines = new ArrayList<>();
+        JsonNode groups = member.path("groups");
+        if (!groups.isArray() || groups.isEmpty()) {
+            lines.add("waits on nothing");
+            return lines;
+        }
+        boolean first = true;
+        for (JsonNode group : groups) {
+            lines.add(first ? "waits on:" : "or:");
+            first = false;
+            for (JsonNode criterion : group.path("criteria")) {
+                String held = text(criterion, "satisfiedAt").isEmpty() ? "[ ]" : "[x]";
+                lines.add("  " + held + " " + criterion(criterion, qualifiedIds));
+            }
+        }
+        return lines;
+    }
+
+    /**
+     * A criterion in brief: ENTITY_STATUS as the member and the status it waits for, any other kind
+     * as its predicate's fields, {@code key=value}.
+     */
+    private static String criterion(JsonNode criterion, Map<String, String> qualifiedIds) {
+        String kind = text(criterion, "kind");
+        JsonNode predicate = criterion.path("predicate");
+        List<String> parts = new ArrayList<>(List.of(SafeText.line(kind)));
+        if ("ENTITY_STATUS".equals(kind)) {
+            String id = text(predicate, "entityId");
+            parts.add(SafeText.line(qualifiedIds.getOrDefault(id, id)));
+            parts.add(SafeText.line(text(predicate, "status")));
+        } else {
+            for (Map.Entry<String, JsonNode> field : predicate.properties()) {
+                if (!field.getValue().isNull()) {
+                    parts.add(SafeText.line(field.getKey() + "=" + field.getValue().asText()));
+                }
+            }
+        }
+        return Table.cell(String.join(" ", parts), 200);
     }
 
     private static final List<String> HEADERS =

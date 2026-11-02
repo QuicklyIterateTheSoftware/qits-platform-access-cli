@@ -719,6 +719,23 @@ public final class ProjectsContract {
         members.forEach(ProjectsContract::member);
     };
 
+    /** A campaign's members as `work details` prints them: no membership id, but each criterion. */
+    private static final Call DETAILS_MEMBERS = (api, params, recorded) -> {
+        JsonNode members = api.workMembers(params.get("qualifiedId")).path("members");
+        assertThat(members).isNotEmpty();
+        members.forEach(m -> {
+            assertThat(m.path("position").isNumber()).isTrue();
+            assertThat(m.path("joinedRunning").isBoolean()).isTrue();
+            assertThat(ProjectsApi.text(m.path("entity"), "id")).isNotBlank();
+            assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
+            assertThat(ProjectsApi.text(m.path("entity"), "status")).isNotBlank();
+            m.path("groups").forEach(g -> g.path("criteria").forEach(c -> {
+                assertThat(ProjectsApi.text(c, "kind")).isNotBlank();
+                assertThat(c.path("predicate").isObject()).isTrue();
+            }));
+        });
+    };
+
     private static final Call MEMBER_ADD = (api, params, recorded) ->
             member(api.addWorkMember(params.get("qualifiedId"), body(recorded)).path("member"));
 
@@ -1402,6 +1419,12 @@ public final class ProjectsContract {
                 .consumes(held(SUPERSEDED_ITEMS, "listProjectWork",
                         prefixed("entities[].", Stream.concat(ROW.stream(), Stream.of("supersededBy")).toList())))
                 .request("GET /projects/api/projects/{projectId}/work?supersededBy={entityId}"));
+        // A campaign's details also read its members, and each criterion the conditions print.
+        rows.add(row("qits work details", CAMPAIGN_TO_EDIT, "listWorkMembers", "workMembers", DETAILS_MEMBERS)
+                .consumes(held(CAMPAIGN_TO_EDIT, "listWorkMembers", prefixed("members[].", List.of("position",
+                        "joinedRunning", "entity.id", "entity.qualifiedId", "entity.archetype", "entity.status",
+                        "entity.title", "groups", "groups[].criteria[].kind", "groups[].criteria[].predicate",
+                        "groups[].criteria[].satisfiedAt")))));
         rows.add(row("qits work create", NO_WORK, "createWork", "createWork", CREATE)
                 .consumes(held(NO_WORK, "createWork", ROW)));
         rows.add(row("qits work create", REGISTRY, "getWorkArchetypeSchema", "archetypeSchema", schema("create"))

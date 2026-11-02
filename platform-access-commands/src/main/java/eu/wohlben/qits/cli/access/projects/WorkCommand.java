@@ -228,15 +228,18 @@ public class WorkCommand implements Runnable {
             description = {"One work item: its fields, its description, its comment thread, its children, and what "
                     + "it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by "
                     + "it, or superseded by it). A DROPPED item shows its outcome beside the status, and its "
-                    + "supersededBy as duplicate of, resolved by or superseded by."},
+                    + "supersededBy as duplicate of, resolved by or superseded by. A campaign also shows its "
+                    + "members, in order, each with the condition it waits on."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 details",
                     "  qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json",
                     "",
                     "- -o json prints one object: the item as the service answers it, its comments, its "
-                            + "children and supersedes, the items it closes. Control characters are written as "
-                            + "escapes."},
+                            + "children and supersedes, the items it closes, and for a campaign its members as "
+                            + "`qits work members list` reads them. Control characters are written as escapes.",
+                    "- A member's condition is its groups, the second and later introduced by or, each with its "
+                            + "criteria under it: [x] has held, [ ] has not yet."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.",
@@ -256,6 +259,8 @@ public class WorkCommand implements Runnable {
             List<JsonNode> comments = ProjectsApi.entries(api.workComments(wanted), "comment");
             List<JsonNode> children = WorkEntities.children(api.workChildren(wanted));
             List<JsonNode> closes = closes(context, api, entity);
+            // Members are a campaign's own relation, not its children: only a campaign has the door.
+            JsonNode members = "CAMPAIGN".equals(upper(text(entity, "archetype"))) ? api.workMembers(wanted) : null;
             if (json) {
                 ObjectNode all = JsonNodeFactory.instance.objectNode();
                 all.set("entity", entity);
@@ -267,10 +272,15 @@ public class WorkCommand implements Runnable {
                     ArrayNode supersedes = all.putArray("supersedes");
                     closes.forEach(supersedes::add);
                 }
+                if (members != null) {
+                    JsonNode list = members.path("members");
+                    all.set("members", list.isArray() ? list : JsonNodeFactory.instance.arrayNode());
+                }
                 SafeJson.print(context.out(), all);
                 return 0;
             }
-            WorkEntities.printDetails(context.out(), entity, comments, children, closes);
+            WorkEntities.printDetails(context.out(), entity, comments, children,
+                    members == null ? null : WorkMembersCommand.members(members), closes);
             return 0;
         }
 

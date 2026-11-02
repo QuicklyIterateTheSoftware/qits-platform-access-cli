@@ -83,6 +83,12 @@ class WorkCommandsTest {
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
             """.formatted(EPIC, PROJECT);
 
+    private static final String CAMPAIGN_ROW = """
+            {"id":"c1c1c1c1-0000-4000-8000-00000000000c","archetype":"CAMPAIGN","projectId":"%s","number":130,
+             "qualifiedId":"qits-130","title":"Spring release","description":"d","status":"REPORTED",
+             "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
+            """.formatted(PROJECT);
+
     // --- blockSource (qits-895): a ticket blocked by an idle agent session, an explicit block with and
     // without its reason and who, both at once, and one sent not blocked at all. ---
 
@@ -797,6 +803,63 @@ class WorkCommandsTest {
         assertThat(all.path("entity").path("id").asText()).isEqualTo(TICKET);
         assertThat(all.path("comments").get(0).path("author").asText()).isEqualTo("carol");
         assertThat(all.path("children").get(0).path("qualifiedId").asText()).isEqualTo("qits-601");
+        assertThat(all.has("members")).isFalse();
+        // Members are a campaign's: a ticket's details never ask for them.
+        assertThat(platform.requests.stream().filter(q -> q.path().endsWith("/members")).toList()).isEmpty();
+    }
+
+    @Test
+    void detailsShowsACampaignsMembersInOrderWithTheirConditions() throws Exception {
+        // Sent out of order: details puts them in position order.
+        platform.answer("GET", WORK + "/qits-130/members", """
+                {"members":[
+                  {"membershipId":"m2","position":1,"joinedRunning":false,
+                   "entity":{"id":"e-102","archetype":"EPIC","qualifiedId":"qits-102","title":"Second \\u001b[2Jone",
+                             "status":"REFINED","blocked":false},
+                   "groups":[
+                     {"id":"g1","criteria":[
+                       {"id":"c1","kind":"ENTITY_STATUS","predicate":{"entityId":"e-101","status":"VERIFIED"},
+                        "seeded":true,"satisfiedAt":"2026-09-29T09:00:00Z","evidence":null,"approval":null},
+                       {"id":"c2","kind":"APPROVAL","predicate":{},"seeded":false,"satisfiedAt":null,
+                        "evidence":null,"approval":null}]},
+                     {"id":"g2","criteria":[
+                       {"id":"c3","kind":"SCM_RELEASE","predicate":{"repositoryName":"qits-ci-service",
+                        "projectId":null,"minimumVersion":"2026.1001.1"},"seeded":false,"satisfiedAt":null,
+                        "evidence":null,"approval":null}]}]},
+                  {"membershipId":"m1","position":0,"joinedRunning":true,
+                   "entity":{"id":"e-101","archetype":"TICKET","qualifiedId":"qits-101","title":"First one",
+                             "status":"VERIFIED","blocked":false},
+                   "groups":[]}]}
+                """);
+
+        Result r = detailsOf("qits-130", CAMPAIGN_ROW);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", WORK + "/qits-130/members")).hasSize(1);
+        String members = r.out().substring(r.out().indexOf("Members (2):"), r.out().indexOf("Closes"));
+        assertThat(members).contains("qits-101").contains("qits-102").doesNotContain(String.valueOf(ESC));
+        assertThat(members.indexOf("qits-101")).isLessThan(members.indexOf("qits-102"));
+        List<String> lines = members.lines().map(String::strip).toList();
+        assertThat(lines.get(1)).startsWith("0  qits-101  TICKET  VERIFIED  First one").endsWith("joined in flight");
+        assertThat(lines.get(2)).isEqualTo("waits on nothing");
+        assertThat(lines.get(3)).startsWith("1  qits-102  EPIC  REFINED").doesNotContain("joined in flight");
+        assertThat(lines.subList(4, lines.size())).containsExactly("waits on:", "[x] ENTITY_STATUS qits-101 VERIFIED",
+                "[ ] APPROVAL", "or:", "[ ] SCM_RELEASE repositoryName=qits-ci-service minimumVersion=2026.1001.1");
+
+        Result json = run("work", "--entity", "qits-130", "details", "-o", "json");
+        JsonNode all = JSON.readTree(json.out());
+        assertThat(all.path("members")).hasSize(2);
+        assertThat(all.path("members").get(0).path("membershipId").asText()).isEqualTo("m2");
+    }
+
+    @Test
+    void detailsOfACampaignWithNoMembersSaysSo() {
+        platform.answer("GET", WORK + "/qits-130/members", "{\"members\":[]}");
+
+        Result r = detailsOf("qits-130", CAMPAIGN_ROW);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("Members: none.");
     }
 
     @Test
