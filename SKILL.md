@@ -660,12 +660,12 @@ Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING,
 
 ## qits work list
 
-A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).
+A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked. TAGS appears when some item carries one, as its display text (RESERVED_FOR_HUMAN shows as reserved for human), and - for an item with none. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).
 
 Each filter narrows the list; without one it shows everything.
 
 ```
-qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome>] [--output table|json] [--parent <entity>] [--project <project>] [--projects-url <url>] [--status <status>]
+qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome>] [--output table|json] [--parent <entity>] [--project <project>] [--projects-url <url>] [--status <status>] [--tag <tag>]
 ```
 
 | Name | What it does |
@@ -678,6 +678,7 @@ qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome
 | `--project <project>` | The project (required): its id or its slug. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
 | `--status <status>` | Only items in this status, such as REFINED. |
+| `--tag <tag>` | Only items carrying this tag: reserved-for-human (RESERVED_FOR_HUMAN). |
 
 ### Examples
 
@@ -686,9 +687,10 @@ qits work list --project qits
 qits work list --project qits --archetype epic --status REFINED
 qits work list --project qits --parent qits-120 -o json
 qits work list --project qits --status DROPPED --outcome duplicate
+qits work list --project qits --tag reserved-for-human
 ```
 
-- --archetype, --status and --outcome are case-insensitive. --parent lists the children of one item.
+- --archetype, --status and --outcome are case-insensitive. --parent lists the children of one item. --tag takes the tag's display form (reserved-for-human) or its enum name (RESERVED_FOR_HUMAN), either case.
 
 ### Exit codes
 

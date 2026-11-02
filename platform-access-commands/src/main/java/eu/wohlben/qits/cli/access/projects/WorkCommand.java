@@ -141,8 +141,9 @@ public class WorkCommand implements Runnable {
             description = {"A project's work items, every archetype, in the service's order: id (qualified), "
                     + "archetype, status, title and when it last changed. BLOCKED appears when a ticket is: "
                     + "yes for an explicit block, waiting when the only reason is an agent session sitting "
-                    + "idle, and - when it is not blocked. A DROPPED item shows its outcome beside the status: "
-                    + "DROPPED (DUPLICATE).",
+                    + "idle, and - when it is not blocked. TAGS appears when some item carries one, as its "
+                    + "display text (RESERVED_FOR_HUMAN shows as reserved for human), and - for an item with "
+                    + "none. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).",
                     "Each filter narrows the list; without one it shows everything."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
@@ -150,9 +151,11 @@ public class WorkCommand implements Runnable {
                     "  qits work list --project qits --archetype epic --status REFINED",
                     "  qits work list --project qits --parent qits-120 -o json",
                     "  qits work list --project qits --status DROPPED --outcome duplicate",
+                    "  qits work list --project qits --tag reserved-for-human",
                     "",
                     "- --archetype, --status and --outcome are case-insensitive. --parent lists the children of "
-                            + "one item."},
+                            + "one item. --tag takes the tag's display form (reserved-for-human) or its enum name "
+                            + "(RESERVED_FOR_HUMAN), either case."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an unknown archetype or status, HTTP 400, or a project it "
@@ -186,6 +189,10 @@ public class WorkCommand implements Runnable {
                         + "SUPERSEDED, OBSOLETE, INVALID or WONT_DO.")
         String outcome;
 
+        @CommandLine.Option(names = "--tag", paramLabel = "<tag>",
+                description = "Only items carrying this tag: reserved-for-human (RESERVED_FOR_HUMAN).")
+        String tag;
+
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
             boolean json = json(work.options.output);
@@ -197,7 +204,11 @@ public class WorkCommand implements Runnable {
             }
             ProjectsApi api = work.api(context);
             String parentEntity = parent == null || parent.isBlank() ? null : parent.strip();
-            JsonNode answer = api.projectWork(wanted, upper(archetype), upper(status), parentEntity, why, null);
+            // The service itself reads a tag's enum name or its kebab form, either case, so the CLI
+            // sends --tag as it was given, trimmed, and leaves the 400 for an unknown one to it.
+            String wantedTag = tag == null || tag.isBlank() ? null : tag.strip();
+            JsonNode answer = api.projectWork(wanted, upper(archetype), upper(status), parentEntity, why, null,
+                    wantedTag);
             List<JsonNode> entities = WorkEntities.list(answer);
             if (why != null) {
                 // Again here: a service older than qits-248 ignores ?outcome= and answers every row.
@@ -293,7 +304,7 @@ public class WorkCommand implements Runnable {
             String qualified = text(entity, "qualifiedId");
             try {
                 return WorkEntities.superseding(WorkEntities.list(api.projectWork(project, null, null, null, null,
-                        qualified.isEmpty() ? id : qualified)), entity);
+                        qualified.isEmpty() ? id : qualified, null)), entity);
             } catch (CliFailure refused) {
                 if (refused.exitCode() == CliFailure.USAGE) {
                     throw refused;
