@@ -368,14 +368,18 @@ class CiCommandsTest {
                 "Its verdict also comes as an event:  qits events --filter=BuildSuccessful,BuildFailed");
     }
 
+    /** qits-1825: the service's own sentence is passed on, not reworded into a made-up one. */
     @Test
     void retryingARunThatHasNotFinishedSaysSo() {
-        platform.answer("POST", RUNS + "/" + RUNNING + "/retry", 409, "{\"message\":\"CI run is still running\"}");
+        platform.answer("POST", RUNS + "/" + RUNNING + "/retry", 409,
+                "{\"message\":\"CI run " + RUNNING + " has not finished (RUNNING) — nothing to retry yet\"}");
 
         Result r = run("ci", "retry", RUNNING);
 
         assertThat(r.exit()).isEqualTo(1);
-        assertThat(r.err()).contains("Run " + RUNNING + " has not finished yet, so there is nothing to retry (HTTP 409).");
+        assertThat(r.err()).contains(
+                "CI run " + RUNNING + " has not finished (RUNNING) — nothing to retry yet (HTTP 409).");
+        assertThat(r.err()).doesNotContain("answered HTTP");
         assertThat(r.out()).isEmpty();
     }
 
@@ -393,6 +397,35 @@ class CiCommandsTest {
         assertThat(r.err()).contains("qits release-request regenerate --kind dependency-bump (HTTP 409).");
         assertThat(r.err()).doesNotContain("has not finished yet");
         assertThat(r.err()).doesNotContain("answered HTTP");
+        assertThat(r.out()).isEmpty();
+    }
+
+    /** qits-1825: qits-ci's own sentences are passed on too, not just the automation's. */
+    @Test
+    void retryingARetiredRunnersHealthCheckSaysSo() {
+        platform.answer("POST", RUNS + "/" + FAILED + "/retry", 409,
+                "{\"message\":\"CI run " + FAILED + " is a retired CI runner's health check — there is nothing to"
+                        + " retry\"}");
+
+        Result r = run("ci", "retry", FAILED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(
+                "CI run " + FAILED + " is a retired CI runner's health check — there is nothing to retry (HTTP 409).");
+        assertThat(r.err()).doesNotContain("has not finished yet");
+        assertThat(r.out()).isEmpty();
+    }
+
+    /** qits-1825: a 409 with no service message at all gets a plain refusal, never a guessed one. */
+    @Test
+    void retryingWithNo409ServiceMessageIsAPlainRefusal() {
+        platform.answer("POST", RUNS + "/" + FAILED + "/retry", 409, "");
+
+        Result r = run("ci", "retry", FAILED);
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("The platform refused to retry run " + FAILED + " (HTTP 409).");
+        assertThat(r.err()).doesNotContain("has not finished");
         assertThat(r.out()).isEmpty();
     }
 

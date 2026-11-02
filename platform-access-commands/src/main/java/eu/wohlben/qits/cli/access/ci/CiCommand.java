@@ -447,7 +447,6 @@ public class CiCommand implements Runnable {
                         + "repository.")
         String runId;
 
-        private static final String REGENERATE = "qits release-request regenerate";
         private static final String ANSWERED_409 = "answered HTTP 409: ";
 
         @Override
@@ -461,17 +460,15 @@ public class CiCommand implements Runnable {
             try {
                 answer = apis.ci().retry(id);
             } catch (CliFailure refused) {
-                if (refused.status() == 409 && refused.getMessage().contains(REGENERATE)) {
-                    // A release-request automation's run (qits-1816): the service's sentence names the
-                    // regenerate command that re-runs it, so it is passed on rather than reworded.
+                if (refused.status() == 409) {
+                    // qits-1825: a 409 can mean the run has not finished, is an automation's run (qits-1816),
+                    // or something a provider adds later (qits-ci's retired-runner health check); the
+                    // service's own sentence is passed on rather than guessed at, and only a 409 with no
+                    // service message at all falls back to a plain refusal.
                     String said = refused.getMessage();
                     int at = said.indexOf(ANSWERED_409);
-                    throw new CliFailure((at < 0 ? said : said.substring(at + ANSWERED_409.length()))
-                            + " (HTTP 409).", CliFailure.FAILED);
-                }
-                if (refused.status() == 409) {
-                    throw new CliFailure("Run " + id + " has not finished yet, so there is nothing to retry (HTTP 409). "
-                            + "Wait for it to end.", CliFailure.FAILED);
+                    throw new CliFailure((at < 0 ? "The platform refused to retry run " + id
+                            : said.substring(at + ANSWERED_409.length())) + " (HTTP 409).", CliFailure.FAILED);
                 }
                 throw refused.status() == 404 ? noSuchRun(id, lookedUp) : refused;
             }
