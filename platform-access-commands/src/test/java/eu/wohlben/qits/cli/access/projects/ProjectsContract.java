@@ -208,9 +208,14 @@ public final class ProjectsContract {
     static final List<String> DESK_TRIGGERS_FIELDS = List.of("messages[].openedAt", "messages[].state",
             "messages[].events[].source", "messages[].attempts", "messages[].acceptedAt");
 
-    /** One work item as a row of a list ({@code WorkEntities.printRows}): each only where the service sends it. */
+    /**
+     * One work item as a row of a list ({@code WorkEntities.printRows}): each only where the service
+     * sends it. {@code tags} (qits-634) is bound here too: {@code held} drops it from a row generated
+     * against a pinned golden-masters jar that predates the field, so this is safe before the
+     * provider's release reaches the pin as well as after.
+     */
     static final List<String> ROW = List.of("qualifiedId", "id", "archetype", "status", "outcome", "blocked",
-            "blockSource", "title", "updatedAt");
+            "blockSource", "tags", "title", "updatedAt");
 
     /** One work item in full ({@code WorkEntities.printDetails}), and the project its closes are read in. */
     static final List<String> DETAILS = Stream.concat(ROW.stream(), Stream.of("blockReason", "blockedBy",
@@ -218,7 +223,12 @@ public final class ProjectsContract {
             "implementedAt", "createdBy", "createdAt", "description", "acceptanceCriteria", "projectId", "inspiredBy"))
             .toList();
 
-    /** What {@code qits work transition} carries over from the item ({@code WorkEntities.currentState}). */
+    /**
+     * What {@code qits work transition} carries over from the item ({@code WorkEntities.currentState}).
+     * No {@code tags}: {@code WorkEntities.CARRIED} leaves it out (qits-634; see its javadoc), and the
+     * transition schema golden masters bind here ({@link #TRANSITION_SCHEMA}) list no slot for it
+     * either, so there is nothing a row could bind.
+     */
     static final List<String> CARRIED = Stream.concat(WorkEntities.CARRIED.stream(), Stream.of("parent", "position"))
             .toList();
 
@@ -470,7 +480,7 @@ public final class ProjectsContract {
         JsonNode entity = JsonNodeFactory.instance.objectNode().put("id", id)
                 .put("qualifiedId", params.get("entityId")).put("projectId", params.get("projectId"));
         List<JsonNode> closes = WorkEntities.superseding(WorkEntities.list(api.projectWork(params.get("projectId"),
-                null, null, null, null, params.get("entityId"))), entity);
+                null, null, null, null, params.get("entityId"), null)), entity);
         assertThat(closes).isNotEmpty().allSatisfy(e -> {
             assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank();
             assertThat(ProjectsApi.text(e, "supersededBy")).isNotBlank();
