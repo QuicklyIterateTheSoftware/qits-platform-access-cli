@@ -26364,6 +26364,26 @@
                     }
                   ]
                 }
+              },
+              {
+                "archetype": "ISSUE",
+                "lifecycle": [
+                  "OPEN",
+                  "OPEN",
+                  "OPEN"
+                ],
+                "transitions": {
+                  "OBSOLETE": [],
+                  "OPEN": [
+                    {
+                      "to": "RESOLVED"
+                    },
+                    {
+                      "to": "RESOLVED"
+                    }
+                  ],
+                  "RESOLVED": []
+                }
               }
             ]
           },
@@ -27146,6 +27166,50 @@
               ]
             },
             "$.archetypes[4].transitions.VERIFIED[*].to": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[5].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[5].lifecycle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.archetypes[5].lifecycle[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.archetypes[5].transitions.OPEN": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.archetypes[5].transitions.OPEN[*].to": {
               "combine": "AND",
               "matchers": [
                 {

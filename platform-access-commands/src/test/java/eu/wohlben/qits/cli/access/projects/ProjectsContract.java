@@ -1467,7 +1467,10 @@ public final class ProjectsContract {
                         "archetypes[].transitions.READY_FOR_DEV[].to", "archetypes[].transitions.IMPLEMENTING[].to",
                         "archetypes[].transitions.IMPLEMENTED[].to", "archetypes[].transitions.VERIFYING[].to",
                         "archetypes[].transitions.VERIFIED[].to", "archetypes[].transitions.DONE[].to",
-                        "archetypes[].transitions.DROPPED[].to")
+                        "archetypes[].transitions.DROPPED[].to",
+                        // An issue's own statuses (qits-1819). Only OPEN has moves.
+                        "archetypes[].transitions.OPEN[].to", "archetypes[].transitions.RESOLVED[].to",
+                        "archetypes[].transitions.OBSOLETE[].to")
                 .anyLength("archetypes[].transitions.REPORTED", "archetypes[].transitions.REFINED",
                         "archetypes[].transitions.READY_FOR_DEV", "archetypes[].transitions.IMPLEMENTING",
                         "archetypes[].transitions.IMPLEMENTED", "archetypes[].transitions.VERIFYING",
