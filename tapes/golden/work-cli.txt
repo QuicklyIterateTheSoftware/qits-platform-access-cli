@@ -599,6 +599,7 @@ $ qits work list --project contract-00000001 -o json
     "number" : 1,
     "qualifiedId" : "contract-00000001-1",
     "title" : "Reported epic",
+    "excerpt" : "Seeded work.",
     "slug" : "reported-epic",
     "slugScope" : "00000000-0000-4000-8000-000000000001",
     "status" : "REPORTED",
@@ -619,7 +620,6 @@ $ qits work list --project contract-00000001 -o json
     "createdAt" : "2026-01-01T00:00:00Z",
     "updatedAt" : "2026-01-01T00:00:00Z",
     "changedBy" : null,
-    "blocked" : false,
 ────────────────────────────────────────────────────────────────────────────────
 $ qits work list --project contract-00000001 -o json
 {
@@ -630,6 +630,7 @@ $ qits work list --project contract-00000001 -o json
     "number" : 1,
     "qualifiedId" : "contract-00000001-1",
     "title" : "Reported epic",
+    "excerpt" : "Seeded work.",
     "slug" : "reported-epic",
     "slugScope" : "00000000-0000-4000-8000-000000000001",
     "status" : "REPORTED",
@@ -650,7 +651,6 @@ $ qits work list --project contract-00000001 -o json
     "createdAt" : "2026-01-01T00:00:00Z",
     "updatedAt" : "2026-01-01T00:00:00Z",
     "changedBy" : null,
-    "blocked" : false,
 ────────────────────────────────────────────────────────────────────────────────
 $ qits work --entity contract-00000001-1 block --reason 'Waiting on the DB team.'
 403 - this credential is qits:agent, which reads but does not write
