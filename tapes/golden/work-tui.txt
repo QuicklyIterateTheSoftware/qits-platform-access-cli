@@ -783,10 +783,10 @@
  │   --status            (any)                                                                     │
  │   --parent            (any)                                                                     │
  │   --outcome           (any)                                                                     │
+ │   --tag               (any)                                                                     │
  │   --projects-url      (any)                                                                     │
  │   --output            (any)                                                                     │
  │   --entity            (any)                                                                     │
- │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -814,10 +814,10 @@
  │   --status            (any)                                                                     │
  │   --parent            (any)                                                                     │
  │   --outcome           (any)                                                                     │
+ │   --tag               (any)                                                                     │
  │   --projects-url      (any)                                                                     │
  │   --output            (any)                                                                     │
  │   --entity            (any)                                                                     │
- │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -1031,10 +1031,10 @@
  │   --status            (any)                                                                     │
  │   --parent            (any)                                                                     │
  │   --outcome           (any)                                                                     │
+ │   --tag               (any)                                                                     │
  │   --projects-url      (any)                                                                     │
  │   --output            (any)                                                                     │
  │   --entity            (any)                                                                     │
- │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -1062,10 +1062,10 @@
  │   --status            (any)                                                                     │
  │   --parent            (any)                                                                     │
  │   --outcome           (any)                                                                     │
+ │   --tag               (any)                                                                     │
  │   --projects-url      (any)                                                                     │
  │   --output            (any)                                                                     │
  │   --entity            (any)                                                                     │
- │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -1093,10 +1093,10 @@
  │   --status            (any)                                                                     │
  │   --parent            (any)                                                                     │
  │   --outcome           (any)                                                                     │
+ │   --tag               (any)                                                                     │
  │   --projects-url      (any)                                                                     │
  │   --output            (any)                                                                     │
  │   --entity            (any)                                                                     │
- │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -1124,10 +1124,10 @@
  │   --status            (any)                                                                     │
  │   --parent            (any)                                                                     │
  │   --outcome           (any)                                                                     │
+ │   --tag               (any)                                                                     │
  │   --projects-url      (any)                                                                     │
  │   --output            (any)                                                                     │
  │   --entity            (any)                                                                     │
- │                                                                                                 │
  │                                                                                                 │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
