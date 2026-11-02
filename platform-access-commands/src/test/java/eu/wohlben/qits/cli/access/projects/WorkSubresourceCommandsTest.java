@@ -187,7 +187,37 @@ class WorkSubresourceCommandsTest {
 
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(r.out()).contains("evaluator: connected").contains("qits-102").contains("WAITING")
-                .contains("qits-101");
+                .contains("qits-101")
+                .as("an older service sends no heldBy: nothing extra is printed").doesNotContain("held at");
+    }
+
+    @Test
+    void progressPrintsHeldByWhenPresent() {
+        platform.answer("GET", WORK + "/progress", """
+                {"progress":{"campaign":{"qualifiedId":"qits-100","title":"Q4","status":"REFINED",
+                    "heldBy":["qits-752","qits-753"]},
+                  "evaluator":{"connected":true,"stalled":false,"consumerFailing":false},
+                  "members":[]}}
+                """);
+
+        Result r = run("work", "--entity", ITEM, "progress");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("held at REFINED by qits-752, qits-753");
+    }
+
+    @Test
+    void progressPrintsNothingExtraWhenHeldByIsEmpty() {
+        platform.answer("GET", WORK + "/progress", """
+                {"progress":{"campaign":{"qualifiedId":"qits-100","title":"Q4","status":"REFINED","heldBy":[]},
+                  "evaluator":{"connected":true,"stalled":false,"consumerFailing":false},
+                  "members":[]}}
+                """);
+
+        Result r = run("work", "--entity", ITEM, "progress");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).doesNotContain("held at");
     }
 
     // --- transition --map ---
@@ -345,6 +375,25 @@ class WorkSubresourceCommandsTest {
         assertThat(remove.out()).contains("no members");
         assertThat(condition.exit()).as(condition.err()).isZero();
         assertThat(sent("PUT", WORK + "/members/m1/condition")).isEqualTo(JSON.readTree("{\"groups\":[]}"));
+    }
+
+    @Test
+    void membersListMarksHoldsStatusYesAndDashWhenAbsent() throws Exception {
+        String holding = """
+                {"membershipId":"m2","position":1,"groups":[],
+                 "entity":{"qualifiedId":"qits-102","archetype":"EPIC","status":"REFINED","title":"Tax"},
+                 "holdsStatus":true}
+                """;
+        platform.answer("GET", WORK + "/members", "{\"members\":[" + MEMBER + "," + holding + "]}");
+
+        Result r = run("work", "--entity", ITEM, "members", "list");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).contains("HOLDS");
+        assertThat(r.out().lines().filter(l -> l.contains("m1")).findFirst().orElseThrow())
+                .as("an older service, or a member that does not hold it, sends no holdsStatus: a dash")
+                .doesNotContain("yes");
+        assertThat(r.out().lines().filter(l -> l.contains("m2")).findFirst().orElseThrow()).contains("yes");
     }
 
     @Test

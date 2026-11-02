@@ -57,8 +57,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, "
                         + "VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an "
                         + "outcome saying why (status names them). "
-                        + "Features and tasks walk the same nine words as epics and tickets; campaigns keep a "
-                        + "shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets "
+                        + "Features and tasks walk the same nine words as epics and tickets. A campaign's status "
+                        + "is derived from its members instead - never IMPLEMENTING or VERIFYING - and by hand it "
+                        + "is only DROP and REOPEN (DROPPED back to REPORTED); `qits work progress` shows which "
+                        + "members hold it there. A SKIP transition lets "
                         + "READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED "
                         + "move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or "
                         + "drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own "
@@ -551,12 +553,17 @@ public class WorkCommand implements Runnable {
 
     @CommandLine.Command(name = "status", mixinStandardHelpOptions = true,
             description = {"Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, "
-                    + "IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and "
-                    + "tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A "
-                    + "SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and "
-                    + "IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward "
-                    + "or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own "
-                    + "`qits` CLI sign-in, or the browser; an agent credential is refused.",
+                    + "IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Epics, tickets, features and tasks walk "
+                    + "it by hand. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing "
+                    + "IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING "
+                    + "only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person "
+                    + "- a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. "
+                    + "A campaign never walks this by hand: the service derives its status from its members "
+                    + "(the lowest one still open wins, IMPLEMENTING counting as READY_FOR_DEV and VERIFYING as "
+                    + "IMPLEMENTED; no members is REPORTED; every member DROPPED is DROPPED; once DONE or DROPPED "
+                    + "it is not recomputed), so this command refuses every target on a campaign but DROP and "
+                    + "REOPEN (DROPPED back to REPORTED, which also clears outcome and supersededBy). "
+                    + "`qits work progress` names the members holding its status (heldBy).",
                     "Reads {\"target\":\"<STATUS>\"} on stdin and sends it unchanged to POST "
                             + "/projects/api/work/{entity}/status. The service refuses a move its lifecycle does not "
                             + "allow (HTTP 409).",
@@ -572,8 +579,9 @@ public class WorkCommand implements Runnable {
                             + "payload's schema, whose target enum is the moves open from the item's current status "
                             + "as the service's archetype registry (GET /projects/api/work/archetypes) states "
                             + "them, and exits with 0.",
-                    "A campaign, epic or feature whose children are all DONE or DROPPED can be closed straight to "
-                            + "DONE by a person or the delivery desk (a CLOSE move)."},
+                    "An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by "
+                            + "a person or the delivery desk (a CLOSE move). A campaign is never closed this way: "
+                            + "it reaches DONE on its own once every member does (see the derivation above)."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 status </dev/null",
@@ -943,6 +951,11 @@ public class WorkCommand implements Runnable {
             JsonNode evaluator = progress.path("evaluator");
             out.println("CAMPAIGN " + SafeText.line(text(campaign, "qualifiedId")) + "  "
                     + SafeText.line(text(campaign, "status")) + "  " + SafeText.line(text(campaign, "title")));
+            JsonNode heldBy = campaign.path("heldBy");
+            if (heldBy.isArray() && !heldBy.isEmpty()) {
+                out.println("held at " + SafeText.line(text(campaign, "status")) + " by "
+                        + String.join(", ", WorkEntities.texts(heldBy)));
+            }
             out.println("evaluator: " + (evaluator.path("connected").asBoolean() ? "connected" : "not connected")
                     + (evaluator.path("stalled").asBoolean() ? ", stalled" : "")
                     + (evaluator.path("consumerFailing").asBoolean()

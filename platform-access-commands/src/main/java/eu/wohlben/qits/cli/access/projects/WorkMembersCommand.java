@@ -37,7 +37,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footer = {
                 "- --entity is the campaign. --member is a membership's id, as list prints it, not the member "
                         + "item's id.",
-                "- Members and conditions change only while the campaign is REPORTED, REFINED or READY_FOR_DEV.",
+                "- Members and conditions change only while the campaign is neither DONE nor DROPPED.",
                 "- Starting a campaign and approving an APPROVAL criterion are a person's to do."})
 public class WorkMembersCommand implements Runnable {
 
@@ -59,7 +59,8 @@ public class WorkMembersCommand implements Runnable {
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
             description = {"List a campaign's members in order: membership id, position, the member's qualified "
-                    + "id, archetype, status and title, and whether it waits on a condition.",
+                    + "id, archetype, status and title, whether it holds the campaign's status (HOLDS), and "
+                    + "whether it waits on a condition.",
                     "Reads GET /projects/api/work/{entity}/members. -o json adds each member's condition (groups "
                             + "of criteria with their latches) and its dispatch record."},
             footerHeading = HelpText.EXAMPLES,
@@ -286,14 +287,14 @@ public class WorkMembersCommand implements Runnable {
     }
 
     private static final List<String> HEADERS =
-            List.of("MEMBERSHIP", "POS", "ID", "ARCHETYPE", "STATUS", "WAITS", "TITLE");
+            List.of("MEMBERSHIP", "POS", "ID", "ARCHETYPE", "STATUS", "HOLDS", "WAITS", "TITLE");
 
     private static List<String> row(JsonNode m) {
         JsonNode e = m.path("entity");
         int groups = m.path("groups").size();
         return List.of(WorkEntities.cell(text(m, "membershipId"), 40), m.path("position").asText(),
                 WorkEntities.cell(text(e, "qualifiedId"), 40), WorkEntities.cell(text(e, "archetype"), 9),
-                WorkEntities.cell(text(e, "status"), 11),
+                WorkEntities.cell(text(e, "status"), 11), m.path("holdsStatus").asBoolean() ? "yes" : "-",
                 groups == 0 ? "-" : groups + (groups == 1 ? " group" : " groups"),
                 WorkEntities.cell(text(e, "title"), 60));
     }
