@@ -601,6 +601,11 @@ $ qits targets list -o json
     "workspace" : 2,
     "desk" : 1
   },
+  "maximums" : {
+    "ci" : null,
+    "workspace" : null,
+    "desk" : null
+  },
   "used" : {
     "ci" : 1,
     "workspace" : 1,
@@ -615,11 +620,6 @@ $ qits targets list -o json
   "loginCommand" : null,
   "kimiLoginCommand" : null,
   "connected" : true,
-  "connectedSince" : "2026-01-01T00:00:00Z",
-  "quarantined" : false,
-  "quarantineReason" : null,
-  "quarantinedAt" : null,
-  "runnerVersion" : "frozen-token-1",
 ────────────────────────────────────────────────────────────────────────────────
 $ qits targets list -o json
 [ {
@@ -632,6 +632,11 @@ $ qits targets list -o json
     "workspace" : 2,
     "desk" : 1
   },
+  "maximums" : {
+    "ci" : null,
+    "workspace" : null,
+    "desk" : null
+  },
   "used" : {
     "ci" : 1,
     "workspace" : 1,
@@ -646,11 +651,6 @@ $ qits targets list -o json
   "loginCommand" : null,
   "kimiLoginCommand" : null,
   "connected" : true,
-  "connectedSince" : "2026-01-01T00:00:00Z",
-  "quarantined" : false,
-  "quarantineReason" : null,
-  "quarantinedAt" : null,
-  "runnerVersion" : "frozen-token-1",
 ────────────────────────────────────────────────────────────────────────────────
 $ qits targets greenlight --target lab
 403 - this credential is qits:agent, which reads but does not write
