@@ -24,7 +24,13 @@ import java.util.Objects;
  * there is no recording to read that from; the day the provider records the state the row goes live
  * with no change here, and the pact file test fails until the file is written again.
  *
- * @param reaches the client method the call goes through: {@code ProjectsApi#work}
+ * <b>A framework row</b> ({@link #framework}) is a call no class of the commands makes: the MCP
+ * service's quarkus-oidc tenant reading the idp at startup (qits-708). It has no {@link #reaches},
+ * its trigger is an event rather than a command, and {@code ClientCallsGuardTest} holds it to the
+ * service's shipped configuration instead of to a client method.
+ *
+ * @param reaches the client method the call goes through: {@code ProjectsApi#work}; null on a
+ *     {@linkplain #framework framework row}
  * @param request {@code METHOD /path/{param}}: the door, for a row the provider has not recorded;
  *     null otherwise, where the recording says it
  * @param fieldsMatching form fields of the request body held to a regex rather than to the recorded
@@ -51,9 +57,11 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
         fieldsMatching = Map.copyOf(fieldsMatching);
         unsent = java.util.List.copyOf(unsent);
         Objects.requireNonNull(interaction, "interaction");
-        Objects.requireNonNull(reaches, "reaches");
         Objects.requireNonNull(call, "call");
-        if (!reaches.matches("[A-Za-z0-9$]+#[A-Za-z0-9]+")) {
+        if (reaches == null && "command".equals(interaction.trigger().kind())) {
+            throw new IllegalArgumentException("a command's row names the client method it reaches");
+        }
+        if (reaches != null && !reaches.matches("[A-Za-z0-9$]+#[A-Za-z0-9]+")) {
             throw new IllegalArgumentException("reaches is Class#method, got '" + reaches + "'");
         }
         if (request != null && !request.matches("(GET|HEAD|POST|PUT|PATCH|DELETE) /\\S*")) {
@@ -64,6 +72,19 @@ public record CliRow(GoldenInteraction interaction, String reaches, String reque
     /** {@code command}'s call of {@code operationId} in {@code state}, through {@code reaches}; reads the status only. */
     public static CliRow of(String command, String state, String operationId, String reaches, Call call) {
         return new CliRow(GoldenInteraction.of(Trigger.command(command), state, operationId), reaches, null, call);
+    }
+
+    /**
+     * A call the FRAMEWORK makes on {@code trigger}, not a command: the MCP service's quarkus-oidc
+     * tenant reading the idp at startup. {@code call} reads the answer as the framework does.
+     */
+    public static CliRow framework(Trigger trigger, String state, String operationId, Call call) {
+        return new CliRow(GoldenInteraction.of(trigger, state, operationId), null, null, call);
+    }
+
+    /** Whether this is a {@link #framework} row, which reaches no client method. */
+    public boolean isFramework() {
+        return reaches == null;
     }
 
     /** The same row, reading {@code paths} of the answer: see {@link GoldenInteraction#consumes}. */

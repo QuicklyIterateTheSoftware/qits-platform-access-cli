@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -41,6 +42,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>Every contract with a recorded row has its committed {@code pacts/} file and its line in
  *       {@code .config/qits/release.yml}'s {@code contracts.pacts}, and nothing else is there.</li>
  * </ol>
+ * The calls a framework makes rather than a class of the commands (the MCP service's quarkus-oidc
+ * tenant reading the idp, qits-708) are {@linkplain CliRow#framework framework rows}: they reach no
+ * door, and are held instead to the configuration that switches them on ({@link
+ * #theMcpTenantsReadsArePacted}).
+ * <p>
  * A new door on a client, or a new class that sends, fails here until it has its row or its
  * reason. The row's own test ({@link CliPactTest}) proves the row goes through the door it names.
  */
@@ -88,7 +94,7 @@ class ClientCallsGuardTest {
         Set<String> reached = new HashSet<>();
         Map<String, String> excluded = new LinkedHashMap<>();
         Contracts.ALL.forEach(c -> {
-            c.rows().forEach(r -> reached.add(r.reaches()));
+            c.rows().stream().filter(r -> !r.isFramework()).forEach(r -> reached.add(r.reaches()));
             excluded.putAll(c.excluded());
         });
         Set<String> missing = new TreeSet<>();
@@ -112,6 +118,9 @@ class ClientCallsGuardTest {
         for (CliPact contract : Contracts.ALL) {
             Set<String> doors = doors(contract);
             for (CliRow row : contract.rows()) {
+                if (row.isFramework()) {
+                    continue;
+                }
                 if (!doors.contains(row.reaches())) {
                     wrong.add(row.description() + " [" + row.state() + "] reaches " + row.reaches()
                             + ", no door of " + contract.provider() + "'s clients");
@@ -125,12 +134,54 @@ class ClientCallsGuardTest {
         assertThat(wrong).isEmpty();
     }
 
+    /**
+     * The MCP service's quarkus-oidc tenant reads qits-idp at {@code auth-server-url}, and its reads
+     * are framework rows of the idp's contract held to the shipped configuration (qits-708): with
+     * discovery on, the default and what ships, that is the discovery document and the JWKS it
+     * names; with discovery off it would be the JWKS alone. So turning discovery off again, or
+     * pinning an issuer in configuration beside it, is a red build here rather than an unpacted read
+     * or an issuer nobody's discovery publishes.
+     */
     @Test
-    void everyLivePactIsCommittedAndPublished() throws IOException {
+    void theMcpTenantsReadsArePacted() throws IOException {
+        Properties shipped = new Properties();
+        try (InputStream in = Files.newInputStream(
+                root().resolve("platform-access-mcp-service/src/main/resources/application.properties"))) {
+            shipped.load(in);
+        }
+        String server = shipped.getProperty("quarkus.oidc.auth-server-url", "");
+        assertThat(server).as("the tenant reads qits-idp").contains("qits-idp");
+        assertThat(shipped.stringPropertyNames().stream().filter(k -> k.startsWith("quarkus.oidc.")
+                && k.contains("issuer"))).as("the issuer is never configuration: discovery publishes it (qits-730)")
+                .isEmpty();
+        boolean discovery = Boolean.parseBoolean(shipped.getProperty("quarkus.oidc.discovery-enabled", "true"));
+        Set<String> framework = new TreeSet<>();
+        for (CliPact contract : Contracts.ALL) {
+            for (CliRow row : contract.rows()) {
+                if (row.isFramework()) {
+                    assertThat(contract.provider()).as(row.description()).isEqualTo("qits-idp-service");
+                    assertThat(contract.recorded(row)).as("%s is recorded by the pinned idp", row.description())
+                            .isTrue();
+                    framework.add(row.operationId());
+                }
+            }
+        }
+        assertThat(framework).as("the MCP service's oidc tenant's reads of " + server)
+                .isEqualTo(discovery ? Set.of("getJwks", "getOpenIdConfiguration") : Set.of("getJwks"));
+    }
+
+    /** The reactor's root: the outermost directory above this module that holds a pom. */
+    private static Path root() {
         Path root = Path.of("").toAbsolutePath();
         while (root.getParent() != null && Files.isRegularFile(root.getParent().resolve("pom.xml"))) {
             root = root.getParent();
         }
+        return root;
+    }
+
+    @Test
+    void everyLivePactIsCommittedAndPublished() throws IOException {
+        Path root = root();
         Set<String> live = new TreeSet<>();
         Contracts.ALL.stream().filter(c -> !c.live().isEmpty()).forEach(c -> live.add(c.provider()));
         Set<String> committed = new TreeSet<>();

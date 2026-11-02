@@ -122,9 +122,23 @@ A new command or option on the CLI is a tool or a schema property with no change
 `McpToolCatalogTest` walks the real tree and fails when that stops being true; `McpServiceTest`
 proves the 401 without a bearer, `tools/list`, the instructions and a call carrying the caller's
 bearer; `McpWireJsonTest` reads a `tools/call` answer as bytes and fails on any `null` member
-(`"_meta":null`, `"annotations":null`, `"structuredContent":null`), which MCP clients reject. A
-plain `mvn verify` runs all three; none needs docker or an idp (the bearer tests sign with a key
-under `src/test/resources`).
+(`"_meta":null`, `"annotations":null`, `"structuredContent":null`), which MCP clients reject;
+`BearerIssuerTest` proves the tenant pins the issuer the idp publishes (below). A plain `mvn verify`
+runs all four; none needs docker or a real idp (the bearer tests sign with a key under
+`src/test/resources`).
+
+**The bearer check pins the idp's published issuer** (qits-708). The tenant runs with discovery on
+and no issuer key at all: it reads `<auth-server-url>/.well-known/openid-configuration` and checks
+every bearer's `iss` against the `issuer` that document publishes (`https://idp.qits.<domain>`),
+besides the signature (keys from its `jwks_uri`, fetched when a bearer first needs one), `exp` and
+the audience `qits-platform`. Never add `quarkus.oidc.token.issuer`: the issuer is not
+configuration (qits-730), and `ClientCallsGuardTest.theMcpTenantsReadsArePacted` refuses one. The
+two reads are rows of the idp's contract (`IdpContract`, framework rows triggered by `StartupEvent`
+from `qits-platform-access-mcp-service`, the issuer bound by value), because this repository has
+one pacticipant and the service is part of it. `BearerIssuerTest` runs the shipped tenant against
+`IssuerIdp`, a discovery document and a JWKS in the test's process: a correctly signed token with
+another `iss` is a 401. There is no `connection-delay`: one read at boot, and an idp that does not
+answer is a WARN and a retry on the first bearer, so readiness never waits on the idp.
 
 **The native runner has tests of its own**, because one failure exists only there (qits-1226):
 Vert.x's JSON codec, which writes every tool result, may be initialised at native-image build time
@@ -422,7 +436,9 @@ Two packages sit outside `access/`, because neither is about one command:
   with qits-observability. Change it there first, and on both sides.
   The server sends no acknowledgement for a subscribe frame, so an `{"error": …}` before the first
   record is taken as its answer.
-- Do not configure the idp from its discovery document: it names the idp's internal issuer.
+- The commands do not configure their idp client (`TokenClient`) from its discovery document: they
+  address the idp they were given directly. The MCP service's bearer check is the one reader of
+  discovery here, for the issuer it publishes (qits-708).
 - The PKCE and token code, `GitOrigin` and `LoopbackCallback` were copied from qits-bootstrap-cli.
   Do not share a jar with it.
 - **Git setup is per host.** `qits git-login` sets `credential.<git host>.helper` and never
@@ -534,7 +550,10 @@ top-level body members it names with `sendsWithout`: a field the provider has de
 but still records its own request with (qits-1673: `create`'s `summary`). A row whose
 state the provider has not recorded yet stays in the table, skipped with the state it needs and
 its door, and out of the file until a newer pin records it. Every interaction carries `qits-call`
-and a `qits-trigger` of kind `command` naming the command (`qits work details`).
+and a `qits-trigger` of kind `command` naming the command (`qits work details`), but the MCP
+service's two reads of the idp (`CliRow.framework`, qits-708), whose trigger is the `StartupEvent`
+of `qits-platform-access-mcp-service` and which `ClientCallsGuardTest` holds to that service's
+`application.properties` instead of to a client method.
 
 `contracts/ClientCallsGuardTest` holds the table to the code: every class whose bytecode calls a
 request method of `PlatformClient`, the publish `Http` or the JDK's `HttpClient` is a client of

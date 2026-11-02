@@ -23,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * {@link #theCommittedPactIsWhatTheRowsWrite}: the committed {@code pacts/} file, byte for byte;
  * {@code -Dgolden.update=true} writes it again. {@link #everyInteractionCarriesBothReferences}:
- * {@code qits-call} and a {@code qits-trigger} of kind {@code command} on every interaction.
+ * {@code qits-call} and a {@code qits-trigger} of kind {@code command} on every interaction, but a
+ * {@linkplain CliRow#framework framework row}'s, whose trigger is the event it runs on.
  */
 public abstract class CliPactTest {
 
@@ -40,7 +41,7 @@ public abstract class CliPactTest {
                         contract.run(row);
                         return null;
                     });
-                    if (!reached.isEmpty()) {
+                    if (!reached.isEmpty() && !row.isFramework()) {
                         assertThat(reached).as("%s: the client methods the call went through", row.description())
                                 .contains(row.reaches());
                     }
@@ -64,6 +65,8 @@ public abstract class CliPactTest {
         assertThat(pact.path("provider").path("name").asText()).isEqualTo(contract.provider());
         assertThat(pact.path("metadata").path("pactSpecification").path("version").asText()).isEqualTo("4.0");
         assertThat(pact.path("interactions")).as("one interaction per recorded row").hasSize(contract.live().size());
+        java.util.Map<String, CliRow> framework = new java.util.HashMap<>();
+        contract.live().stream().filter(CliRow::isFramework).forEach(r -> framework.put(r.description(), r));
         pact.path("interactions").forEach(interaction -> {
             String description = interaction.path("description").asText();
             var references = interaction.path("comments").path("references");
@@ -73,11 +76,20 @@ public abstract class CliPactTest {
             assertThat(call.path("operationId").asText()).as(description).isNotBlank();
             var trigger = references.path("qits-trigger");
             assertStrings(description, trigger, 3);
+            assertThat(references.has("qits-via")).as("%s: the CLI calls the provider itself, no qits-via",
+                    description).isFalse();
+            CliRow frameworkRow = framework.get(description);
+            if (frameworkRow != null) {
+                // A call the framework makes (CliRow#framework): the trigger is its own, as the row names it.
+                var expected = frameworkRow.interaction().trigger();
+                assertThat(trigger.path("kind").asText()).as(description).isEqualTo(expected.kind());
+                assertThat(trigger.path("app").asText()).as(description).isEqualTo(expected.app());
+                assertThat(trigger.path(expected.key()).asText()).as(description).isEqualTo(expected.value());
+                return;
+            }
             assertThat(trigger.path("kind").asText()).isEqualTo("command");
             assertThat(trigger.path("app").asText()).isEqualTo(CliPact.CONSUMER);
             assertThat(trigger.path("command").asText()).startsWith("qits ");
-            assertThat(references.has("qits-via")).as("%s: the CLI calls the provider itself, no qits-via",
-                    description).isFalse();
         });
     }
 

@@ -850,8 +850,13 @@ worked; campaigns never enter it), `IMPLEMENTED` (released and deployed, not mer
 `VERIFIED` (somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit
 for work a decision was taken not to do, carrying an `outcome` that says why (see `status` below). A SKIP transition lets `REFINED` move straight to
 `IMPLEMENTED`, bypassing `IMPLEMENTING`, and `IMPLEMENTED` move straight to `VERIFIED`, bypassing
-`VERIFYING`. Features and tasks walk the same eight words as epics and tickets; campaigns keep a
-shorter walk. A ticket is also blocked or not: the phase its status belongs to cannot proceed.
+`VERIFYING`. Features and tasks walk the same eight words as epics and tickets. A campaign never
+walks this by hand at all: the service derives its status from its members instead (the lowest
+one still open wins, `IMPLEMENTING` counting as `READY_FOR_DEV` and `VERIFYING` as `IMPLEMENTED`;
+no members is `REPORTED`; every member `DROPPED` is `DROPPED`; once `DONE` or `DROPPED` it stays),
+and its own manual moves are only DROP and REOPEN (`DROPPED` back to `REPORTED`); `work progress`
+and a campaign's own read both carry `heldBy`, the members currently holding its status. A ticket
+is also blocked or not: the phase its status belongs to cannot proceed.
 
 Reading takes `qits:admin` or `qits:agent`, and so does writing, an agent in its own project only.
 An epic's status move takes `qits:admin`: an agent is answered HTTP 403, and the command prints the

@@ -649,7 +649,7 @@ An epic's or a ticket's dossier (dossier), a campaign's members and progress (me
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
-Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an outcome saying why (status names them). Features and tasks walk the same nine words as epics and tickets; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
+Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an outcome saying why (status names them). Features and tasks walk the same nine words as epics and tickets. A campaign's status is derived from its members instead - never IMPLEMENTING or VERIFYING - and by hand it is only DROP and REOPEN (DROPPED back to REPORTED); `qits work progress` shows which members hold it there. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
 
 ### Notes
 
@@ -835,7 +835,7 @@ jq -n '{"qits-101":{archetype:"EPIC",title:"Export",status:"REPORTED"},"qits-102
 
 ## qits work status
 
-Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Every archetype walks it, features and tasks included; campaigns keep a shorter walk and never enter IMPLEMENTING or VERIFYING. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused.
+Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Epics, tickets, features and tasks walk it by hand. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. A campaign never walks this by hand: the service derives its status from its members (the lowest one still open wins, IMPLEMENTING counting as READY_FOR_DEV and VERIFYING as IMPLEMENTED; no members is REPORTED; every member DROPPED is DROPPED; once DONE or DROPPED it is not recomputed), so this command refuses every target on a campaign but DROP and REOPEN (DROPPED back to REPORTED, which also clears outcome and supersededBy). `qits work progress` names the members holding its status (heldBy).
 
 Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/work/{entity}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
@@ -843,7 +843,7 @@ A move into DROPPED says why in "outcome": DUPLICATE (another item asks for the 
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/work/archetypes) states them, and exits with 0.
 
-A campaign, epic or feature whose children are all DONE or DROPPED can be closed straight to DONE by a person or the delivery desk (a CLOSE move).
+An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by a person or the delivery desk (a CLOSE move). A campaign is never closed this way: it reaches DONE on its own once every member does (see the derivation above).
 
 ```
 qits work status [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -1319,12 +1319,12 @@ A condition is groups OR'd of criteria AND'd: a member waits until every criteri
 ### Notes
 
 - --entity is the campaign. --member is a membership's id, as list prints it, not the member item's id.
-- Members and conditions change only while the campaign is REPORTED, REFINED or READY_FOR_DEV.
+- Members and conditions change only while the campaign is neither DONE nor DROPPED.
 - Starting a campaign and approving an APPROVAL criterion are a person's to do.
 
 ## qits work members list
 
-List a campaign's members in order: membership id, position, the member's qualified id, archetype, status and title, and whether it waits on a condition.
+List a campaign's members in order: membership id, position, the member's qualified id, archetype, status and title, whether it holds the campaign's status (HOLDS), and whether it waits on a condition.
 
 Reads GET /projects/api/work/{entity}/members. -o json adds each member's condition (groups of criteria with their latches) and its dispatch record.
 
