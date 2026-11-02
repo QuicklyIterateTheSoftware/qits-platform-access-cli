@@ -75,7 +75,13 @@ final class TargetsApi {
         return client.get(uri(targetPath(id)));
     }
 
-    /** {@code patchTarget}: only the fields {@code change} carries. */
+    /**
+     * {@code patchTarget}: only the fields {@code change} carries. {@code maximums} (epic qits-1813)
+     * is a hard ceiling per slot type, as opposed to {@code reservations}' floor: a key left out
+     * keeps its value, an explicit JSON {@code null} clears it (no ceiling), and {@code 0} is a real
+     * ceiling. HTTP 409 {@code MAXIMUM_BELOW_RESERVATION}: a maximum would be below that type's
+     * reservation.
+     */
     JsonNode patchTarget(String id, JsonNode change) throws CliFailure, InterruptedException {
         return client.patch(uri(targetPath(id)), change, "application/json");
     }

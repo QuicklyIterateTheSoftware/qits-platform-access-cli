@@ -54,7 +54,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 TargetsCommand.SignInCommand.class, TargetDockerCommand.class},
         description = {"The execution targets qits-system-runner runs on, and their leases: list them with their "
                 + "connection, slots, login and quarantine; read one in full; declare one, or rotate its registration "
-                + "token, and print the line that installs its runner; change its slot reservations or description; "
+                + "token, and print the line that installs its runner; change its slot reservations, slot maximums "
+                + "or description; "
                 + "lift a quarantine; ask for a health check or a login check; delete one; list the leases a "
                 + "target or a slot type holds, show one or end one; sign a target in; and read or handle a "
                 + "target's own docker containers and volumes without a shell on it.",
@@ -178,29 +179,44 @@ public class TargetsCommand implements Runnable {
         return node.path(field).asBoolean(false) ? "yes" : "no";
     }
 
-    /** What {@link #slots} shows: per type used over reserved, then used over the target's slot total. */
-    static final String SLOTS_LEGEND = "used/reserved, total used/total";
+    /** What {@link #slots} shows: per type used over reserved (with a maximum where set), then used over the total. */
+    static final String SLOTS_LEGEND = "used/reserved[≤max], total used/total";
 
     /**
-     * {@code ci a/r, ws b/r, desk c/r, total u/slots}, as the list column. A reservation holds slots
-     * for one type; it is not a limit, so {@code ws 5/1} is valid while shared slots are free. The
-     * total is the target's real slot count.
+     * {@code ci a/r, ws b/r, desk c/r, total u/slots}, as the list column, with {@code ≤<max>}
+     * after a type's reserved count where the target carries one. A reservation holds slots for one
+     * type; it is a floor, not a limit, so {@code ws 5/1} is valid while shared slots are free. A
+     * maximum is a limit: a type never runs more leases than its maximum on that target. No suffix
+     * when the maximum is null or the field is absent (an older server). The total is the target's
+     * real slot count.
      */
     static String slots(JsonNode target) {
         JsonNode reserved = reservations(target);
+        JsonNode maximums = maximums(target);
         JsonNode used = target.path("used");
         int ci = used.path("ci").asInt(0);
         int ws = used.path("workspace").asInt(0);
         int desk = used.path("desk").asInt(0);
-        return "ci " + ci + "/" + reserved.path("ci").asInt(0)
-                + ", ws " + ws + "/" + reserved.path("workspace").asInt(0)
-                + ", desk " + desk + "/" + reserved.path("desk").asInt(0)
+        return "ci " + ci + "/" + reserved.path("ci").asInt(0) + maxSuffix(maximums, "ci")
+                + ", ws " + ws + "/" + reserved.path("workspace").asInt(0) + maxSuffix(maximums, "workspace")
+                + ", desk " + desk + "/" + reserved.path("desk").asInt(0) + maxSuffix(maximums, "desk")
                 + ", total " + (ci + ws + desk) + "/" + target.path("slotsTotal").asInt(0);
+    }
+
+    /** {@code ≤<n>} for a type with a maximum set; empty when the field is absent or explicitly null. */
+    private static String maxSuffix(JsonNode maximums, String field) {
+        JsonNode value = maximums.path(field);
+        return value.isNull() || value.isMissingNode() ? "" : "≤" + value.asInt();
     }
 
     /** A target's per-type reservations. */
     static JsonNode reservations(JsonNode target) {
         return target.path("reservations");
+    }
+
+    /** A target's per-type maximums; an older server's answer carries no field, read as absent. */
+    static JsonNode maximums(JsonNode target) {
+        return target.path("maximums");
     }
 
     /** The per-type reservations a create or update sends. */
@@ -217,6 +233,42 @@ public class TargetsCommand implements Runnable {
         }
         if (!reserved.isEmpty()) {
             body.set("reservations", reserved);
+        }
+    }
+
+    /**
+     * The per-type maximums an update sends: {@code none} (case-insensitive) sends an explicit JSON
+     * {@code null}, which clears the maximum; a whole number >= 0 sends it; anything else is a usage
+     * error naming the option. An option left out (its value null) is omitted, keeping its value.
+     */
+    static void putMaximums(ObjectNode body, String maxCi, String maxWorkspace, String maxDesk) throws CliFailure {
+        ObjectNode max = JsonNodeFactory.instance.objectNode();
+        putMaximum(max, "ci", "--max-ci", maxCi);
+        putMaximum(max, "workspace", "--max-workspace", maxWorkspace);
+        putMaximum(max, "desk", "--max-desk", maxDesk);
+        if (!max.isEmpty()) {
+            body.set("maximums", max);
+        }
+    }
+
+    private static void putMaximum(ObjectNode max, String field, String option, String given) throws CliFailure {
+        if (given == null) {
+            return;
+        }
+        String value = given.strip();
+        if (value.equalsIgnoreCase("none")) {
+            max.putNull(field);
+            return;
+        }
+        try {
+            int n = Integer.parseInt(value);
+            if (n < 0) {
+                throw new NumberFormatException(value);
+            }
+            max.put(field, n);
+        } catch (NumberFormatException notANumber) {
+            throw new CliFailure(option + " must be a whole number >= 0, or `none`, not '" + value + "'.",
+                    CliFailure.USAGE);
         }
     }
 
@@ -265,8 +317,9 @@ public class TargetsCommand implements Runnable {
 
     @CommandLine.Command(name = "list", mixinStandardHelpOptions = true,
             description = {"Every target, by name: connected or not, version, slots, login and quarantine. Slots show "
-                    + "ci, workspace and desk as used over reserved, then all used over the target's slot total. "
-                    + "A reservation is not a limit: a type may use more while shared slots are free.",
+                    + "ci, workspace and desk as used over reserved (with a maximum where set), then all used over "
+                    + "the target's slot total. A reservation is a floor, not a limit: a type may use more while "
+                    + "shared slots are free. A maximum is a limit: a type never runs more leases than its maximum.",
                     "GET /system/api/targets. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets list", "  qits targets list -o json"},
@@ -304,9 +357,9 @@ public class TargetsCommand implements Runnable {
     // --- show ---
 
     @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
-            description = {"One target in full: its slots and reservations, its login state for claude and kimi, its "
-                    + "login command for each (the docker run that signs its credential volume in), its "
-                    + "quarantine, and its newest connection.",
+            description = {"One target in full: its slots, reservations and maximums, its login state for claude "
+                    + "and kimi, its login command for each (the docker run that signs its credential volume in), "
+                    + "its quarantine, and its newest connection.",
                     "GET /system/api/targets/{id}. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets show --target localhost", "  qits targets show --target localhost -o json",
@@ -486,17 +539,20 @@ public class TargetsCommand implements Runnable {
     // --- update ---
 
     @CommandLine.Command(name = "update", mixinStandardHelpOptions = true,
-            description = {"Change a target's description or slot reservations. Only what is given is sent; a "
-                    + "reservation left out keeps its value. A reservation is not a limit: a type may use more "
-                    + "while shared slots are free.",
-                    "PATCH /system/api/targets/{id} with {description?, reservations?: {ci?, workspace?, desk?}}. "
-                            + Doors.WRITE},
+            description = {"Change a target's description, slot reservations or slot maximums. Only what is given "
+                    + "is sent; a reservation or maximum left out keeps its value. A reservation is a floor, not a "
+                    + "limit: a type may use more while shared slots are free. A maximum is the limit: a type "
+                    + "never runs more leases than its maximum on that target. `none` clears a maximum.",
+                    "PATCH /system/api/targets/{id} with {description?, reservations?: {ci?, workspace?, desk?}, "
+                            + "maximums?: {ci?, workspace?, desk?}}. " + Doors.WRITE},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --reserved-desk 1",
                     "  qits targets update --target localhost --description 'The build machine under the desk'",
+                    "  qits targets update --target ws-proof --max-ci 2",
                     "",
                     "- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL: their sum is above the "
-                            + "target's slots total."},
+                            + "target's slots total. HTTP 409 MAXIMUM_BELOW_RESERVATION: a maximum would be below "
+                            + "that type's reservation."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE, HelpText.REFUSED, HelpText.USAGE})
     public static class UpdateCommand extends PlatformCommand {
@@ -520,6 +576,21 @@ public class TargetsCommand implements Runnable {
                 description = "Slots reserved for the desk.")
         Integer reservedDesk;
 
+        @CommandLine.Option(names = "--max-ci", paramLabel = "<n>|none",
+                description = "Maximum slots this target ever runs for CI leases; `none` clears it, leaving no "
+                        + "ceiling.")
+        String maxCi;
+
+        @CommandLine.Option(names = "--max-workspace", paramLabel = "<n>|none",
+                description = "Maximum slots this target ever runs for workspace leases; `none` clears it, leaving "
+                        + "no ceiling.")
+        String maxWorkspace;
+
+        @CommandLine.Option(names = "--max-desk", paramLabel = "<n>|none",
+                description = "Maximum slots this target ever runs for desk leases; `none` clears it, leaving no "
+                        + "ceiling.")
+        String maxDesk;
+
         @CommandLine.Option(names = "--description", paramLabel = "<text>", description = "Free text.")
         String description;
 
@@ -532,9 +603,10 @@ public class TargetsCommand implements Runnable {
                 change.put("description", description);
             }
             putReservations(change, reservedCi, reservedWorkspace, reservedDesk);
+            putMaximums(change, maxCi, maxWorkspace, maxDesk);
             if (change.isEmpty()) {
-                throw new CliFailure("Nothing to change: give --reserved-ci, --reserved-workspace, --reserved-desk or "
-                        + "--description.", CliFailure.USAGE);
+                throw new CliFailure("Nothing to change: give --reserved-ci, --reserved-workspace, --reserved-desk, "
+                        + "--max-ci, --max-workspace, --max-desk or --description.", CliFailure.USAGE);
             }
             JsonNode answer = targets.api(context).patchTarget(id, change);
             if (json) {

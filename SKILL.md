@@ -4093,7 +4093,7 @@ qits workspaces agents plugins install pyright-lsp --workspace 1
 
 ## qits targets
 
-The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot reservations or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; sign a target in; and read or handle a target's own docker containers and volumes without a shell on it.
+The execution targets qits-system-runner runs on, and their leases: list them with their connection, slots, login and quarantine; read one in full; declare one, or rotate its registration token, and print the line that installs its runner; change its slot reservations, slot maximums or description; lift a quarantine; ask for a health check or a login check; delete one; list the leases a target or a slot type holds, show one or end one; sign a target in; and read or handle a target's own docker containers and volumes without a shell on it.
 
 A target is named by its name or its id (`qits targets list` shows both).
 
@@ -4107,7 +4107,7 @@ A target is named by its name or its id (`qits targets list` shows both).
 
 ## qits targets list
 
-Every target, by name: connected or not, version, slots, login and quarantine. Slots show ci, workspace and desk as used over reserved, then all used over the target's slot total. A reservation is not a limit: a type may use more while shared slots are free.
+Every target, by name: connected or not, version, slots, login and quarantine. Slots show ci, workspace and desk as used over reserved (with a maximum where set), then all used over the target's slot total. A reservation is a floor, not a limit: a type may use more while shared slots are free. A maximum is a limit: a type never runs more leases than its maximum.
 
 GET /system/api/targets. Any credential may call it, qits:agent included.
 
@@ -4135,7 +4135,7 @@ qits targets list -o json
 
 ## qits targets show
 
-One target in full: its slots and reservations, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, and its newest connection.
+One target in full: its slots, reservations and maximums, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, and its newest connection.
 
 GET /system/api/targets/{id}. Any credential may call it, qits:agent included.
 
@@ -4243,18 +4243,21 @@ qits targets rotate-token --target buildbox --slots 8
 
 ## qits targets update
 
-Change a target's description or slot reservations. Only what is given is sent; a reservation left out keeps its value. A reservation is not a limit: a type may use more while shared slots are free.
+Change a target's description, slot reservations or slot maximums. Only what is given is sent; a reservation or maximum left out keeps its value. A reservation is a floor, not a limit: a type may use more while shared slots are free. A maximum is the limit: a type never runs more leases than its maximum on that target. `none` clears a maximum.
 
-PATCH /system/api/targets/{id} with {description?, reservations?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
+PATCH /system/api/targets/{id} with {description?, reservations?: {ci?, workspace?, desk?}, maximums?: {ci?, workspace?, desk?}}. It needs qits:admin, qits:admin-agent, qits:desk-admin or qits:system, which a person's token, the delivery desk's or qits-system's own carries. qits:agent alone is refused (HTTP 403) by design.
 
 ```
-qits targets update --target <name|id> [--description <text>] [--output table|json] [--reserved-ci <n>] [--reserved-desk <n>] [--reserved-workspace <n>] [--system-url <url>]
+qits targets update --target <name|id> [--description <text>] [--max-ci <n>|none] [--max-desk <n>|none] [--max-workspace <n>|none] [--output table|json] [--reserved-ci <n>] [--reserved-desk <n>] [--reserved-workspace <n>] [--system-url <url>]
 ```
 
 | Name | What it does |
 |---|---|
 | `--target <name\|id>` | Required. The target's name or id. |
 | `--description <text>` | Free text. |
+| `--max-ci <n>\|none` | Maximum slots this target ever runs for CI leases; `none` clears it, leaving no ceiling. |
+| `--max-desk <n>\|none` | Maximum slots this target ever runs for desk leases; `none` clears it, leaving no ceiling. |
+| `--max-workspace <n>\|none` | Maximum slots this target ever runs for workspace leases; `none` clears it, leaving no ceiling. |
 | `-o, --output table\|json` | table (the default): for a person. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--reserved-ci <n>` | Slots reserved for CI. |
 | `--reserved-desk <n>` | Slots reserved for the desk. |
@@ -4266,9 +4269,10 @@ qits targets update --target <name|id> [--description <text>] [--output table|js
 ```
 qits targets update --target localhost --reserved-ci 2 --reserved-workspace 2 --reserved-desk 1
 qits targets update --target localhost --description 'The build machine under the desk'
+qits targets update --target ws-proof --max-ci 2
 ```
 
-- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL: their sum is above the target's slots total.
+- A blank --description clears it. HTTP 409 RESERVATIONS_EXCEED_TOTAL: their sum is above the target's slots total. HTTP 409 MAXIMUM_BELOW_RESERVATION: a maximum would be below that type's reservation.
 
 ### Exit codes
 
