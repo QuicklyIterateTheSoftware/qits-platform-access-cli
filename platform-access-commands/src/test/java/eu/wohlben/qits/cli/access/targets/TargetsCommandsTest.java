@@ -111,7 +111,7 @@ class TargetsCommandsTest {
 
         Result table = run("targets", "list");
         assertThat(table.exit()).as(table.err()).isZero();
-        assertThat(table.out()).contains("NAME").contains("SLOTS (used/reserved, total used/total)")
+        assertThat(table.out()).contains("NAME").contains("SLOTS (used/reserved[≤max], total used/total)")
                 .contains("LOGIN")
                 .containsPattern("localhost\\s+yes\\s+2026.1023.1");
         assertThat(table.out()).contains("ci 1/2, ws 0/2, desk 0/1, total 1/6");
@@ -191,7 +191,128 @@ class TargetsCommandsTest {
         assertThat(sent.path("description").asText()).isEqualTo("new text");
         assertThat(sent.path("reservations").path("ci").asInt()).isEqualTo(3);
         assertThat(sent.path("reservations").has("workspace")).isFalse();
-        assertThat(updated.out()).contains("(used/reserved, total used/total)");
+        assertThat(updated.out()).contains("(used/reserved[≤max], total used/total)");
+    }
+
+    // --- maximums (qits-1813) ---
+
+    private static String targetWithMaximums(String maximumsJson) {
+        return target("PRESENT", null).replace("\"used\":{\"ci\":1,\"workspace\":0,\"desk\":0},",
+                "\"used\":{\"ci\":1,\"workspace\":0,\"desk\":0},\"maximums\":" + maximumsJson + ",");
+    }
+
+    @Test
+    void showRendersAMaximumWhereSetAndNothingWhenNullOrAbsent() {
+        platform.answer("GET", "/system/api/targets/" + TARGET,
+                targetWithMaximums("{\"ci\":2,\"workspace\":null,\"desk\":0}"));
+
+        Result show = run("targets", "show", "--target", TARGET);
+
+        assertThat(show.exit()).as(show.err()).isZero();
+        assertThat(show.out()).contains("ci 1/2≤2, ws 0/2, desk 0/1≤0, total 1/6");
+    }
+
+    @Test
+    void showWithNoMaximumsFieldAtAllHasNoSuffix() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result show = run("targets", "show", "--target", TARGET);
+
+        assertThat(show.exit()).as(show.err()).isZero();
+        assertThat(show.out()).contains("ci 1/2, ws 0/2, desk 0/1, total 1/6");
+    }
+
+    @Test
+    void listRendersAMaximumTheSameWay() {
+        platform.answer("GET", "/system/api/targets",
+                "[" + targetWithMaximums("{\"ci\":2,\"workspace\":null,\"desk\":null}") + "]");
+
+        Result table = run("targets", "list");
+
+        assertThat(table.exit()).as(table.err()).isZero();
+        assertThat(table.out()).contains("ci 1/2≤2, ws 0/2, desk 0/1, total 1/6");
+    }
+
+    @Test
+    void updateSendsMaximumsOnlyWhenGiven() throws Exception {
+        platform.answer("PATCH", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result updated = run("targets", "update", "--target", TARGET, "--max-ci", "5");
+
+        assertThat(updated.exit()).as(updated.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("PATCH", "/system/api/targets/" + TARGET).getFirst().body());
+        assertThat(sent.has("reservations")).isFalse();
+        assertThat(sent.has("description")).isFalse();
+        assertThat(sent.path("maximums").path("ci").asInt()).isEqualTo(5);
+        assertThat(sent.path("maximums").has("workspace")).isFalse();
+        assertThat(sent.path("maximums").has("desk")).isFalse();
+    }
+
+    @Test
+    void updateMaxZeroIsARealCeilingNotOmitted() throws Exception {
+        platform.answer("PATCH", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result updated = run("targets", "update", "--target", TARGET, "--max-ci", "0");
+
+        assertThat(updated.exit()).as(updated.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("PATCH", "/system/api/targets/" + TARGET).getFirst().body());
+        assertThat(sent.path("maximums").has("ci")).isTrue();
+        assertThat(sent.path("maximums").path("ci").asInt()).isZero();
+    }
+
+    @Test
+    void updateNoneSendsAnExplicitNullForTheMaximum() throws Exception {
+        platform.answer("PATCH", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result updated = run("targets", "update", "--target", TARGET, "--max-ci", "none");
+
+        assertThat(updated.exit()).as(updated.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("PATCH", "/system/api/targets/" + TARGET).getFirst().body());
+        assertThat(sent.path("maximums").has("ci")).isTrue();
+        assertThat(sent.path("maximums").get("ci").isNull()).isTrue();
+    }
+
+    @Test
+    void updateNoneIsCaseInsensitive() throws Exception {
+        platform.answer("PATCH", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result updated = run("targets", "update", "--target", TARGET, "--max-workspace", "None");
+
+        assertThat(updated.exit()).as(updated.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("PATCH", "/system/api/targets/" + TARGET).getFirst().body());
+        assertThat(sent.path("maximums").get("workspace").isNull()).isTrue();
+    }
+
+    @Test
+    void updateWithAllThreeMaximumsSendsAllThree() throws Exception {
+        platform.answer("PATCH", "/system/api/targets/" + TARGET, target("PRESENT", null));
+
+        Result updated = run("targets", "update", "--target", TARGET, "--max-ci", "2", "--max-workspace", "none",
+                "--max-desk", "1");
+
+        assertThat(updated.exit()).as(updated.err()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("PATCH", "/system/api/targets/" + TARGET).getFirst().body());
+        assertThat(sent.path("maximums").path("ci").asInt()).isEqualTo(2);
+        assertThat(sent.path("maximums").get("workspace").isNull()).isTrue();
+        assertThat(sent.path("maximums").path("desk").asInt()).isEqualTo(1);
+    }
+
+    @Test
+    void updateWithAnInvalidMaximumIsAUsageErrorBeforeAnyRequest() {
+        Result invalid = run("targets", "update", "--target", TARGET, "--max-ci", "not-a-number");
+
+        assertThat(invalid.exit()).isEqualTo(2);
+        assertThat(invalid.err()).contains("--max-ci must be a whole number >= 0, or `none`");
+        assertThat(platform.requests).isEmpty();
+    }
+
+    @Test
+    void updateHelpNamesTheMaximumsAndTheConflict() {
+        Result help = run("targets", "update", "--help");
+
+        assertThat(help.exit()).as(help.err()).isZero();
+        assertThat(help.out()).contains("--max-ci").contains("--max-workspace").contains("--max-desk")
+                .contains("MAXIMUM_BELOW_RESERVATION").contains("none").contains("ws-proof");
     }
 
     @Test
