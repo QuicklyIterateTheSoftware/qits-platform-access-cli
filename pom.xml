@@ -102,7 +102,7 @@
         <!-- qits-system's recordings, for the targets the VHS tapes' fake platform answers with
              (FakePlatformMain, epic qits-881); no consumer pact reads them yet. Bumped by
              qits-maintenance like the others. -->
-        <qits.system-golden-masters.version>2026.1102.155819</qits.system-golden-masters.version>
+        <qits.system-golden-masters.version>2026.1102.183359</qits.system-golden-masters.version>
         <qits.deployments-golden-masters.version>2026.1010.145913</qits.deployments-golden-masters.version>
         <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:
              it reads every provider's recordings off the classpath and binds only what a command
