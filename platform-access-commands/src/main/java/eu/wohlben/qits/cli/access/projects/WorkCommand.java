@@ -42,7 +42,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 WorkCommand.BlockCommand.class, WorkCommand.UnblockCommand.class, WorkCommand.DeleteCommand.class,
                 WorkCommand.ProgressCommand.class, WorkCommand.DispatchCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
                 WorkMembersCommand.class, WorkRefinementCommand.class, WorkDesignCommand.class},
-        description = {"Work items of every archetype - epics, tickets, features, tasks and campaigns - and their "
+        description = {"Work items of every archetype - epics, tickets, features, tasks, campaigns and issues - and their "
                         + "comment threads. list shows a project's items, details shows one with its comments and "
                         + "children, create files one, update edits its fields, transition reshapes it into "
                         + "another archetype, status moves it along its lifecycle, block and unblock flag that its "
@@ -75,11 +75,14 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which "
                         + "takes qits:admin. An agent writes only in its own project.",
                 "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "
-                        + "an agent credential is refused (HTTP 409, or HTTP 403 for an epic)."})
+                        + "an agent credential is refused (HTTP 409, or HTTP 403 for an epic).",
+                "- An issue is one thing the delivery desk cannot resolve. Only the desk creates one; a person "
+                        + "resolves it (see create and status). Open ones: qits work list --project <project> "
+                        + "--archetype ISSUE --status OPEN. Comment with qits work comment create."})
 public class WorkCommand implements Runnable {
 
     static final String NAME_THE_ENTITY = "Name the entity: --entity <id or qualified id, like qits-100>.";
-    static final String NAME_THE_ARCHETYPE = "Name the archetype: --archetype <EPIC, TICKET, FEATURE, TASK or CAMPAIGN>.";
+    static final String NAME_THE_ARCHETYPE = "Name the archetype: --archetype <EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE>.";
 
     @CommandLine.Mixin
     ProjectsOptions options;
@@ -175,11 +178,11 @@ public class WorkCommand implements Runnable {
         String project;
 
         @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
-                description = "Only items of this archetype: EPIC, TICKET, FEATURE, TASK or CAMPAIGN.")
+                description = "Only items of this archetype: EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE.")
         String archetype;
 
         @CommandLine.Option(names = "--status", paramLabel = "<status>",
-                description = "Only items in this status, such as REFINED.")
+                description = "Only items in this status, such as REFINED or OPEN.")
         String status;
 
         @CommandLine.Option(names = "--parent", paramLabel = "<entity>",
@@ -334,7 +337,7 @@ public class WorkCommand implements Runnable {
                     "Reads the payload, a JSON object, on stdin, sets its \"archetype\" from --archetype, and sends "
                             + "it to POST /projects/api/work. A root item names its \"project\" (id or slug), a "
                             + "child its \"parent\" (qualified id or id). The item starts REPORTED if its archetype "
-                            + "has a lifecycle. The command prints the new item, its qualified id first.",
+                            + "has a lifecycle, and an issue OPEN. The command prints the new item, its qualified id first.",
                     "With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the "
                             + "payload's JSON schema, served by the service at "
                             + "GET /projects/api/work/archetypes/{archetype}/schemas/create, and exits with 0."},
@@ -346,7 +349,13 @@ public class WorkCommand implements Runnable {
                     "  jq -n --rawfile d plan.md '{parent:\"qits-120\",title:\"Retry\",description:$d}' "
                             + "| qits work create --archetype feature -o json",
                     "",
-                    "- The first one prints the schema: nothing is sent."},
+                    "  echo '{\"project\":\"qits\",\"title\":\"CI retry refused\",\"description\":\"qits-ci refuses "
+                            + "the retry. A person must lift the lease.\"}' | qits work create --archetype issue",
+                    "",
+                    "- The first one prints the schema: nothing is sent.",
+                    "- An issue takes qits:desk or qits:desk-admin; everyone else, qits:admin included, is answered "
+                            + "HTTP 403. Its description holds at most 280 characters (HTTP 400). It may name one "
+                            + "related item in \"relatedTo\" (qualified id or id)."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item is filed, or nothing was put in and the schema is printed.",
                     "1:The platform refused (for example a payload it does not take, HTTP 400, your roles or "
@@ -364,7 +373,7 @@ public class WorkCommand implements Runnable {
         CommandLine.Model.CommandSpec spec;
 
         @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
-                description = "The new item's archetype (required): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. "
+                description = "The new item's archetype (required): EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE. "
                         + "Case-insensitive.")
         String archetype;
 
@@ -600,6 +609,11 @@ public class WorkCommand implements Runnable {
                             + "payload's schema, whose target enum is the moves open from the item's current status "
                             + "as the service's archetype registry (GET /projects/api/work/archetypes) states "
                             + "them, and exits with 0.",
+                    "An issue has its own lifecycle: OPEN, then RESOLVED or OBSOLETE, and both are final. Only a "
+                            + "person moves it to RESOLVED (qits:admin, signed in; anyone else gets HTTP 403), with "
+                            + "the answer in an optional \"reason\". The delivery desk or a person moves it to "
+                            + "OBSOLETE, with a one-line \"reason\" (HTTP 400 without one). The reason lands on its "
+                            + "thread. An issue is never dispatched and is not reshaped by transition.",
                     "An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by "
                             + "a person or the delivery desk (a CLOSE move). A campaign is never closed this way: "
                             + "it reaches DONE on its own once every member does (see the derivation above)."},
@@ -610,6 +624,8 @@ public class WorkCommand implements Runnable {
                     "  echo '{\"target\":\"DROPPED\",\"outcome\":\"DUPLICATE\",\"supersededBy\":\"qits-90\"}' "
                             + "| qits work --entity qits-100 status",
                     "  echo '{\"target\":\"DROPPED\",\"outcome\":\"OBSOLETE\"}' | qits work --entity qits-100 status",
+                    "  echo '{\"target\":\"RESOLVED\",\"reason\":\"Lease lifted.\"}' | qits work --entity qits-100 status",
+                    "  echo '{\"target\":\"OBSOLETE\",\"reason\":\"The lease ended.\"}' | qits work --entity qits-100 status",
                     "",
                     "- An epic's status move takes qits:admin; an agent is answered HTTP 403.",
                     "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "

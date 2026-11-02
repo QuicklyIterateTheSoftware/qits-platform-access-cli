@@ -643,7 +643,7 @@ qits repositories remote-login --project qits --repository qits-ci-service
 
 ## qits work
 
-Work items of every archetype - epics, tickets, features, tasks and campaigns - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its thread.
+Work items of every archetype - epics, tickets, features, tasks, campaigns and issues - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its thread.
 
 An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, progress), its refinement room itself (refinement: open, show, discard) and the HTML designs of a refinement (design) are here too.
 
@@ -657,6 +657,7 @@ Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING,
 - --entity is the item's qualified id (qits-100) or its id, sent to the service as it is; the service resolves either. So is every id inside a payload (parent, membership.parent, supersededBy, dependsOn).
 - Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which takes qits:admin. An agent writes only in its own project.
 - REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; an agent credential is refused (HTTP 409, or HTTP 403 for an epic).
+- An issue is one thing the delivery desk cannot resolve. Only the desk creates one; a person resolves it (see create and status). Open ones: qits work list --project <project> --archetype ISSUE --status OPEN. Comment with qits work comment create.
 
 ## qits work list
 
@@ -670,14 +671,14 @@ qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome
 
 | Name | What it does |
 |---|---|
-| `--archetype <archetype>` | Only items of this archetype: EPIC, TICKET, FEATURE, TASK or CAMPAIGN. |
+| `--archetype <archetype>` | Only items of this archetype: EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--outcome <outcome>` | Only DROPPED items dropped with this outcome: DUPLICATE, RESOLVED_ELSEWHERE, SUPERSEDED, OBSOLETE, INVALID or WONT_DO. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--parent <entity>` | Only the children of this item: its id or its qualified id. |
 | `--project <project>` | The project (required): its id or its slug. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-| `--status <status>` | Only items in this status, such as REFINED. |
+| `--status <status>` | Only items in this status, such as REFINED or OPEN. |
 | `--tag <tag>` | Only items carrying this tag: reserved-for-human (RESERVED_FOR_HUMAN). |
 
 ### Examples
@@ -732,7 +733,7 @@ qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json
 
 File a new work item of an archetype.
 
-Reads the payload, a JSON object, on stdin, sets its "archetype" from --archetype, and sends it to POST /projects/api/work. A root item names its "project" (id or slug), a child its "parent" (qualified id or id). The item starts REPORTED if its archetype has a lifecycle. The command prints the new item, its qualified id first.
+Reads the payload, a JSON object, on stdin, sets its "archetype" from --archetype, and sends it to POST /projects/api/work. A root item names its "project" (id or slug), a child its "parent" (qualified id or id). The item starts REPORTED if its archetype has a lifecycle, and an issue OPEN. The command prints the new item, its qualified id first.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's JSON schema, served by the service at GET /projects/api/work/archetypes/{archetype}/schemas/create, and exits with 0.
 
@@ -742,7 +743,7 @@ qits work create [--archetype <archetype>] [--entity <entity>] [--output table|j
 
 | Name | What it does |
 |---|---|
-| `--archetype <archetype>` | The new item's archetype (required): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
+| `--archetype <archetype>` | The new item's archetype (required): EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE. Case-insensitive. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
@@ -755,7 +756,12 @@ echo '{"project":"qits","title":"The log view stops at 64 KiB","ticketType":"BUG
 jq -n --rawfile d plan.md '{parent:"qits-120",title:"Retry",description:$d}' | qits work create --archetype feature -o json
 ```
 
+```
+echo '{"project":"qits","title":"CI retry refused","description":"qits-ci refuses the retry. A person must lift the lease."}' | qits work create --archetype issue
+```
+
 - The first one prints the schema: nothing is sent.
+- An issue takes qits:desk or qits:desk-admin; everyone else, qits:admin included, is answered HTTP 403. Its description holds at most 280 characters (HTTP 400). It may name one related item in "relatedTo" (qualified id or id).
 
 ### Exit codes
 
@@ -845,6 +851,8 @@ A move into DROPPED says why in "outcome": DUPLICATE (another item asks for the 
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/work/archetypes) states them, and exits with 0.
 
+An issue has its own lifecycle: OPEN, then RESOLVED or OBSOLETE, and both are final. Only a person moves it to RESOLVED (qits:admin, signed in; anyone else gets HTTP 403), with the answer in an optional "reason". The delivery desk or a person moves it to OBSOLETE, with a one-line "reason" (HTTP 400 without one). The reason lands on its thread. An issue is never dispatched and is not reshaped by transition.
+
 An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by a person or the delivery desk (a CLOSE move). A campaign is never closed this way: it reaches DONE on its own once every member does (see the derivation above).
 
 ```
@@ -864,6 +872,8 @@ qits work --entity qits-100 status </dev/null
 echo '{"target":"REFINED"}' | qits work --entity qits-100 status
 echo '{"target":"DROPPED","outcome":"DUPLICATE","supersededBy":"qits-90"}' | qits work --entity qits-100 status
 echo '{"target":"DROPPED","outcome":"OBSOLETE"}' | qits work --entity qits-100 status
+echo '{"target":"RESOLVED","reason":"Lease lifted."}' | qits work --entity qits-100 status
+echo '{"target":"OBSOLETE","reason":"The lease ended."}' | qits work --entity qits-100 status
 ```
 
 - An epic's status move takes qits:admin; an agent is answered HTTP 403.
