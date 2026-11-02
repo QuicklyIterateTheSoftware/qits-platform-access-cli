@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /** Aligned columns for a person to read. Two spaces between columns; the last is not padded. */
 public final class Table {
@@ -62,5 +63,18 @@ public final class Table {
         } catch (DateTimeParseException notATime) {
             return value;
         }
+    }
+
+    /** A byte count for a person: GiB above one, else MiB above one, else the bare count; one decimal. */
+    public static String bytes(long value) {
+        double gib = value / (1024.0 * 1024.0 * 1024.0);
+        if (gib >= 1) {
+            return String.format(Locale.ROOT, "%.1f GiB", gib);
+        }
+        double mib = value / (1024.0 * 1024.0);
+        if (mib >= 1) {
+            return String.format(Locale.ROOT, "%.1f MiB", mib);
+        }
+        return value + " B";
     }
 }

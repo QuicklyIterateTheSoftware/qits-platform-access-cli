@@ -309,8 +309,48 @@ public class TargetsCommand implements Runnable {
         rows.add(List.of("last health check", text(target, "lastHealthCheckAt").isEmpty() ? "never"
                 : Table.time(text(target, "lastHealthCheckAt")) + " ("
                 + (target.path("lastHealthCheckOk").asBoolean(false) ? "ok" : "failed") + ")"));
+        rows.add(List.of("oom kills", oomKills(target)));
+        String memory = memoryRow(target);
+        if (memory != null) {
+            rows.add(List.of("memory", memory));
+        }
         rows.add(List.of("created", Table.time(text(target, "createdAt"))));
         Table.print(out, "  ", null, rows);
+    }
+
+    /**
+     * A target's node/kernel OOM kill counters (qits-1818), `memory.nodeOomKills`/`kernelOomKills`:
+     * {@code node <n>, kernel <n>}, a part left out when its value is null; {@code -} when both are
+     * (an older service, with no {@code memory} field at all, reads the same as both null).
+     */
+    static String oomKills(JsonNode target) {
+        JsonNode memory = target.path("memory");
+        List<String> parts = new ArrayList<>();
+        String node = text(memory, "nodeOomKills");
+        if (!node.isEmpty()) {
+            parts.add("node " + node);
+        }
+        String kernel = text(memory, "kernelOomKills");
+        if (!kernel.isEmpty()) {
+            parts.add("kernel " + kernel);
+        }
+        return parts.isEmpty() ? "-" : String.join(", ", parts);
+    }
+
+    /**
+     * The {@code memory} row's value: {@code limit <bytes>, reported <time>}, {@code limit none}
+     * when {@code memoryMaxBytes} is null; null (the row is left out) when {@code memory} is absent
+     * or its {@code reportedAt} is null, an older service or one that has not reported yet.
+     */
+    static String memoryRow(JsonNode target) {
+        JsonNode memory = target.path("memory");
+        String reportedAt = text(memory, "reportedAt");
+        if (reportedAt.isEmpty()) {
+            return null;
+        }
+        String maxBytes = text(memory, "memoryMaxBytes");
+        String limit = maxBytes.isEmpty() ? "none" : Table.bytes(Long.parseLong(maxBytes));
+        return "limit " + limit + ", reported " + Table.time(reportedAt);
     }
 
     // --- list ---
@@ -359,7 +399,8 @@ public class TargetsCommand implements Runnable {
     @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
             description = {"One target in full: its slots, reservations and maximums, its login state for claude "
                     + "and kimi, its login command for each (the docker run that signs its credential volume in), "
-                    + "its quarantine, and its newest connection.",
+                    + "its quarantine, its newest connection, and its node and kernel OOM kill counters with its "
+                    + "last reported memory limit.",
                     "GET /system/api/targets/{id}. " + Doors.READ},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits targets show --target localhost", "  qits targets show --target localhost -o json",
@@ -813,11 +854,41 @@ public class TargetsCommand implements Runnable {
             rows.add(List.of("work", cell(lease, "workKey", 120)));
             rows.add(List.of("priority", cell(lease, "priority", 10)));
             rows.add(List.of("exit code", cell(lease, "exitCode", 10)));
+            rows.add(List.of("oom kills", oomKills(lease)));
+            rows.add(List.of("memory peak", memoryPeak(lease)));
             rows.add(List.of("requested", Table.time(text(lease, "requestedAt"))));
             rows.add(List.of("granted", Table.time(text(lease, "grantedAt"))));
             rows.add(List.of("started", Table.time(text(lease, "startedAt"))));
             rows.add(List.of("ended", Table.time(text(lease, "endedAt"))));
             Table.print(out, "  ", null, rows);
+        }
+
+        /**
+         * A lease's OOM kills (qits-1818): {@code <n> (<scope>)}, with {@code , container OOM-killed}
+         * appended when the container's own {@code oomKilled} is true; {@code -} when {@code oomKills}
+         * is null (an older service, or a lease no OOM killer ever touched).
+         */
+        static String oomKills(JsonNode lease) {
+            String kills = text(lease, "oomKills");
+            if (kills.isEmpty()) {
+                return "-";
+            }
+            String scope = text(lease, "oomScope");
+            boolean killed = lease.path("oomKilled").asBoolean(false);
+            StringBuilder detail = new StringBuilder(scope);
+            if (killed) {
+                if (!detail.isEmpty()) {
+                    detail.append(", ");
+                }
+                detail.append("container OOM-killed");
+            }
+            return detail.isEmpty() ? kills : kills + " (" + detail + ")";
+        }
+
+        /** A lease's peak memory (qits-1818), {@code memoryPeakBytes}; {@code -} when it is null. */
+        static String memoryPeak(JsonNode lease) {
+            String bytes = text(lease, "memoryPeakBytes");
+            return bytes.isEmpty() ? "-" : Table.bytes(Long.parseLong(bytes));
         }
 
         static String leaseId(String given) throws CliFailure {
@@ -830,9 +901,9 @@ public class TargetsCommand implements Runnable {
         }
 
         @CommandLine.Command(name = "show", mixinStandardHelpOptions = true,
-                description = {"Show one lease: its slot type, owner, state and detail, its target, and when it was "
-                        + "requested, granted, started and ended. A lease the ENDING deadline or an operator ended "
-                        + "says so in its detail.",
+                description = {"Show one lease: its slot type, owner, state and detail, its target, its OOM kills "
+                        + "and peak memory, and when it was requested, granted, started and ended. A lease the "
+                        + "ENDING deadline or an operator ended says so in its detail.",
                         "GET /system/api/leases/{id}. " + Doors.LEASE},
                 footerHeading = HelpText.EXAMPLES,
                 footer = {"  qits targets leases show 3f2a9c1e-0000-4000-8000-000000000001",

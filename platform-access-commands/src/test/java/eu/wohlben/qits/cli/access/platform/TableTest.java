@@ -32,4 +32,12 @@ class TableTest {
     void aLongCellIsCutWithAnEllipsis() {
         assertThat(Table.cell("abcdefghij", 5)).isEqualTo("abcd…");
     }
+
+    @Test
+    void bytesPicksGibThenMibThenTheBareCountWithOneDecimal() {
+        assertThat(Table.bytes(17_179_869_184L)).isEqualTo("16.0 GiB");
+        assertThat(Table.bytes(1_288_490_189L)).isEqualTo("1.2 GiB");
+        assertThat(Table.bytes(5L * 1024 * 1024)).isEqualTo("5.0 MiB");
+        assertThat(Table.bytes(512)).isEqualTo("512 B");
+    }
 }
