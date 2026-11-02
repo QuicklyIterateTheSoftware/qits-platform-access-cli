@@ -323,6 +323,65 @@ class TargetsCommandsTest {
         assertThat(platform.requests).isEmpty();
     }
 
+    // --- memory and OOM kills (qits-1818) ---
+
+    private static String targetWithMemory(String memoryJson) {
+        return target("PRESENT", null).replace("\"used\":{\"ci\":1,\"workspace\":0,\"desk\":0},",
+                "\"used\":{\"ci\":1,\"workspace\":0,\"desk\":0},\"memory\":" + memoryJson + ",");
+    }
+
+    @Test
+    void showRendersOomKillsAndMemory() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, targetWithMemory(
+                "{\"nodeOomKills\":292,\"kernelOomKills\":297,\"memoryMaxBytes\":17179869184,"
+                        + "\"reportedAt\":\"2026-10-23T09:30:00Z\"}"));
+
+        Result show = run("targets", "show", "--target", TARGET);
+
+        assertThat(show.exit()).as(show.err()).isZero();
+        assertThat(show.out()).containsPattern("oom kills\\s+node 292, kernel 297");
+        assertThat(show.out()).containsPattern("memory\\s+limit 16\\.0 GiB, reported");
+    }
+
+    @Test
+    void oomKillsOmitsANullPartAndMemoryShowsLimitNone() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, targetWithMemory(
+                "{\"nodeOomKills\":5,\"kernelOomKills\":null,\"memoryMaxBytes\":null,"
+                        + "\"reportedAt\":\"2026-10-23T09:30:00Z\"}"));
+
+        Result show = run("targets", "show", "--target", TARGET);
+
+        assertThat(show.exit()).as(show.err()).isZero();
+        assertThat(show.out()).containsPattern("oom kills\\s+node 5");
+        assertThat(show.out()).containsPattern("memory\\s+limit none, reported");
+    }
+
+    @Test
+    void memoryRowIsOmittedWhenNotYetReportedAndOomKillsIsADash() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, targetWithMemory(
+                "{\"nodeOomKills\":null,\"kernelOomKills\":null,\"memoryMaxBytes\":null,\"reportedAt\":null}"));
+
+        Result show = run("targets", "show", "--target", TARGET);
+
+        assertThat(show.exit()).as(show.err()).isZero();
+        assertThat(show.out()).containsPattern("oom kills\\s+-");
+        assertThat(show.out()).doesNotContain("limit");
+    }
+
+    @Test
+    void showWithNoMemoryObjectAtAllIsAnOlderServiceAndDoesNotThrow() {
+        platform.answer("GET", "/system/api/targets/" + TARGET, target("PRESENT", "docker run --rm -it claude"));
+
+        Result show = run("targets", "show", "--target", TARGET);
+
+        assertThat(show.exit()).as(show.err()).isZero();
+        assertThat(show.out()).containsPattern("oom kills\\s+-");
+        assertThat(show.out()).doesNotContain("limit");
+        // Every field printed before this ticket is unaffected.
+        assertThat(show.out()).contains("credential volume").contains("qits_shared_dot_claude")
+                .contains("login command").contains("docker run --rm -it claude");
+    }
+
     @Test
     void greenlightSaysWhenAStillQuarantinedTargetDidNotClear() {
         platform.answer("POST", "/system/api/targets/" + TARGET + "/greenlight",
@@ -398,6 +457,52 @@ class TargetsCommandsTest {
 
         Result json = run("targets", "-o", "json", "leases", "show", LEASE);
         assertThat(JSON.readTree(json.out()).path("specHash").asText()).isEqualTo("abc");
+    }
+
+    // --- oom kills and memory peak (qits-1818) ---
+
+    private static String leaseWithOom(String state, String oomKillsJson, String oomScopeJson,
+            String memoryPeakBytesJson, String oomKilledJson) {
+        return lease(state, null).replace("\"exitCode\":null,",
+                "\"exitCode\":null,\"oomKills\":" + oomKillsJson + ",\"oomScope\":" + oomScopeJson
+                        + ",\"memoryPeakBytes\":" + memoryPeakBytesJson + ",\"oomKilled\":" + oomKilledJson + ",");
+    }
+
+    @Test
+    void leasesShowRendersOomKillsAndMemoryPeak() {
+        platform.answer("GET", "/system/api/leases/" + LEASE,
+                leaseWithOom("ENDED", "2", "\"LEASE\"", "1288490189", "true"));
+
+        Result shown = run("targets", "leases", "show", LEASE);
+
+        assertThat(shown.exit()).as(shown.err()).isZero();
+        assertThat(shown.out()).containsPattern("oom kills\\s+2 \\(LEASE, container OOM-killed\\)");
+        assertThat(shown.out()).containsPattern("memory peak\\s+1\\.2 GiB");
+    }
+
+    @Test
+    void leasesShowWithANodeScopeAndNoContainerKillOmitsTheSuffix() {
+        platform.answer("GET", "/system/api/leases/" + LEASE,
+                leaseWithOom("RUNNING", "2", "\"NODE\"", "null", "false"));
+
+        Result shown = run("targets", "leases", "show", LEASE);
+
+        assertThat(shown.exit()).as(shown.err()).isZero();
+        assertThat(shown.out()).containsPattern("oom kills\\s+2 \\(NODE\\)");
+        assertThat(shown.out()).containsPattern("memory peak\\s+-");
+    }
+
+    @Test
+    void leasesShowWithNoneOfTheFieldsAtAllIsAnOlderServiceAndDoesNotThrow() {
+        platform.answer("GET", "/system/api/leases/" + LEASE, lease("RUNNING", null));
+
+        Result shown = run("targets", "leases", "show", LEASE);
+
+        assertThat(shown.exit()).as(shown.err()).isZero();
+        assertThat(shown.out()).containsPattern("oom kills\\s+-");
+        assertThat(shown.out()).containsPattern("memory peak\\s+-");
+        // Every field printed before this ticket is unaffected.
+        assertThat(shown.out()).contains(LEASE).contains("qits-ci/run-7").contains("RUNNING").contains(TARGET);
     }
 
     @Test

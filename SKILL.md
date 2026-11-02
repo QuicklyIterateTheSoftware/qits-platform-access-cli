@@ -4135,7 +4135,7 @@ qits targets list -o json
 
 ## qits targets show
 
-One target in full: its slots, reservations and maximums, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, and its newest connection.
+One target in full: its slots, reservations and maximums, its login state for claude and kimi, its login command for each (the docker run that signs its credential volume in), its quarantine, its newest connection, and its node and kernel OOM kill counters with its last reported memory limit.
 
 GET /system/api/targets/{id}. Any credential may call it, qits:agent included.
 
@@ -4434,7 +4434,7 @@ qits targets leases end 3f2a9c1e-0000-4000-8000-000000000001 --reason 'stuck in 
 
 ## qits targets leases show
 
-Show one lease: its slot type, owner, state and detail, its target, and when it was requested, granted, started and ended. A lease the ENDING deadline or an operator ended says so in its detail.
+Show one lease: its slot type, owner, state and detail, its target, its OOM kills and peak memory, and when it was requested, granted, started and ended. A lease the ENDING deadline or an operator ended says so in its detail.
 
 GET /system/api/leases/{id}. qits:admin, qits:admin-agent, qits:desk-admin and qits:agent read any lease; qits:system reads only its own.
 
