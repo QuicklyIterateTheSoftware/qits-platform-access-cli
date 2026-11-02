@@ -60,8 +60,11 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "Fix the branch and push; do not open a new request.",
                 "- When a red build was the platform's fault and not the code's (a flaked container, a registry "
                         + "that was down), retry that run with `qits ci retry <run id>`: it builds the same commit "
-                        + "again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new "
-                        + "request, and do not withdraw this one.",
+                        + "again. `qits ci runs --release-request <id>` finds the request's runs. A red "
+                        + "automation's run (a dependency bump, golden recordings, the entity diagram, screenshot "
+                        + "baselines, cli-tapes, estate pins) is re-run with `qits release-request regenerate "
+                        + "--kind <kind>` instead, not `qits ci retry`. Do not open a new request, and do not "
+                        + "withdraw this one.",
                 "- When one branch alone holds a shared request back (it conflicts, its check is red, it is not "
                         + "ready), move it with `move`: do not force-push it back to main, and do not hold the "
                         + "others. An agent whose own branch blocks a shared request moves it itself.",

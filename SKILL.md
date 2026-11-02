@@ -1963,7 +1963,7 @@ create, join, withdraw, approve and decline print the request's quality gates as
 ### Notes
 
 - A REJECTED or CONFLICTED request comes back by itself when one of its branches gets a new push. Fix the branch and push; do not open a new request.
-- When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. Do not open a new request, and do not withdraw this one.
+- When a red build was the platform's fault and not the code's (a flaked container, a registry that was down), retry that run with `qits ci retry <run id>`: it builds the same commit again. `qits ci runs --release-request <id>` finds the request's runs. A red automation's run (a dependency bump, golden recordings, the entity diagram, screenshot baselines, cli-tapes, estate pins) is re-run with `qits release-request regenerate --kind <kind>` instead, not `qits ci retry`. Do not open a new request, and do not withdraw this one.
 - When one branch alone holds a shared request back (it conflicts, its check is red, it is not ready), move it with `move`: do not force-push it back to main, and do not hold the others. An agent whose own branch blocks a shared request moves it itself.
 - `withdraw` is only for a request that must not ship: the change is wrong, or nobody wants it any more. WITHDRAWN is final.
 - approve and decline judge one fold: the request's merged sha. A push that folds the request again leaves the decision behind, and the new fold waits for a decision of its own.
@@ -2450,7 +2450,7 @@ qits ci run 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17 -o json | jq -r .status
 
 Run a finished CI run again: the same commit, the same pipeline, the same release request.
 
-For a red run that was the platform's fault, not the code's: a flaked container, a registry that was down, a step that ran out of time on a busy host. The new run is queued; the command prints its id and how to follow it. Its verdict counts for the release request like the first run's would have.
+For a red run that was the platform's fault, not the code's: a flaked container, a registry that was down, a step that ran out of time on a busy host. The new run is queued; the command prints its id and how to follow it. Its verdict counts for the release request like the first run's would have. A release-request automation's run (a dependency bump, golden recordings, the entity diagram, screenshot baselines, cli-tapes, estate pins) is refused instead (HTTP 409): re-run it with `qits release-request regenerate --kind <kind>`.
 
 ```
 qits ci retry [--ci-url <url>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <run id>
@@ -2479,7 +2479,7 @@ qits ci retry 5f2c0a9e --project qits --repository qits-ci-service
 ### Exit codes
 
 - `0` The new run is queued.
-- `1` The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
+- `1` The platform refused: the run has not finished yet (HTTP 409), the run is an automation's run (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it (HTTP 403). Or it cannot be reached.
 - `2` Used wrongly (for example an id start that fits no run of the repository, or more than one), not signed in, or the session ended.
 
 ## qits ci cancel

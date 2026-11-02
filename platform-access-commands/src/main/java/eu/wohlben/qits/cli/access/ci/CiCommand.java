@@ -416,7 +416,10 @@ public class CiCommand implements Runnable {
                     "For a red run that was the platform's fault, not the code's: a flaked container, a registry that "
                             + "was down, a step that ran out of time on a busy host. The new run is queued; the "
                             + "command prints its id and how to follow it. Its verdict counts for the release request "
-                            + "like the first run's would have."},
+                            + "like the first run's would have. A release-request automation's run (a dependency "
+                            + "bump, golden recordings, the entity diagram, screenshot baselines, cli-tapes, estate "
+                            + "pins) is refused instead (HTTP 409): re-run it with `qits release-request regenerate "
+                            + "--kind <kind>`."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits ci retry 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17",
@@ -428,8 +431,9 @@ public class CiCommand implements Runnable {
                     "- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The new run is queued.",
-                    "1:The platform refused: the run has not finished yet (HTTP 409), there is no such run (HTTP 404), "
-                            + "or your roles do not allow it (HTTP 403). Or it cannot be reached.",
+                    "1:The platform refused: the run has not finished yet (HTTP 409), the run is an automation's "
+                            + "run (HTTP 409), there is no such run (HTTP 404), or your roles do not allow it "
+                            + "(HTTP 403). Or it cannot be reached.",
                     "2:Used wrongly (for example an id start that fits no run of the repository, or more than one), "
                             + "not signed in, or the session ended."})
     public static class RetryCommand extends PlatformCommand {
