@@ -10,6 +10,7 @@ import eu.wohlben.qits.cli.access.platform.Table;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
@@ -26,6 +27,12 @@ final class WorkEntities {
      * {@code membership} is built from {@code parent} and {@code position}. These are the door's
      * field names, not a schema: which of them a target archetype takes is the served schema's call,
      * and whatever it does not list is dropped.
+     * <p>
+     * {@code tags} (qits-634) is deliberately not here: it is not a registry property an archetype's
+     * schema carries a slot for (the transition schema lists none), so it would be dropped on every
+     * transition anyway, with a stderr warning for a property this door never meant to move. The
+     * service keeps a work item's tags as they stood through a transition on its own, outside the
+     * full-state merge.
      */
     static final List<String> CARRIED = List.of("title", "description", "status", "outcome", "ticketType", "impetus",
             "assignee", "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn", "acceptanceCriteria");
@@ -64,6 +71,33 @@ final class WorkEntities {
             String by = text(e, "supersededBy");
             return !by.isEmpty() && (by.equals(id) || by.equals(qualified));
         }).toList();
+    }
+
+    /** The item's tags, as the service names them (its enum names); empty when it carries none. */
+    private static List<String> tags(JsonNode e) {
+        JsonNode array = e.path("tags");
+        List<String> all = new ArrayList<>();
+        if (array.isArray()) {
+            array.forEach(t -> {
+                String name = t.asText();
+                if (!name.isEmpty()) {
+                    all.add(name);
+                }
+            });
+        }
+        return all;
+    }
+
+    /** A tag's display text: lower case, its underscores as spaces ({@code RESERVED_FOR_HUMAN} to "reserved for human"). */
+    private static String tagDisplay(String tag) {
+        return tag.toLowerCase(Locale.ROOT).replace('_', ' ');
+    }
+
+    /** The item's tags, display text, comma-joined; empty when it carries none. */
+    private static String tagsText(JsonNode e) {
+        List<String> words = new ArrayList<>();
+        tags(e).forEach(tag -> words.add(tagDisplay(tag)));
+        return String.join(", ", words);
     }
 
     /** The status, with the outcome beside it when the service sent one: {@code DROPPED (DUPLICATE)}. */
@@ -214,12 +248,16 @@ final class WorkEntities {
         printRows(out, "", List.of(answer));
     }
 
-    /** ID (qualified), ARCHETYPE, STATUS, BLOCKED when one is, TITLE, UPDATED. */
+    /** ID (qualified), ARCHETYPE, STATUS, BLOCKED when one is, TAGS when one carries any, TITLE, UPDATED. */
     static void printRows(PrintStream out, String indent, List<JsonNode> entities) {
         boolean anyBlocked = entities.stream().anyMatch(WorkEntities::blocked);
+        boolean anyTagged = entities.stream().anyMatch(e -> !tags(e).isEmpty());
         List<String> headers = new ArrayList<>(List.of("ID", "ARCHETYPE", "STATUS"));
         if (anyBlocked) {
             headers.add("BLOCKED");
+        }
+        if (anyTagged) {
+            headers.add("TAGS");
         }
         headers.add("TITLE");
         headers.add("UPDATED");
@@ -229,6 +267,10 @@ final class WorkEntities {
                     cell(status(e), 30)));
             if (anyBlocked) {
                 row.add(blockedCell(e));
+            }
+            if (anyTagged) {
+                String joined = tagsText(e);
+                row.add(cell(joined.isEmpty() ? "-" : joined, 40));
             }
             row.add(cell(text(e, "title"), 70));
             row.add(Table.time(text(e, "updatedAt")));
@@ -250,6 +292,10 @@ final class WorkEntities {
         rows.add(row("status", status(e)));
         if (e.has("blocked") && !e.get("blocked").isNull()) {
             rows.add(row("blocked", blockedDetail(e)));
+        }
+        String tagsText = tagsText(e);
+        if (!tagsText.isEmpty()) {
+            rows.add(row("tags", tagsText));
         }
         optional(rows, e, "ticket type", "ticketType");
         optional(rows, e, "impetus", "impetus");

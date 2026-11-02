@@ -310,23 +310,26 @@ public final class ProjectsApi {
      */
     public JsonNode projectWork(String project, String archetype, String status, String parent)
             throws CliFailure, InterruptedException {
-        return projectWork(project, archetype, status, parent, null, null);
+        return projectWork(project, archetype, status, parent, null, null, null);
     }
 
     /**
-     * The same list with the two filters qits-248 adds: {@code outcome} (why a DROPPED item was
-     * dropped) and {@code supersededBy} (the items naming that one, a qualified id or an id, as
-     * theirs). A service older than qits-248 ignores both and answers the unfiltered list, so a
-     * caller that relies on either filters the answer again itself.
+     * The same list with the filters qits-248 and qits-634 add: {@code outcome} (why a DROPPED item
+     * was dropped), {@code supersededBy} (the items naming that one, a qualified id or an id, as
+     * theirs) and {@code tag} (only items carrying it; the service reads its enum name or its kebab
+     * form, either case, and answers HTTP 400 for anything else). A service older than qits-248
+     * ignores the first two and answers the unfiltered list, so a caller that relies on either
+     * filters the answer again itself.
      */
     public JsonNode projectWork(String project, String archetype, String status, String parent, String outcome,
-            String supersededBy) throws CliFailure, InterruptedException {
+            String supersededBy, String tag) throws CliFailure, InterruptedException {
         List<String> query = new ArrayList<>();
         addQuery(query, "archetype", archetype);
         addQuery(query, "status", status);
         addQuery(query, "parent", parent);
         addQuery(query, "outcome", outcome);
         addQuery(query, "supersededBy", supersededBy);
+        addQuery(query, "tag", tag);
         return client.get(uri("/projects/api/projects/" + segment(project) + "/work"
                 + (query.isEmpty() ? "" : "?" + String.join("&", query))));
     }

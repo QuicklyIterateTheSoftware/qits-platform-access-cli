@@ -132,6 +132,22 @@ class WorkCommandsTest {
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","blocked":false}
             """.formatted(NOT_BLOCKED_TICKET, PROJECT);
 
+    // --- tags (qits-634): a ticket reserved for a person, and one that carries none. ---
+
+    private static final String TAGGED_TICKET = "e0e0e0e0-0000-4000-8000-00000000000d";
+    private static final String TAGGED_TICKET_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":750,"qualifiedId":"qits-750",
+             "title":"Needs a person","description":"d","status":"READY_FOR_DEV","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":["RESERVED_FOR_HUMAN"]}
+            """.formatted(TAGGED_TICKET, PROJECT);
+
+    private static final String UNTAGGED_TICKET = "e1e1e1e1-0000-4000-8000-00000000000e";
+    private static final String UNTAGGED_TICKET_ROW = """
+            {"id":"%s","archetype":"TICKET","projectId":"%s","number":751,"qualifiedId":"qits-751",
+             "title":"Ordinary","description":"d","status":"READY_FOR_DEV","createdBy":"bob",
+             "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[]}
+            """.formatted(UNTAGGED_TICKET, PROJECT);
+
     // --- outcome (qits-248): a ticket dropped as qits-548's duplicate, one dropped as obsolete, and an
     // epic dropped before the service sent outcomes at all. ---
 
@@ -730,6 +746,40 @@ class WorkCommandsTest {
     }
 
     @Test
+    void listByTagSendsItAsGivenAndLetsTheServiceJudgeIt() {
+        Result r = run("work", "list", "--project", "qits", "--tag", "reserved-for-human");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(platform.requests("GET", LIST).getFirst().query()).isEqualTo("tag=reserved-for-human");
+    }
+
+    @Test
+    void listShowsATagsColumnOnlyWhenSomeItemCarriesOneAndADashForTheRest() {
+        platform.answer("GET", LIST, "{\"entities\":[" + TAGGED_TICKET_ROW + "," + UNTAGGED_TICKET_ROW + "]}");
+
+        Result r = run("work", "list", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        List<String> lines = r.out().lines().toList();
+        assertThat(lines.getFirst()).contains("TAGS");
+        assertThat(tagsColumn(lines.get(1))).isEqualTo("reserved for human");
+        assertThat(tagsColumn(lines.get(2))).isEqualTo("-");
+    }
+
+    @Test
+    void listWithNoTaggedItemShowsNoTagsColumn() {
+        Result r = run("work", "list", "--project", "qits", "--archetype", "ticket", "--status", "reported");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out().lines().findFirst().orElseThrow()).doesNotContain("TAGS");
+    }
+
+    /** The TAGS column of a `work list` row with no BLOCKED column: ID, ARCHETYPE, STATUS, TAGS, TITLE, UPDATED. */
+    private static String tagsColumn(String row) {
+        return row.strip().split("\\s{2,}")[3];
+    }
+
+    @Test
     void listShowsTheOutcomeBesideDropped() {
         platform.answer("GET", LIST, "{\"entities\":[" + DUPLICATE_ROW + "," + OBSOLETE_ROW + ","
                 + LEGACY_DROPPED_ROW + "]}");
@@ -994,6 +1044,27 @@ class WorkCommandsTest {
         return out.lines().filter(line -> line.strip().startsWith("blocked")).findFirst()
                 .orElseThrow(() -> new AssertionError("no blocked row in:%n%s".formatted(out)))
                 .strip().replaceFirst("^blocked\\s+", "");
+    }
+
+    @Test
+    void detailsShowsATagsLineWithItsDisplayTextWhenTheItemCarriesOne() {
+        Result r = detailsOf("qits-750", TAGGED_TICKET_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(tagsRow(r.out())).isEqualTo("reserved for human");
+    }
+
+    @Test
+    void detailsOmitsTheTagsLineWhenTheItemCarriesNone() {
+        Result r = detailsOf("qits-751", UNTAGGED_TICKET_ROW);
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).doesNotContain("tags");
+    }
+
+    /** The value of the details table's "tags" row, with no padding around it. */
+    private static String tagsRow(String out) {
+        return out.lines().filter(line -> line.strip().startsWith("tags")).findFirst()
+                .orElseThrow(() -> new AssertionError("no tags row in:%n%s".formatted(out)))
+                .strip().replaceFirst("^tags\\s+", "");
     }
 
     @Test

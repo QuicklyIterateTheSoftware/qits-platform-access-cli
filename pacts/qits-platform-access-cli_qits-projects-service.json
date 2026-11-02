@@ -2735,6 +2735,7 @@
             "outcome": null,
             "qualifiedId": "contract-00000001-1",
             "status": "REPORTED",
+            "tags": [],
             "title": "Export fails for an empty quarter",
             "updatedAt": "2026-01-01T00:00:00Z"
           },
@@ -18489,6 +18490,7 @@
             "outcome": null,
             "qualifiedId": "contract-00000001-1",
             "status": "REPORTED",
+            "tags": [],
             "title": "Export fails for an empty quarter",
             "updatedAt": "2026-01-01T00:00:00Z"
           },
@@ -18638,6 +18640,16 @@
                 "description": "The project the new TICKET goes in: its id or its slug.",
                 "pattern": "\\S",
                 "type": "string"
+              },
+              "tags": {
+                "description": "The work's tags, the whole set: RESERVED_FOR_HUMAN — the work cannot be completed by an agent and a person has to do it (say why in the description); no agent is dispatched onto it. Editable at every status, outside every scope freeze; an empty array or null clears them.",
+                "items": {
+                  "enum": [
+                    "RESERVED_FOR_HUMAN"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
               },
               "ticketType": {
                 "description": "A ticket's kind.",
@@ -18808,6 +18820,48 @@
               ]
             },
             "$.properties.project.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.items.enum": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.properties.tags.items.enum[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.items.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.type": {
               "combine": "AND",
               "matchers": [
                 {
@@ -19937,6 +19991,7 @@
             "repositoryId": null,
             "status": "IMPLEMENTING",
             "supersededBy": null,
+            "tags": [],
             "ticketType": null,
             "title": "Export invoices for the accountants",
             "updatedAt": "2026-01-01T00:00:00Z"
@@ -20131,6 +20186,7 @@
                 "qualifiedId": "contract-00000001-2",
                 "status": "DROPPED",
                 "supersededBy": "00000000-0000-4000-8000-000000000003",
+                "tags": [],
                 "title": "Deploys fail on a refused connection",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -20142,6 +20198,7 @@
                 "qualifiedId": "contract-00000001-2",
                 "status": "DROPPED",
                 "supersededBy": "00000000-0000-4000-8000-000000000003",
+                "tags": [],
                 "title": "Deploys fail on a refused connection",
                 "updatedAt": "2026-01-01T00:00:00Z"
               }
@@ -20324,6 +20381,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-3",
                 "status": "IMPLEMENTED",
+                "tags": [],
                 "title": "CSV export",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -20333,6 +20391,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-3",
                 "status": "IMPLEMENTED",
+                "tags": [],
                 "title": "CSV export",
                 "updatedAt": "2026-01-01T00:00:00Z"
               }
@@ -22098,6 +22157,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-1",
                 "status": "REPORTED",
+                "tags": [],
                 "title": "Reported epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22108,6 +22168,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-2",
                 "status": "REPORTED",
+                "tags": [],
                 "title": "Reported ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22118,6 +22179,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-3",
                 "status": "REFINED",
+                "tags": [],
                 "title": "Refined epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22128,6 +22190,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-4",
                 "status": "REFINED",
+                "tags": [],
                 "title": "Refined ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22138,6 +22201,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-5",
                 "status": "READY_FOR_DEV",
+                "tags": [],
                 "title": "Ready for dev epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22148,6 +22212,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-6",
                 "status": "READY_FOR_DEV",
+                "tags": [],
                 "title": "Ready for dev ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22158,6 +22223,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-7",
                 "status": "IMPLEMENTING",
+                "tags": [],
                 "title": "Implementing epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22168,6 +22234,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-8",
                 "status": "IMPLEMENTING",
+                "tags": [],
                 "title": "Implementing ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22178,6 +22245,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-9",
                 "status": "IMPLEMENTED",
+                "tags": [],
                 "title": "Implemented epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22188,6 +22256,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-10",
                 "status": "IMPLEMENTED",
+                "tags": [],
                 "title": "Implemented ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22198,6 +22267,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-11",
                 "status": "VERIFYING",
+                "tags": [],
                 "title": "Verifying epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22208,6 +22278,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-12",
                 "status": "VERIFYING",
+                "tags": [],
                 "title": "Verifying ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22218,6 +22289,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-13",
                 "status": "VERIFIED",
+                "tags": [],
                 "title": "Verified epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22228,6 +22300,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-14",
                 "status": "VERIFIED",
+                "tags": [],
                 "title": "Verified ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22238,6 +22311,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-15",
                 "status": "DONE",
+                "tags": [],
                 "title": "Done epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22248,6 +22322,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-16",
                 "status": "DONE",
+                "tags": [],
                 "title": "Done ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22258,6 +22333,7 @@
                 "outcome": "OBSOLETE",
                 "qualifiedId": "contract-00000001-17",
                 "status": "DROPPED",
+                "tags": [],
                 "title": "Dropped epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22268,6 +22344,7 @@
                 "outcome": "OBSOLETE",
                 "qualifiedId": "contract-00000001-18",
                 "status": "DROPPED",
+                "tags": [],
                 "title": "Dropped ticket",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22278,6 +22355,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-19",
                 "status": "IMPLEMENTING",
+                "tags": [],
                 "title": "Started epic",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22287,6 +22365,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-20",
                 "status": "IMPLEMENTING",
+                "tags": [],
                 "title": "Started feature",
                 "updatedAt": "2026-01-01T00:00:00Z"
               },
@@ -22296,6 +22375,7 @@
                 "outcome": null,
                 "qualifiedId": "contract-00000001-21",
                 "status": "IMPLEMENTING",
+                "tags": [],
                 "title": "Started task",
                 "updatedAt": "2026-01-01T00:00:00Z"
               }
@@ -27149,6 +27229,7 @@
             "outcome": null,
             "qualifiedId": "contract-00000001-1",
             "status": "REFINED",
+            "tags": [],
             "title": "Database runs out of connection slots during deploys",
             "updatedAt": "2026-01-01T00:00:00Z"
           },
@@ -27905,6 +27986,7 @@
               "outcome": null,
               "qualifiedId": "contract-00000001-1",
               "status": "REPORTED",
+              "tags": [],
               "title": "Database refuses connections during deploys",
               "updatedAt": "2026-01-01T00:00:00Z"
             }
@@ -28288,6 +28370,19 @@
                   "integer"
                 ]
               },
+              "tags": {
+                "description": "The work's tags, the whole set: RESERVED_FOR_HUMAN — the work cannot be completed by an agent and a person has to do it (say why in the description); no agent is dispatched onto it. Editable at every status, outside every scope freeze; an empty array or null clears them.",
+                "items": {
+                  "enum": [
+                    "RESERVED_FOR_HUMAN"
+                  ],
+                  "type": "string"
+                },
+                "type": [
+                  "array",
+                  "array"
+                ]
+              },
               "ticketType": {
                 "description": "A ticket's kind.",
                 "enum": [
@@ -28511,6 +28606,58 @@
                 }
               ]
             },
+            "$.properties.tags.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.items.enum": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 1,
+                  "min": 1
+                }
+              ]
+            },
+            "$.properties.tags.items.enum[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.items.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.tags.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.properties.tags.type[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
             "$.properties.ticketType.description": {
               "combine": "AND",
               "matchers": [
@@ -28645,6 +28792,7 @@
             "outcome": null,
             "qualifiedId": "contract-00000001-1",
             "status": "REPORTED",
+            "tags": [],
             "title": "Database refuses connections during deploys",
             "updatedAt": "2026-01-01T00:00:00Z"
           },
