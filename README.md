@@ -638,6 +638,14 @@ Installing it is not part of this version.
     qits ideas --entity <idea id> archive --reason <text>
     qits ideas --entity <idea id> unarchive
     <payload> | qits ideas --entity <idea id> spawn --archetype EPIC|TICKET
+    qits work --entity <id or qualified id> milestones list|attach|detach [--milestone <id>]
+    qits work --entity <campaign> members milestones --member <membership> --milestone <id>...|--none
+    qits milestones list --project <project> [--met true|false]
+    qits milestones --milestone <id> details
+    <payload> | qits milestones create --project <project>
+    qits milestones --milestone <id> rename --name <text>
+    <payload> | qits milestones --milestone <id> criteria
+    qits milestones --milestone <id> approve --criterion <id> [--note <text>]
     qits release-request --project <project> [--repository <repository>] list \
         [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
@@ -882,8 +890,21 @@ filtered again for the same reason. When that read is refused, stderr says so an
 printed. A campaign also shows its members (`…/members`, a relation of their own, not its children),
 in position order, each with the condition it waits on: `waits on nothing`, or each group (`waits
 on:`, then `or:` for the next) with its criteria under it, `[x]` for one that has held and `[ ]` for
-one that has not; an `ENTITY_STATUS` criterion names the member by its qualified id. No other
-archetype asks for members. `-o json` prints `{"entity": …, "comments": […], "children": […],
+one that has not; an `ENTITY_STATUS` criterion names the member by its qualified id, and a member that
+needs a milestone not met yet has a `needs:` line naming it. No other archetype asks for members.
+
+**What an item needs** (epic qits-615). A work read carries the item's `milestones` (`id`,
+`displayName`, `satisfiedAt`) and `unmetMilestones`, the count of those not met. `list` adds a
+`NEEDS` column when some item needs a milestone that is not met yet, naming those milestones (`-`
+for an item that needs none; only the count when an answer names none), and `details` a `needs` line
+with the unmet ones and a `milestones met` line with the rest. The word is "needs" on purpose:
+"waiting" and "waiting on" are an agent's (the `AGENT_WAITING` block, a declared `qits wait`). `work
+milestones list|attach|detach --entity <item> [--milestone <id>]` reads and edits what one item needs
+(`GET`, `PUT` and `DELETE /projects/api/work/{entity}/milestones[/{milestone}]`, each answering the
+list as it now stands), and `work members milestones --member <membership> --milestone <id>...` (or
+`--none`) sets, whole, what a campaign member needs before it is dispatched (`PUT
+/projects/api/work/{entity}/members/{membershipId}/milestones`, `{"milestoneIds":[…]}`). The
+milestones themselves are `qits milestones`. `-o json` prints `{"entity": …, "comments": […], "children": […],
 "supersedes": […]}`, and a campaign's adds `"members": […]` as `members list` reads it.
 
 **Writes read a JSON payload on stdin.** A payload that is not one JSON object is a usage error
@@ -971,6 +992,38 @@ in, what is still missing and the archetype's create schema. `qits work create` 
     qits ideas --entity <idea id> details
     qits ideas --entity <idea id> archive --reason 'Folded into the cache epic.'
     echo '{}' | qits ideas --entity <idea id> spawn --archetype epic
+
+### qits milestones
+
+`qits milestones` is a project's milestones (epic qits-615): named, foreseeable conditions that work
+needs met before it can go on ("bootstrap test node"), each shared by any number of items. A
+milestone has no lifecycle: it holds or it does not. Its condition is the DNF a campaign member used
+to carry alone, groups OR'd of criteria AND'd, and each criterion, each group and the milestone keep
+the date they came to hold. `ENTITY_STATUS` (a work item of the same project reaching a status)
+latches from the current state, so an item already there meets it at once (evidence
+`CURRENT_STATE`); `DEPLOYMENT_ACTIVE` and `SCM_RELEASE` latch only on events after the criterion was
+made; `APPROVAL` is a person's yes, `approve`. Editing a criterion clears its latch, so a met
+milestone can become unmet again (`MilestoneUnmet`; `MilestoneMet` when it holds).
+
+- `list --project <p> [--met true|false]` (`GET /projects/api/projects/{p}/milestones`): id, met,
+  since when, how many criteria hold of how many, the items that need it, the name.
+- `details --milestone <id>` (`GET /projects/api/milestones/{id}`): the condition, each criterion
+  with its id (what `approve` and a restated criterion take), its date and its evidence or
+  approval; the items that need it and the campaign memberships it gates.
+- `create --project <p>` and `--milestone <id> criteria` read `{"displayName","groups":[…]}` and
+  `{"groups":[…]}` on stdin and send them unchanged (`POST …/projects/{p}/milestones`, `PUT
+  …/milestones/{id}/groups`); with nothing put in they print the request body's schema from the
+  service's OpenAPI document, as `qits work` does. `criteria` is whole: a criterion restated with its
+  id, kind and predicate keeps its latch, a left-out one is deleted.
+- `rename --name <text>` (`PATCH …/milestones/{id}`, `{"displayName"}`) and `approve --criterion <id>
+  [--note <text>]` (`POST …/milestones/{id}/criteria/{criterion}/approve`, a person's or the
+  project's delivery desk's; an agent is answered HTTP 403).
+
+    qits milestones list --project qits --met false
+    echo '{"displayName":"bootstrap test node","groups":[{"criteria":[{"kind":"APPROVAL","predicate":{}}]}]}' \
+        | qits milestones create --project qits
+    qits work --entity qits-102 milestones attach --milestone <milestone id>
+    qits milestones --milestone <milestone id> approve --criterion <criterion id> --note 'Node 7 is up.'
 
 ### qits release-request
 

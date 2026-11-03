@@ -15,9 +15,9 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "milestones", mixinStandardHelpOptions = true,
         subcommands = {WorkMilestonesCommand.ListCommand.class, WorkMilestonesCommand.AttachCommand.class,
                 WorkMilestonesCommand.DetachCommand.class},
-        description = {"The milestones a work item needs: list shows them, attach adds one, detach takes one off. "
-                + "An item needs every milestone attached to it; `qits work list` and `qits work details` show the "
-                + "unmet ones as what it still needs.",
+        description = {"The milestones a work item needs, attached and taken off one at a time.",
+                "list shows them, attach adds one, detach takes one off. An item needs every milestone attached to "
+                        + "it; `qits work list` and `qits work details` show the unmet ones as what it still needs.",
                 "The milestones themselves - their names and criteria - are `qits milestones`."},
         footerHeading = "%nNotes:%n",
         footer = {

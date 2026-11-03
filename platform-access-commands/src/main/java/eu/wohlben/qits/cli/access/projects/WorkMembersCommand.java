@@ -34,11 +34,12 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 WorkMembersCommand.ConditionCommand.class, WorkMembersCommand.MemberMilestonesCommand.class},
         description = {"The members of a campaign: the epics and tickets it runs, in order, each with the "
                 + "condition it waits on. list shows them, add gathers one, move reorders, remove takes one out, "
-                + "condition replaces what one waits on, and milestones sets the milestones one needs. `qits work "
-                + "progress` shows how they are doing.",
+                + "and condition replaces what one waits on. `qits work progress` shows how they are doing.",
                 "A condition is groups OR'd of criteria AND'd: a member waits until every criterion of at least "
-                        + "one group holds. A member is dispatched once all of its milestones are met (`qits "
-                        + "milestones`); once claimed, a milestone that becomes unmet again changes nothing for it."},
+                        + "one group holds.",
+                "milestones sets the milestones a member needs (`qits milestones`): it is dispatched once all of "
+                        + "them are met, and once claimed, a milestone that becomes unmet again changes nothing for "
+                        + "it."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --entity is the campaign. --member is a membership's id, as list prints it, not the member "

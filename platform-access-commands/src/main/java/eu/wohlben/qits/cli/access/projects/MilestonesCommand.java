@@ -41,10 +41,11 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {MilestonesCommand.ListCommand.class, MilestonesCommand.DetailsCommand.class,
                 MilestonesCommand.CreateCommand.class, MilestonesCommand.RenameCommand.class,
                 MilestonesCommand.CriteriaCommand.class, MilestonesCommand.ApproveCommand.class},
-        description = {"A project's milestones: named, foreseeable things that must be met before work can go on "
-                        + "(\"bootstrap test node\"). list shows a project's milestones, details shows one with its "
-                        + "criteria and the items that need it, create writes one, rename renames it, criteria "
-                        + "replaces its condition, and approve says yes to an APPROVAL criterion.",
+        description = {"A project's milestones: named, foreseeable conditions an item needs met before it can go "
+                        + "on (\"bootstrap test node\"), shared by any number of items.",
+                "list shows a project's milestones, details shows one with its criteria and the items that need it, "
+                        + "create writes one, rename renames it, criteria replaces its condition, and approve says "
+                        + "yes to an APPROVAL criterion.",
                 "A milestone's condition is groups OR'd of criteria AND'd: it is met while every criterion of at "
                         + "least one group holds. Each criterion, each group and the milestone keep the date they "
                         + "came to hold. Editing a criterion clears its latch, so a met milestone can become unmet "
