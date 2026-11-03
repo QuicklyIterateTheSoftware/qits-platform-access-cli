@@ -15863,6 +15863,7 @@
       "request": {
         "body": {
           "content": {
+            "archetype": "SERVICE",
             "component": "contract",
             "name": "contract-service"
           },
