@@ -31,12 +31,14 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 @CommandLine.Command(name = "members", mixinStandardHelpOptions = true,
         subcommands = {WorkMembersCommand.ListCommand.class, WorkMembersCommand.AddCommand.class,
                 WorkMembersCommand.MoveCommand.class, WorkMembersCommand.RemoveCommand.class,
-                WorkMembersCommand.ConditionCommand.class},
+                WorkMembersCommand.ConditionCommand.class, WorkMembersCommand.MemberMilestonesCommand.class},
         description = {"The members of a campaign: the epics and tickets it runs, in order, each with the "
                 + "condition it waits on. list shows them, add gathers one, move reorders, remove takes one out, "
-                + "and condition replaces what one waits on. `qits work progress` shows how they are doing.",
+                + "condition replaces what one waits on, and milestones sets the milestones one needs. `qits work "
+                + "progress` shows how they are doing.",
                 "A condition is groups OR'd of criteria AND'd: a member waits until every criterion of at least "
-                        + "one group holds."},
+                        + "one group holds. A member is dispatched once all of its milestones are met (`qits "
+                        + "milestones`); once claimed, a milestone that becomes unmet again changes nothing for it."},
         footerHeading = "%nNotes:%n",
         footer = {
                 "- --entity is the campaign. --member is a membership's id, as list prints it, not the member "
@@ -266,19 +268,86 @@ public class WorkMembersCommand implements Runnable {
         }
     }
 
+    @CommandLine.Command(name = "milestones", mixinStandardHelpOptions = true,
+            description = {"Set the milestones a campaign member needs, whole: it is dispatched once every one of "
+                    + "them is met.",
+                    "Sends {\"milestoneIds\":[...]} to PUT "
+                            + "/projects/api/work/{entity}/members/{membershipId}/milestones and prints the member. "
+                            + "What you name is the whole list afterwards; --none needs nothing. Each must be a "
+                            + "milestone of the campaign's project, and the member item is attached to each, so "
+                            + "`qits work details` shows it. A milestone left off stays attached to the item, "
+                            + "except the member's generated condition, which is deleted once nothing needs it."},
+            footerHeading = HelpText.EXAMPLES,
+            footer = {
+                    "  qits work --entity qits-130 members milestones --member 5f2c0a9e-... --milestone "
+                            + "45a14f8e-... --milestone 7b0e11d2-...",
+                    "  qits work --entity qits-130 members milestones --member 5f2c0a9e-... --none",
+                    "",
+                    "- Refused once the member is claimed, and on a DROPPED campaign."},
+            exitCodeListHeading = HelpText.EXIT_CODES,
+            exitCodeList = {"0:The member's milestones are set.",
+                    "1:The platform refused (for example another project, HTTP 403, no such campaign, membership or "
+                            + "milestone, HTTP 404, or a claimed member, a DROPPED campaign or a milestone of another "
+                            + "project, HTTP 409), or cannot be reached.",
+                    "2:Used wrongly (for example no --entity or no --member, or neither --milestone nor --none), "
+                            + "not signed in, or the session ended."})
+    public static class MemberMilestonesCommand extends PlatformCommand {
+
+        @CommandLine.ParentCommand
+        WorkMembersCommand members;
+
+        @CommandLine.Option(names = "--member", paramLabel = "<membership>",
+                description = "The membership (required): its id, as list prints it.")
+        String member;
+
+        @CommandLine.Option(names = "--milestone", paramLabel = "<milestone>",
+                description = "A milestone the member needs: its id. Repeat it for each.")
+        List<String> milestones;
+
+        @CommandLine.Option(names = "--none", description = "The member needs no milestone.")
+        boolean none;
+
+        @Override
+        protected int execute(CliContext context) throws CliFailure, InterruptedException {
+            WorkCommand work = members.work;
+            boolean json = json(work.options.output);
+            String entity = work.entity();
+            String id = RepositoriesCommand.required(member, NAME_THE_MEMBER);
+            List<String> named = new ArrayList<>();
+            if (milestones != null) {
+                for (String m : milestones) {
+                    if (m != null && !m.isBlank()) {
+                        named.add(m.strip());
+                    }
+                }
+            }
+            if (none == !named.isEmpty()) {
+                throw new CliFailure(none ? "--none needs nothing, so it takes no --milestone. Nothing was sent."
+                        : "Name what the member needs: --milestone <id>, once for each, or --none.",
+                        CliFailure.USAGE);
+            }
+            ObjectNode body = JsonNodeFactory.instance.objectNode();
+            var ids = body.putArray("milestoneIds");
+            named.forEach(ids::add);
+            printMember(context.out(), json, work.api(context).setWorkMemberMilestones(entity, id, body));
+            return 0;
+        }
+    }
+
     /** {@code {"members":[…]}}: as JSON, or a row each. */
     static void printMembers(PrintStream out, boolean json, JsonNode answer) throws CliFailure {
         if (json) {
             SafeJson.print(out, answer);
             return;
         }
-        List<List<String>> rows = new ArrayList<>();
-        answer.path("members").forEach(m -> rows.add(row(m)));
-        if (rows.isEmpty()) {
+        List<JsonNode> all = new ArrayList<>();
+        answer.path("members").forEach(all::add);
+        if (all.isEmpty()) {
             out.println("The campaign has no members.");
             return;
         }
-        Table.print(out, "", HEADERS, rows);
+        boolean needs = all.stream().anyMatch(WorkEntities::needsSomething);
+        Table.print(out, "", headers(needs), all.stream().map(m -> row(m, needs)).toList());
     }
 
     /** {@code {"member":{…}}}: as JSON, or its row. */
@@ -287,7 +356,9 @@ public class WorkMembersCommand implements Runnable {
             SafeJson.print(out, answer);
             return;
         }
-        Table.print(out, "", HEADERS, List.of(row(answer.path("member"))));
+        JsonNode member = answer.path("member");
+        boolean needs = WorkEntities.needsSomething(member);
+        Table.print(out, "", headers(needs), List.of(row(member, needs)));
     }
 
     /** The members of a members answer, {@code {"members":[…]}}, in position order. */
@@ -342,7 +413,7 @@ public class WorkMembersCommand implements Runnable {
      * A criterion in brief: ENTITY_STATUS as the member and the status it waits for, any other kind
      * as its predicate's fields, {@code key=value}.
      */
-    private static String criterion(JsonNode criterion, Map<String, String> qualifiedIds) {
+    static String criterion(JsonNode criterion, Map<String, String> qualifiedIds) {
         String kind = text(criterion, "kind");
         JsonNode predicate = criterion.path("predicate");
         List<String> parts = new ArrayList<>(List.of(SafeText.line(kind)));
@@ -360,16 +431,29 @@ public class WorkMembersCommand implements Runnable {
         return Table.cell(String.join(" ", parts), 200);
     }
 
-    private static final List<String> HEADERS =
-            List.of("MEMBERSHIP", "POS", "ID", "ARCHETYPE", "STATUS", "HOLDS", "WAITS", "TITLE");
+    /** The columns; NEEDS, the member's unmet milestones by name, only when some member has one. */
+    private static List<String> headers(boolean needs) {
+        List<String> headers = new ArrayList<>(List.of("MEMBERSHIP", "POS", "ID", "ARCHETYPE", "STATUS", "HOLDS",
+                "WAITS"));
+        if (needs) {
+            headers.add("NEEDS");
+        }
+        headers.add("TITLE");
+        return headers;
+    }
 
-    private static List<String> row(JsonNode m) {
+    private static List<String> row(JsonNode m, boolean needs) {
         JsonNode e = m.path("entity");
         int groups = m.path("groups").size();
-        return List.of(WorkEntities.cell(text(m, "membershipId"), 40), m.path("position").asText(),
-                WorkEntities.cell(text(e, "qualifiedId"), 40), WorkEntities.cell(text(e, "archetype"), 9),
-                WorkEntities.cell(text(e, "status"), 11), m.path("holdsStatus").asBoolean() ? "yes" : "-",
-                groups == 0 ? "-" : groups + (groups == 1 ? " group" : " groups"),
-                WorkEntities.cell(text(e, "title"), 60));
+        List<String> row = new ArrayList<>(List.of(WorkEntities.cell(text(m, "membershipId"), 40),
+                m.path("position").asText(), WorkEntities.cell(text(e, "qualifiedId"), 40),
+                WorkEntities.cell(text(e, "archetype"), 9), WorkEntities.cell(text(e, "status"), 11),
+                m.path("holdsStatus").asBoolean() ? "yes" : "-",
+                groups == 0 ? "-" : groups + (groups == 1 ? " group" : " groups")));
+        if (needs) {
+            row.add(WorkEntities.needsCell(m));
+        }
+        row.add(WorkEntities.cell(text(e, "title"), 60));
+        return row;
     }
 }

@@ -41,7 +41,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 WorkCommand.UpdateCommand.class, WorkCommand.TransitionCommand.class, WorkCommand.StatusCommand.class,
                 WorkCommand.BlockCommand.class, WorkCommand.UnblockCommand.class, WorkCommand.DeleteCommand.class,
                 WorkCommand.ProgressCommand.class, WorkCommand.DispatchCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
-                WorkMembersCommand.class, WorkRefinementCommand.class, WorkDesignCommand.class},
+                WorkMembersCommand.class, WorkMilestonesCommand.class, WorkRefinementCommand.class, WorkDesignCommand.class},
         description = {"Work items of every archetype - epics, tickets, features, tasks, campaigns and issues - and their "
                         + "comment threads. list shows a project's items, details shows one with its comments and "
                         + "children, create files one, update edits its fields, transition reshapes it into "
@@ -49,7 +49,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its "
                         + "thread.",
                 "An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, "
-                        + "progress), its refinement room itself (refinement: open, show, discard) and the HTML "
+                        + "progress), the milestones an item needs (milestones; the milestones themselves are `qits "
+                        + "milestones`), its refinement room itself (refinement: open, show, discard) and the HTML "
                         + "designs of a refinement (design) are here too.",
                 "A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or "
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
@@ -146,7 +147,9 @@ public class WorkCommand implements Runnable {
             description = {"A project's work items, every archetype, in the service's order: id (qualified), "
                     + "archetype, status, title and when it last changed. BLOCKED appears when a ticket is: "
                     + "yes for an explicit block, waiting when the only reason is an agent session sitting "
-                    + "idle, and - when it is not blocked. TAGS appears when some item carries one, as its "
+                    + "idle, and - when it is not blocked. NEEDS appears when some item needs a milestone that "
+                    + "is not met yet, naming those milestones, and - for an item that needs none. TAGS appears "
+                    + "when some item carries one, as its "
                     + "display text (RESERVED_FOR_HUMAN shows as reserved for human), and - for an item with "
                     + "none. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).",
                     "Each filter narrows the list; without one it shows everything."},
@@ -244,8 +247,10 @@ public class WorkCommand implements Runnable {
             description = {"One work item: its fields, its description, its comment thread, its children, and what "
                     + "it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by "
                     + "it, or superseded by it). A DROPPED item shows its outcome beside the status, and its "
-                    + "supersededBy as duplicate of, resolved by or superseded by. A campaign also shows its "
-                    + "members, in order, each with the condition it waits on."},
+                    + "supersededBy as duplicate of, resolved by or superseded by. needs names the milestones it "
+                    + "needs that are not met yet, and milestones met the ones that are (`qits work milestones`). "
+                    + "A campaign also shows its members, in order, each with the condition it waits on and the "
+                    + "milestones it still needs."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 details",

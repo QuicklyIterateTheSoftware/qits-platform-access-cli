@@ -148,6 +148,25 @@ class WorkCommandsTest {
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[]}
             """.formatted(UNTAGGED_TICKET, PROJECT);
 
+    // --- milestones (epic qits-615): a ticket needing one unmet and one met milestone, and one an
+    // answer gives only the count of. ---
+
+    private static final String NEEDING_ROW = """
+            {"id":"f0f0f0f0-0000-4000-8000-00000000000f","archetype":"TICKET","projectId":"%s","number":760,
+             "qualifiedId":"qits-760","title":"Bootstrap a fresh node","description":"d","status":"REPORTED",
+             "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[],
+             "milestones":[{"id":"m1","displayName":"bootstrap \\u001b[2Jtest node","satisfiedAt":null},
+               {"id":"m2","displayName":"arm64 runner","satisfiedAt":"2026-09-29T08:30:00Z"}],
+             "unmetMilestones":1}
+            """.formatted(PROJECT);
+
+    private static final String COUNTED_ROW = """
+            {"id":"f1f1f1f1-0000-4000-8000-00000000000f","archetype":"TICKET","projectId":"%s","number":761,
+             "qualifiedId":"qits-761","title":"Counted only","description":"d","status":"REPORTED",
+             "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[],
+             "unmetMilestones":2}
+            """.formatted(PROJECT);
+
     // --- outcome (qits-248): a ticket dropped as qits-548's duplicate, one dropped as obsolete, and an
     // epic dropped before the service sent outcomes at all. ---
 
@@ -764,6 +783,48 @@ class WorkCommandsTest {
         assertThat(lines.getFirst()).contains("TAGS");
         assertThat(tagsColumn(lines.get(1))).isEqualTo("reserved for human");
         assertThat(tagsColumn(lines.get(2))).isEqualTo("-");
+    }
+
+    @Test
+    void listShowsANeedsColumnNamingTheUnmetMilestonesOnlyWhenSomeItemHasOne() {
+        platform.answer("GET", LIST, "{\"entities\":[" + NEEDING_ROW + "," + COUNTED_ROW + ","
+                + UNTAGGED_TICKET_ROW + "]}");
+
+        Result r = run("work", "list", "--project", "qits");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        List<String> lines = r.out().lines().toList();
+        assertThat(lines.getFirst()).contains("NEEDS").doesNotContain("WAITING");
+        // ID, ARCHETYPE, STATUS, NEEDS, TITLE, UPDATED: no BLOCKED and no TAGS column here.
+        assertThat(lines.get(1).strip().split("\\s{2,}")[3]).isEqualTo("bootstrap test node");
+        assertThat(lines.get(2).strip().split("\\s{2,}")[3]).isEqualTo("2 milestones");
+        assertThat(lines.get(3).strip().split("\\s{2,}")[3]).isEqualTo("-");
+        assertThat(r.out()).doesNotContain("arm64 runner").doesNotContain(String.valueOf((char) 0x1B));
+    }
+
+    @Test
+    void listWithNoItemNeedingAMilestoneShowsNoNeedsColumn() {
+        Result r = run("work", "list", "--project", "qits", "--archetype", "ticket", "--status", "reported");
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out().lines().findFirst().orElseThrow()).doesNotContain("NEEDS");
+    }
+
+    @Test
+    void detailsNamesWhatTheItemNeedsAndTheMilestonesAlreadyMet() {
+        Result r = detailsOf("qits-760", NEEDING_ROW);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).containsPattern("(?m)^\\s+needs\\s+bootstrap test node$")
+                .containsPattern("(?m)^\\s+milestones met\\s+arm64 runner$");
+    }
+
+    @Test
+    void detailsOfAnItemNeedingNothingHasNoNeedsLine() {
+        Result r = detailsOf("qits-751", UNTAGGED_TICKET_ROW);
+
+        assertThat(r.exit()).as(r.err()).isZero();
+        assertThat(r.out()).doesNotContain("needs").doesNotContain("milestones met");
     }
 
     @Test

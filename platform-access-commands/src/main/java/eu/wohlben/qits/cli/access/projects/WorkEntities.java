@@ -248,13 +248,20 @@ final class WorkEntities {
         printRows(out, "", List.of(answer));
     }
 
-    /** ID (qualified), ARCHETYPE, STATUS, BLOCKED when one is, TAGS when one carries any, TITLE, UPDATED. */
+    /**
+     * ID (qualified), ARCHETYPE, STATUS, BLOCKED when one is, NEEDS when one needs an unmet milestone
+     * (epic qits-615), TAGS when one carries any, TITLE, UPDATED.
+     */
     static void printRows(PrintStream out, String indent, List<JsonNode> entities) {
         boolean anyBlocked = entities.stream().anyMatch(WorkEntities::blocked);
+        boolean anyNeeds = entities.stream().anyMatch(WorkEntities::needsSomething);
         boolean anyTagged = entities.stream().anyMatch(e -> !tags(e).isEmpty());
         List<String> headers = new ArrayList<>(List.of("ID", "ARCHETYPE", "STATUS"));
         if (anyBlocked) {
             headers.add("BLOCKED");
+        }
+        if (anyNeeds) {
+            headers.add("NEEDS");
         }
         if (anyTagged) {
             headers.add("TAGS");
@@ -267,6 +274,9 @@ final class WorkEntities {
                     cell(status(e), 30)));
             if (anyBlocked) {
                 row.add(blockedCell(e));
+            }
+            if (anyNeeds) {
+                row.add(needsCell(e));
             }
             if (anyTagged) {
                 String joined = tagsText(e);
@@ -292,6 +302,14 @@ final class WorkEntities {
         rows.add(row("status", status(e)));
         if (e.has("blocked") && !e.get("blocked").isNull()) {
             rows.add(row("blocked", blockedDetail(e)));
+        }
+        if (needsSomething(e)) {
+            List<String> needs = MilestonesCommand.unmet(e);
+            rows.add(row("needs", needs.isEmpty() ? needsCell(e) : String.join(", ", needs)));
+        }
+        List<String> met = MilestonesCommand.metNames(e);
+        if (!met.isEmpty()) {
+            rows.add(row("milestones met", String.join(", ", met)));
         }
         String tagsText = tagsText(e);
         if (!tagsText.isEmpty()) {
@@ -365,6 +383,10 @@ final class WorkEntities {
                     + cell(text(member, "title"), 70) + (m.path("joinedRunning").asBoolean(false)
                     ? "  joined in flight" : ""));
             WorkMembersCommand.condition(m, qualifiedIds).forEach(line -> out.println("    " + line));
+            List<String> needs = MilestonesCommand.unmet(m);
+            if (!needs.isEmpty()) {
+                out.println("    needs: " + cell(String.join(", ", needs), 200));
+            }
         }
     }
 
@@ -450,6 +472,24 @@ final class WorkEntities {
             explicit.append(" (by ").append(by).append(")");
         }
         return explicit.toString();
+    }
+
+    /** Whether the item needs a milestone that is not met (epic qits-615). */
+    static boolean needsSomething(JsonNode e) {
+        return !MilestonesCommand.unmet(e).isEmpty() || e.path("unmetMilestones").asInt(0) > 0;
+    }
+
+    /**
+     * The NEEDS column: the names of the item's unmet milestones, comma-joined, or - when it needs
+     * nothing. An answer that carries only the count ({@code unmetMilestones}) gets the count.
+     */
+    static String needsCell(JsonNode e) {
+        List<String> names = MilestonesCommand.unmet(e);
+        if (!names.isEmpty()) {
+            return cell(String.join(", ", names), 40);
+        }
+        int count = e.path("unmetMilestones").asInt(0);
+        return count > 0 ? count + (count == 1 ? " milestone" : " milestones") : "-";
     }
 
     /** The text a line at a time, each line cleaned on its own and indented. */
