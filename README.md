@@ -1736,9 +1736,13 @@ request FINALIZED: deployed for a service, released for a library. The default l
 Before declaring it reads `GET /projects/api/branch-deliveries?branch=…[&repository=…][&project=…]`
 once:
 
-- When the target or an early step already holds, it prints `branch <branch> already <STEP> in
-  <repository> (<request id>)` or `branch <branch> already <STEP> everywhere`, declares nothing and
-  exits 0. With `-o json` it prints what it read.
+- When the target already holds, it prints `branch <branch> already <STEP> in <repository>
+  (<request id>)` or `branch <branch> already <STEP> everywhere`, declares nothing and exits 0.
+- When only an early step (FAILED, CONFLICTED or WITHDRAWN) already holds, it prints the same line
+  to stderr, with `: nothing was declared and nothing will wake you; fix and push, then wait again`
+  appended, declares nothing and exits 1.
+- Either way, with `-o json` it prints what it read, with `declared: false` and `already: "<the
+  line>"` added.
 - When no repository knows the branch yet, it warns `no repository knows <branch> yet; waiting
   anyway` on stderr and declares.
 - When the read fails, it declares anyway.

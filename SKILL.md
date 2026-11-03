@@ -3754,7 +3754,7 @@ Wait until a branch is joined, released or live, or fails, in one repository or 
 
 The same as --event BranchDeliveryChanged with branch=<branch> in every group, repository=<name> with --repository and projectId=<uuid> with --project. With --repository the target is the repository's step: joined is JOINED or MOVED, released is RELEASED or LIVE, live is LIVE. Without it the target is everywhere, the least advanced step across the branch's repositories: joined is JOINED, RELEASED or LIVE, released is RELEASED or LIVE, live is LIVE. Every target also fires early on a step FAILED, CONFLICTED or WITHDRAWN, so a broken delivery wakes you. failed waits for a step FAILED or CONFLICTED.
 
-It reads the branch's deliveries first. When the target or an early step already holds it says so, declares nothing and exits 0; with -o json it prints what it read. When no repository knows the branch yet it warns and declares anyway, and so it does when the read fails.
+It reads the branch's deliveries first. When the target already holds it says so, declares nothing and exits 0; when only an early step (FAILED, CONFLICTED or WITHDRAWN) holds it says so, declares nothing and exits 1. With -o json either way it prints what it read, with declared added as false. When no repository knows the branch yet it warns and declares anyway, and so it does when the read fails.
 
 ```
 qits wait branch --until joined|released|live|failed [--agent <id>] [--desk <project>] [--label <text>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <name>] [--timeout <duration>] [--workspaces-url <url>] <branch>
@@ -3789,8 +3789,8 @@ qits wait branch ticket/qits-123 --until failed --repository qits-ci-service
 
 ### Exit codes
 
-- `0` The wait is declared and printed, or the branch already reached the step; it says which.
-- `1` The platform refused (the message names the status), or cannot be reached.
+- `0` The wait is declared and printed, or the branch already reached the target; it says which.
+- `1` An early step (FAILED, CONFLICTED or WITHDRAWN) already holds, so nothing was declared; or the platform refused, or cannot be reached.
 - `2` Used wrongly (no holder, no branch, an --until that is not joined, released, live or failed, a project qits does not know), not signed in, or the session ended.
 
 ## qits wait release-request

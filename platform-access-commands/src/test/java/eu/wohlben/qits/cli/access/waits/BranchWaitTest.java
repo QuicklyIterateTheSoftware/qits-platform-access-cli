@@ -301,9 +301,11 @@ class BranchWaitTest {
 
         Result result = run("wait", "branch", BRANCH, "--until", "released");
 
-        assertThat(result.exit()).as(result.err()).isZero();
-        assertThat(result.out().strip())
-                .isEqualTo("branch " + BRANCH + " already CONFLICTED in qits-ci-frontend (qits-ci-frontend-rr-3)");
+        assertThat(result.exit()).isEqualTo(1);
+        assertThat(result.out()).isEmpty();
+        assertThat(result.err())
+                .contains("branch " + BRANCH + " already CONFLICTED in qits-ci-frontend (qits-ci-frontend-rr-3)")
+                .contains("nothing was declared");
         assertThat(platform.requests("POST", WAITS)).isEmpty();
     }
 
@@ -313,9 +315,30 @@ class BranchWaitTest {
 
         Result result = run("wait", "branch", BRANCH, "--until", "live", "--repository", "qits-ci-service");
 
-        assertThat(result.exit()).as(result.err()).isZero();
-        assertThat(result.out().strip())
+        assertThat(result.exit()).isEqualTo(1);
+        assertThat(result.out()).isEmpty();
+        assertThat(result.err())
+                .contains("branch " + BRANCH + " already FAILED in qits-ci-service (qits-ci-service-rr-3)")
+                .contains("nothing was declared");
+        assertThat(platform.requests("POST", WAITS)).isEmpty();
+    }
+
+    @Test
+    void anEarlyStepAlreadyHeldWithJsonPrintsTheReadAndRefuses() throws Exception {
+        deliveries("JOINED", delivery("qits-ci-service", "FAILED"));
+
+        Result result = run("wait", "-o", "json", "branch", BRANCH, "--until", "live", "--repository",
+                "qits-ci-service");
+
+        assertThat(result.exit()).isEqualTo(1);
+        JsonNode printed = JSON.readTree(result.out());
+        assertThat(printed.path("declared").asBoolean()).isFalse();
+        assertThat(printed.path("already").asText())
                 .isEqualTo("branch " + BRANCH + " already FAILED in qits-ci-service (qits-ci-service-rr-3)");
+        assertThat(printed.path("deliveries").get(0).path("repository").asText()).isEqualTo("qits-ci-service");
+        assertThat(result.err())
+                .contains("branch " + BRANCH + " already FAILED in qits-ci-service (qits-ci-service-rr-3)")
+                .contains("nothing was declared");
         assertThat(platform.requests("POST", WAITS)).isEmpty();
     }
 
@@ -333,6 +356,7 @@ class BranchWaitTest {
     void failedAlreadyHeldIsSaidAndWithdrawnIsNotFailed() throws Exception {
         deliveries("JOINED", delivery("qits-ci-service", "FAILED"));
         Result failed = run("wait", "branch", BRANCH, "--until", "failed");
+        assertThat(failed.exit()).as(failed.err()).isZero();
         assertThat(failed.out().strip())
                 .isEqualTo("branch " + BRANCH + " already FAILED in qits-ci-service (qits-ci-service-rr-3)");
         assertThat(platform.requests("POST", WAITS)).isEmpty();
@@ -353,6 +377,8 @@ class BranchWaitTest {
         JsonNode printed = JSON.readTree(result.out());
         assertThat(printed.path("everywhere").asText()).isEqualTo("LIVE");
         assertThat(printed.path("deliveries").get(0).path("repository").asText()).isEqualTo("qits-ci-service");
+        assertThat(printed.path("declared").asBoolean()).isFalse();
+        assertThat(printed.path("already").asText()).isEqualTo("branch " + BRANCH + " already LIVE everywhere");
         assertThat(platform.requests("POST", WAITS)).isEmpty();
     }
 

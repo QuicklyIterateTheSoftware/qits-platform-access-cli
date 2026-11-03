@@ -1,6 +1,7 @@
 package eu.wohlben.qits.cli.access.waits;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.wohlben.qits.cli.access.observe.SafeText;
 import eu.wohlben.qits.cli.access.platform.CliContext;
 import eu.wohlben.qits.cli.access.platform.CliFailure;
@@ -36,10 +37,11 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "repositories: joined is JOINED, RELEASED or LIVE, released is RELEASED or LIVE, live is "
                         + "LIVE. Every target also fires early on a step FAILED, CONFLICTED or WITHDRAWN, so a "
                         + "broken delivery wakes you. failed waits for a step FAILED or CONFLICTED.",
-                "It reads the branch's deliveries first. When the target or an early step already holds it says "
-                        + "so, declares nothing and exits 0; with -o json it prints what it read. When no "
-                        + "repository knows the branch yet it warns and declares anyway, and so it does when the "
-                        + "read fails."},
+                "It reads the branch's deliveries first. When the target already holds it says so, declares "
+                        + "nothing and exits 0; when only an early step (FAILED, CONFLICTED or WITHDRAWN) holds "
+                        + "it says so, declares nothing and exits 1. With -o json either way it prints what it "
+                        + "read, with declared added as false. When no repository knows the branch yet it warns "
+                        + "and declares anyway, and so it does when the read fails."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits wait branch ticket/qits-123 --until released",
                 "  qits wait branch ticket/qits-123 --until joined --repository qits-ci-service",
@@ -51,8 +53,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- A branch can carry on into a new request when its request releases without it or is "
                         + "superseded (MOVED): the wait does not care which request it is on."},
         exitCodeListHeading = HelpText.EXIT_CODES,
-        exitCodeList = {"0:The wait is declared and printed, or the branch already reached the step; it says which.",
-                HelpText.REFUSED,
+        exitCodeList = {"0:The wait is declared and printed, or the branch already reached the target; it says "
+                + "which.",
+                "1:An early step (FAILED, CONFLICTED or WITHDRAWN) already holds, so nothing was declared; or the "
+                        + "platform refused, or cannot be reached.",
                 "2:Used wrongly (no holder, no branch, an --until that is not joined, released, live or failed, a "
                         + "project qits does not know), not signed in, or the session ended."})
 public class BranchWait extends PlatformCommand {
@@ -166,12 +170,18 @@ public class BranchWait extends PlatformCommand {
 
         JsonNode read = look(context, projects, name, repo, projectId);
         if (read != null) {
-            String already = already(read, name, repo, target);
+            Already already = already(read, name, repo, target);
             if (already != null) {
                 if (json) {
-                    WaitCommand.printJson(context.out(), read);
-                } else {
-                    context.out().println(already);
+                    WaitCommand.printJson(context.out(), declaredFalse((ObjectNode) read, already.line()));
+                }
+                if (already.early()) {
+                    context.err().println(already.line() + ": nothing was declared and nothing will wake you; "
+                            + "fix and push, then wait again");
+                    return CliFailure.FAILED;
+                }
+                if (!json) {
+                    context.out().println(already.line());
                 }
                 return 0;
             }
@@ -197,11 +207,19 @@ public class BranchWait extends PlatformCommand {
     }
 
     /**
-     * What the read says has already happened, as the line to print, or null when nothing has: the
+     * What the read says has already happened: the line to print, and whether it is only an early
+     * step (one that ends the wait early, rather than the target itself) that holds. An early step
+     * declares nothing and refuses; the target itself declares nothing and is done.
+     */
+    record Already(String line, boolean early) {
+    }
+
+    /**
+     * What the read says has already happened, as an {@link Already}, or null when nothing has: the
      * target first, then an early step. With a repository both are that repository's step; without
      * one the target is {@code everywhere} (failed excepted) and an early step is any repository's.
      */
-    static String already(JsonNode read, String branch, String repository, Target target) {
+    static Already already(JsonNode read, String branch, String repository, Target target) {
         List<JsonNode> deliveries = new ArrayList<>();
         for (JsonNode delivery : read.path("deliveries")) {
             if (repository == null || repository.equals(text(delivery, "repository"))
@@ -213,16 +231,25 @@ public class BranchWait extends PlatformCommand {
         if (target.path().equals("everywhere")) {
             String everywhere = text(read, "everywhere");
             if (target.steps().contains(everywhere)) {
-                return "branch " + safeBranch + " already " + SafeText.line(everywhere) + " everywhere";
+                return new Already("branch " + safeBranch + " already " + SafeText.line(everywhere) + " everywhere",
+                        false);
             }
         } else {
             JsonNode hit = first(deliveries, target.steps());
             if (hit != null) {
-                return reached(safeBranch, hit);
+                return new Already(reached(safeBranch, hit), false);
             }
         }
         JsonNode early = first(deliveries, target.early());
-        return early == null ? null : reached(safeBranch, early);
+        return early == null ? null : new Already(reached(safeBranch, early), true);
+    }
+
+    /** {@code read}, copied, with {@code declared: false} and the line {@code -o json} owes as {@code already}. */
+    private static ObjectNode declaredFalse(ObjectNode read, String already) {
+        ObjectNode copy = read.deepCopy();
+        copy.put("declared", false);
+        copy.put("already", already);
+        return copy;
     }
 
     private static JsonNode first(List<JsonNode> deliveries, List<String> steps) {
