@@ -47,7 +47,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         footer = {
                 "- Reading runs takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk, qits:system or "
                         + "qits:agent. retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or "
-                        + "qits:agent. cancel takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk.",
+                        + "qits:agent. cancel takes the same, qits:desk and qits:agent bound to the run's own "
+                        + "project.",
                 "- To follow a run, run `qits ci run <run id>` again. There is no live log stream. A build's verdict "
                         + "also comes as an event: `qits events --filter=BuildSuccessful,BuildFailed`.",
                 "- --project, --repository, --output and the two -url options may come before or after the command.",
@@ -500,8 +501,8 @@ public class CiCommand implements Runnable {
                     "",
                     "- Only a queued or running run can be cancelled. One that has finished answers HTTP 409.",
                     "- --reason is kept on the run as its cancellation reason, and `qits ci run` shows it.",
-                    "- Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk. qits:agent alone is refused "
-                            + "(HTTP 403).",
+                    "- Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent; a desk or an "
+                            + "agent only for a run in its own project, and another project's run answers HTTP 403.",
                     "- -o json prints the run as the service answers it after the cancel."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The run is cancelled, or asked to stop; it is printed.",

@@ -493,10 +493,11 @@ class CiCommandsTest {
         // picocli may break a line after "qits:", so the words are joined again before they are read.
         String ci = run("ci", "--help").out().replaceAll("\\s+", " ").replace("qits: ", "qits:");
         assertThat(ci).contains("retry takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent")
-                .contains("cancel takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk")
+                .contains("cancel takes the same, qits:desk and qits:agent bound to the run's own project")
                 .doesNotContain("retry needs qits:admin.");
         assertThat(run("ci", "cancel", "--help").out().replaceAll("\\s+", " ").replace("qits: ", "qits:"))
-                .contains("Takes qits:admin, qits:admin-agent, qits:desk-admin or qits:desk.");
+                .contains("Takes qits:admin, qits:admin-agent, qits:desk-admin, qits:desk or qits:agent; a desk or "
+                        + "an agent only for a run in its own project, and another project's run answers HTTP 403.");
     }
 
     // --- the address ---
