@@ -1,4 +1,4 @@
-# AGENTS.md — qits-platform-access-cli
+# AGENTS.md — qits-platform-access-monorepo
 
 ## What this repository is
 

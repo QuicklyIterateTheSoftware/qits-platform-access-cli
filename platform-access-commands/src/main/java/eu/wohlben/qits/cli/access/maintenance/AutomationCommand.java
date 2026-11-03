@@ -46,8 +46,8 @@ public class AutomationCommand implements Runnable {
                             + "--request qits-landing-app-rr-7 --kind estate-pins",
                     "  qits maintenance --project qits --repository qits-landing-app automation run "
                             + "--request qits-landing-app-rr-7 --kind estate-pins --work-item qits-112",
-                    "  qits maintenance --project qits --repository qits-platform-access-cli automation run "
-                            + "--request qits-platform-access-cli-rr-3 --kind cli-tapes",
+                    "  qits maintenance --project qits --repository qits-platform-access-monorepo automation run "
+                            + "--request qits-platform-access-monorepo-rr-3 --kind cli-tapes",
                     "",
                     "- `qits maintenance automations --request <id>` names the kinds; `kind` is the first column. "
                             + "cli-tapes plays a CLI's VHS tapes (tapes/*.tape) and commits their text goldens and "

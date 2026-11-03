@@ -2274,7 +2274,7 @@ qits release-request regenerate --kind <kind> [--output table|json] [--project <
 ```
 qits release-request --project qits --repository qits-landing-app regenerate --kind screenshot-baselines
 qits release-request --project qits --repository qits-projects-service regenerate --request qits-projects-service-rr-12 --kind entity-diagram
-qits release-request --project qits --repository qits-platform-access-cli regenerate --kind cli-tapes
+qits release-request --project qits --repository qits-platform-access-monorepo regenerate --kind cli-tapes
 ```
 
 - Without --request it takes the repository's one open request. A REJECTED request is open: a red QA is the usual reason to regenerate.
@@ -2887,7 +2887,7 @@ qits maintenance automation run --kind <kind> --request <id> [--maintenance-url 
 ```
 qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins
 qits maintenance --project qits --repository qits-landing-app automation run --request qits-landing-app-rr-7 --kind estate-pins --work-item qits-112
-qits maintenance --project qits --repository qits-platform-access-cli automation run --request qits-platform-access-cli-rr-3 --kind cli-tapes
+qits maintenance --project qits --repository qits-platform-access-monorepo automation run --request qits-platform-access-monorepo-rr-3 --kind cli-tapes
 ```
 
 - `qits maintenance automations --request <id>` names the kinds; `kind` is the first column. cli-tapes plays a CLI's VHS tapes (tapes/*.tape) and commits their text goldens and GIFs.

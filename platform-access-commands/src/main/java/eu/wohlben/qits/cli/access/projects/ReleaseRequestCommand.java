@@ -849,7 +849,7 @@ public class ReleaseRequestCommand implements Runnable {
                             + "--kind screenshot-baselines",
                     "  qits release-request --project qits --repository qits-projects-service regenerate "
                             + "--request qits-projects-service-rr-12 --kind entity-diagram",
-                    "  qits release-request --project qits --repository qits-platform-access-cli regenerate "
+                    "  qits release-request --project qits --repository qits-platform-access-monorepo regenerate "
                             + "--kind cli-tapes",
                     "",
                     "- Without --request it takes the repository's one open request. A REJECTED request is open: "

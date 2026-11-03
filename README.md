@@ -1,4 +1,4 @@
-# qits-platform-access-cli
+# qits-platform-access-monorepo
 
 The `qits` command: access to the qits platform from a workstation, with defaults that need no
 setup. A static native binary for Linux and WSL.
@@ -321,7 +321,7 @@ tapes, or a tape no command.
 moved (a step in `.config/qits/release.yml` with `check-outputs: [cli-tapes]`); new ones come from
 the platform's `cli-tapes` automation, which commits them to the release request:
 
-    qits release-request --project qits --repository qits-platform-access-cli regenerate --kind cli-tapes
+    qits release-request --project qits --repository qits-platform-access-monorepo regenerate --kind cli-tapes
 
 The generator is qits-ci's (`platform-pipelines/automations/cli-tapes.yml` in qits-ci-service): it
 sources `tapes/prepare.sh`, plays each tape into its golden, and renders a GIF only for a golden that
@@ -484,7 +484,7 @@ Recorded on dev, 2026-09-13, from the released binary (`2026.913.220350`) inside
 container that dialled the wire aliases. With `QITS_TOKEN` the addresses are the public vhosts and
 the answers read the same:
 
-    $ qits ci runs --project qits --repository qits-platform-access-cli --limit 3
+    $ qits ci runs --project qits --repository qits-platform-access-monorepo --limit 3
     ID        STATUS   BRANCH                                        COMMIT    REQUEST   CREATED                  TOOK
     473131bb  SUCCESS  2026.913.195048                               767cd203  -         2026-09-13 19:50:50 GMT  2m40s
     f4f1ec8d  SUCCESS  release/33f56c22-24f8-42b9-9305-1d0d73d3a3b5  d47a2770  33f56c22  2026-09-13 19:46:08 GMT  3m52s
