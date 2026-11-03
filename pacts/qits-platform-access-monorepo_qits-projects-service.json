@@ -3992,6 +3992,1708 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "approveMilestoneCriterion"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones approve",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones approve: approveMilestoneCriterion",
+      "key": "f51c5af",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "note": "Node 7 is up."
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/milestones/${milestoneId}/criteria/${criterionId}/approve",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "POST",
+        "path": "/projects/api/milestones/00000000-0000-4000-8000-000000000002/criteria/00000000-0000-4000-8000-000000000001/approve"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestone": {
+              "createdAt": "2026-01-01T00:00:00Z",
+              "displayName": "bootstrap test node",
+              "entities": [
+                {
+                  "archetype": "TICKET",
+                  "qualifiedId": "contract-00000001-1",
+                  "status": "REPORTED",
+                  "title": "Bootstrap a fresh node"
+                }
+              ],
+              "groups": [
+                {
+                  "criteria": [
+                    {
+                      "approval": {
+                        "approvedBy": "dev",
+                        "note": "Node 7 is up."
+                      },
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "kind": "APPROVAL",
+                      "satisfiedAt": "2026-01-01T00:00:00Z"
+                    }
+                  ],
+                  "satisfiedAt": "2026-01-01T00:00:00Z"
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000002",
+              "met": true,
+              "projectId": "00000000-0000-4000-8000-000000000004",
+              "satisfiedAt": "2026-01-01T00:00:00Z"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestone.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.entities[*].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].approval.approvedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].approval.note": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.groups[*].satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "createMilestone"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones create",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones create: createMilestone",
+      "key": "5f11a484",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "displayName": "bootstrap ticket done",
+            "groups": [
+              {
+                "criteria": [
+                  {
+                    "kind": "ENTITY_STATUS",
+                    "predicate": {
+                      "entityId": "contract-00000001-1",
+                      "status": "DONE"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.groups[0].criteria[0].predicate.entityId": {
+              "dataType": "STRING",
+              "expression": "${qualifiedId}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/milestones",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.groups[0].criteria[0].predicate.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000004/milestones"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestone": {
+              "createdAt": "2026-01-01T00:00:00Z",
+              "displayName": "bootstrap ticket done",
+              "groups": [
+                {
+                  "criteria": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000008",
+                      "kind": "ENTITY_STATUS"
+                    }
+                  ]
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000006",
+              "met": false,
+              "projectId": "00000000-0000-4000-8000-000000000004"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestone.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 201
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "setMilestoneGroups"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones criteria",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones criteria: setMilestoneGroups",
+      "key": "bdf9eec3",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "groups": [
+              {
+                "criteria": [
+                  {
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "kind": "APPROVAL",
+                    "predicate": {}
+                  }
+                ]
+              },
+              {
+                "criteria": [
+                  {
+                    "kind": "ENTITY_STATUS",
+                    "predicate": {
+                      "entityId": "contract-00000001-1",
+                      "status": "DONE"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.groups[0].criteria[0].id": {
+              "dataType": "STRING",
+              "expression": "${criterionId}",
+              "type": "ProviderState"
+            },
+            "$.groups[1].criteria[0].predicate.entityId": {
+              "dataType": "STRING",
+              "expression": "${qualifiedId}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/milestones/${milestoneId}/groups",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.groups[0].criteria[0].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.groups[1].criteria[0].predicate.entityId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "PUT",
+        "path": "/projects/api/milestones/00000000-0000-4000-8000-000000000002/groups"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestone": {
+              "createdAt": "2026-01-01T00:00:00Z",
+              "displayName": "bootstrap test node",
+              "entities": [
+                {
+                  "archetype": "TICKET",
+                  "qualifiedId": "contract-00000001-1",
+                  "status": "REPORTED",
+                  "title": "Bootstrap a fresh node"
+                }
+              ],
+              "groups": [
+                {
+                  "criteria": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "kind": "APPROVAL"
+                    }
+                  ]
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000002",
+              "met": false,
+              "projectId": "00000000-0000-4000-8000-000000000004"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestone.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.entities[*].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getMilestone"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones details: getMilestone",
+      "key": "701d34ba",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a campaign member waiting on a milestone",
+          "params": {
+            "membershipId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005",
+            "ticketQualifiedId": "contract-00000001-2"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/milestones/${milestoneId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/milestones/00000000-0000-4000-8000-000000000002"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestone": {
+              "createdAt": "2026-01-01T00:00:00Z",
+              "displayName": "bootstrap test node",
+              "entities": [
+                {
+                  "archetype": "TICKET",
+                  "qualifiedId": "contract-00000001-2",
+                  "status": "REPORTED",
+                  "title": "Bootstrap a fresh node"
+                }
+              ],
+              "groups": [
+                {
+                  "criteria": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000007",
+                      "kind": "APPROVAL"
+                    }
+                  ]
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000002",
+              "memberships": [
+                {
+                  "campaignQualifiedId": "contract-00000001-1",
+                  "campaignTitle": "Ship the bootstrap",
+                  "entityQualifiedId": "contract-00000001-2",
+                  "membershipId": "00000000-0000-4000-8000-000000000001"
+                }
+              ],
+              "met": false,
+              "projectId": "00000000-0000-4000-8000-000000000004"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestone.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.entities[*].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.memberships": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.memberships[*].campaignQualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.memberships[*].campaignTitle": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.memberships[*].entityQualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.memberships[*].membershipId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getMilestone"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones details: getMilestone",
+      "key": "2bb8e619",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on a met milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/milestones/${milestoneId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/milestones/00000000-0000-4000-8000-000000000002"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestone": {
+              "createdAt": "2026-01-01T00:00:00Z",
+              "displayName": "bootstrap test node",
+              "entities": [
+                {
+                  "archetype": "TICKET",
+                  "qualifiedId": "contract-00000001-1",
+                  "status": "REPORTED",
+                  "title": "Bootstrap a fresh node"
+                }
+              ],
+              "groups": [
+                {
+                  "criteria": [
+                    {
+                      "approval": {
+                        "approvedBy": "dev",
+                        "note": "Node 7 is up."
+                      },
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "kind": "APPROVAL",
+                      "satisfiedAt": "2026-01-01T00:00:00Z"
+                    }
+                  ],
+                  "satisfiedAt": "2026-01-01T00:00:00Z"
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000002",
+              "met": true,
+              "projectId": "00000000-0000-4000-8000-000000000004",
+              "satisfiedAt": "2026-01-01T00:00:00Z"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestone.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.entities[*].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].approval.approvedBy": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].approval.note": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.groups[*].satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listProjectMilestones"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones list: listProjectMilestones",
+      "key": "417ff81c",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/milestones",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000004/milestones"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestones": [
+              {
+                "displayName": "bootstrap test node",
+                "entities": [
+                  {
+                    "qualifiedId": "contract-00000001-1"
+                  }
+                ],
+                "groups": [
+                  {
+                    "criteria": [
+                      {
+                        "id": "00000000-0000-4000-8000-000000000001"
+                      }
+                    ]
+                  }
+                ],
+                "id": "00000000-0000-4000-8000-000000000002",
+                "met": false
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestones[*].entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestones[*].groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestones[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestones[*].met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "renameMilestone"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits milestones rename",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits milestones rename: renameMilestone",
+      "key": "42a75258",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "displayName": "bootstrap test node (arm64)"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/milestones/${milestoneId}",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "method": "PATCH",
+        "path": "/projects/api/milestones/00000000-0000-4000-8000-000000000002"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestone": {
+              "createdAt": "2026-01-01T00:00:00Z",
+              "displayName": "bootstrap test node (arm64)",
+              "entities": [
+                {
+                  "archetype": "TICKET",
+                  "qualifiedId": "contract-00000001-1",
+                  "status": "REPORTED",
+                  "title": "Bootstrap a fresh node"
+                }
+              ],
+              "groups": [
+                {
+                  "criteria": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "kind": "APPROVAL"
+                    }
+                  ]
+                }
+              ],
+              "id": "00000000-0000-4000-8000-000000000002",
+              "met": false,
+              "projectId": "00000000-0000-4000-8000-000000000004"
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestone.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.milestone.displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.entities[*].archetype": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.entities[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.groups": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.groups[*].criteria[*].kind": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestone.met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestone.projectId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "listProjects"
           },
           "qits-trigger": {
@@ -19928,6 +21630,222 @@
         }
       },
       "description": "qits work details: getWork",
+      "key": "393aacd6",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on a met milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestones": [
+              {
+                "displayName": "bootstrap test node",
+                "satisfiedAt": "2026-01-01T00:00:00Z"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestones[*].satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work details: getWork",
+      "key": "19346d51",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestones": [
+              {
+                "displayName": "bootstrap test node"
+              }
+            ],
+            "qualifiedId": "contract-00000001-1",
+            "unmetMilestones": 1
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.unmetMilestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work details: getWork",
       "key": "21581120",
       "pending": false,
       "providerStates": [
@@ -20644,6 +22562,135 @@
         }
       },
       "description": "qits work details: listWorkMembers",
+      "key": "a53d08d8",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a campaign member waiting on a milestone",
+          "params": {
+            "membershipId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005",
+            "ticketQualifiedId": "contract-00000001-2"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/members",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/members"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "members": [
+              {
+                "entity": {
+                  "qualifiedId": "contract-00000001-2"
+                },
+                "membershipId": "00000000-0000-4000-8000-000000000001",
+                "milestones": [
+                  {
+                    "displayName": "bootstrap test node"
+                  }
+                ]
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.members": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.members[*].entity.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.members[*].membershipId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.members[*].milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.members[*].milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listWorkMembers"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work details: listWorkMembers",
       "key": "795dab04",
       "pending": false,
       "providerStates": [
@@ -20737,7 +22784,7 @@
                       {
                         "approval": null,
                         "evidence": null,
-                        "id": "00000000-0000-4000-8000-00000000000e",
+                        "id": "00000000-0000-4000-8000-00000000000f",
                         "kind": "ENTITY_STATUS",
                         "predicate": {
                           "entityId": "00000000-0000-4000-8000-000000000003",
@@ -20756,7 +22803,7 @@
                         "seeded": false
                       }
                     ],
-                    "id": "00000000-0000-4000-8000-00000000000d"
+                    "id": "00000000-0000-4000-8000-00000000000e"
                   }
                 ],
                 "joinedRunning": false,
@@ -23632,6 +25679,131 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "listProjectWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work list: listProjectWork",
+      "key": "fc5790d0",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/work",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000004/work"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entities": [
+              {
+                "milestones": [
+                  {
+                    "displayName": "bootstrap test node"
+                  }
+                ],
+                "qualifiedId": "contract-00000001-1",
+                "unmetMilestones": 1
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.entities[*].milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.entities[*].milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].unmetMilestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "addWorkMember"
           },
           "qits-trigger": {
@@ -24136,6 +26308,135 @@
         }
       },
       "description": "qits work members list: listWorkMembers",
+      "key": "6fbc4053",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a campaign member waiting on a milestone",
+          "params": {
+            "membershipId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005",
+            "ticketQualifiedId": "contract-00000001-2"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/members",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/members"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "members": [
+              {
+                "entity": {
+                  "qualifiedId": "contract-00000001-2"
+                },
+                "membershipId": "00000000-0000-4000-8000-000000000001",
+                "milestones": [
+                  {
+                    "displayName": "bootstrap test node"
+                  }
+                ]
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.members": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.members[*].entity.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.members[*].membershipId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.members[*].milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.members[*].milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listWorkMembers"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work members list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work members list: listWorkMembers",
       "key": "43dce27f",
       "pending": false,
       "providerStates": [
@@ -24220,7 +26521,7 @@
                       {
                         "approval": null,
                         "evidence": null,
-                        "id": "00000000-0000-4000-8000-00000000000e",
+                        "id": "00000000-0000-4000-8000-00000000000f",
                         "kind": "ENTITY_STATUS",
                         "predicate": {
                           "entityId": "00000000-0000-4000-8000-000000000003",
@@ -24239,7 +26540,7 @@
                         "seeded": false
                       }
                     ],
-                    "id": "00000000-0000-4000-8000-00000000000d"
+                    "id": "00000000-0000-4000-8000-00000000000e"
                   }
                 ],
                 "membershipId": "00000000-0000-4000-8000-000000000007",
@@ -24525,6 +26826,199 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "setWorkMemberMilestones"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work members milestones",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work members milestones: setWorkMemberMilestones",
+      "key": "471b7f3e",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a campaign member waiting on a milestone",
+          "params": {
+            "membershipId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005",
+            "ticketQualifiedId": "contract-00000001-2"
+          }
+        }
+      ],
+      "request": {
+        "body": {
+          "content": {
+            "milestoneIds": [
+              "00000000-0000-4000-8000-000000000002",
+              "00000000-0000-4000-8000-000000000003"
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "generators": {
+          "body": {
+            "$.milestoneIds[0]": {
+              "dataType": "STRING",
+              "expression": "${milestoneId}",
+              "type": "ProviderState"
+            },
+            "$.milestoneIds[1]": {
+              "dataType": "STRING",
+              "expression": "${otherMilestoneId}",
+              "type": "ProviderState"
+            }
+          },
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/members/${membershipId}/milestones",
+            "type": "ProviderState"
+          }
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestoneIds[0]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestoneIds[1]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "method": "PUT",
+        "path": "/projects/api/work/contract-00000001-1/members/00000000-0000-4000-8000-000000000001/milestones"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "member": {
+              "entity": {
+                "qualifiedId": "contract-00000001-2",
+                "status": "REPORTED"
+              },
+              "membershipId": "00000000-0000-4000-8000-000000000001",
+              "milestones": [
+                {
+                  "displayName": "bootstrap test node",
+                  "id": "00000000-0000-4000-8000-000000000002"
+                }
+              ],
+              "position": 0
+            }
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.member.entity.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.member.entity.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.member.membershipId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.member.milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.member.milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.member.milestones[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.member.position": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "moveWorkMember"
           },
           "qits-trigger": {
@@ -24640,7 +27134,7 @@
                       {
                         "approval": null,
                         "evidence": null,
-                        "id": "00000000-0000-4000-8000-00000000000e",
+                        "id": "00000000-0000-4000-8000-00000000000f",
                         "kind": "ENTITY_STATUS",
                         "predicate": {
                           "entityId": "00000000-0000-4000-8000-000000000006",
@@ -24650,7 +27144,7 @@
                         "seeded": true
                       }
                     ],
-                    "id": "00000000-0000-4000-8000-00000000000d"
+                    "id": "00000000-0000-4000-8000-00000000000e"
                   }
                 ],
                 "membershipId": "00000000-0000-4000-8000-000000000004",
@@ -25160,6 +27654,270 @@
               "matchers": [
                 {
                   "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "attachWorkMilestone"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work milestones attach",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work milestones attach: attachWorkMilestone",
+      "key": "46667fe2",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/milestones/${otherMilestoneId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "PUT",
+        "path": "/projects/api/work/contract-00000001-1/milestones/00000000-0000-4000-8000-000000000003"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestones": [
+              {
+                "displayName": "bootstrap test node",
+                "id": "00000000-0000-4000-8000-000000000002"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestones[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "detachWorkMilestone"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work milestones detach",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work milestones detach: detachWorkMilestone",
+      "key": "49b6f1ae",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on an unmet milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/milestones/${milestoneId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "DELETE",
+        "path": "/projects/api/work/contract-00000001-1/milestones/00000000-0000-4000-8000-000000000002"
+      },
+      "response": {
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "listWorkMilestones"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work milestones list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work milestones list: listWorkMilestones",
+      "key": "f9329b6e",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket waiting on a met milestone",
+          "params": {
+            "criterionId": "00000000-0000-4000-8000-000000000001",
+            "milestoneId": "00000000-0000-4000-8000-000000000002",
+            "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
+            "projectId": "00000000-0000-4000-8000-000000000004",
+            "qualifiedId": "contract-00000001-1",
+            "ticketId": "00000000-0000-4000-8000-000000000005"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}/milestones",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-1/milestones"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "milestones": [
+              {
+                "displayName": "bootstrap test node",
+                "id": "00000000-0000-4000-8000-000000000002",
+                "satisfiedAt": "2026-01-01T00:00:00Z"
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.milestones": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.milestones[*].displayName": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.milestones[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$.milestones[*].satisfiedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
                 }
               ]
             }
