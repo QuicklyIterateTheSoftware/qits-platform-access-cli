@@ -537,9 +537,9 @@
  │   repositories        The repositories of one project: list shows them, create stands a new one │
  │   work                Work items of every archetype - epics, tickets, features, tasks, campaign │
  │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   milestones          A project's milestones: named, foreseeable conditions an item needs met b │
  │   release-request     Release requests: the one way to release a repository. list shows them (o │
  │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
- │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits
@@ -568,9 +568,9 @@
  │   repositories        The repositories of one project: list shows them, create stands a new one │
  │   work                Work items of every archetype - epics, tickets, features, tasks, campaign │
  │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   milestones          A project's milestones: named, foreseeable conditions an item needs met b │
  │   release-request     Release requests: the one way to release a repository. list shows them (o │
  │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
- │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits
