@@ -421,7 +421,10 @@ public final class ProjectsContract {
 
     private static final Call CREATE_REPOSITORY = (api, params, recorded) -> {
         JsonNode created = api.createRepository(params.get("projectId"), body(recorded).path("name").asText(),
-                body(recorded).path("component").asText());
+                body(recorded).path("component").asText(),
+                // The recording's own archetype, when it states one (qits-1834): the service stores no
+                // kind it was not told, so a stated one is what the answer's archetype comes from.
+                body(recorded).path("archetype").asText(null));
         assertThat(ProjectsApi.text(created.path("repository"), "name")).isEqualTo(body(recorded).path("name").asText());
         assertThat(ProjectsApi.text(created.path("repository"), "archetype")).isNotBlank();
         assertThat(ProjectsApi.text(created, "wrapperPath")).isNotBlank();

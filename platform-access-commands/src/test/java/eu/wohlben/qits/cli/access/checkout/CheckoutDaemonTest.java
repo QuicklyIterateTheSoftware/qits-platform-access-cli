@@ -572,6 +572,176 @@ class CheckoutDaemonTest {
         return work.resolve("components/demo/" + SUB);
     }
 
+    // ---------- submodules of submodules (qits-290) ----------
+
+    private static final String NESTED = "qits-demo-webui";
+    private static final String NESTED_PATH = "service/src/main/webui";
+    private static final String NESTED_FROM_ROOT = "components/demo/" + SUB + "/" + NESTED_PATH;
+
+    /**
+     * Two levels, the way the estate is: the wrapper declares {@link #SUB} with {@code ignore = all},
+     * and {@link #SUB} declares its webui with {@code ignore = all} and {@code update = merge}. Both
+     * initialised here. Answers the checked-out submodule; its webui is {@link #nestedIn}.
+     */
+    private Path addNestedSubmodules() throws Exception {
+        Path nested = Files.createDirectories(tmp.resolve("git").resolve(PROJECT).resolve(NESTED));
+        init(nested);
+        commit(nested, "index.html", "one");
+        Path sub = Files.createDirectories(tmp.resolve("git").resolve(PROJECT).resolve(SUB));
+        init(sub);
+        commit(sub, "lib.txt", "one");
+        git(sub, "submodule", "add", "-q", "--name", NESTED, nested.toString(), NESTED_PATH);
+        git(sub, "config", "-f", ".gitmodules", "submodule." + NESTED + ".ignore", "all");
+        git(sub, "config", "-f", ".gitmodules", "submodule." + NESTED + ".update", "merge");
+        git(sub, "add", ".gitmodules", NESTED_PATH);
+        git(sub, "commit", "-q", "-m", "declare the webui");
+
+        git(upstream, "submodule", "add", "-q", "--name", SUB, sub.toString(), "components/demo/" + SUB);
+        git(upstream, "config", "-f", ".gitmodules", "submodule." + SUB + ".ignore", "all");
+        git(upstream, "add", ".gitmodules", "components/demo/" + SUB);
+        git(upstream, "commit", "-q", "-m", "declare the submodule");
+
+        git(work, "fetch", "-q", "origin");
+        git(work, "reset", "--hard", "-q", "origin/main");
+        git(work, "-c", "submodule." + SUB + ".url=" + sub, "submodule", "update", "--init", "--recursive", "--",
+                "components/demo/" + SUB);
+        Path checkedOut = work.resolve("components/demo/" + SUB);
+        assertThat(Files.exists(nestedIn(checkedOut).resolve("index.html"))).as("the webui is checked out").isTrue();
+        return checkedOut;
+    }
+
+    private static Path nestedIn(Path checkedOut) {
+        return checkedOut.resolve(NESTED_PATH);
+    }
+
+    /**
+     * A webui bump as the estate makes one: a commit in the webui, the submodule's gitlink moved to
+     * it, and the wrapper's gitlink moved to that. Answers the webui's and the submodule's commits.
+     */
+    private String[] bumpNested() throws Exception {
+        Path nested = tmp.resolve("git").resolve(PROJECT).resolve(NESTED);
+        Path sub = tmp.resolve("git").resolve(PROJECT).resolve(SUB);
+        String webui = commit(nested, "index.html", "two");
+        Path inSub = sub.resolve(NESTED_PATH);
+        git(inSub, "fetch", "-q", "origin");
+        git(inSub, "checkout", "-q", "--detach", webui);
+        git(sub, "add", NESTED_PATH);
+        git(sub, "commit", "-q", "-m", "bump the webui");
+        String subCommit = head(sub);
+        Path inUpstream = upstream.resolve("components/demo/" + SUB);
+        git(inUpstream, "fetch", "-q", "origin");
+        git(inUpstream, "checkout", "-q", "--detach", subCommit);
+        git(upstream, "add", "components/demo/" + SUB);
+        git(upstream, "commit", "-q", "-m", "bump the submodule");
+        return new String[] {webui, subCommit};
+    }
+
+    /**
+     * The freeze of qits-290. A release that bumps a webui moves the submodule and its webui to the
+     * commits it recorded, and the release after it is followed, not refused for good.
+     */
+    @Test
+    void aNestedBumpMovesTheNestedSubmoduleAndDoesNotFreezeTheNextRelease() throws Exception {
+        Path checkedOut = addNestedSubmodules();
+        String[] bumped = bumpNested();
+        String released = release(VERSION);
+        announced(payloadFor(VERSION));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(head(checkedOut)).as("the gitlink the release recorded").isEqualTo(bumped[1]);
+        assertThat(head(nestedIn(checkedOut))).as("the gitlink the submodule now records").isEqualTo(bumped[0]);
+        assertThat(branch(nestedIn(checkedOut))).as("detached, update = merge or not").isEqualTo("HEAD");
+
+        out.reset();
+        err.reset();
+        String next = release(NEXT_VERSION);
+        announced(payloadFor(NEXT_VERSION));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(next);
+        assertThat(err()).doesNotContain("has local changes");
+    }
+
+    @Test
+    void anUntrackedFileInANestedSubmoduleIsNotALocalChange() throws Exception {
+        Path checkedOut = addNestedSubmodules();
+        String released = release(VERSION);
+        announced(payloadFor(VERSION));
+        Files.writeString(nestedIn(checkedOut).resolve("scratch.txt"), "nobody tracked this");
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(Files.readString(nestedIn(checkedOut).resolve("scratch.txt"))).isEqualTo("nobody tracked this");
+        assertThat(err()).doesNotContain("has local changes");
+    }
+
+    @Test
+    void aTrackedChangeInANestedSubmoduleRefusesAndIsNamedFromTheRoot() throws Exception {
+        Path checkedOut = addNestedSubmodules();
+        release(VERSION);
+        announced(payloadFor(VERSION));
+        String before = head(work);
+        Files.writeString(nestedIn(checkedOut).resolve("index.html"), "somebody is working in the webui");
+
+        assertThat(run("--once")).isEqualTo(1);
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(Files.readString(nestedIn(checkedOut).resolve("index.html")))
+                .isEqualTo("somebody is working in the webui");
+        assertThat(err()).contains("has local changes")
+                .contains(NESTED_FROM_ROOT + " (changes in the submodule)")
+                .doesNotContain("components/demo/" + SUB + " (changes in the submodule)");
+    }
+
+    @Test
+    void aNestedSubmoduleCommitNoRefHoldsIsRefusedAndNamedFromTheRoot() throws Exception {
+        Path checkedOut = addNestedSubmodules();
+        release(VERSION);
+        announced(payloadFor(VERSION));
+        String before = head(work);
+        Path webui = nestedIn(checkedOut);
+        git(webui, "config", "user.email", "test@example.invalid");
+        git(webui, "config", "user.name", "Test");
+        git(webui, "checkout", "-q", "--detach");
+        String orphan = commit(webui, "index.html", "committed, but on no branch");
+
+        assertThat(run("--once")).isEqualTo(1);
+
+        assertThat(head(work)).isEqualTo(before);
+        assertThat(head(webui)).isEqualTo(orphan);
+        assertThat(err()).contains("has local changes")
+                .contains(NESTED_FROM_ROOT + " (a commit in the submodule that no branch or tag holds)");
+    }
+
+    /** "Already at" is never claimed while a nested submodule sits off its gitlink. */
+    @Test
+    void aRootAndSubmoduleAtTheReleaseWithANestedSubmoduleElsewhereIsNotAlreadyThere() throws Exception {
+        Path checkedOut = addNestedSubmodules();
+        String pinnedSub = head(checkedOut);
+        Path webui = nestedIn(checkedOut);
+        String pinnedWebui = head(webui);
+        String released = release(VERSION);
+        git(work, "fetch", "-q", "origin", "refs/tags/" + VERSION + ":refs/tags/" + VERSION);
+        git(work, "checkout", "-q", "--detach", VERSION);
+        String ahead = commit(tmp.resolve("git").resolve(PROJECT).resolve(NESTED), "index.html", "ahead");
+        git(webui, "fetch", "-q", "origin");
+        git(webui, "checkout", "-q", "-B", "main", "origin/main");
+        assertThat(head(webui)).isEqualTo(ahead);
+        announced(payloadFor(VERSION));
+
+        assertThat(run("--once")).isZero();
+
+        assertThat(head(work)).isEqualTo(released);
+        assertThat(head(checkedOut)).isEqualTo(pinnedSub);
+        assertThat(head(webui)).as("back at the gitlink the submodule records").isEqualTo(pinnedWebui);
+        assertThat(err()).doesNotContain("already at").contains("moved the submodules");
+        assertThat(out().lines()).containsExactly(VERSION);
+    }
+
     private String payloadFor(String version) {
         return stateChanged("repoName", REPO, "FINALIZED", version);
     }

@@ -254,7 +254,7 @@ class PlatformCommandsTest {
     }
 
     @Test
-    void createSendsTheNameAndComponentAndNeverAnArchetype() throws Exception {
+    void createSendsTheNameAndComponentAndNoArchetypeFieldWithoutTheFlag() throws Exception {
         answerCreate();
 
         Result r = run("repositories", "--project", "qits", "create", "qits-docs-app", "--component", "qits-docs");
@@ -262,11 +262,24 @@ class PlatformCommandsTest {
         assertThat(r.exit()).isZero();
         JsonNode sent = JSON.readTree(platform.requests("POST", REPOSITORIES).getFirst().body());
         assertThat(sent).isEqualTo(JSON.readTree("{\"name\":\"qits-docs-app\",\"component\":\"qits-docs\"}"));
-        assertThat(sent.has("archetype")).as("the name decides the kind; a flag could contradict it").isFalse();
+        assertThat(sent.has("archetype")).as("no --archetype was given, so none is sent").isFalse();
     }
 
     @Test
-    void createPrintsTheArchetypeTheDoorDerivedAndTheWrapperPath() {
+    void createWithArchetypeSendsItNormalisedToUpperCase() throws Exception {
+        answerCreate();
+
+        Result r = run("repositories", "--project", "qits", "create", "qits-docs-app", "--component", "qits-docs",
+                "--archetype", "daemon");
+
+        assertThat(r.exit()).isZero();
+        JsonNode sent = JSON.readTree(platform.requests("POST", REPOSITORIES).getFirst().body());
+        assertThat(sent).isEqualTo(JSON.readTree(
+                "{\"name\":\"qits-docs-app\",\"component\":\"qits-docs\",\"archetype\":\"DAEMON\"}"));
+    }
+
+    @Test
+    void createPrintsTheArchetypeTheDoorAnsweredAndTheWrapperPath() {
         answerCreate();
 
         Result r = run("repositories", "create", "qits-docs-app", "--project", "qits", "--component", "qits-docs");
@@ -313,22 +326,6 @@ class PlatformCommandsTest {
     }
 
     @Test
-    void aNameWithNoRoleSuffixSaysTheServiceMayNotKnowTheRoleYet() {
-        platform.answer("POST", REPOSITORIES, 400, """
-                {"message":"'qits-docs' carries no role suffix, so there is nothing to read the kind of component\
-                 out of."}
-                """);
-
-        Result r = run("repositories", "--project", "qits", "create", "qits-docs");
-
-        assertThat(r.exit()).isEqualTo(1);
-        assertThat(r.err()).contains("The service cannot tell what kind of component 'qits-docs' is (HTTP 400)")
-                .contains("carries no role suffix")
-                .contains("a role the live service has not been released with reads exactly like a missing one");
-        assertThat(r.out()).isEmpty();
-    }
-
-    @Test
     void aRefusedCredentialSaysWhichRolesTheDoorTakes() {
         platform.answer("POST", REPOSITORIES, 403, "{\"message\":\"forbidden\"}");
 
@@ -347,8 +344,7 @@ class PlatformCommandsTest {
         Result r = run("repositories", "--project", "qits", "create", "qits-docs-app");
 
         assertThat(r.exit()).isEqualTo(1);
-        assertThat(r.err()).contains("A repository named qits-docs-app exists.")
-                .doesNotContain("role suffix");
+        assertThat(r.err()).contains("A repository named qits-docs-app exists.");
     }
 
     @Test
