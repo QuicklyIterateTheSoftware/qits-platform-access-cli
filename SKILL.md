@@ -311,7 +311,7 @@ archive and unarchive ask for repository.archived in the repository's .config/qi
 
 remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for the credentials the project's backups push with.
 
-A repository's archetype is read off its name's role suffix, so the name is what says what kind of component it is. There is no flag for the archetype, on purpose.
+A repository's name says the role it plays to a reader, but it decides nothing (owner ruling 2026-11-03): state the kind with create's --archetype, or declare it in the repository's own .config/qits/repository.yml (repository.archetype), which the wrapper reconcile applies. With neither, the repository simply has no archetype yet.
 
 ## qits repositories list
 
@@ -344,17 +344,18 @@ qits repositories list --project qits -o json
 
 Create a repository in the project: a blank one on the platform's git host, seeded with the repository template, and mounted in the project's wrapper.
 
-The NAME says what kind of component it is: the service reads the archetype off the name's role suffix (payments-daemon is a DAEMON), and there is no flag to state one, because a flag could contradict the name. Name the repository <component>[-<modifier>]-<role>.
+The NAME says what kind of component it is to a reader; it decides nothing. State the kind with --archetype, or leave it to the repository's own .config/qits/repository.yml (repository.archetype), which a wrapper reconcile applies. With neither, the repository has no archetype until one is declared. Name the repository <component>[-<modifier>]-<role> all the same, so a reader still sees the role.
 
 --component places the wrapper entry at components/<component>/<name>. Without it the wrapper's own layout decides.
 
 ```
-qits repositories create [--component <component>] [--output table|json] [--project <project>] [--projects-url <url>] <name>
+qits repositories create [--archetype <archetype>] [--component <component>] [--output table|json] [--project <project>] [--projects-url <url>] <name>
 ```
 
 | Name | What it does |
 |---|---|
-| `<name>` | The repository's name, and with it its kind: it ends in a role suffix, and that suffix is what the archetype is read from. It is also what ../<name>.git resolves to. |
+| `<name>` | The repository's name. Its role suffix tells a reader what kind of component it is, but decides nothing: state the kind with --archetype. It is also what ../<name>.git resolves to. |
+| `--archetype <archetype>` | The kind of component this is: SERVICE, DAEMON, LIBRARY, FRONTEND, APP, CLI or IMAGE, any case. Default: none: the repository has no archetype until this, or its .config/qits/repository.yml, declares one. |
 | `--component <component>` | The technical component to mount the entry under: components/<component>/<name>. Default: the wrapper's own layout decides. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--project <project>` | The project: its id, slug or name. |
@@ -363,14 +364,14 @@ qits repositories create [--component <component>] [--output table|json] [--proj
 ### Examples
 
 ```
-qits repositories --project qits create qits-docs-app --component qits-docs
-qits repositories create qits-payments-service --project qits --component qits-payments
+qits repositories --project qits create qits-docs-app --component qits-docs --archetype app
+qits repositories create qits-payments-service --project qits --component qits-payments --archetype service
 qits repositories --project qits create qits-docs-app -o json
 ```
 
-- Roles: -service, -frontend, -app, -daemon, -oci, -cli, -javalib, -jslib. A name that carries none of them is refused by the service, because a guessed kind is the one thing nothing downstream could correct.
+- --archetype: SERVICE, DAEMON, LIBRARY, FRONTEND, APP, CLI or IMAGE, any case. Anything else is left for the service to refuse.
 - Creating a repository needs the role qits:admin or qits:agent.
-- The command prints what the service answered: the name, the archetype it derived, the component, the id, and the wrapper path the entry was written at.
+- The command prints what the service answered: the name, the archetype (if any was declared), the component, the id, and the wrapper path the entry was written at.
 
 ### Exit codes
 

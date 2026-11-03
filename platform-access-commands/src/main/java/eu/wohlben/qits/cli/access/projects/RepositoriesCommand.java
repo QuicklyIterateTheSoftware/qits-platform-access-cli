@@ -32,8 +32,10 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + ".config/qits/repository.yml, released through its own release request.",
                 "remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for "
                         + "the credentials the project's backups push with.",
-                "A repository's archetype is read off its name's role suffix, so the name is what says what kind "
-                        + "of component it is. There is no flag for the archetype, on purpose."})
+                "A repository's name says the role it plays to a reader, but it decides nothing (owner ruling "
+                        + "2026-11-03): state the kind with create's --archetype, or declare it in the "
+                        + "repository's own .config/qits/repository.yml (repository.archetype), which the wrapper "
+                        + "reconcile applies. With neither, the repository simply has no archetype yet."})
 public class RepositoriesCommand implements Runnable {
 
     @CommandLine.Mixin
@@ -102,33 +104,36 @@ public class RepositoriesCommand implements Runnable {
      * Stands a repository up: a blank one on the platform's git host, and the entry that mounts it
      * in the project's wrapper.
      *
-     * <p><b>There is no --archetype, and there deliberately never will be.</b> The service reads the
-     * kind off the name's role suffix, and that derivation is the whole point: a flag would let a
-     * caller state a kind the name contradicts, and the archetype is the one field nothing
-     * downstream can correct afterwards. So the archetype is printed rather than chosen — it is
-     * what the door decided.
+     * <p><b>--archetype states the kind; the name never did (owner ruling 2026-11-03).</b> The name's
+     * role suffix is a convention for a reader, not an input any service reads. A caller states the
+     * kind with this flag, or leaves it to the repository's own {@code .config/qits/repository.yml}
+     * once a wrapper reconcile applies it; with neither, the row is created with no archetype at
+     * all. The archetype is still printed, because it is what the door answered, never what this
+     * command derived.
      */
     @CommandLine.Command(name = "create", mixinStandardHelpOptions = true,
             description = {"Create a repository in the project: a blank one on the platform's git host, seeded "
                     + "with the repository template, and mounted in the project's wrapper.",
-                    "The NAME says what kind of component it is: the service reads the archetype off the name's "
-                            + "role suffix (payments-daemon is a DAEMON), and there is no flag to state one, "
-                            + "because a flag could contradict the name. Name the repository "
-                            + "<component>[-<modifier>]-<role>.",
+                    "The NAME says what kind of component it is to a reader; it decides nothing. State the kind "
+                            + "with --archetype, or leave it to the repository's own "
+                            + ".config/qits/repository.yml (repository.archetype), which a wrapper reconcile "
+                            + "applies. With neither, the repository has no archetype until one is declared. "
+                            + "Name the repository <component>[-<modifier>]-<role> all the same, so a reader "
+                            + "still sees the role.",
                     "--component places the wrapper entry at components/<component>/<name>. Without it the "
                             + "wrapper's own layout decides."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
-                    "  qits repositories --project qits create qits-docs-app --component qits-docs",
-                    "  qits repositories create qits-payments-service --project qits --component qits-payments",
+                    "  qits repositories --project qits create qits-docs-app --component qits-docs --archetype app",
+                    "  qits repositories create qits-payments-service --project qits --component qits-payments "
+                            + "--archetype service",
                     "  qits repositories --project qits create qits-docs-app -o json",
                     "",
-                    "- Roles: -service, -frontend, -app, -daemon, -oci, -cli, -javalib, -jslib. A name that "
-                            + "carries none of them is refused by the service, because a guessed kind is the one "
-                            + "thing nothing downstream could correct.",
+                    "- --archetype: SERVICE, DAEMON, LIBRARY, FRONTEND, APP, CLI or IMAGE, any case. Anything "
+                            + "else is left for the service to refuse.",
                     "- Creating a repository needs the role qits:admin or qits:agent.",
-                    "- The command prints what the service answered: the name, the archetype it derived, the "
-                            + "component, the id, and the wrapper path the entry was written at."},
+                    "- The command prints what the service answered: the name, the archetype (if any was "
+                            + "declared), the component, the id, and the wrapper path the entry was written at."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The repository exists and the wrapper names it.",
                     "1:The platform refused (the message names the status and what to do next), or cannot be "
@@ -140,14 +145,21 @@ public class RepositoriesCommand implements Runnable {
         RepositoriesCommand parent;
 
         @CommandLine.Parameters(index = "0", paramLabel = "<name>",
-                description = "The repository's name, and with it its kind: it ends in a role suffix, and that "
-                        + "suffix is what the archetype is read from. It is also what ../<name>.git resolves to.")
+                description = "The repository's name. Its role suffix tells a reader what kind of component it "
+                        + "is, but decides nothing: state the kind with --archetype. It is also what "
+                        + "../<name>.git resolves to.")
         String name;
 
         @CommandLine.Option(names = "--component", paramLabel = "<component>",
                 description = "The technical component to mount the entry under: components/<component>/<name>. "
                         + "Default: the wrapper's own layout decides.")
         String component;
+
+        @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
+                description = "The kind of component this is: SERVICE, DAEMON, LIBRARY, FRONTEND, APP, CLI or "
+                        + "IMAGE, any case. Default: none: the repository has no archetype until this, or its "
+                        + ".config/qits/repository.yml, declares one.")
+        String archetype;
 
         @Override
         protected int execute(CliContext context) throws CliFailure, InterruptedException {
@@ -159,7 +171,7 @@ public class RepositoriesCommand implements Runnable {
             JsonNode project = api.project(wanted);
             JsonNode answer;
             try {
-                answer = api.createRepository(text(project, "id"), repository, component);
+                answer = api.createRepository(text(project, "id"), repository, component, archetype);
             } catch (CliFailure refused) {
                 throw explain(refused, repository);
             }
@@ -172,10 +184,11 @@ public class RepositoriesCommand implements Runnable {
         }
 
         /**
-         * What the service answered, the archetype first among equals: it is the derivation nobody
-         * can correct once the row exists, so a person sees it at the moment it is decided. The
-         * wrapper path is the proof the wrapper entry was written; the service leaves it out when
-         * there is none, and then so does this.
+         * What the service answered, the archetype first among equals: it is what the row was
+         * declared as, through --archetype or the repository's .config/qits/repository.yml, not
+         * what this command guessed from the name. A repository declared as neither prints a dash,
+         * the same as any other empty cell (Table.cell). The wrapper path is the proof the wrapper
+         * entry was written; the service leaves it out when there is none, and then so does this.
          */
         private static void print(CliContext context, JsonNode answer) {
             JsonNode repository = answer.path("repository");
@@ -192,20 +205,12 @@ public class RepositoriesCommand implements Runnable {
         }
 
         /**
-         * The two refusals this command meets in the ordinary course of standing a repository up,
-         * each with the step that follows it. Both are the platform's answer, so both keep the
-         * refusal's exit code; what they add is the sentence that says what to do next.
+         * The one refusal this command meets in the ordinary course of standing a repository up,
+         * with the step that follows it. It is the platform's own answer, so it keeps the refusal's
+         * exit code; what this adds is the sentence that says what to do next.
          */
         private static CliFailure explain(CliFailure refused, String repository) {
             String said = refused.getMessage() == null ? "" : refused.getMessage();
-            if (refused.status() == 400 && said.contains("role suffix")) {
-                return new CliFailure("The service cannot tell what kind of component '" + repository
-                        + "' is (HTTP 400): " + said + System.lineSeparator()
-                        + "Either the name carries no role suffix, or it carries one this service does not know "
-                        + "yet — a role the live service has not been released with reads exactly like a missing "
-                        + "one. `qits repositories --project <project> list` shows the archetypes it does know.",
-                        CliFailure.FAILED);
-            }
             if (refused.status() == 403) {
                 return new CliFailure(said + System.lineSeparator()
                         + "Creating a repository needs qits:admin or qits:agent. A 403 on an agent credential "

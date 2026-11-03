@@ -421,7 +421,7 @@ public final class ProjectsContract {
 
     private static final Call CREATE_REPOSITORY = (api, params, recorded) -> {
         JsonNode created = api.createRepository(params.get("projectId"), body(recorded).path("name").asText(),
-                body(recorded).path("component").asText());
+                body(recorded).path("component").asText(), null);
         assertThat(ProjectsApi.text(created.path("repository"), "name")).isEqualTo(body(recorded).path("name").asText());
         assertThat(ProjectsApi.text(created.path("repository"), "archetype")).isNotBlank();
         assertThat(ProjectsApi.text(created, "wrapperPath")).isNotBlank();

@@ -778,32 +778,33 @@ Columns: slug, name, id.
 that matches; a value that matches none, or more than one, stops with a message. Columns: name,
 archetype, component, id.
 
-### qits repositories --project \<project\> create \<name\> [--component \<component\>]
+### qits repositories --project \<project\> create \<name\> [--component \<component\>] [--archetype \<archetype\>]
 
 Creates a blank repository on the platform's git host, seeded with the repository template, and
 writes the entry that mounts it in the project's wrapper. `--project` is as above.
 
-`<name>` is the repository's name and, with it, its kind: the service reads the archetype off the
-name's role suffix (`qits-payments-daemon` is a `DAEMON`), which under the component layout is where
-the kind lives. **There is no `--archetype` flag, on purpose.** The request omits the field the
-service would obey, so the name and the kind can never contradict each other — and the archetype is
-the one field nothing downstream can correct once the row exists. The roles are `-service`,
+`<name>`'s role suffix (`qits-payments-daemon` ends in `-daemon`) tells a reader what kind of
+component the repository is; it decides nothing (owner ruling 2026-11-03). A kind is stated with
+`--archetype` (`SERVICE`, `DAEMON`, `LIBRARY`, `FRONTEND`, `APP`, `CLI` or `IMAGE`, any case; sent
+upper-cased, anything else left for the service to refuse), or by the repository's own
+`.config/qits/repository.yml` (`repository: { archetype: DAEMON }`), which a wrapper reconcile
+applies once it releases. With neither, the row is created with no archetype at all: the field is
+simply omitted from the request rather than guessed from the name. Name the repository
+`<component>[-<modifier>]-<role>` all the same, so a reader still sees the role: `-service`,
 `-frontend`, `-app`, `-daemon`, `-oci`, `-cli`, `-javalib` and `-jslib`.
 
 `--component` places the wrapper entry at `components/<component>/<name>`; without it the wrapper's
 own layout decides.
 
-The command prints what the service answered: the name, the archetype it derived, the component, the
-id and the wrapper path the entry was written at — the last being the proof the wrapper entry
-exists. `-o json` prints the answer as it came.
+The command prints what the service answered: the name, the archetype (if any was declared), the
+component, the id and the wrapper path the entry was written at — the last being the proof the
+wrapper entry exists. `-o json` prints the answer as it came.
 
-Two refusals get a sentence that says what to do next, both with exit code 1. A 400 naming a missing
-role suffix says that the name carries none *or* that the live service has not been released with
-that role yet — the two read the same from here. A 403 says the door takes `qits:admin` or
-`qits:agent`, so a refusal on an agent credential means the role has not reached the deployed
-service yet.
+A refusal gets a sentence that says what to do next, with exit code 1. A 403 says the door takes
+`qits:admin` or `qits:agent`, so a refusal on an agent credential means the role has not reached the
+deployed service yet. Any other refusal is left as the service worded it.
 
-    qits repositories --project qits create qits-docs-app --component qits-docs
+    qits repositories --project qits create qits-docs-app --component qits-docs --archetype app
 
 ### qits repositories --project \<project\> remote-login [--repository \<repository\>]
 

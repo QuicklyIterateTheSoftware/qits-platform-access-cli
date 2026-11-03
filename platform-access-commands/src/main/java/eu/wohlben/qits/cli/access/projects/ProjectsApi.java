@@ -61,20 +61,24 @@ public final class ProjectsApi {
      * {@code {"repository":{…},"projectId":…,"wrapperPath":…}}: a blank repository on the platform's
      * git host, and the wrapper entry that names it, which is the same statement made twice.
      * <p>
-     * <b>No {@code archetype} field, and there is no flag for one.</b> The service reads the kind
-     * off the name's role suffix ({@code qits-payments-daemon} is a {@code DAEMON}), which under the
-     * component layout is where the kind lives. The field exists on the request and is deliberately
-     * left unset: sending one would let a caller state a kind the name contradicts, and the row's
-     * archetype is the one thing nothing downstream can correct afterwards.
+     * The name's role suffix (owner ruling 2026-11-03) decides nothing any more: it is a convention
+     * that tells a reader what a repository is, not an input the service reads a kind from. A kind
+     * is stated by {@code archetype}, or by the repository's own {@code .config/qits/repository.yml}
+     * once the wrapper reconcile runs; with neither, the service stores no archetype at all. A null
+     * {@code archetype} here omits the field, so a caller who names none leaves the row exactly as
+     * undeclared as that.
      * <p>
      * A null component lets the wrapper's own layout decide where the entry is mounted.
      */
-    public JsonNode createRepository(String projectId, String name, String component)
+    public JsonNode createRepository(String projectId, String name, String component, String archetype)
             throws CliFailure, InterruptedException {
         ObjectNode body = JSON.createObjectNode();
         body.put("name", name);
         if (component != null && !component.isBlank()) {
             body.put("component", component.strip());
+        }
+        if (archetype != null && !archetype.isBlank()) {
+            body.put("archetype", archetype.strip().toUpperCase(Locale.ROOT));
         }
         return client.post(uri("/projects/api/projects/" + segment(projectId) + "/repositories"), body);
     }
