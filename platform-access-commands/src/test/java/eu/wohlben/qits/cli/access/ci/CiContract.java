@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <b>What the commands ask qits-ci, and why</b> (ticket qits-1149): {@code qits ci runs|run|retry|cancel},
  * {@code qits ci report show|submit}, the changelog's gate highlights and the tui's run dropdown,
  * each row through {@link CiApi} against a pact mock server, written to {@code
- * pacts/qits-platform-access-cli_qits-ci-service.json}.
+ * pacts/qits-platform-access-monorepo_qits-ci-service.json}.
  * <p>
  * Each row binds what the table form reads ({@code RunView}, the report summaries); {@code -o json}
  * prints the answer as it came. Besides the default {@code runs}, qits-ci records the run list

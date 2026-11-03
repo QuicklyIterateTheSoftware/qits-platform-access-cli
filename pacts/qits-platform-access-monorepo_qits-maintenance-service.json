@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -11,7 +11,7 @@
             "operationId": "listDeployedPacts"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts fetch deployed-pacts",
             "kind": "command"
           }
@@ -165,7 +165,7 @@
             "operationId": "runReleaseRequestAutomation"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits maintenance automation run",
             "kind": "command"
           }
@@ -259,7 +259,7 @@
             "operationId": "runReleaseRequestAutomation"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits maintenance automation run",
             "kind": "command"
           }
@@ -375,7 +375,7 @@
             "operationId": "listReleaseRequestAutomations"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits maintenance automations",
             "kind": "command"
           }
@@ -556,7 +556,7 @@
             "operationId": "listReleaseRequestAutomations"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits maintenance automations",
             "kind": "command"
           }
@@ -725,7 +725,7 @@
             "operationId": "getBump"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits maintenance bump",
             "kind": "command"
           }

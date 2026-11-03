@@ -5,7 +5,7 @@ import eu.wohlben.qits.cli.access.contracts.CliPactTest;
 
 /**
  * The consumer half of the qits-projects contract: {@link ProjectsContract}'s rows against pact mock
- * servers, and {@code pacts/qits-platform-access-cli_qits-projects-service.json}. See {@link
+ * servers, and {@code pacts/qits-platform-access-monorepo_qits-projects-service.json}. See {@link
  * CliPactTest}.
  */
 class ProjectsConsumerPactTest extends CliPactTest {

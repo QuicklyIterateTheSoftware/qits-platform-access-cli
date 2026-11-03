@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * <b>Everything the CLI asks one provider</b> (ticket qits-1149): the rows, the client classes they
  * call through, the doors of those classes that are not REST calls (named, with the reason), and
- * the consumer pact the rows make, {@code pacts/qits-platform-access-cli_<provider>.json}.
+ * the consumer pact the rows make, {@code pacts/qits-platform-access-monorepo_<provider>.json}.
  * <p>
  * The rows are bound to the provider's golden masters, {@code eu.wohlben.qits:<app>-golden-masters}
  * pinned in the root pom, and read through qits-pact-consumer's {@link ConsumerPact}: only what a
@@ -52,7 +52,7 @@ public record CliPact(
         List<CliRow> rows) {
 
     /** The consumer, as every pact names it: the repository, never an application. */
-    public static final String CONSUMER = "qits-platform-access-cli";
+    public static final String CONSUMER = "qits-platform-access-monorepo";
 
     public CliPact {
         Objects.requireNonNull(masters, "masters");

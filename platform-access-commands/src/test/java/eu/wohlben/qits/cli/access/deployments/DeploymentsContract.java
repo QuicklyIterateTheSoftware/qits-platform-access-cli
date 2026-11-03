@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * <b>What {@code qits deployments settings} asks qits-deployments, and why</b> (epic qits-765,
  * qits-1390): list, set, delete and preview, through {@link DeploymentsApi}, written to {@code
- * pacts/qits-platform-access-cli_qits-deployments-service.json} once the provider records them.
+ * pacts/qits-platform-access-monorepo_qits-deployments-service.json} once the provider records them.
  * <p>
  * Every row is pending until a pinned {@code qits-deployments-golden-masters} records its state.
  * The set row sends the recorded body ({@code {"value", "secret"}}) through the client, so the pact

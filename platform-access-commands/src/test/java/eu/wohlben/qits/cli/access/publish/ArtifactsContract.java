@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * and npm registry), {@code qits update}'s daemon reads ({@link UpdateRows}), {@code qits
  * changelog bump-message}'s changelog read ({@link BumpMessageRows}) and {@code qits artifacts fetch
  * deployed-pacts}' pact jar ({@link FetchRows}), written to {@code
- * pacts/qits-platform-access-cli_qits-artifacts-service.json}.
+ * pacts/qits-platform-access-monorepo_qits-artifacts-service.json}.
  * <p>
  * <b>One row per (command, request).</b> A row runs the client method the command calls, over the
  * publish {@link Http} with a fixed token, against a mock answering that one request. Where a

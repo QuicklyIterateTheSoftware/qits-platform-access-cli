@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * <b>What the commands ask qits-events over REST, and why</b> (ticket qits-1149): {@code qits events
  * query}'s pages of the events log and {@code qits checkout-daemon}'s newest-release read ({@link
- * ReleaseWatcherRows}), written to {@code pacts/qits-platform-access-cli_qits-events-service.json}.
+ * ReleaseWatcherRows}), written to {@code pacts/qits-platform-access-monorepo_qits-events-service.json}.
  * The live streams ({@code qits events}, the checkout's watch) are Server-Sent Events, no part of it.
  * <p>
  * {@code events query} pages back from {@code --until} with {@code since}, {@code order=desc}, a

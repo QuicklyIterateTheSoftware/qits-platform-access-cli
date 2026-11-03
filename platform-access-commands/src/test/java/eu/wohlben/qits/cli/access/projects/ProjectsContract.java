@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * <b>What the commands ask qits-projects, and why</b> (epic qits-965, ticket qits-1149): the one
  * table {@code ProjectsConsumerPactTest} runs row by row against a pact mock server and writes to
- * {@code pacts/qits-platform-access-cli_qits-projects-service.json}, so the file and the verified
+ * {@code pacts/qits-platform-access-monorepo_qits-projects-service.json}, so the file and the verified
  * behaviour cannot drift apart.
  * <p>
  * <b>One row per (command, call).</b> Each row runs the {@link ProjectsApi} method the command

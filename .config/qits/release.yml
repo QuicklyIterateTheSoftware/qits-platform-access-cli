@@ -29,8 +29,9 @@ artifacts:
   - { type: maven, name: "eu.wohlben.qits:qits-platform-access-cli-binary", path: platform-access-cli-binary, sbom: platform-access-cli-binary/target/sbom.json }
 # THE CONSUMER PACTS (epics qits-546 and qits-965, ticket qits-1149): what the commands ask each qits
 # service, one file per provider, written by that provider's *ConsumerPactTest from its golden masters
-# and committed at pacts/qits-platform-access-cli_<provider>.json (the files keep the old consumer
-# name; qits-ci picks them by the `_<provider>.json` suffix alone). The platform packs each as
+# and committed at pacts/qits-platform-access-monorepo_<provider>.json (since qits-1835 the files name
+# the consumer qits-platform-access-monorepo, the repository's new name; qits-ci picks them by the
+# `_<provider>.json` suffix alone). The platform packs each as
 # `eu.wohlben.qits:qits-platform-access-monorepo-pacts-<provider>` (the coordinate is named by this
 # repository and the provider's, so it moved with the qits-631 rename), only when it changed, from
 # the release slot's LAST step — the pin jar's step below — exactly as for an archetype recipe:

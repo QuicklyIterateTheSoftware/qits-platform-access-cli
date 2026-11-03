@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -11,7 +11,7 @@
             "operationId": "getMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts fetch deployed-pacts",
             "kind": "command"
           }
@@ -56,7 +56,7 @@
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish changelog",
             "kind": "command"
           }
@@ -153,7 +153,7 @@
             "operationId": "listDocsVersions"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish changelog",
             "kind": "command"
           }
@@ -195,7 +195,7 @@
             "operationId": "listDocsVersions"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish changelog",
             "kind": "command"
           }
@@ -286,7 +286,7 @@
             "operationId": "putDocs"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish changelog",
             "kind": "command"
           }
@@ -340,7 +340,7 @@
             "operationId": "putDocs"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish changelog",
             "kind": "command"
           }
@@ -438,7 +438,7 @@
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract-docs",
             "kind": "command"
           }
@@ -535,7 +535,7 @@
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract-docs",
             "kind": "command"
           }
@@ -622,7 +622,7 @@
             "operationId": "putDocs"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract-docs",
             "kind": "command"
           }
@@ -676,7 +676,7 @@
             "operationId": "putDocs"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract-docs",
             "kind": "command"
           }
@@ -774,7 +774,7 @@
             "operationId": "getContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -861,7 +861,7 @@
             "operationId": "getContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -906,7 +906,7 @@
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -993,7 +993,7 @@
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -1038,7 +1038,7 @@
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -1120,7 +1120,7 @@
             "operationId": "putMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -1176,7 +1176,7 @@
             "operationId": "putMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -1232,7 +1232,7 @@
             "operationId": "putNpmDistTag"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -1287,7 +1287,7 @@
             "operationId": "putNpmPackage"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish contract",
             "kind": "command"
           }
@@ -1369,7 +1369,7 @@
             "operationId": "headDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish daemon submit",
             "kind": "command"
           }
@@ -1442,7 +1442,7 @@
             "operationId": "putDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish daemon submit",
             "kind": "command"
           }
@@ -1540,7 +1540,7 @@
             "operationId": "putDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish daemon submit",
             "kind": "command"
           }
@@ -1594,7 +1594,7 @@
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish docs submit",
             "kind": "command"
           }
@@ -1691,7 +1691,7 @@
             "operationId": "putDocs"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish docs submit",
             "kind": "command"
           }
@@ -1745,7 +1745,7 @@
             "operationId": "putDocs"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish docs submit",
             "kind": "command"
           }
@@ -1843,7 +1843,7 @@
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -1886,7 +1886,7 @@
             "operationId": "getDocsVersion"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -1929,7 +1929,7 @@
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -2078,7 +2078,7 @@
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -2123,7 +2123,7 @@
             "operationId": "headDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -2166,7 +2166,7 @@
             "operationId": "headDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -2209,7 +2209,7 @@
             "operationId": "headSbom"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -2253,7 +2253,7 @@
             "operationId": "headSbom"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish exists",
             "kind": "command"
           }
@@ -2297,7 +2297,7 @@
             "operationId": "getContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2384,7 +2384,7 @@
             "operationId": "getContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2429,7 +2429,7 @@
             "operationId": "getMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2474,7 +2474,7 @@
             "operationId": "getMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2519,7 +2519,7 @@
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2606,7 +2606,7 @@
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2651,7 +2651,7 @@
             "operationId": "putMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2707,7 +2707,7 @@
             "operationId": "putMavenFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish maven",
             "kind": "command"
           }
@@ -2763,7 +2763,7 @@
             "operationId": "putNpmDistTag"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm dist-tag",
             "kind": "command"
           }
@@ -2818,7 +2818,7 @@
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm plan",
             "kind": "command"
           }
@@ -2978,7 +2978,7 @@
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm plan",
             "kind": "command"
           }
@@ -3023,7 +3023,7 @@
             "operationId": "getContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm",
             "kind": "command"
           }
@@ -3110,7 +3110,7 @@
             "operationId": "getNewestContentHash"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm",
             "kind": "command"
           }
@@ -3197,7 +3197,7 @@
             "operationId": "getNpmPackument"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm",
             "kind": "command"
           }
@@ -3279,7 +3279,7 @@
             "operationId": "putNpmDistTag"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm",
             "kind": "command"
           }
@@ -3334,7 +3334,7 @@
             "operationId": "putNpmPackage"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish npm",
             "kind": "command"
           }
@@ -3416,7 +3416,7 @@
             "operationId": "getSbom"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish sbom submit",
             "kind": "command"
           }
@@ -3684,7 +3684,7 @@
             "operationId": "putSbom"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish sbom submit",
             "kind": "command"
           }
@@ -3820,7 +3820,7 @@
             "operationId": "putSbom"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits artifacts publish sbom submit",
             "kind": "command"
           }
@@ -3965,7 +3965,7 @@
             "operationId": "getDocsFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits changelog bump-message",
             "kind": "command"
           }
@@ -4007,7 +4007,7 @@
             "operationId": "getDocsFile"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits changelog bump-message",
             "kind": "command"
           }
@@ -4049,7 +4049,7 @@
             "operationId": "getDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits update",
             "kind": "command"
           }
@@ -4092,7 +4092,7 @@
             "operationId": "headDaemon"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits update",
             "kind": "command"
           }
@@ -4165,7 +4165,7 @@
             "operationId": "listDaemons"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits update",
             "kind": "command"
           }

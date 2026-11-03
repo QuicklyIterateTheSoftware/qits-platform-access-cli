@@ -82,7 +82,7 @@
         <surefire.failIfNoSpecifiedTests>false</surefire.failIfNoSpecifiedTests>
         <!-- THE PROVIDER'S GOLDEN MASTERS (epic qits-546, qits-965), test scope: qits-projects
              records what its /work doors answer for each provider state, and the commands' consumer
-             pact (ProjectsConsumerPactTest, pacts/qits-platform-access-cli_qits-projects-service.json)
+             pact (ProjectsConsumerPactTest, pacts/qits-platform-access-monorepo_qits-projects-service.json)
              is written from those recordings, never from hand-written JSON. A newer recording reaches
              this repository the way every pin does — as a qits-maintenance bump on this property,
              gated here, where a changed answer the CLI cannot read goes red before it ships. Do not

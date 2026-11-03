@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <b>What the commands ask qits-maintenance, and why</b> (ticket qits-1149): {@code qits maintenance
  * automations}, {@code automation run} and {@code bump}, and {@code qits artifacts fetch
  * deployed-pacts}'s one read (qits-1765), through {@link MaintenanceApi}, written to
- * {@code pacts/qits-platform-access-cli_qits-maintenance-service.json}.
+ * {@code pacts/qits-platform-access-monorepo_qits-maintenance-service.json}.
  * <p>
  * qits-maintenance records the automations of a request at a named fold, and a re-run with no body
  * but {@code {}}: those are what {@code --fold} and a run without {@code --work-item} send. The list

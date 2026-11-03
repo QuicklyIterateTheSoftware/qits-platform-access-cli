@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -11,7 +11,7 @@
             "operationId": "listEvents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits checkout-daemon",
             "kind": "command"
           }
@@ -126,7 +126,7 @@
             "operationId": "listEvents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits events query",
             "kind": "command"
           }

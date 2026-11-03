@@ -10,7 +10,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * <b>The compare-or-rewrite switch for this repository's committed contract files</b> — today the
- * consumer pact {@code pacts/qits-platform-access-cli_qits-projects-service.json}. A copy of
+ * consumer pact {@code pacts/qits-platform-access-monorepo_qits-projects-service.json}. A copy of
  * qits-workspaces-service's {@code testing/contracts/GoldenFiles}, itself qits-projects' (the
  * provider side of epic qits-546), so every end of the contract answers to the SAME switch: the
  * repositories share no test library to put it in.

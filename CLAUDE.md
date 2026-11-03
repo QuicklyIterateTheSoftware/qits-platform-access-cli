@@ -534,7 +534,7 @@ JDK, so a native proof can run it from `target/test-classes`. `PlatformCommandsT
 `CliContext` (environment, stdout, stderr, clock), so a command test needs no second process.
 
 **The consumer pacts** (epics qits-546 and qits-965, ticket qits-1149). Every REST call the
-commands make to a qits service is a row of its provider's contract, and `pacts/qits-platform-access-cli_<provider>.json`
+commands make to a qits service is a row of its provider's contract, and `pacts/qits-platform-access-monorepo_<provider>.json`
 at the repository root is what those rows write: written, never hand-edited. Each provider has one
 `CliPact` (test), the table of (command, state, operation) rows beside the client it calls
 (`projects/ProjectsContract`, ...), listed in `contracts/Contracts`, and one `*ConsumerPactTest`

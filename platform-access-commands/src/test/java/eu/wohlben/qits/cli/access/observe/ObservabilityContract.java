@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <b>What {@code qits observe} asks qits-observability over REST, and why</b> (ticket qits-1149):
  * the records search of {@code observe query} and the buffer reads of {@code observe sources|errors|
  * slow-spans|metrics}, each row the real command against a pact mock server, written to {@code
- * pacts/qits-platform-access-cli_qits-observability-service.json}. The live stream is a WebSocket
+ * pacts/qits-platform-access-monorepo_qits-observability-service.json}. The live stream is a WebSocket
  * ({@code ObserveStream}) and no part of this pact.
  * <p>
  * {@code observe slow-spans} always sends its {@code --threshold-ms} (500 by default), which

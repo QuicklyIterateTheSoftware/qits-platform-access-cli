@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -11,7 +11,7 @@
             "operationId": "installPlugin"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces agents plugins install",
             "kind": "command"
           }
@@ -129,7 +129,7 @@
             "operationId": "listPlugins"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces agents plugins list",
             "kind": "command"
           }
@@ -233,7 +233,7 @@
             "operationId": "refinePrompt"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces agents refine",
             "kind": "command"
           }
@@ -323,7 +323,7 @@
             "operationId": "openSignInTerminal"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces agents sign-in open",
             "kind": "command"
           }
@@ -415,7 +415,7 @@
             "operationId": "availableAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces agents sign-in status",
             "kind": "command"
           }
@@ -524,7 +524,7 @@
             "operationId": "availableAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces agents sign-in status",
             "kind": "command"
           }

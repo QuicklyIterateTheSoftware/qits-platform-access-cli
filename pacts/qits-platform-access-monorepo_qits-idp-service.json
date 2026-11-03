@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -217,7 +217,7 @@
             "operationId": "issueToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits git-credential",
             "kind": "command"
           }
@@ -326,7 +326,7 @@
             "operationId": "issueToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits git-login",
             "kind": "command"
           }
@@ -436,7 +436,7 @@
             "operationId": "issueToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits login",
             "kind": "command"
           }
@@ -568,7 +568,7 @@
             "operationId": "issueToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits session-daemon",
             "kind": "command"
           }
@@ -676,7 +676,7 @@
             "operationId": "issueToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits session-daemon",
             "kind": "command"
           }
@@ -766,7 +766,7 @@
             "operationId": "deleteUser"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits users delete",
             "kind": "command"
           }
@@ -821,7 +821,7 @@
             "operationId": "deleteUser"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits users delete",
             "kind": "command"
           }
@@ -876,7 +876,7 @@
             "operationId": "mintRegisterToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits users invite",
             "kind": "command"
           }
@@ -971,7 +971,7 @@
             "operationId": "listUsers"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits users list",
             "kind": "command"
           }
@@ -1098,7 +1098,7 @@
             "operationId": "register"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits users register",
             "kind": "command"
           }
@@ -1224,7 +1224,7 @@
             "operationId": "register"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits users register",
             "kind": "command"
           }
@@ -1350,7 +1350,7 @@
             "operationId": "issueToken"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits work list",
             "kind": "command"
           }

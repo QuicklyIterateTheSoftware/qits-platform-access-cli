@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -11,7 +11,7 @@
             "operationId": "listTelemetryErrors"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits observe errors",
             "kind": "command"
           }
@@ -192,7 +192,7 @@
             "operationId": "listTelemetryMetrics"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits observe metrics",
             "kind": "command"
           }
@@ -358,7 +358,7 @@
             "operationId": "searchTelemetryRecords"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits observe query",
             "kind": "command"
           }
@@ -1608,7 +1608,7 @@
             "operationId": "listSlowSpans"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits observe slow-spans",
             "kind": "command"
           }
@@ -1771,7 +1771,7 @@
             "operationId": "listTelemetrySources"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits observe sources",
             "kind": "command"
           }

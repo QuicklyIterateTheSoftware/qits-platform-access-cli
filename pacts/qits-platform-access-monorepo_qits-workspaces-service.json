@@ -1,6 +1,6 @@
 {
   "consumer": {
-    "name": "qits-platform-access-cli"
+    "name": "qits-platform-access-monorepo"
   },
   "interactions": [
     {
@@ -11,7 +11,7 @@
             "operationId": "discardAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents discard",
             "kind": "command"
           }
@@ -100,7 +100,7 @@
             "operationId": "deleteAgentPromptDraft"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents draft discard",
             "kind": "command"
           }
@@ -143,7 +143,7 @@
             "operationId": "saveAgentPromptDraft"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents draft save",
             "kind": "command"
           }
@@ -237,7 +237,7 @@
             "operationId": "getAgentPromptDraft"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents draft show",
             "kind": "command"
           }
@@ -327,7 +327,7 @@
             "operationId": "getAgentPromptDraft"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents draft show",
             "kind": "command"
           }
@@ -370,7 +370,7 @@
             "operationId": "interruptAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents interrupt",
             "kind": "command"
           }
@@ -457,7 +457,7 @@
             "operationId": "listAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents list",
             "kind": "command"
           }
@@ -600,7 +600,7 @@
             "operationId": "listAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents list",
             "kind": "command"
           }
@@ -1278,7 +1278,7 @@
             "operationId": "listAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents list",
             "kind": "command"
           }
@@ -1460,7 +1460,7 @@
             "operationId": "listAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents list",
             "kind": "command"
           }
@@ -1645,7 +1645,7 @@
             "operationId": "listAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents list",
             "kind": "command"
           }
@@ -1811,7 +1811,7 @@
             "operationId": "listAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents prompt",
             "kind": "command"
           }
@@ -1930,7 +1930,7 @@
             "operationId": "promptAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents prompt",
             "kind": "command"
           }
@@ -2057,7 +2057,7 @@
             "operationId": "restartAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents restart",
             "kind": "command"
           }
@@ -2135,7 +2135,7 @@
             "operationId": "listAgentSessions"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents sessions",
             "kind": "command"
           }
@@ -2258,7 +2258,7 @@
             "operationId": "getAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents show",
             "kind": "command"
           }
@@ -2432,7 +2432,7 @@
             "operationId": "getAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents show",
             "kind": "command"
           }
@@ -2508,7 +2508,7 @@
             "operationId": "stopAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents stop",
             "kind": "command"
           }
@@ -2585,7 +2585,7 @@
             "operationId": "getAgentTranscript"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents transcript",
             "kind": "command"
           }
@@ -2676,7 +2676,7 @@
             "operationId": "yieldAgent"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits agents yield",
             "kind": "command"
           }
@@ -2753,7 +2753,7 @@
             "operationId": "cancelAgentWait"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits wait cancel",
             "kind": "command"
           }
@@ -2892,7 +2892,7 @@
             "operationId": "createAgentWait"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits wait ci-run",
             "kind": "command"
           }
@@ -3160,7 +3160,7 @@
             "operationId": "listAgentWaits"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits wait list",
             "kind": "command"
           }
@@ -3307,7 +3307,7 @@
             "operationId": "createAgentWait"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits wait release-request",
             "kind": "command"
           }
@@ -3575,7 +3575,7 @@
             "operationId": "createAgentWait"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits wait work",
             "kind": "command"
           }
@@ -3735,7 +3735,7 @@
             "operationId": "getWorkspaceActiveProcess"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces active-process",
             "kind": "command"
           }
@@ -3812,7 +3812,7 @@
             "operationId": "getWorkspaceActiveProcess"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces active-process",
             "kind": "command"
           }
@@ -3894,7 +3894,7 @@
             "operationId": "listWorkItemWorkspaces"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces history",
             "kind": "command"
           }
@@ -4053,7 +4053,7 @@
             "operationId": "listWorkItemWorkspaces"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces history",
             "kind": "command"
           }
@@ -4127,7 +4127,7 @@
             "operationId": "listOpenWorkspaces"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces items",
             "kind": "command"
           }
@@ -4259,7 +4259,7 @@
             "operationId": "listOpenWorkspaces"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces items",
             "kind": "command"
           }
@@ -4326,7 +4326,7 @@
             "operationId": "listWorkspaces"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces list",
             "kind": "command"
           }
@@ -4475,7 +4475,7 @@
             "operationId": "recreateWorkspaceContainer"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces recreate",
             "kind": "command"
           }
@@ -4553,7 +4553,7 @@
             "operationId": "getWorkspace"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces show",
             "kind": "command"
           }
@@ -4683,7 +4683,7 @@
             "operationId": "getWorkspace"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces show",
             "kind": "command"
           }
@@ -4807,7 +4807,7 @@
             "operationId": "listWorkspaceAgents"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces show",
             "kind": "command"
           }
@@ -5021,7 +5021,7 @@
             "operationId": "ensureWorkspaceContainer"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces start",
             "kind": "command"
           }
@@ -5101,7 +5101,7 @@
             "operationId": "stopWorkspaceContainer"
           },
           "qits-trigger": {
-            "app": "qits-platform-access-cli",
+            "app": "qits-platform-access-monorepo",
             "command": "qits workspaces stop",
             "kind": "command"
           }
