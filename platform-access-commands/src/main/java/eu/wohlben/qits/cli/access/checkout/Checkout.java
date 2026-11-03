@@ -46,6 +46,14 @@ public final class Checkout {
     public record Origin(String url, String repoName, String projectId, String parent) {
     }
 
+    /**
+     * How deep the guard and the "already at" check follow submodules into submodules. The estate is
+     * two levels deep today (a wrapper entry and its {@code service/src/main/webui}); the cap only
+     * keeps a {@code .gitmodules} that declares itself, somewhere down, from looping forever. The
+     * same bound as qits-projects-daemon's {@code MAX_SUBMODULE_DEPTH}.
+     */
+    static final int MAX_SUBMODULE_DEPTH = 8;
+
     private final Path path;
     private final Git git;
     private final Origin origin;
@@ -119,10 +127,18 @@ public final class Checkout {
      * Brings the checkout to this release: the root detached at the release tag, and every
      * submodule detached at the gitlink the release recorded. Answers whether it moved anything.
      * <p>
-     * "Already at" means the root is at the release <i>and</i> every initialised submodule is at
-     * the gitlink the release recorded. A root at the release whose submodules sit elsewhere — a
-     * checkout whose submodules followed {@code main} — still has its submodules moved; returning
-     * early on the root alone left them where they were.
+     * "Already at" means the root is at the release <i>and</i> every initialised submodule, at any
+     * depth, is at the gitlink its parent recorded. A root at the release whose submodules sit
+     * elsewhere — a checkout whose submodules followed {@code main} — still has its submodules
+     * moved; returning early on the root alone left them where they were.
+     * <p>
+     * <b>Submodules are followed all the way down</b>, by the move ({@code --recursive}), by the
+     * guard and by "already at". The estate is two levels deep: thirteen wrapper entries each
+     * declare a {@code service/src/main/webui} submodule of their own. Handling one level only froze
+     * checkouts after a nested webui bump (qits-290): the move never brought the nested submodule to
+     * the commit its parent now recorded, and the guard, asking inside the parent with
+     * {@code --ignore-submodules=none}, then saw that nested submodule as a change and refused every
+     * release from there on.
      * <p>
      * <b>Untracked paths are not local changes, and the guard below excludes them on purpose</b>
      * ({@code --untracked-files=no}). The guard exists to protect work this command could destroy,
@@ -140,7 +156,8 @@ public final class Checkout {
      * again: the exact silent no-op this command exists to prevent. Every long-lived checkout that
      * outlives a submodule removal would end up there.
      * <p>
-     * See {@link #refuseLocalChanges} for what counts, and why the submodules are asked one by one.
+     * See {@link #refuseLocalChanges} for what counts, and why the submodules are asked one by one,
+     * at every depth.
      * Nothing here stashes, resets or forces.
      */
     public boolean hold(Release release) throws CliFailure, InterruptedException {
@@ -187,56 +204,42 @@ public final class Checkout {
      * checkout whose submodules follow {@code main}. Neither {@code dirty} nor {@code untracked}
      * hides a submodule at another commit (git 2.39.5); only {@code all} does, and {@code all} also
      * hides real work in a submodule. So the root is asked with {@code all}, and each submodule is
-     * asked on its own:
+     * asked on its own, by the same rule, at every depth:
      * <ul>
-     * <li>{@code --ignore-submodules=none} inside it: a modified or staged file, or a nested
-     * submodule with changes, is work;</li>
+     * <li>{@code --ignore-submodules=all} inside it, plus its staged paths: a modified or staged
+     * file, or a staged gitlink of a nested submodule, is work;</li>
      * <li>whether any branch, remote branch or tag holds its {@code HEAD}: a detached commit
      * nothing holds would be left behind by the move, and Git would only find it again in the
-     * reflog. A {@code HEAD} at the gitlink the root records is not asked about: the wrapper's own
-     * history holds that commit. This matters in a project agent container, where every submodule
-     * sits detached at its gitlink and that commit was often fetched by its id alone, because a
-     * release tag reaches {@code main} only when the request is finalized; no ref in the
+     * reflog. A {@code HEAD} at the gitlink its parent records is not asked about: the parent's
+     * own history holds that commit. This matters in a project agent container, where every
+     * submodule sits detached at its gitlink and that commit was often fetched by its id alone,
+     * because a release tag reaches {@code main} only when the request is finalized; no ref in the
      * submodule holds it, and refusing there would freeze the checkout for good. The gitlink is
-     * read from the index, which equals the root's {@code HEAD} here, since a staged gitlink has
-     * already been refused above.</li>
+     * read from the parent's index, which equals the parent's {@code HEAD} here, since a staged
+     * gitlink has already been refused in the parent.</li>
      * </ul>
-     * A submodule at another commit that a ref holds is not work — the move puts it back at the
-     * gitlink and the commit stays reachable. Every entry of the wrapper sets {@code ignore = all},
-     * which Git's status honours, so asking inside each submodule is what keeps that work visible.
+     * Then the submodules that submodule's own {@code .gitmodules} declares, and that are
+     * initialised, are asked the same way, down to {@link #MAX_SUBMODULE_DEPTH}.
      * <p>
-     * {@code --ignore-submodules=all} also hides a staged gitlink at the root, which
-     * {@code git add -A} produces without a word under {@code ignore = all}. That is a tracked
-     * change at the root, so the staged paths are asked for separately.
+     * A submodule at another commit that a ref holds is not work — the move puts it back at the
+     * gitlink and the commit stays reachable — and neither is an untracked file, at any depth.
+     * Every entry of the wrapper sets {@code ignore = all}, and so does every nested webui entry,
+     * which Git's status honours, so asking inside each submodule is what keeps that work visible.
+     * Asking inside a submodule with {@code --ignore-submodules=none}, as this did until qits-290,
+     * reported a nested submodule that was merely at another commit, or held only untracked files,
+     * as a change of its parent: after any nested bump the next release was refused for good.
+     * <p>
+     * {@code --ignore-submodules=all} also hides a staged gitlink, which {@code git add -A}
+     * produces without a word under {@code ignore = all}. That is a tracked change, so the staged
+     * paths are asked for separately, at the root and in every submodule.
      */
     private void refuseLocalChanges(Release release) throws CliFailure, InterruptedException {
         List<String> found = new ArrayList<>();
-        Set<String> atRoot = new LinkedHashSet<>();
-        for (String line : git.run("status", "--porcelain", "--untracked-files=no", "--ignore-submodules=all")
-                .lines().filter(entry -> !entry.isBlank()).toList()) {
-            // The status letters, then the path. The output is stripped, so the first line may have
-            // lost the blank that stands for an unchanged index.
-            atRoot.add(line.strip().replaceFirst("^\\S{1,2}\\s+", ""));
-        }
-        atRoot.addAll(git.run("diff", "--cached", "--name-only", "--ignore-submodules=none").lines()
-                .filter(line -> !line.isBlank()).toList());
-        for (String changed : atRoot) {
+        for (String changed : trackedChanges(git)) {
             found.add(safe(changed) + " (a tracked change)");
         }
         if (submodules) {
-            for (String sub : declaredSubmodules().values()) {
-                if (!initialised(sub)) {
-                    continue;
-                }
-                Git inside = new Git(path.resolve(sub), git.env);
-                if (!inside.run("status", "--porcelain", "--untracked-files=no", "--ignore-submodules=none").isEmpty()) {
-                    found.add(safe(sub) + " (changes in the submodule)");
-                } else if (!inside.run("rev-parse", "HEAD").equals(gitlink(sub))
-                        && inside.run("for-each-ref", "--contains", "HEAD", "--count=1",
-                        "refs/heads", "refs/remotes", "refs/tags").isEmpty()) {
-                    found.add(safe(sub) + " (a commit in the submodule that no branch or tag holds)");
-                }
-            }
+            refuseLocalChangesIn(path, "", 1, found);
         }
         if (!found.isEmpty()) {
             throw new CliFailure("The checkout at " + path + " has local changes, so nothing was touched: "
@@ -246,27 +249,82 @@ public final class Checkout {
     }
 
     /**
-     * Whether every submodule the release carries and this checkout has initialised is at the
-     * gitlink the release recorded. One that is not initialised is left out: it holds nothing, and
-     * {@link #holdSubmodules} would only initialise it, which a root at the release has never asked
-     * for.
+     * Every initialised submodule {@code repo} declares, asked by {@link #refuseLocalChanges}'s
+     * rule, and then its own submodules. {@code prefix} is {@code repo}'s path from the checkout's
+     * root, so every offending path is named from there.
      */
-    private boolean submodulesAtTheirGitlinks() throws CliFailure, InterruptedException {
-        for (String sub : declaredSubmodules().values()) {
-            String recorded = gitlink(sub);
-            if (recorded == null || !initialised(sub)) {
+    private void refuseLocalChangesIn(Path repo, String prefix, int depth, List<String> found)
+            throws CliFailure, InterruptedException {
+        if (depth > MAX_SUBMODULE_DEPTH) {
+            return;
+        }
+        for (String sub : declaredSubmodules(repo).values()) {
+            if (!initialised(repo, sub)) {
                 continue;
             }
-            if (!recorded.equals(new Git(path.resolve(sub), git.env).ask("rev-parse", "HEAD"))) {
+            Path dir = repo.resolve(sub);
+            String named = prefix + sub;
+            Git inside = new Git(dir, git.env);
+            if (!trackedChanges(inside).isEmpty()) {
+                found.add(safe(named) + " (changes in the submodule)");
+            } else if (!inside.run("rev-parse", "HEAD").equals(gitlink(repo, sub))
+                    && inside.run("for-each-ref", "--contains", "HEAD", "--count=1",
+                    "refs/heads", "refs/remotes", "refs/tags").isEmpty()) {
+                found.add(safe(named) + " (a commit in the submodule that no branch or tag holds)");
+            }
+            refuseLocalChangesIn(dir, named + "/", depth + 1, found);
+        }
+    }
+
+    /**
+     * The tracked changes of one repository, its submodules' insides left out: the modified paths
+     * {@code status} reports with {@code --ignore-submodules=all}, and every staged path, a staged
+     * gitlink included.
+     */
+    private static Set<String> trackedChanges(Git in) throws CliFailure, InterruptedException {
+        Set<String> changed = new LinkedHashSet<>();
+        for (String line : in.run("status", "--porcelain", "--untracked-files=no", "--ignore-submodules=all")
+                .lines().filter(entry -> !entry.isBlank()).toList()) {
+            // The status letters, then the path. The output is stripped, so the first line may have
+            // lost the blank that stands for an unchanged index.
+            changed.add(line.strip().replaceFirst("^\\S{1,2}\\s+", ""));
+        }
+        changed.addAll(in.run("diff", "--cached", "--name-only", "--ignore-submodules=none").lines()
+                .filter(line -> !line.isBlank()).toList());
+        return changed;
+    }
+
+    /**
+     * Whether every submodule the release carries and this checkout has initialised is at the
+     * gitlink its parent recorded, at any depth. One that is not initialised is left out: it holds
+     * nothing, and {@link #holdSubmodules} would only initialise it, which a root at the release has
+     * never asked for.
+     */
+    private boolean submodulesAtTheirGitlinks() throws CliFailure, InterruptedException {
+        return submodulesAtTheirGitlinks(path, 1);
+    }
+
+    private boolean submodulesAtTheirGitlinks(Path repo, int depth) throws CliFailure, InterruptedException {
+        if (depth > MAX_SUBMODULE_DEPTH) {
+            return true;
+        }
+        for (String sub : declaredSubmodules(repo).values()) {
+            String recorded = gitlink(repo, sub);
+            if (recorded == null || !initialised(repo, sub)) {
+                continue;
+            }
+            Path dir = repo.resolve(sub);
+            if (!recorded.equals(new Git(dir, git.env).ask("rev-parse", "HEAD"))
+                    || !submodulesAtTheirGitlinks(dir, depth + 1)) {
                 return false;
             }
         }
         return true;
     }
 
-    /** The commit the index records for {@code sub}, or null when it carries no gitlink there. */
-    private String gitlink(String sub) throws CliFailure, InterruptedException {
-        String staged = git.ask("ls-files", "--stage", "--", sub);
+    /** The commit {@code repo}'s index records for {@code sub}, or null when it carries no gitlink there. */
+    private String gitlink(Path repo, String sub) throws CliFailure, InterruptedException {
+        String staged = new Git(repo, git.env).ask("ls-files", "--stage", "--", sub);
         if (staged == null || !staged.startsWith("160000 ")) {
             return null;
         }
@@ -274,21 +332,22 @@ public final class Checkout {
         return fields.length > 1 ? fields[1] : null;
     }
 
-    /** A submodule Git has checked out here has a {@code .git}, a file or a directory. */
-    private boolean initialised(String sub) {
-        return Files.exists(path.resolve(sub).resolve(".git"));
+    /** A submodule Git has checked out in {@code repo} has a {@code .git}, a file or a directory. */
+    private static boolean initialised(Path repo, String sub) {
+        return Files.exists(repo.resolve(sub).resolve(".git"));
     }
 
-    /** Every submodule {@code .gitmodules} declares: its name, and its path. */
-    private Map<String, String> declaredSubmodules() throws CliFailure, InterruptedException {
+    /** Every submodule {@code repo}'s {@code .gitmodules} declares: its name, and its path. */
+    private Map<String, String> declaredSubmodules(Path repo) throws CliFailure, InterruptedException {
         Map<String, String> declared = new LinkedHashMap<>();
-        String keys = git.ask("config", "-f", ".gitmodules", "--name-only", "--get-regexp", "^submodule\\..*\\.path$");
+        Git in = new Git(repo, git.env);
+        String keys = in.ask("config", "-f", ".gitmodules", "--name-only", "--get-regexp", "^submodule\\..*\\.path$");
         if (keys == null || keys.isBlank()) {
             return declared;
         }
         for (String key : keys.lines().map(String::strip).filter(line -> !line.isEmpty()).toList()) {
             String name = key.substring("submodule.".length(), key.length() - ".path".length());
-            declared.put(name, git.run("config", "-f", ".gitmodules", "--get", key));
+            declared.put(name, in.run("config", "-f", ".gitmodules", "--get", key));
         }
         return declared;
     }
@@ -299,17 +358,25 @@ public final class Checkout {
     }
 
     /**
-     * Every submodule the released tree declares, detached at the commit that tree recorded.
+     * Every submodule the released tree declares, detached at the commit that tree recorded, and
+     * every submodule of those, recursively, detached at the commit its parent now records.
+     * <p>
+     * {@code --recursive} is what brings a nested submodule along (qits-290): without it a release
+     * that bumps a wrapper entry's webui moved the entry and left its webui at the old commit, which
+     * the guard then counted as a change. Nested submodules get no URL override: their URLs are
+     * their parent's {@code .gitmodules}, relative to the parent's origin, which is a sibling on the
+     * same host. {@code --checkout} reaches every level, so a nested {@code update = merge} does not
+     * merge either.
      * <p>
      * A gitlink {@code .gitmodules} declares but the released tree does not carry is skipped: the
      * wrapper adds and removes components, and a release from before a component existed is a
      * release all the same.
      */
     private void holdSubmodules() throws CliFailure, InterruptedException {
-        for (Map.Entry<String, String> entry : declaredSubmodules().entrySet()) {
+        for (Map.Entry<String, String> entry : declaredSubmodules(path).entrySet()) {
             String name = entry.getKey();
             String sub = entry.getValue();
-            if (gitlink(sub) == null) {
+            if (gitlink(path, sub) == null) {
                 notes.accept("the release has no " + safe(sub) + ", although .gitmodules declares it; skipped");
                 continue;
             }
@@ -319,7 +386,7 @@ public final class Checkout {
             // branch the submodule sits on, which leaves the submodule at that branch's tip rather
             // than at the commit the release recorded.
             git.run("-c", "submodule." + name + ".url=" + origin.parent() + "/" + name,
-                    "submodule", "update", "--init", "--checkout", "--", sub);
+                    "submodule", "update", "--init", "--checkout", "--recursive", "--", sub);
         }
     }
 
