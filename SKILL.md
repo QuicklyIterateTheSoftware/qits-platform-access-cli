@@ -571,9 +571,11 @@ qits repositories --project qits commit-diff --repository qits-ci-service --comm
 
 ## qits repositories commit-subjects
 
-Count how many of a branch's newest commits name their subject as term(<project>-<n>): message, for example feat(qits-1337): add the export, and list the ones that do not.
+Count how many of a branch's newest commits fit one of qits-githost's accepted commit-message variants, and list the ones that fit none of them.
 
-Reads GET /projects/api/repositories/{id}/commit-subjects. Each commit is EXEMPT (a merge, or a platform machine author such as a bump or release commit), COMPLYING or NON_COMPLYING. guard says whether the branch opts into the git host's subject guard (.config/qits/commit-subjects.yml holding enforce: true).
+The variants: MERGE (any merge commit), BUMP (bump(<group>): N dependencies), RELEASE (release(<version>): ...), PLATFORM (chore(platform): ...), and SUBJECT (term(<project>-<n>[, <project>-<n>]): message, for example feat(qits-1337): add the export). qits-githost refuses a new commit that fits none of them, on every repository; a commit made before the rule took effect may still show as non-complying.
+
+Reads GET /projects/api/repositories/{id}/commit-subjects.
 
 ```
 qits repositories commit-subjects [--branch <branch>] [--limit <n>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>]

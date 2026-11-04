@@ -701,7 +701,7 @@ public final class ProjectsApi {
         return client.get(uri(repositoryPath(repoId) + "/commits/" + segment(hash) + "/diff" + query(query)));
     }
 
-    /** {@code {branch, limit, guardEnabled, counts, nonComplying:[…], qualifiedIds}}. */
+    /** {@code {branch, limit, counts, nonComplying:[…], qualifiedIds}}. */
     public JsonNode commitSubjects(String repoId, String branch, Integer limit) throws CliFailure, InterruptedException {
         List<String> query = new ArrayList<>();
         addQuery(query, "branch", branch);

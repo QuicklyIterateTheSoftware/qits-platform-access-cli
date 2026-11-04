@@ -15,6 +15,7 @@ import picocli.CommandLine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
@@ -224,12 +225,15 @@ final class RepositoryGitCommands {
     }
 
     @CommandLine.Command(name = "commit-subjects", mixinStandardHelpOptions = true,
-            description = {"Count how many of a branch's newest commits name their subject as term(<project>-<n>): "
-                    + "message, for example feat(qits-1337): add the export, and list the ones that do not.",
-                    "Reads GET /projects/api/repositories/{id}/commit-subjects. Each commit is EXEMPT (a merge, or "
-                            + "a platform machine author such as a bump or release commit), COMPLYING or "
-                            + "NON_COMPLYING. guard says whether the branch opts into the git host's subject guard "
-                            + "(.config/qits/commit-subjects.yml holding enforce: true)."},
+            description = {"Count how many of a branch's newest commits fit one of qits-githost's accepted "
+                    + "commit-message variants, and list the ones that fit none of them.",
+                    "The variants: MERGE (any merge commit), BUMP (bump(<group>): N dependencies), RELEASE "
+                            + "(release(<version>): ...), PLATFORM (chore(platform): ...), and SUBJECT "
+                            + "(term(<project>-<n>[, <project>-<n>]): message, for example "
+                            + "feat(qits-1337): add the export). qits-githost refuses a new commit that fits none "
+                            + "of them, on every repository; a commit made before the rule took effect may still "
+                            + "show as non-complying.",
+                    "Reads GET /projects/api/repositories/{id}/commit-subjects."},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits repositories --project qits commit-subjects --repository qits-ci-service",
                     "  qits repositories --project qits commit-subjects --repository qits-ci-service --branch ticket/x "
@@ -257,10 +261,34 @@ final class RepositoryGitCommands {
                 return 0;
             }
             JsonNode counts = answer.path("counts");
-            context.out().println("branch " + SafeText.line(text(answer, "branch")) + ": "
-                    + counts.path("complying").asInt() + " complying, " + counts.path("nonComplying").asInt()
-                    + " not, " + counts.path("exempt").asInt() + " exempt, of " + counts.path("total").asInt()
-                    + "; guard " + (answer.path("guardEnabled").asBoolean() ? "on" : "off"));
+            int total = counts.path("total").asInt();
+            int nonComplying = counts.path("nonComplying").asInt();
+            // Everything in counts besides total and nonComplying is one commit-message variant; show whichever
+            // the service answered with, so this renders the same whether it still sends complying/exempt or
+            // already sends the variant breakdown (merge, bump, release, platform, subject).
+            List<Map.Entry<String, Integer>> variants = new ArrayList<>();
+            counts.fields().forEachRemaining(entry -> {
+                if (!entry.getKey().equals("total") && !entry.getKey().equals("nonComplying")
+                        && entry.getValue().isNumber()) {
+                    variants.add(Map.entry(entry.getKey(), entry.getValue().asInt()));
+                }
+            });
+            variants.sort(Map.Entry.<String, Integer>comparingByValue().reversed()
+                    .thenComparing(Map.Entry.comparingByKey()));
+            StringBuilder summary = new StringBuilder();
+            summary.append("branch ").append(SafeText.line(text(answer, "branch"))).append(": ")
+                    .append(nonComplying).append(" non-complying of ").append(total);
+            if (!variants.isEmpty()) {
+                summary.append(": ");
+                for (int i = 0; i < variants.size(); i++) {
+                    if (i > 0) {
+                        summary.append(", ");
+                    }
+                    Map.Entry<String, Integer> variant = variants.get(i);
+                    summary.append(variant.getValue()).append(' ').append(variant.getKey());
+                }
+            }
+            context.out().println(summary);
             List<List<String>> rows = new ArrayList<>();
             for (JsonNode c : answer.path("nonComplying")) {
                 rows.add(List.of(cell(text(c, "shortHash"), 12), cell(text(c, "authorName"), 30),
