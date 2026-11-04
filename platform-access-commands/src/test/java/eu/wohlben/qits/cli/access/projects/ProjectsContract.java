@@ -1793,12 +1793,13 @@ public final class ProjectsContract {
                 .consumes(held(UNMET_MILESTONE, "setMilestoneGroups", prefixed("milestone.", MILESTONE)))
                 .anyLength(openEndedMilestone("milestone."))
                 .request("PUT /projects/api/milestones/{milestoneId}/groups"));
-        rows.add(row("qits milestones approve", UNMET_MILESTONE, "approveMilestoneCriterion",
-                "approveMilestoneCriterion", APPROVE_MILESTONE)
+        rows.add(CliRow.of("qits milestones approve", UNMET_MILESTONE, "approveMilestoneCriterion",
+                "ProjectsApi#approveMilestoneCriterion", asThePerson(APPROVE_MILESTONE))
                 .consumes(held(UNMET_MILESTONE, "approveMilestoneCriterion", prefixed("milestone.",
                         concat(MILESTONE, MILESTONE_HELD))))
                 .anyLength(openEndedMilestone("milestone."))
-                .request("POST /projects/api/milestones/{milestoneId}/criteria/{criterionId}/approve"));
+                .request("POST /projects/api/milestones/{milestoneId}/criteria/{criterionId}/approve")
+                .header("Authorization", "{authorization}"));
         rows.add(row("qits work milestones list", MET_MILESTONE, "listWorkMilestones", "workMilestones",
                 WORK_MILESTONES)
                 .consumes(held(MET_MILESTONE, "listWorkMilestones", List.of("milestones[].id",
