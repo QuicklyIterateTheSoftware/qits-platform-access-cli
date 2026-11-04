@@ -17043,14 +17043,9 @@
           "content": {
             "branch": "main",
             "counts": {
-              "complying": 0,
-              "exempt": 0,
-              "exemptMachine": 0,
-              "exemptMerge": 0,
               "nonComplying": 1,
               "total": 1
             },
-            "guardEnabled": false,
             "nonComplying": [
               {
                 "authorName": "Contract Seeder",
@@ -17077,38 +17072,6 @@
                 }
               ]
             },
-            "$.counts.complying": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.counts.exempt": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.counts.exemptMachine": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.counts.exemptMerge": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
             "$.counts.nonComplying": {
               "combine": "AND",
               "matchers": [
@@ -17122,14 +17085,6 @@
               "matchers": [
                 {
                   "match": "number"
-                }
-              ]
-            },
-            "$.guardEnabled": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "type"
                 }
               ]
             },

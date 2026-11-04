@@ -2306,7 +2306,8 @@ class PlatformCommandsTest {
                 {"path":"README.md","changeType":"MODIFY","diff":"@@ -1 +1 @@\\n-a\\n+b"}
                 """);
         platform.answer("GET", REPO + "/commit-subjects", """
-                {"branch":"main","guardEnabled":true,"counts":{"total":3,"complying":2,"nonComplying":1,"exempt":0},
+                {"branch":"main","counts":{"total":3,"merge":0,"bump":1,"release":0,"platform":0,"subject":1,
+                 "nonComplying":1},
                  "nonComplying":[{"shortHash":"def5678","authorName":"x","subject":"fix stuff"}]}
                 """);
 
@@ -2325,7 +2326,8 @@ class PlatformCommandsTest {
         assertThat(diff.out()).contains("+b");
         assertThat(subjects.exit()).as(subjects.err()).isZero();
         assertThat(platform.requests("GET", REPO + "/commit-subjects").getFirst().query()).isEqualTo("limit=20");
-        assertThat(subjects.out()).contains("2 complying, 1 not").contains("guard on").contains("fix stuff");
+        assertThat(subjects.out()).contains("1 non-complying of 3: 1 bump, 1 subject, 0 merge, 0 platform, 0 release")
+                .contains("fix stuff");
     }
 
     @Test

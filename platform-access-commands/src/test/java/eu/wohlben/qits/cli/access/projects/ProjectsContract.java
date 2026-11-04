@@ -1250,12 +1250,11 @@ public final class ProjectsContract {
         });
     };
 
-    /** {@code qits repositories commit-subjects}: the branch, the counts, the guard and the commits that do not comply. */
+    /** {@code qits repositories commit-subjects}: the branch, the counts and the commits that do not comply. */
     private static final Call COMMIT_SUBJECTS = (api, params, recorded) -> {
         JsonNode answer = api.commitSubjects(params.get("repositoryId"), null, null);
         assertThat(ProjectsApi.text(answer, "branch")).isNotBlank();
-        assertThat(answer.path("guardEnabled").isBoolean()).isTrue();
-        for (String count : List.of("total", "complying", "nonComplying", "exempt")) {
+        for (String count : List.of("total", "nonComplying")) {
             assertThat(answer.path("counts").path(count).isNumber()).as(count).isTrue();
         }
         assertThat(answer.path("nonComplying")).isNotEmpty().allSatisfy(c -> {
@@ -1485,8 +1484,8 @@ public final class ProjectsContract {
         rows.add(row("qits repositories commit-diff", AWAITING_REQUEST, "getCommitFileDiff", "commitDiff",
                 COMMIT_DIFF).consumes("path", "changeType", "diff"));
         rows.add(row("qits repositories commit-subjects", AWAITING_REQUEST, "measureCommitSubjects", "commitSubjects",
-                COMMIT_SUBJECTS).consumes("branch", "guardEnabled", "counts", "nonComplying[].shortHash",
-                "nonComplying[].authorName", "nonComplying[].subject"));
+                COMMIT_SUBJECTS).consumes("branch", "counts.total", "counts.nonComplying",
+                "nonComplying[].shortHash", "nonComplying[].authorName", "nonComplying[].subject"));
         rows.add(row("qits repositories archive", ARCHIVABLE_REPOSITORY, ARCHIVE_OPERATION, "archiveRepository",
                 ARCHIVE_REPOSITORY)
                 .consumes(held(ARCHIVABLE_REPOSITORY, ARCHIVE_OPERATION, ARCHIVE_ANSWER))
