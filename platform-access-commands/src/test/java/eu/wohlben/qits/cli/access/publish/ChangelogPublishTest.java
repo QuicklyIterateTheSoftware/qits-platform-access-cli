@@ -148,6 +148,40 @@ class ChangelogPublishTest {
     }
 
     @Test
+    void aBumpCommitsInheritedTicketsAreLeftOutOfTheTicketsAndTheLastLine() {
+        stub.on("GET", COMMITS, json("""
+                {"commits":[
+                  {"hash":"c","shortHash":"ccc3333","author":"Bob","message":"fix(qits-3): x","fold":false},
+                  {"hash":"b","shortHash":"bbb2222","author":"qits maintenance",
+                   "message":"chore(qits-1, qits-2): bump(qits-1): 1 dependencies","fold":false}
+                ]}"""));
+        stub.on("GET", "/projects/api/work/qits-3", json("{\"qualifiedId\":\"qits-3\",\"title\":\"Three\"}"));
+        stub.on("GET", GATE, json("{\"reports\":[]}"));
+
+        Harness.Run run = publish();
+
+        assertThat(run.code()).as(run.err()).isEqualTo(ExitCode.OK);
+        assertThat(uploaded()).isEqualTo("""
+                # qits-ci 2026.1012.91502
+
+                Release request `rr-1`, released 2026-10-12T09:15:02Z.
+
+                ## Commits
+
+                - `bbb2222` chore(qits-1, qits-2): bump(qits-1): 1 dependencies (qits maintenance)
+                - `ccc3333` fix(qits-3): x (Bob)
+
+                ## Tickets
+
+                - [`qits-3`](https://qits.example.org/projects/qits/work/detail/qits-3) Three
+
+                associated tickets: `qits-3`
+                """);
+        assertThat(stub.paths()).doesNotContain("GET /projects/api/work/qits-1")
+                .doesNotContain("GET /projects/api/work/qits-2");
+    }
+
+    @Test
     void anUnknownTicketIsListedWithoutALinkAndLeftOutOfTheLastLine() {
         stub.on("GET", COMMITS, json("""
                 {"commits":[{"hash":"a","shortHash":"aaa1111","author":"Alice","message":"feat(nope-1): gone"}]}"""));

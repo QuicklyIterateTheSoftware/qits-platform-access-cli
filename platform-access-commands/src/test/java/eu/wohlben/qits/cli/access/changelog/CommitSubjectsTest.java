@@ -29,6 +29,22 @@ class CommitSubjectsTest {
     }
 
     @Test
+    void aBumpSubjectIsRecognisedBareOrChorified() {
+        assertThat(CommitSubjects.isBump("bump(targeted): 2 dependencies")).isTrue();
+        assertThat(CommitSubjects.isBump("chore(qits-1, qits-2): bump(qits-1): 1 dependencies")).isTrue();
+        assertThat(CommitSubjects.isBump("bump(platform): 5 dependencies")).isTrue();
+    }
+
+    @Test
+    void anythingElseIsNotABumpSubject() {
+        assertThat(CommitSubjects.isBump("feat(qits-1): bump(x): 2 dependencies")).isFalse();
+        assertThat(CommitSubjects.isBump("chore(qits-1): bump the parent")).isFalse();
+        assertThat(CommitSubjects.isBump("fix(qits-3): x")).isFalse();
+        assertThat(CommitSubjects.isBump("release(2026.1.1): bump(qits-1): 1 dependencies")).isFalse();
+        assertThat(CommitSubjects.isBump(null)).isFalse();
+    }
+
+    @Test
     void theSubjectIsTheFirstLine() {
         assertThat(CommitSubjects.subject("feat(qits-1): x\r\n\nfix(qits-2): y")).isEqualTo("feat(qits-1): x");
         assertThat(CommitSubjects.subject(null)).isEmpty();

@@ -25,6 +25,12 @@ public final class CommitSubjects {
     /** A qualified id: the project's slug, a dash, the item's number. The slug is everything before the last dash. */
     private static final Pattern ID = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9-]*)-([0-9]{1,18})$");
 
+    /**
+     * A dependency-bump commit's subject: the bare {@code bump(<group>): <N> dependencies}, or the same
+     * subject behind the {@code chore(<ids>):} scope the bump step's postlude puts in front of it.
+     */
+    private static final Pattern BUMP = Pattern.compile("^(chore\\([^()]+\\)!?: )?bump\\([^()]+\\): [0-9]+ dependencies$");
+
     /** Project slug first, as text; then the number, as a number, so qits-9 comes before qits-10. */
     public static final Comparator<String> ORDER = Comparator.comparing(CommitSubjects::slug)
             .thenComparingLong(CommitSubjects::number);
@@ -78,6 +84,17 @@ public final class CommitSubjects {
     /** Whether the text is one qualified id. */
     public static boolean isId(String text) {
         return text != null && ID.matcher(text).matches();
+    }
+
+    /**
+     * Whether a subject is a dependency-bump commit's: {@code bump(targeted): 2 dependencies}, or the
+     * same subject with a {@code chore(qits-1, qits-2):} scope in front, as {@code qits changelog
+     * bump-message} writes it once a bump brings tickets in. Its scope, bare or chorified, is not the
+     * release's own work: it is what the bumped dependencies' own changelogs already named, so no
+     * reader counts it again (qits-1866).
+     */
+    public static boolean isBump(String subject) {
+        return subject != null && BUMP.matcher(subject).matches();
     }
 
     /** The project slug of a qualified id: {@code qits} of {@code qits-893}. */

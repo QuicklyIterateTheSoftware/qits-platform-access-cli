@@ -31,7 +31,9 @@ import java.util.Set;
  * SCMRelease that started the run); the commits are the release request's, from qits-projects, after
  * those of every earlier release since the newest one that published a changelog ({@link
  * #unpublished}, qits-1193), so a release whose publish never completed loses none of its commits; the
- * tickets are the ones their subjects name ({@link CommitSubjects}), titled by qits-projects; the
+ * tickets are the ones named by the subjects of the commits other than dependency bumps ({@link
+ * CommitSubjects}), titled by qits-projects, because a bump's scope only ever repeats what its
+ * dependencies' own changelogs already named (qits-1866); the
  * highlights are the gate run's reports, from qits-ci. The document's last line lists the tickets
  * that resolved, and a dependant's bump message reads it back ({@code qits changelog bump-message}).
  * The second line's time is the payload's {@code occurredAt} when it carries one, else qits-ci's own
@@ -49,7 +51,7 @@ import java.util.Set;
                         + "releaseRequestQualifiedId and occurredAt); the commits from the release request in qits-projects, oldest first and "
                         + "without the request's own merge commits, after those of every earlier release cut since the "
                         + "newest one that published a changelog (a release whose publish never completed has none of "
-                        + "its own); the tickets from the commits' subjects "
+                        + "its own); the tickets from the subjects of the commits other than dependency bumps "
                         + "(`feat(qits-9, qits-10): ...`), titled by qits-projects; and the report highlights from "
                         + "the gate run's reports in qits-ci (QITS_CI_RUN_ID), when it has any.",
                 "The second line's time is the payload's occurredAt, or QITS_EVENT_OCCURRED_AT when the payload "
@@ -161,8 +163,14 @@ public class ChangelogCommand extends AbstractPublishCommand {
             commits.add(new Changelog.Commit(shortHash, subject, text(commit, "author")));
         }
         String root = composed(() -> Store.projectRoot(variables));
+        List<String> ticketSubjects = new ArrayList<>();
+        for (String subject : subjects) {
+            if (!CommitSubjects.isBump(subject)) {
+                ticketSubjects.add(subject);
+            }
+        }
         List<Changelog.Ticket> tickets = new ArrayList<>();
-        for (String id : CommitSubjects.ids(subjects)) {
+        for (String id : CommitSubjects.ids(ticketSubjects)) {
             tickets.add(ticket(projects, id, root));
         }
         List<Changelog.Highlight> highlights = highlights(ci, runId);

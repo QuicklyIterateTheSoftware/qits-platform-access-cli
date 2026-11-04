@@ -40,7 +40,8 @@ import java.util.regex.Pattern;
  * The bump's own body stays as it was; below it come the changelogs {@code qits artifacts publish
  * changelog} published for every version the upgraded dependencies moved through, read from the docs
  * store, and their {@code associated tickets:} lines become the subject's scope. So the dependant's
- * own release names the tickets it brings in, and its changelog lists them in turn.
+ * own release names the tickets it brings in; its own changelog does not list them again, because
+ * {@code publish changelog} leaves a bump commit's subject out of the tickets it names (qits-1866).
  * <p>
  * Which versions: the step's {@code QITS_EVENT_PAYLOAD} lists the changes the bump was asked for,
  * each with an optional {@code changelog: {repository, versions}}; only the changes the step
