@@ -724,8 +724,10 @@ class McpToolCatalogTest {
     void theCommandsSeeTheServicesEnvironmentAndNothingElse() {
         Map<String, String> env = ToolRunner.environment(Map.of("QITS_ENV", "prod", "QITS_TOKEN", "x",
                 "HOME", "/root", "QITS_OBSERVABILITY_URL", "http://prod-qits-observability:8080",
+                "QITS_DOMAIN", "wohlben.eu",
                 "QITS_AGENT_ID", "0a0b0c0d-0000-4000-8000-000000000009")::get);
         assertThat(env).containsExactlyInAnyOrderEntriesOf(Map.of("QITS_PLATFORM", "true", "QITS_ENV", "prod",
+                "QITS_DOMAIN", "wohlben.eu",
                 "QITS_OBSERVABILITY_URL", "http://prod-qits-observability:8080"));
     }
 

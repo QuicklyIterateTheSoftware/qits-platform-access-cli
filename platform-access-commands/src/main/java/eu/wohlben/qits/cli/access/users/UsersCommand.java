@@ -46,8 +46,8 @@ public class UsersCommand implements Runnable {
     static final String ADMIN = "Managing users needs qits:admin";
 
     @CommandLine.Option(names = "--idp-url", paramLabel = "<url>", scope = CommandLine.ScopeType.INHERIT,
-            description = "The idp's base URL, with /idp. Default: the session's idp; inside the platform its "
-                    + "wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses.")
+            description = "The idp's base URL, with /idp. Default: the session's idp; inside the platform "
+                    + "https://idp.qits.<QITS_DOMAIN>/idp; for register with no session, QITS_IDP_URL, else the address `qits login` uses.")
     String idpUrl;
 
     @CommandLine.Option(names = {"-o", "--output"}, paramLabel = "table|json", scope = CommandLine.ScopeType.INHERIT,
@@ -86,8 +86,8 @@ public class UsersCommand implements Runnable {
      * The idp with its {@code /idp} prefix. The flag first. On a workstation the session's idp, which
      * is where its bearer was minted; a registration needs no session, so without one it takes the
      * address {@code qits login} would ({@link IdpUrl}). Anywhere else {@code PlatformEndpoints}
-     * decides, as for every service: the wire alias inside, the public vhost in the token home,
-     * {@code QITS_URL_IDP} over either.
+     * decides, as for every service: the public vhost of {@code QITS_DOMAIN} inside and in the
+     * token home, {@code QITS_URL_IDP} over either.
      */
     String idp(CliContext context, boolean session) throws CliFailure, InterruptedException {
         if (idpUrl != null && !idpUrl.isBlank()) {

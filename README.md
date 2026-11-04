@@ -439,10 +439,9 @@ is no browser and nobody to sign in, and there are two ways in, decided once at 
   written to `t.json` or under the agent's config folder, and a `401` means the token was deleted
   with the workspace's container.
 - **In-platform** (`QITS_PLATFORM=true`), which the MCP service sets for every command it runs.
-  A service is dialled by its wire alias, `http://<env>-qits-<app>:8080`, with the tier from
-  `QITS_ENV`, else from the host of whichever platform URL the container carries —
-  `QITS_WORKSPACE_DAEMON_URL` in a workspace, `QITS_PROJECTS_DAEMON_URL` in a project-agent
-  container, `QITS_PLATFORM_MCP_URL` in both. The credential is the caller's own bearer, which the
+  A service is dialled at its public vhost, `https://<app>.qits.<QITS_DOMAIN>`, exactly as in
+  the token home — the CLI never dials a wire alias (qits-1436); the MCP service hands each command
+  its own `QITS_DOMAIN`. The credential is the caller's own bearer, which the
   service hands to each command; this home has none of its own, and a call made there without one
   refuses with exit code 2.
 
@@ -753,11 +752,10 @@ its first label: `https://idp.qits.<QITS_DOMAIN>/idp` gives `https://projects.qi
 `qits checkout-daemon` reads the events service the same way, with `--events-url` or
 `QITS_EVENTS_URL`; the git host it fetches from is the checkout's own `origin`, never a flag.
 
-Inside a container none of those vhosts resolve and the wire aliases answer instead, on two planes:
-a service on an environment's plane is `http://<env>-qits-<app>:8080` (projects, ci, observability,
-the git host), and one on the platform plane has its own alias — `http://qits-platform-idp:8080`
-and `http://qits-events:8080`. The flags and variables above still come first in either home (see
-*qits from inside the platform*).
+Inside the platform the same vhosts are dialled, with the domain read from `QITS_DOMAIN` rather
+than off a session: `https://<app>.qits.<QITS_DOMAIN>`, in the token home and in-platform alike. No
+home dials a wire alias (qits-1436). The flags and variables above still come first in either home
+(see *qits from inside the platform*).
 
 ### Output, errors and exit codes
 
@@ -1394,8 +1392,8 @@ the idp's reason and leaves the token unspent. Then sign in with `qits login`.
 `Deleted user <username>.`; an unknown user is `There is no user '<username>' (HTTP 404)`, and
 deleting yourself is refused (409). Every refusal is exit code 1.
 
-The idp's address: `--idp-url` (with `/idp`), else the session's idp, else inside the platform its
-wire alias (`QITS_URL_IDP` over it, as for every service). `register` on a workstation with no
+The idp's address: `--idp-url` (with `/idp`), else the session's idp, else inside the platform
+`https://idp.qits.<QITS_DOMAIN>/idp` (`QITS_URL_IDP` over it, as for every service). `register` on a workstation with no
 session takes the address `qits login` would: `QITS_IDP_URL`, else `https://idp.qits.<QITS_DOMAIN>/idp`.
 
 The qits MCP server serves `list` and `delete` but not `invite` or `register`: their answer is a

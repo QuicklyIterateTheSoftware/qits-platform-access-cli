@@ -88,8 +88,10 @@ public final class ToolRunner {
     }
 
     /**
-     * The environment every call runs in: in-platform, the environment's label and the service
-     * addresses this service was configured with. None of this process's own environment beyond
+     * The environment every call runs in: in-platform, the environment's label, the public domain
+     * every address is composed from ({@code QITS_DOMAIN}: a command dials
+     * {@code https://<app>.qits.<QITS_DOMAIN>} and never a wire alias, qits-1436) and the service
+     * address overrides this service was configured with. None of this process's own environment beyond
      * those names — in particular no {@code QITS_TOKEN}, which would turn every command into the
      * token home and send it to the public edge. The one thing a call adds is from the caller's
      * token: see {@link #callEnvironment}.
@@ -99,7 +101,7 @@ public final class ToolRunner {
     public static Map<String, String> environment(Function<String, String> config) {
         Map<String, String> env = new TreeMap<>();
         env.put(Mode.OVERRIDE, "true");
-        for (String name : List.of("QITS_ENV", "QITS_PROJECTS_URL", "QITS_CI_URL", "QITS_EVENTS_URL",
+        for (String name : List.of("QITS_ENV", "QITS_DOMAIN", "QITS_PROJECTS_URL", "QITS_CI_URL", "QITS_EVENTS_URL",
                 "QITS_OBSERVABILITY_URL", "QITS_WORKSPACES_URL")) {
             String value = config.apply(name);
             if (value != null && !value.isBlank()) {

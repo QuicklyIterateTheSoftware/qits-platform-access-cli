@@ -25,7 +25,8 @@ It has **three homes**. A workstation, where a person signs in with a browser an
 in a file; a workspace handed a token of its own (`QITS_TOKEN`: every agent container, a runner
 node, an admin or editor workspace), which sends that token as it is to the public vhosts; and
 in-platform (`QITS_PLATFORM=true`), which the MCP service sets for the commands it runs: services
-are dialled by their wire aliases, with the caller's own bearer handed to each command. The mode is
+are dialled at the same public vhosts of `QITS_DOMAIN`, with the caller's own bearer handed to each
+command (no home dials a wire alias, qits-1436). The mode is
 decided once at startup and the homes are never mixed.
 
 ## Four modules
@@ -316,7 +317,7 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                (AgentMcpApi; epic qits-765). Its rows belong to ProjectsContract (AgentMcpContract)
     users/     qits users invite, register, list and delete, on the idp's user doors (IdpUsersApi).
                register sends no bearer: the register token is the credential, and the person has
-               no session yet. The idp's address is the session's, the wire alias inside
+               no session yet. The idp's address is the session's, the public vhost inside
                (PlatformEndpoints), or, for register with no session, IdpUrl's default
     agents/    qits agents: the group (AgentsCommand), whose verbs are workspaces/AgentCommands; only
                its `claude` group is Interaction.LOCAL.
@@ -384,14 +385,10 @@ Two packages sit outside `access/`, because neither is about one command:
   `git.json.lock` (`GitAccess`); its tokens are another client's (`qits-git-workstation`), so the
   two files never share a token. Both are written through `PrivateFiles`.
 - **One place decides a service's address**: `PlatformEndpoints`. `PlatformUrls` keeps the commands'
-  own flags and `QITS_<APP>_URL` variables and hands the rest to it. The public vhosts on a
-  workstation, the wire aliases inside the platform, `QITS_URL_<APP>` over either. Inside, a service
-  on an environment's plane is `http://<env>-qits-<app>:8080` and one on the platform plane has the
-  alias `PlatformEndpoints.PLATFORM_PLANE` names for it (`qits-platform-idp`, `qits-events`) —
-  those are not one pattern, so a service added there is looked up in the deployments API's
-  application list (`platform:<name>` against `<envUuid>:<name>`), never spelled. The epic
-  *Remove the platform service concept* deletes the environment prefix and the platform/environment
-  split; that must stay one edit there.
+  own flags and `QITS_<APP>_URL` variables and hands the rest to it. The public vhosts
+  in every home — from the session's idp on a workstation, from `QITS_DOMAIN` inside the platform —
+  and `QITS_URL_<APP>` over either. The wire aliases (`http://<env>-qits-<app>:8080`) the
+  in-platform home used to dial are gone with the internal address plane (qits-1436).
 - **One credential interface**: `Credential`. `AccessTokens` is the workstation's, `TokenCredential`
   the token home's, and `CliContext.credential()` picks by mode. A command never asks which it has.
   They are never mixed: only a workstation opens the session file (`BothHomesTest`). The third,

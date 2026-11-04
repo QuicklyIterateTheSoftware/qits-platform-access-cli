@@ -45,24 +45,21 @@ class PlatformUrlsTest {
     }
 
     /**
-     * Inside, events is an ordinary environment service on {@code <env>-qits-events} — and
-     * everything a person can say about its address still comes first, because the day it moves
-     * again they must not have to wait for a CLI release.
-     * <p>
-     * It was the bare {@code qits-events} while the bus was on the platform plane, and the override
-     * is why this test was worth keeping through the change rather than replacing: the default moved
-     * twice and no override had to.
+     * Inside, events is the public vhost of {@code QITS_DOMAIN} like every service (qits-1436) — no
+     * wire alias — and everything a person can say about its address still comes first, because the
+     * day it moves again they must not have to wait for a CLI release.
      */
     @Test
-    void insideTheEventsDefaultCarriesTheTierAndEveryOverrideStillBeatsIt() throws Exception {
+    void insideTheEventsDefaultIsThePublicVhostAndEveryOverrideStillBeatsIt() throws Exception {
         Map<String, String> container = Map.of(
                 Mode.OVERRIDE, "true",
+                "QITS_DOMAIN", "wohlben.eu",
                 "QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352");
 
         assertThat(PlatformUrls.events(null, container, null))
-                .isEqualTo("http://dev-qits-events:8080");
-        assertThat(PlatformUrls.projects(null, container, null)).as("one per environment, as ever")
-                .isEqualTo("http://dev-qits-projects:8080");
+                .isEqualTo("https://events.qits.wohlben.eu");
+        assertThat(PlatformUrls.projects(null, container, null))
+                .isEqualTo("https://projects.qits.wohlben.eu");
 
         Map<String, String> said = new HashMap<>(container);
         said.put("QITS_EVENTS_URL", "http://told-env:8080/");

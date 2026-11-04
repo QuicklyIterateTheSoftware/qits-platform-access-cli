@@ -3308,7 +3308,7 @@ qits users invite [--idp-url <url>] [--output table|json]
 
 | Name | What it does |
 |---|---|
-| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform https://idp.qits.<QITS_DOMAIN>/idp; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
 | `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
 
 ### Examples
@@ -3341,7 +3341,7 @@ qits users register --token <token> [--idp-url <url>] [--output table|json] <use
 |---|---|
 | `<username>` | The new user's name. |
 | `--token <token>` | Required. The register token `qits users invite` printed. This call spends it. |
-| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform https://idp.qits.<QITS_DOMAIN>/idp; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
 | `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
 
 ### Examples
@@ -3371,7 +3371,7 @@ qits users list [--idp-url <url>] [--output table|json]
 
 | Name | What it does |
 |---|---|
-| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform https://idp.qits.<QITS_DOMAIN>/idp; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
 | `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
 
 ### Examples
@@ -3398,7 +3398,7 @@ qits users delete [--idp-url <url>] [--output table|json] <username>
 | Name | What it does |
 |---|---|
 | `<username>` | The user to delete. |
-| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform its wire alias; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
+| `--idp-url <url>` | The idp's base URL, with /idp. Default: the session's idp; inside the platform https://idp.qits.<QITS_DOMAIN>/idp; for register with no session, QITS_IDP_URL, else the address `qits login` uses. |
 | `-o, --output table\|json` | table (the default): for people. json: the answer as JSON, pretty-printed. |
 
 ### Examples

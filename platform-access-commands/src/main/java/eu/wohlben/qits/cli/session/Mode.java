@@ -6,8 +6,8 @@ import java.util.Map;
  * Which of the CLI's three homes this process is in.
  * <p>
  * A workstation, where a person signed in with a browser and the session lives in a file; a
- * process on the container network that runs commands for somebody else — the MCP service, which
- * hands every command its caller's own bearer — where services are dialled by their wire aliases;
+ * process that runs commands for somebody else — the MCP service, which hands every command its
+ * caller's own bearer — where services are dialled at the public vhosts of {@code QITS_DOMAIN};
  * or a workspace handed a token of its own ({@code QITS_TOKEN}) — every agent container, a runner
  * node, an admin or editor workspace placed directly on qits-containers — which reaches the
  * platform through the public edge, because only the edge exchanges that token.
@@ -22,8 +22,8 @@ public enum Mode {
     WORKSTATION,
 
     /**
-     * On the container network, dialling wire aliases, with the credential its host hands each
-     * command — the MCP service and its caller's bearer. Only {@link #OVERRIDE} chooses it.
+     * Run for somebody else, with the credential its host hands each command — the MCP service and
+     * its caller's bearer — dialling the public vhosts of {@code QITS_DOMAIN}, as every home does. Only {@link #OVERRIDE} chooses it.
      */
     IN_PLATFORM,
 
@@ -59,7 +59,7 @@ public enum Mode {
         return WORKSTATION;
     }
 
-    /** The wire aliases and a handed credential. False in the token home, which dials the edge. */
+    /** A handed credential, from the MCP service. False in the token home, which holds its own. */
     public boolean inPlatform() {
         return this == IN_PLATFORM;
     }

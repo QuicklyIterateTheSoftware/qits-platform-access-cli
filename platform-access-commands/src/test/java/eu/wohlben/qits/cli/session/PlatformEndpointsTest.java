@@ -9,7 +9,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** The token home's addresses: the public vhosts of {@code QITS_DOMAIN}, and the domains refused. */
+/** The token and in-platform homes' addresses: the public vhosts of {@code QITS_DOMAIN}, and the domains refused. */
 class PlatformEndpointsTest {
 
     private static final Map<String, String> RUNNER = Map.of(
@@ -67,14 +67,14 @@ class PlatformEndpointsTest {
     }
 
     /**
-     * Untold, the idp inside is the rule: {@code <env>-qits-idp}. The application was renamed from
-     * {@code qits-platform-idp} (its {@code deployments.yml} carries {@code renamed_from}), so the
-     * rule is the one alias that answers and there is no special case for it.
+     * Inside — the MCP service's in-platform commands — the idp is the public vhost too (qits-1436):
+     * no wire alias, and the injected token url is not read for an address.
      */
     @Test
-    void insideTheUntoldIdpIsTheRule() throws CliFailure {
-        Map<String, String> container = Map.of(Mode.OVERRIDE, "true", "QITS_ENV", "qa");
-        assertThat(endpoints(container).base("idp")).isEqualTo("http://qa-qits-idp:8080");
+    void insideTheIdpIsThePublicVhost() throws CliFailure {
+        Map<String, String> container = Map.of(Mode.OVERRIDE, "true", "QITS_ENV", "qa",
+                "QITS_DOMAIN", "wohlben.eu", "QITS_GIT_AUTH_TOKEN_URL", "http://qa-qits-idp:8080/idp/token");
+        assertThat(endpoints(container).base("idp")).isEqualTo("https://idp.qits.wohlben.eu");
     }
 
     /** The landing app is a browser address in every home: the bare platform domain, never a wire alias. */

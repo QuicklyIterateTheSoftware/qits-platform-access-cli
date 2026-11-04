@@ -10,7 +10,8 @@ import java.util.Map;
  * https://projects.qits.<QITS_DOMAIN>}). The one place that decides it.
  * <p>
  * Order: the command's flag, else {@code QITS_<APP>_URL}, else whatever {@link PlatformEndpoints}
- * works out — the public vhost on a workstation, the wire alias inside the platform. The commands
+ * works out — the public vhost, in every home (from the session on a workstation, from
+ * {@code QITS_DOMAIN} inside the platform). The commands
  * keep their own flags and variables, and the addresses themselves are decided in one class.
  */
 public final class PlatformUrls {

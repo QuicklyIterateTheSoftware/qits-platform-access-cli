@@ -7,23 +7,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Which home, and which addresses follow from it — from a fixed environment, in both directions. */
 class ModeTest {
 
     private static final String IDP = "https://idp.qits.wohlben.eu/idp";
 
+    /**
+     * The MCP service's in-platform environment, with the wire-alias variables an older container
+     * carried beside it: none of them is read for an address any more.
+     */
     private static final Map<String, String> CONTAINER = Map.of(
             Mode.OVERRIDE, "true",
+            "QITS_DOMAIN", "wohlben.eu",
             "QITS_WORKSPACE_DAEMON_URL", "ws://dev-qits-workspaces:8080/workspaces/daemon/352",
-            "QITS_GIT_AUTH_TOKEN_URL", "http://qits-platform-idp:8080/idp/token");
-
-    /** A project-agent container: no workspace daemon, and the two URLs that factory does inject. */
-    private static final Map<String, String> PROJECT_AGENT = Map.of(
-            Mode.OVERRIDE, "true",
             "QITS_PROJECTS_DAEMON_URL", "http://qa-qits-projects:8080/projects/agents/daemon",
-            "QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp");
+            "QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp",
+            "QITS_GIT_AUTH_TOKEN_URL", "http://qits-platform-idp:8080/idp/token");
 
     private static PlatformEndpoints endpoints(Map<String, String> env, String idpUrl) {
         return new PlatformEndpoints(Mode.of(env), env, idpUrl);
@@ -89,105 +90,44 @@ class ModeTest {
         assertThat(outside.base("idp")).isEqualTo("https://idp.qits.wohlben.eu");
     }
 
-    @Test
-    void insideItDialsTheWireAliases() throws CliFailure {
-        PlatformEndpoints inside = endpoints(CONTAINER, null);
-        assertThat(inside.base("projects")).isEqualTo("http://dev-qits-projects:8080");
-        assertThat(inside.base("ci")).isEqualTo("http://dev-qits-ci:8080");
-        assertThat(inside.base("githost")).isEqualTo("http://dev-qits-githost:8080");
-        // The idp reads the injected token url when the container carries one, and CONTAINER does.
-        assertThat(inside.base("idp")).isEqualTo("http://qits-platform-idp:8080");
-    }
-
     /**
-     * <b>The bus carries the tier like everything else, and this assertion has been inverted
-     * twice.</b>
-     * <p>
-     * It was first written because {@code qits events} hung forever on {@code dev-qits-events}: the
-     * bus was on the platform plane and answered only on the bare {@code qits-events}, so the rule
-     * produced a name with no DNS record. The fix was a table of bare aliases.
-     * <p>
-     * Deleting the plane inverted it again, and the table was what stayed behind — so the same
-     * command reconnect-looped on {@code http://qits-events:8080} instead, in every agent container
-     * on the estate. Measured on 2026-09-25: ConnectException, backing off 1s, 2s, 4s, 8s, 16s,
-     * forever. The rule is the whole answer now.
+     * <b>Inside, every address is the public vhost of {@code QITS_DOMAIN}</b> (qits-1436): the CLI
+     * never dials a wire alias, in-platform included. The idp is no exception any more — the
+     * injected token url is not read for an address — and neither is the bus.
      */
     @Test
-    void theBusCarriesTheTierLikeEveryOtherApplication() throws CliFailure {
-        assertThat(endpoints(CONTAINER, null).base("events"))
-                .isEqualTo("http://dev-qits-events:8080");
-        // A project-agent container reads its tier off the urls it carries, and this fixture's is
-        // qa — so the bus follows it there. That is the whole of what changed.
-        assertThat(endpoints(PROJECT_AGENT, null).base("events")).as("the tier reaches it")
-                .isEqualTo("http://qa-qits-events:8080");
+    void insideItDialsThePublicVhostsOfItsDomain() throws CliFailure {
+        PlatformEndpoints inside = endpoints(CONTAINER, null);
+        assertThat(inside.base("projects")).isEqualTo("https://projects.qits.wohlben.eu");
+        assertThat(inside.base("ci")).isEqualTo("https://ci.qits.wohlben.eu");
+        assertThat(inside.base("githost")).isEqualTo("https://githost.qits.wohlben.eu");
+        assertThat(inside.base("idp")).isEqualTo("https://idp.qits.wohlben.eu");
+        assertThat(inside.base("events")).isEqualTo("https://events.qits.wohlben.eu");
+        assertThat(inside.base("observability")).isEqualTo("https://observability.qits.wohlben.eu");
     }
 
-    /** The idp keeps taking the address the container was told to mint at, when it was told one. */
+    /** Without a public domain there is nothing inside to dial, and the failure names the variable. */
     @Test
-    void theIdpPrefersTheInjectedTokenUrlAndOtherwiseTakesTheRule() throws CliFailure {
-        Map<String, String> told = new HashMap<>(CONTAINER);
-        told.put("QITS_GIT_AUTH_TOKEN_URL", "http://qits-platform-idp.internal:9443/idp/token");
-        assertThat(endpoints(told, null).base("idp")).isEqualTo("http://qits-platform-idp.internal:9443");
-
-        // Untold, it is the rule and nothing else — no bare alias to fall back to.
+    void insideWithoutADomainIsAUsageFailure() {
         Map<String, String> untold = new HashMap<>(CONTAINER);
-        untold.remove("QITS_GIT_AUTH_TOKEN_URL");
-        assertThat(endpoints(untold, null).base("idp")).isEqualTo("http://dev-qits-idp:8080");
-        assertThat(endpoints(untold, null).base("events")).as("only the idp reads that variable")
-                .isEqualTo("http://dev-qits-events:8080");
+        untold.remove("QITS_DOMAIN");
+        assertThatThrownBy(() -> endpoints(untold, null).base("projects"))
+                .isInstanceOfSatisfying(CliFailure.class,
+                        failure -> assertThat(failure.exitCode()).isEqualTo(CliFailure.USAGE))
+                .hasMessageContaining("QITS_DOMAIN");
     }
 
-    /** Every service carries the tier, which is now the only rule there is. */
+    /** The label is a display: told, or {@code dev}; never read off a wire alias. */
     @Test
-    void everyServiceCarriesTheTier() throws CliFailure {
-        assertThat(endpoints(CONTAINER, null).base("projects")).isEqualTo("http://dev-qits-projects:8080");
-        assertThat(endpoints(CONTAINER, null).base("observability"))
-                .isEqualTo("http://dev-qits-observability:8080");
-    }
-
-    @Test
-    void theEnvironmentIsToldOrReadOffTheDaemonAddressOrDev() {
+    void theEnvironmentIsToldOrDev() {
         assertThat(endpoints(CONTAINER, null).environment()).isEqualTo("dev");
         assertThat(endpoints(Map.of("QITS_ENV", "prod"), null).environment()).isEqualTo("prod");
         assertThat(endpoints(Map.of(), null).environment()).isEqualTo("dev");
         assertThat(endpoints(Map.of("QITS_WORKSPACE_DAEMON_URL", "ws://staging-qits-projects:8080/x"), null)
-                .environment()).isEqualTo("staging");
-    }
-
-    @Test
-    void aProjectAgentContainerReadsTheTierOffTheUrlsItDoesCarry() throws CliFailure {
-        PlatformEndpoints agent = endpoints(PROJECT_AGENT, null);
-        assertThat(agent.environment()).isEqualTo("qa");
-        assertThat(agent.base("projects")).isEqualTo("http://qa-qits-projects:8080");
-    }
-
-    @Test
-    void thePlatformMcpUrlAnswersWhenItIsTheOnlyOne() {
-        assertThat(endpoints(Map.of("QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp"), null)
-                .environment()).isEqualTo("qa");
-    }
-
-    @Test
-    void theRetiredRepositoryMcpUrlIsNotRead() {
-        assertThat(endpoints(Map.of("QITS_REPOSITORY_MCP_URL", "http://qa-qits-projects:8080/projects/mcp"), null)
-                .environment()).isEqualTo("dev");
-    }
-
-    @Test
-    void toldStillWinsOverEveryUrl() {
-        Map<String, String> agent = new HashMap<>(PROJECT_AGENT);
-        agent.put("QITS_ENV", "prod");
-        assertThat(endpoints(agent, null).environment()).isEqualTo("prod");
-    }
-
-    @Test
-    void aValueThatIsNotAWireAliasIsPassedOver() {
-        assertThat(endpoints(Map.of("QITS_PROJECTS_DAEMON_URL", "not a url at all"), null)
-                .environment()).as("no throw, and no tier read off it").isEqualTo("dev");
-        Map<String, String> mixed = Map.of(
-                "QITS_PROJECTS_DAEMON_URL", "not a url at all",
-                "QITS_PLATFORM_MCP_URL", "http://qa-qits-platform-access-mcp:8080/mcp");
-        assertThat(endpoints(mixed, null).environment()).isEqualTo("qa");
+                .environment()).as("a wire alias is no longer read for the tier").isEqualTo("dev");
+        Map<String, String> told = new HashMap<>(CONTAINER);
+        told.put("QITS_ENV", "qa");
+        assertThat(endpoints(told, null).environment()).isEqualTo("qa");
     }
 
     @Test
