@@ -662,7 +662,7 @@
  │   commits             List the commits on a branch that are not on its parent, newest first, ea │
  │   commit-changes      List the files one commit changed against its first parent, or against -- │
  │   commit-diff         Print the unified diff of one file in one commit, against the same base a │
- │   commit-subjects     Count how many of a branch's newest commits name their subject as term(<p │
+ │   commit-subjects     Count how many of a branch's newest commits fit one of qits-githost's acc │
  │   remote-login        Attach this terminal to a repository's backup-remote sign-in: the server  │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -693,7 +693,7 @@
  │   commits             List the commits on a branch that are not on its parent, newest first, ea │
  │   commit-changes      List the files one commit changed against its first parent, or against -- │
  │   commit-diff         Print the unified diff of one file in one commit, against the same base a │
- │   commit-subjects     Count how many of a branch's newest commits name their subject as term(<p │
+ │   commit-subjects     Count how many of a branch's newest commits fit one of qits-githost's acc │
  │   remote-login        Attach this terminal to a repository's backup-remote sign-in: the server  │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -720,7 +720,7 @@
  │   branches            List a repository's branches: each with its parent, how far it is ahead o │
  │   commits             List the commits on a branch that are not on its parent, newest first, ea │
  │   commit-changes      List the files one commit changed against its first parent, or against -- │
- │   commit-subjects     Count how many of a branch's newest commits name their subject as term(<p │
+ │   commit-subjects     Count how many of a branch's newest commits fit one of qits-githost's acc │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
@@ -751,7 +751,7 @@
  │   branches            List a repository's branches: each with its parent, how far it is ahead o │
  │   commits             List the commits on a branch that are not on its parent, newest first, ea │
  │   commit-changes      List the files one commit changed against its first parent, or against -- │
- │   commit-subjects     Count how many of a branch's newest commits name their subject as term(<p │
+ │   commit-subjects     Count how many of a branch's newest commits fit one of qits-githost's acc │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
