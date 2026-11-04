@@ -150,7 +150,8 @@ class ClientCallsGuardTest {
             shipped.load(in);
         }
         String server = shipped.getProperty("quarkus.oidc.auth-server-url", "");
-        assertThat(server).as("the tenant reads qits-idp").contains("qits-idp");
+        assertThat(server).as("the tenant reads qits-idp at its public name, through the edge (qits-428)")
+                .isEqualTo("https://idp.qits.${QITS_DOMAIN}/idp");
         assertThat(shipped.stringPropertyNames().stream().filter(k -> k.startsWith("quarkus.oidc.")
                 && k.contains("issuer"))).as("the issuer is never configuration: discovery publishes it (qits-730)")
                 .isEmpty();

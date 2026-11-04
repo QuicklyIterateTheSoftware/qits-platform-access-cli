@@ -166,6 +166,12 @@
                              the command line gets it too. -->
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
+                            <!-- The runner boots the prod profile, whose idp address is
+                                 https://idp.qits.${QITS_DOMAIN}/idp with no default; the ITs replace
+                                 the key fetch (BearerProfile), so any domain resolves the expression. -->
+                            <environmentVariables>
+                                <QITS_DOMAIN>example.test</QITS_DOMAIN>
+                            </environmentVariables>
                             <systemPropertyVariables>
                                 <native.image.path>${native.image.path}</native.image.path>
                                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
