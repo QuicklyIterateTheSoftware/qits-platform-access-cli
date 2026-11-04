@@ -4002,12 +4002,13 @@
         }
       },
       "description": "qits milestones approve: approveMilestoneCriterion",
-      "key": "f51c5af",
+      "key": "10f708c1",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -4026,6 +4027,13 @@
           "encoded": false
         },
         "generators": {
+          "header": {
+            "Authorization": {
+              "dataType": "RAW",
+              "expression": "${authorization}",
+              "type": "ProviderState"
+            }
+          },
           "path": {
             "dataType": "RAW",
             "expression": "/projects/api/milestones/${milestoneId}/criteria/${criterionId}/approve",
@@ -4033,6 +4041,9 @@
           }
         },
         "headers": {
+          "Authorization": [
+            "Bearer qits_tok_contract-person-cli"
+          ],
           "Content-Type": [
             "application/json"
           ]
@@ -4280,12 +4291,13 @@
         }
       },
       "description": "qits milestones create: createMilestone",
-      "key": "5f11a484",
+      "key": "60b6e796",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -4491,12 +4503,13 @@
         }
       },
       "description": "qits milestones criteria: setMilestoneGroups",
-      "key": "bdf9eec3",
+      "key": "bf9f31d5",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -5305,12 +5318,13 @@
         }
       },
       "description": "qits milestones list: listProjectMilestones",
-      "key": "417ff81c",
+      "key": "43253b2e",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -5476,12 +5490,13 @@
         }
       },
       "description": "qits milestones rename: renameMilestone",
-      "key": "42a75258",
+      "key": "444c956a",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -21734,12 +21749,13 @@
         }
       },
       "description": "qits work details: getWork",
-      "key": "19346d51",
+      "key": "1ad9b063",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -25689,12 +25705,13 @@
         }
       },
       "description": "qits work list: listProjectWork",
-      "key": "fc5790d0",
+      "key": "fdfcd3e2",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -27689,12 +27706,13 @@
         }
       },
       "description": "qits work milestones attach: attachWorkMilestone",
-      "key": "46667fe2",
+      "key": "480bc2f4",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
@@ -27793,12 +27811,13 @@
         }
       },
       "description": "qits work milestones detach: detachWorkMilestone",
-      "key": "49b6f1ae",
+      "key": "4b5c34c0",
       "pending": false,
       "providerStates": [
         {
           "name": "a ticket waiting on an unmet milestone",
           "params": {
+            "authorization": "Bearer qits_tok_contract-person-cli",
             "criterionId": "00000000-0000-4000-8000-000000000001",
             "milestoneId": "00000000-0000-4000-8000-000000000002",
             "otherMilestoneId": "00000000-0000-4000-8000-000000000003",
