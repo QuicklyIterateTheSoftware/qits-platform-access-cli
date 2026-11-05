@@ -10,7 +10,8 @@ Commands:
 - `qits projects list`, `qits repositories … list`,
   `qits work list|details|create|update|transition|status|comment` (work items of every archetype)
   and `qits release-request … list|create|join|move|withdraw|approve|decline|regenerate|rerun` read from and ask the projects service;
-  `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in.
+  `qits repositories remote-login` attaches this terminal to a repository's backup-remote sign-in, and
+  `qits repositories backup reset` makes a backup twin whose main holds unrelated history ours.
 - `qits ci runs|run|retry|cancel` lists a repository's CI runs, shows a run with its steps and their logs,
   runs a finished run again, and stops a queued or running one. `qits ci report show` shows a run's release reports (which tests
   failed, and why; the line coverage of the tree and of the change; the pacts and provider states the
@@ -622,6 +623,7 @@ Installing it is not part of this version.
     qits repositories --project <project> list
     qits repositories --project <project> create <name> [--component <component>]
     qits repositories --project <project> remote-login [--repository <repository>]
+    qits repositories --project <project> backup reset --repository <repository> --reason <text>
     qits work list --project <project> [--archetype <A>] [--status <STATUS>] [--parent <entity>]
     qits work --entity <id or qualified id> details
     <payload> | qits work create --archetype <A>
@@ -841,6 +843,25 @@ project pushes with, so one sign-in clears every `AUTH_REQUIRED`. The door takes
 
     qits repositories --project qits remote-login
     qits repositories --project qits remote-login --repository qits-ci-service
+
+### qits repositories --project \<project\> backup reset --repository \<repository\> --reason \<text\>
+
+The fix for a backup twin the forge seeded with a commit of its own (qits-1885): its main shares no
+history with ours, so every ordinary backup push is refused. `POST
+/projects/api/repositories/{id}/backup-reset` on qits-projects, body `{"reason"}`, asks the service to
+probe the twin's main and decide. A twin with no main, at ours or behind ours is fast-forwarded with
+no force (`FAST_FORWARD`); one whose main shares no commit with ours has its main replaced
+(`UNRELATED_RESET`; only main is ever forced); one ahead of ours or diverged from a common base is
+refused with 409 naming both shas, and nothing is pushed. The reset is recorded with who decided
+and the reason.
+
+- Only a person (`qits:admin`, verified as a person) or the project's own delivery desk may call
+  it: the decision is that the forge's copy of main may be discarded. The door words its own 403,
+  so the command prints it as it came, with no role hint of its own.
+- The table prints the repository, the kind, the twin's main before and after, who decided and the
+  reason; `-o json` prints the service's answer.
+
+    qits repositories --project qits backup reset --repository qits-ci-service --reason "Forge seed commit"
 
 ### qits work
 

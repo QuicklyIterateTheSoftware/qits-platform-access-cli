@@ -176,6 +176,9 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                terminal/'s TerminalAttach; without --repository it is the list's
                wrapper.repositoryId, as the page's Backups panel picks it, and a clean close is
                followed by the panel's project-wide backup-sync and one re-read 3 s later
+               `repositories backup reset` (RepositoriesCommand.BackupCommand, qits-1885) is POST
+               /projects/api/repositories/{id}/backup-reset with {reason}: a person's or the
+               project's desk's door, which words its own 403, so it posts with no role hint
                `qits ideas` (IdeasCommand, epic qits-888) is a project's ideas on /projects/api/ideas, the
                same shape: --entity is the idea's id, the writes' schemas come from the OpenAPI
                document through WorkPayload, and `spawn` files work through createWork with the
@@ -590,7 +593,10 @@ the two decisions (`approveReleaseRequest` in `a release request awaiting approv
 runs`, `declineReleaseRequest` in `a release request awaiting approval`); the milestone doors of `qits milestones` and `qits work milestones`, `qits work members milestones`
 and the needs of `qits work list` / `details` (epic qits-615) in `a ticket waiting on an unmet
 milestone`, `a ticket waiting on a met milestone` and `a campaign member waiting on a milestone`,
-pending until the pin reaches the qits-projects-service release of epic qits-615; and `qits projects desk prompt` /
+pending until the pin reaches the qits-projects-service release of epic qits-615; `qits repositories
+backup reset` (qits-1885): `backupResetRepository` in `a repository whose backup twin holds unrelated
+history`, as the person that state names (its `authorization` bearer), pending until a golden-masters
+pin records that state; and `qits projects desk prompt` /
 `answer` (qits-1572): `promptFrontDesk` and `getFrontDeskLastAnswer` in `a project whose front desk
 is running`, both pending until a golden-masters pin records that state. A path the recorder froze
 under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole UUID in some

@@ -311,6 +311,8 @@ archive and unarchive ask for repository.archived in the repository's .config/qi
 
 remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for the credentials the project's backups push with.
 
+backup reset makes a repository's backup twin ours when its main shares no history with ours (a forge's seed commit).
+
 A repository's name says the role it plays to a reader, but it decides nothing (owner ruling 2026-11-03): state the kind with create's --archetype, or declare it in the repository's own .config/qits/repository.yml (repository.archetype), which the wrapper reconcile applies. With neither, the repository simply has no archetype yet.
 
 ## qits repositories list
@@ -642,6 +644,48 @@ qits repositories remote-login --project qits --repository qits-ci-service
 
 - `0` The sign-in ended and the backups were asked to run again, you detached (Ctrl-]), or it was stopped (SIGINT, SIGTERM). A 0 does not say the sign-in worked: the backups say that.
 - `1` The platform refused (the socket or the backups), the repository has no backup remote, or the connection dropped and five attempts to attach again failed.
+- `2` Used wrongly, not signed in, or the session ended (run `qits login`).
+
+## qits repositories backup
+
+A repository's backup twin, the copy on the forge the project's backups push to: reset makes the twin's main ours when it shares no history with ours (a forge's seed commit).
+
+## qits repositories backup reset
+
+Reset a repository's backup twin whose main shares no history with ours, such as a forge's seed commit (a README the forge created): ordinary backups are refused on such a twin, and this makes its main ours.
+
+The service probes the twin's main and decides. A twin with no main, at ours or behind ours is fast-forwarded, with no force (kind FAST_FORWARD). A twin whose main shares no commit with ours has its main replaced by ours (kind UNRELATED_RESET); only main is ever forced. A twin that is ahead of ours or diverged from a common base holds work the platform does not have: it is refused (HTTP 409, naming both shas) and nothing is pushed.
+
+The reset is recorded with who decided it and --reason.
+
+POST /projects/api/repositories/{id}/backup-reset.
+
+```
+qits repositories backup reset [--output table|json] [--project <project>] [--projects-url <url>] [--reason <text>] [--repository <repository>]
+```
+
+| Name | What it does |
+|---|---|
+| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
+| `--project <project>` | The project: its id, slug or name. |
+| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
+| `--reason <text>` | Why the twin's main may be replaced (required). It is recorded with the reset. |
+| `--repository <repository>` | The repository (required): its id or name. |
+
+### Examples
+
+```
+qits repositories --project qits backup reset --repository qits-ci-service --reason "The forge seeded the twin with a README commit."
+qits repositories backup reset --project qits --repository qits-ci-service --reason "Seed commit" -o json
+```
+
+- Only a person (qits:admin, signed in as a person) or the project's own delivery desk may reset a twin: the decision is that the forge's copy of main may be discarded. Agents, CI and another project's desk are refused (HTTP 403).
+- The table prints the repository, the kind, the twin's main before and after, who decided and the reason. -o json prints the service's answer.
+
+### Exit codes
+
+- `0` The twin's main is ours now: fast-forwarded, or reset from unrelated history.
+- `1` The platform refused (for example your roles, HTTP 403, a repository it does not know, HTTP 404, or a twin that is ahead, diverged, moved meanwhile or missing, HTTP 409), or cannot be reached.
 - `2` Used wrongly, not signed in, or the session ended (run `qits login`).
 
 ## qits work

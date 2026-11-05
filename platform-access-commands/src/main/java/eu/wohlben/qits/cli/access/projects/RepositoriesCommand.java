@@ -23,7 +23,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 RepositoriesCommand.ArchiveCommand.class, RepositoriesCommand.UnarchiveCommand.class,
                 RepositoryGitCommands.BranchesCommand.class, RepositoryGitCommands.CommitsCommand.class,
                 RepositoryGitCommands.CommitChangesCommand.class, RepositoryGitCommands.CommitDiffCommand.class,
-                RepositoryGitCommands.CommitSubjectsCommand.class, RemoteLoginCommand.class},
+                RepositoryGitCommands.CommitSubjectsCommand.class, RemoteLoginCommand.class,
+                RepositoriesCommand.BackupCommand.class},
         description = {"The repositories of one project: list shows them, create stands a new one up. Release "
                 + "requests take a repository's id or name as --repository.",
                 "branches, commits, commit-changes, commit-diff and commit-subjects read one repository's git "
@@ -32,6 +33,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + ".config/qits/repository.yml, released through its own release request.",
                 "remote-login attaches this terminal to a repository's backup-remote sign-in, where git asks for "
                         + "the credentials the project's backups push with.",
+                "backup reset makes a repository's backup twin ours when its main shares no history with ours "
+                        + "(a forge's seed commit).",
                 "A repository's name says the role it plays to a reader, but it decides nothing (owner ruling "
                         + "2026-11-03): state the kind with create's --archetype, or declare it in the "
                         + "repository's own .config/qits/repository.yml (repository.archetype), which the wrapper "
@@ -342,6 +345,109 @@ public class RepositoriesCommand implements Runnable {
         @Override
         JsonNode call(ProjectsApi api, String repoId) throws CliFailure, InterruptedException {
             return api.unarchiveRepository(repoId);
+        }
+    }
+
+    /**
+     * {@code qits repositories backup}: what a person does about a repository's backup twin, the
+     * copy on the forge the project's backups push to. Only {@code reset} so far (qits-1885).
+     */
+    @CommandLine.Command(name = "backup", mixinStandardHelpOptions = true,
+            subcommands = {RepositoriesCommand.BackupCommand.ResetCommand.class},
+            description = {"A repository's backup twin, the copy on the forge the project's backups push to: reset "
+                    + "makes the twin's main ours when it shares no history with ours (a forge's seed commit)."})
+    public static class BackupCommand implements Runnable {
+
+        @CommandLine.ParentCommand
+        RepositoriesCommand parent;
+
+        @CommandLine.Spec
+        CommandLine.Model.CommandSpec spec;
+
+        @Override
+        public void run() {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Name a command.");
+        }
+
+        /**
+         * Makes the backup twin's main ours (qits-1885): the fix for a twin the forge seeded with a
+         * commit of its own, which every ordinary backup push is refused on. The service probes the
+         * twin and decides; this command only names the repository and the reason, and prints what
+         * was decided. See {@link ProjectsApi#backupReset}.
+         */
+        @CommandLine.Command(name = "reset", mixinStandardHelpOptions = true,
+                description = {"Reset a repository's backup twin whose main shares no history with ours, such "
+                        + "as a forge's seed commit (a README the forge created): ordinary backups are refused "
+                        + "on such a twin, and this makes its main ours.",
+                        "The service probes the twin's main and decides. A twin with no main, at ours or behind "
+                                + "ours is fast-forwarded, with no force (kind FAST_FORWARD). A twin whose main "
+                                + "shares no commit with ours has its main replaced by ours (kind "
+                                + "UNRELATED_RESET); only main is ever forced. A twin that is ahead of ours or "
+                                + "diverged from a common base holds work the platform does not have: it is "
+                                + "refused (HTTP 409, naming both shas) and nothing is pushed.",
+                        "The reset is recorded with who decided it and --reason.",
+                        "POST /projects/api/repositories/{id}/backup-reset."},
+                footerHeading = HelpText.EXAMPLES,
+                footer = {"  qits repositories --project qits backup reset --repository qits-ci-service "
+                        + "--reason \"The forge seeded the twin with a README commit.\"",
+                        "  qits repositories backup reset --project qits --repository qits-ci-service "
+                                + "--reason \"Seed commit\" -o json",
+                        "",
+                        "- Only a person (qits:admin, signed in as a person) or the project's own delivery desk "
+                                + "may reset a twin: the decision is that the forge's copy of main may be "
+                                + "discarded. Agents, CI and another project's desk are refused (HTTP 403).",
+                        "- The table prints the repository, the kind, the twin's main before and after, who "
+                                + "decided and the reason. -o json prints the service's answer."},
+                exitCodeListHeading = HelpText.EXIT_CODES,
+                exitCodeList = {"0:The twin's main is ours now: fast-forwarded, or reset from unrelated history.",
+                        "1:The platform refused (for example your roles, HTTP 403, a repository it does not know, "
+                                + "HTTP 404, or a twin that is ahead, diverged, moved meanwhile or missing, HTTP "
+                                + "409), or cannot be reached.",
+                        HelpText.USAGE})
+        public static class ResetCommand extends PlatformCommand {
+
+            @CommandLine.ParentCommand
+            BackupCommand backup;
+
+            @Completes(RepositorySource.class)
+            @CommandLine.Option(names = "--repository", paramLabel = "<repository>",
+                    description = "The repository (required): its id or name.")
+            String repository;
+
+            @CommandLine.Option(names = "--reason", paramLabel = "<text>",
+                    description = "Why the twin's main may be replaced (required). It is recorded with the "
+                            + "reset.")
+            String reason;
+
+            @Override
+            protected int execute(CliContext context) throws CliFailure, InterruptedException {
+                RepositoriesCommand parent = backup.parent;
+                boolean json = json(parent.options.output);
+                String wantedProject = required(parent.project, NAME_THE_PROJECT);
+                String wantedRepository = required(repository, "Name the repository: --repository <id or name>.");
+                String why = required(reason, "Say why the twin's main may be replaced: --reason <text>.");
+                ProjectsApi api = ProjectsApi.connect(context, parent.options.projectsUrl);
+                JsonNode repo = api.repository(api.project(wantedProject), wantedRepository);
+                JsonNode answer = api.backupReset(text(repo, "id"), why);
+                if (json) {
+                    ProjectsApi.printJson(context.out(), answer);
+                    return 0;
+                }
+                print(context, text(repo, "name").isEmpty() ? wantedRepository : text(repo, "name"), answer);
+                return 0;
+            }
+
+            /** repository, kind, the twin's main before and after, who decided, and why. */
+            private static void print(CliContext context, String name, JsonNode answer) {
+                String before = text(answer, "twinShaBefore");
+                Table.print(context.out(), "  ", null, List.of(
+                        List.of("repository", Table.cell(name, 120)),
+                        List.of("kind", Table.cell(text(answer, "kind"), 30)),
+                        List.of("twin main", Table.cell((before.isEmpty() ? "(none)" : before) + " -> "
+                                + text(answer, "pushedSha"), 100)),
+                        List.of("decided by", Table.cell(text(answer, "decidedBy"), 120)),
+                        List.of("reason", Table.cell(text(answer, "reason"), 200))));
+            }
         }
     }
 }

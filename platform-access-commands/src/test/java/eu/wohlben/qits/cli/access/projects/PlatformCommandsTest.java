@@ -442,6 +442,100 @@ class PlatformCommandsTest {
         assertThat(noRepository.err()).contains("Name the repository: --repository <id or name>.");
     }
 
+    // --- resetting a backup twin ---
+
+    private static final String BACKUP_RESET = "/projects/api/repositories/" + CI + "/backup-reset";
+
+    @Test
+    void backupResetSendsTheReasonAndPrintsTheDecision() throws Exception {
+        platform.answer("POST", BACKUP_RESET, 200, """
+                {"repositoryId":"%s","kind":"UNRELATED_RESET",
+                 "twinShaBefore":"4cafe88754afd99a5b8c174d94b7bca435ec1f3d",
+                 "pushedSha":"2ea701248909a576a8800b07134c97e195e6a33b","decidedBy":"dev",
+                 "decidedAt":"2026-01-01T00:00:00Z","reason":"The forge seeded the twin."}
+                """.formatted(CI));
+
+        Result r = run("repositories", "--project", "qits", "backup", "reset", "--repository", "qits-ci-service",
+                "--reason", "  The forge seeded the twin.  ");
+
+        assertThat(r.exit()).isZero();
+        List<FakePlatform.Request> sent = platform.requests("POST", BACKUP_RESET);
+        assertThat(sent).hasSize(1);
+        assertThat(JSON.readTree(sent.getFirst().body()))
+                .isEqualTo(JSON.readTree("{\"reason\":\"The forge seeded the twin.\"}"));
+        assertThat(r.out().lines().toList()).containsExactly(
+                "  repository  qits-ci-service",
+                "  kind        UNRELATED_RESET",
+                "  twin main   4cafe88754afd99a5b8c174d94b7bca435ec1f3d -> 2ea701248909a576a8800b07134c97e195e6a33b",
+                "  decided by  dev",
+                "  reason      The forge seeded the twin.");
+    }
+
+    @Test
+    void backupResetOfATwinWithNoMainSaysSoAndJsonIsTheAnswerAsItCame() throws Exception {
+        platform.answer("POST", BACKUP_RESET, 200, """
+                {"repositoryId":"%s","kind":"FAST_FORWARD","twinShaBefore":null,
+                 "pushedSha":"2ea701248909a576a8800b07134c97e195e6a33b","decidedBy":"dev",
+                 "decidedAt":"2026-01-01T00:00:00Z","reason":"r"}
+                """.formatted(CI));
+
+        Result table = run("repositories", "backup", "reset", "--project", "qits", "--repository", CI,
+                "--reason", "r");
+        assertThat(table.exit()).isZero();
+        assertThat(table.out()).contains("  kind        FAST_FORWARD")
+                .contains("  twin main   (none) -> 2ea701248909a576a8800b07134c97e195e6a33b");
+
+        Result json = run("repositories", "--project", "qits", "backup", "reset", "--repository", "qits-ci-service",
+                "--reason", "r", "-o", "json");
+        assertThat(json.exit()).isZero();
+        JsonNode printed = JSON.readTree(json.out());
+        assertThat(printed.path("kind").asText()).isEqualTo("FAST_FORWARD");
+        assertThat(printed.path("twinShaBefore").isNull()).isTrue();
+    }
+
+    @Test
+    void aBackupResetRefusalPrintsTheServicesSentenceAsItCame() {
+        String refusal = "The backup twin's main 1111111111 is ahead of ours (2222222222): it holds work the "
+                + "platform does not have, so nothing was pushed.";
+        platform.answer("POST", BACKUP_RESET, 409, "{\"message\":\"" + refusal + "\"}");
+
+        Result r = run("repositories", "--project", "qits", "backup", "reset", "--repository", "qits-ci-service",
+                "--reason", "r");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains("HTTP 409").contains(refusal);
+        assertThat(r.out()).isEmpty();
+    }
+
+    @Test
+    void a403ToTheBackupResetReachesThePersonInTheServicesWordsAlone() {
+        String refusal = "Only a person or this project's delivery desk may reset a backup twin.";
+        platform.answer("POST", BACKUP_RESET, 403, "{\"message\":\"" + refusal + "\"}");
+
+        Result r = run("repositories", "--project", "qits", "backup", "reset", "--repository", "qits-ci-service",
+                "--reason", "r");
+
+        assertThat(r.exit()).isEqualTo(1);
+        assertThat(r.err()).contains(refusal).doesNotContain("reads but does not write");
+    }
+
+    @Test
+    void backupResetNeedsTheProjectTheRepositoryAndAReason() {
+        Result noProject = run("repositories", "backup", "reset", "--repository", "qits-ci-service", "--reason", "r");
+        assertThat(noProject.exit()).isEqualTo(2);
+        assertThat(noProject.err()).contains("Name the project: --project <id, slug or name>.");
+
+        Result noRepository = run("repositories", "--project", "qits", "backup", "reset", "--reason", "r");
+        assertThat(noRepository.exit()).isEqualTo(2);
+        assertThat(noRepository.err()).contains("Name the repository: --repository <id or name>.");
+
+        Result noReason = run("repositories", "--project", "qits", "backup", "reset", "--repository",
+                "qits-ci-service", "--reason", "  ");
+        assertThat(noReason.exit()).isEqualTo(2);
+        assertThat(noReason.err()).contains("Say why the twin's main may be replaced: --reason <text>.");
+        assertThat(platform.requests("POST", BACKUP_RESET)).isEmpty();
+    }
+
     // --- release requests ---
 
     @Test

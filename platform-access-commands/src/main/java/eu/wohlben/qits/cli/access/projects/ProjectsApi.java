@@ -811,6 +811,24 @@ public final class ProjectsApi {
     }
 
     /**
+     * {@code {repositoryId, kind, twinShaBefore, pushedSha, decidedBy, decidedAt, reason}}: the
+     * repository's backup twin, whose main holds history ours does not share (a forge's seed
+     * commit), made ours (qits-1885). A twin with no main, at ours or behind it is fast-forwarded
+     * ({@code FAST_FORWARD}); one with unrelated history has its main replaced ({@code
+     * UNRELATED_RESET}); one ahead or diverged is refused (409, naming both shas) and nothing is
+     * pushed. {@code twinShaBefore} is null when the twin had no main.
+     * <p>
+     * The door decides who may act itself (a verified person, or the project's own delivery desk)
+     * and words its own 403, so the client's generic "reads but does not write" hint stays off, as
+     * for {@link #approveReleaseRequest}.
+     */
+    public JsonNode backupReset(String repoId, String reason) throws CliFailure, InterruptedException {
+        ObjectNode body = JSON.createObjectNode();
+        body.put("reason", reason);
+        return client.post(uri(repositoryPath(repoId) + "/backup-reset"), body, false);
+    }
+
+    /**
      * The repository's backup-remote sign-in terminal, {@code WS
      * /projects/api/repositories/{id}/remote-login}: {@code ws} for an http base and {@code wss} for
      * https, as the workspaces terminal socket is derived.

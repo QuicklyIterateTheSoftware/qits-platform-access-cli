@@ -139,6 +139,21 @@ public final class ProjectsContract {
     static final String ARCHIVE_OPERATION = "archiveRepository";
     static final String UNARCHIVE_OPERATION = "unarchiveRepository";
 
+    /**
+     * {@code qits repositories backup reset} (qits-1885): the provider records the door as the
+     * person the state names, with that person's CLI bearer ({@code authorization}), since only a
+     * person or the project's delivery desk may reset a twin. Pending until qits-maintenance bumps
+     * {@code qits.projects-golden-masters.version} past the qits-projects-service release that
+     * records this state under {@link #BACKUP_RESET_OPERATION}; on that bump write the pact again
+     * with {@code -Dgolden.update=true}.
+     */
+    static final String TWIN_WITH_UNRELATED_HISTORY = "a repository whose backup twin holds unrelated history";
+    static final String BACKUP_RESET_OPERATION = "backupResetRepository";
+
+    /** What {@code backup reset} prints: the kind, the twin's main before and after, who decided and why. */
+    static final List<String> BACKUP_RESET_ANSWER = List.of("kind", "twinShaBefore", "pushedSha", "decidedBy",
+            "reason");
+
     /** What {@code archive} and {@code unarchive} print: the table shows exactly these, nothing else. */
     static final List<String> ARCHIVE_ANSWER = List.of("outcome", "archived", "branch", "qualifiedId", "detail");
 
@@ -365,7 +380,8 @@ public final class ProjectsContract {
     }
 
     /**
-     * The same call as the person the state names: approve and decline are a person's decisions,
+     * The same call as the person the state names: approve, decline and the backup twin reset are a
+     * person's decisions,
      * and the provider records them with that person's CLI bearer ({@code authorization}), which
      * the row sends as its {@code Authorization} header.
      */
@@ -1280,6 +1296,14 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(answer, "detail")).isNotBlank();
     };
 
+    /** {@code qits repositories backup reset}: the recorded reason as sent; the table prints the decision. */
+    private static final Call BACKUP_RESET = (api, params, recorded) -> {
+        JsonNode answer = api.backupReset(params.get("repositoryId"), body(recorded).path("reason").asText());
+        for (String field : List.of("kind", "pushedSha", "decidedBy", "reason")) {
+            assertThat(ProjectsApi.text(answer, field)).as(field).isNotBlank();
+        }
+    };
+
     /** `design` asks the item for its refinement first; an item with none answers null. */
     private static final Call NO_REFINEMENT = (api, params, recorded) ->
             assertThat(api.workRefinement(params.get("qualifiedId")).path("refinement").isNull()).isTrue();
@@ -1370,7 +1394,7 @@ public final class ProjectsContract {
     static final List<String> PROJECT_SCOPED = List.of("qits repositories list", "qits repositories create",
             "qits repositories remote-login", "qits repositories branches", "qits repositories commits",
             "qits repositories commit-changes", "qits repositories commit-diff", "qits repositories commit-subjects",
-            "qits repositories archive", "qits repositories unarchive",
+            "qits repositories archive", "qits repositories unarchive", "qits repositories backup reset",
             "qits release-request list", "qits release-request create", "qits release-request join",
             "qits release-request move", "qits release-request withdraw", "qits release-request regenerate", "qits release-request override",
             "qits release-request rerun",
@@ -1494,6 +1518,12 @@ public final class ProjectsContract {
                 "unarchiveRepository", UNARCHIVE_REPOSITORY)
                 .consumes(held(ARCHIVABLE_REPOSITORY, UNARCHIVE_OPERATION, ARCHIVE_ANSWER))
                 .request("POST /projects/api/repositories/{repositoryId}/unarchive"));
+
+        rows.add(CliRow.of("qits repositories backup reset", TWIN_WITH_UNRELATED_HISTORY, BACKUP_RESET_OPERATION,
+                "ProjectsApi#backupReset", asThePerson(BACKUP_RESET))
+                .consumes(held(TWIN_WITH_UNRELATED_HISTORY, BACKUP_RESET_OPERATION, BACKUP_RESET_ANSWER))
+                .header("Authorization", "{authorization}")
+                .request("POST /projects/api/repositories/{repositoryId}/backup-reset"));
 
         // qits release-request
         rows.add(row("qits release-request list", PENDING_REQUESTS, "listProjectReleaseRequests",
