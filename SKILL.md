@@ -854,7 +854,7 @@ A move into DROPPED says why in "outcome": DUPLICATE (another item asks for the 
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the payload's schema, whose target enum is the moves open from the item's current status as the service's archetype registry (GET /projects/api/work/archetypes) states them, and exits with 0.
 
-An issue has its own lifecycle: OPEN, then RESOLVED or OBSOLETE, and both are final. Only a person moves it to RESOLVED (qits:admin, signed in; anyone else gets HTTP 403), with the answer in an optional "reason". The delivery desk or a person moves it to OBSOLETE, with a one-line "reason" (HTTP 400 without one). The reason lands on its thread. An issue is never dispatched and is not reshaped by transition.
+An issue has its own lifecycle: OPEN, then RESOLVED or OBSOLETE, and both are final. A person (qits:admin, signed in) moves it to RESOLVED with the answer in an optional "reason"; the delivery desk does too, with a one-line "reason" saying why: answered, or made redundant by other work (HTTP 400 without one). Anyone else gets HTTP 403. The delivery desk or a person moves it to OBSOLETE, with a one-line "reason" (HTTP 400 without one). The reason lands on its thread. An issue is never dispatched and is not reshaped by transition.
 
 An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by a person or the delivery desk (a CLOSE move). A campaign is never closed this way: it reaches DONE on its own once every member does (see the derivation above).
 
