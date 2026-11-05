@@ -50,6 +50,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                         + "one group that go through the same name[] must hold on the same element "
                         + "(entities[].entityId=<id> entities[].status=VERIFIED). Quote a value that holds spaces or "
                         + "is empty: label=\"two words\", note=\"\". At most 8 groups of 8 conditions.",
+                "Two --when are OR, not AND: --when 'repoName=a' --when 'status=b' fires on either; --when "
+                        + "'repoName=a status=b' needs both.",
                 "The holder is --agent or --desk (give one, not both), else QITS_AGENT_ID, else QITS_DESK_PROJECT: "
                         + "the harness sets QITS_AGENT_ID in an agent's environment and QITS_DESK_PROJECT in a "
                         + "project's kept front-desk session, and the MCP server sets QITS_AGENT_ID from the "
@@ -100,7 +102,9 @@ public class WaitCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--when", paramLabel = "<conditions>",
             description = "One group of conditions, for example 'runId=<id> status=SUCCESS'. Give it again for "
-                    + "another group, up to 8. Without one, every event of the name fits.")
+                    + "another group, up to 8: that is OR, not AND, so an event fitting either fires the wait. "
+                    + "Conditions that must all hold go in the one quoted --when. Without one, every event of the "
+                    + "name fits.")
     List<String> when;
 
     @CommandLine.Mixin
