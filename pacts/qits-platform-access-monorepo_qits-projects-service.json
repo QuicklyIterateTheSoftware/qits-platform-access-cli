@@ -18939,13 +18939,47 @@
                 "pattern": "\\S",
                 "type": "string"
               },
+              "needs": {
+                "description": "What this work waits for, the whole list: each entry names a work item of the same project and the status it must reach. The desk and the dispatch hold the item at REFINED and READY_FOR_DEV while a need is unmet. Editable at every status, outside every scope freeze; an empty array or null clears them. A need may not name the item itself, an issue, an item twice, or close a cycle.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The needed work item of the same project — an epic, a ticket, a feature or a task — by qualified id or UUID; never the item itself.",
+                      "pattern": "\\S",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "The status the needed item must reach: met once it is at or past it on the walk; a DROPPED need is met by DROPPED alone.",
+                      "enum": [
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "item",
+                    "item"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
               "project": {
                 "description": "The project the new TICKET goes in: its id or its slug.",
                 "pattern": "\\S",
                 "type": "string"
               },
               "tags": {
-                "description": "The work's tags, the whole set: RESERVED_FOR_HUMAN — the work cannot be completed by an agent and a person has to do it (say why in the description); no agent is dispatched onto it. Editable at every status, outside every scope freeze; an empty array or null clears them.",
+                "description": "The work's tags, the whole set: RESERVED_FOR_HUMAN — the work cannot be completed by an agent and a person has to do it (say why in the description); no agent is dispatched onto it. CONDITION — a condition other work waits for, not work of its own (say what closes it in the description); no agent is dispatched onto it, and a person or an agent moves its status. Editable at every status, outside every scope freeze; an empty array or null clears them.",
                 "items": {
                   "enum": [
                     "RESERVED_FOR_HUMAN"
@@ -19099,6 +19133,114 @@
               ]
             },
             "$.properties.inspiredBy.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.additionalProperties": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.item.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.item.pattern": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.item.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.enum": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 9,
+                  "min": 9
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.enum[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.required": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.properties.needs.items.required[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.type": {
               "combine": "AND",
               "matchers": [
                 {
@@ -20190,6 +20332,145 @@
               ]
             },
             "$.version": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
+            "operationId": "getWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work details",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work details: getWork",
+      "key": "2e224b8d",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket that needs another",
+          "params": {
+            "featureQualifiedId": "contract-00000001-6",
+            "neededQualifiedId": "contract-00000001-1",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "qualifiedId": "contract-00000001-2",
+            "taskQualifiedId": "contract-00000001-7",
+            "ticketId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/work/${qualifiedId}",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/work/contract-00000001-2"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "needs": [
+              {
+                "currentStatus": "REFINED",
+                "met": false,
+                "qualifiedId": "contract-00000001-1",
+                "status": "VERIFIED"
+              }
+            ],
+            "qualifiedId": "contract-00000001-2",
+            "unmetNeeds": 1
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.needs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.needs[*].currentStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.needs[*].met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.needs[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.needs[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.unmetNeeds": {
               "combine": "AND",
               "matchers": [
                 {
@@ -23428,6 +23709,158 @@
         "references": {
           "qits-call": {
             "app": "qits-projects-service",
+            "operationId": "listProjectWork"
+          },
+          "qits-trigger": {
+            "app": "qits-platform-access-monorepo",
+            "command": "qits work list",
+            "kind": "command"
+          }
+        }
+      },
+      "description": "qits work list: listProjectWork",
+      "key": "11456f0c",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a ticket that needs another",
+          "params": {
+            "featureQualifiedId": "contract-00000001-6",
+            "neededQualifiedId": "contract-00000001-1",
+            "projectId": "00000000-0000-4000-8000-000000000001",
+            "qualifiedId": "contract-00000001-2",
+            "taskQualifiedId": "contract-00000001-7",
+            "ticketId": "00000000-0000-4000-8000-000000000002"
+          }
+        }
+      ],
+      "request": {
+        "generators": {
+          "path": {
+            "dataType": "RAW",
+            "expression": "/projects/api/projects/${projectId}/work",
+            "type": "ProviderState"
+          }
+        },
+        "method": "GET",
+        "path": "/projects/api/projects/00000000-0000-4000-8000-000000000001/work"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "entities": [
+              {
+                "needs": [
+                  {
+                    "currentStatus": "REFINED",
+                    "met": false,
+                    "qualifiedId": "contract-00000001-1",
+                    "status": "VERIFIED"
+                  }
+                ],
+                "qualifiedId": "contract-00000001-1",
+                "unmetNeeds": 0
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.entities": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.entities[*].needs": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 0
+                }
+              ]
+            },
+            "$.entities[*].needs[*].currentStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].needs[*].met": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].needs[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].needs[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].qualifiedId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.entities[*].unmetNeeds": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "application/json.*"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "comments": {
+        "references": {
+          "qits-call": {
+            "app": "qits-projects-service",
             "operationId": "discardRefinement"
           },
           "qits-trigger": {
@@ -25398,6 +25831,43 @@
                   "string"
                 ]
               },
+              "needs": {
+                "description": "What this work waits for, the whole list: each entry names a work item of the same project and the status it must reach. The desk and the dispatch hold the item at REFINED and READY_FOR_DEV while a need is unmet. Editable at every status, outside every scope freeze; an empty array or null clears them. A need may not name the item itself, an issue, an item twice, or close a cycle.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "description": "The needed work item of the same project — an epic, a ticket, a feature or a task — by qualified id or UUID; never the item itself.",
+                      "pattern": "\\S",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "The status the needed item must reach: met once it is at or past it on the walk; a DROPPED need is met by DROPPED alone.",
+                      "enum": [
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED",
+                        "REPORTED"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "item",
+                    "item"
+                  ],
+                  "type": "object"
+                },
+                "type": [
+                  "array",
+                  "array"
+                ]
+              },
               "priority": {
                 "description": "The ranking among siblings (a project's roots, campaigns excluded, or the children of one parent): higher sorts first, null after every number, then by number. Editable at every status but DONE and DROPPED, which answer 409; null clears it.",
                 "type": [
@@ -25406,7 +25876,7 @@
                 ]
               },
               "tags": {
-                "description": "The work's tags, the whole set: RESERVED_FOR_HUMAN — the work cannot be completed by an agent and a person has to do it (say why in the description); no agent is dispatched onto it. Editable at every status, outside every scope freeze; an empty array or null clears them.",
+                "description": "The work's tags, the whole set: RESERVED_FOR_HUMAN — the work cannot be completed by an agent and a person has to do it (say why in the description); no agent is dispatched onto it. CONDITION — a condition other work waits for, not work of its own (say what closes it in the description); no agent is dispatched onto it, and a person or an agent moves its status. Editable at every status, outside every scope freeze; an empty array or null clears them.",
                 "items": {
                   "enum": [
                     "RESERVED_FOR_HUMAN"
@@ -25608,6 +26078,124 @@
               ]
             },
             "$.properties.inspiredBy.type[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.additionalProperties": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.item.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.item.pattern": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.item.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.description": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.enum": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 9,
+                  "min": 9
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.enum[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.properties.status.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.required": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.properties.needs.items.required[*]": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.items.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.properties.needs.type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "max": 2,
+                  "min": 2
+                }
+              ]
+            },
+            "$.properties.needs.type[*]": {
               "combine": "AND",
               "matchers": [
                 {
