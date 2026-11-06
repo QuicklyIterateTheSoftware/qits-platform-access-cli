@@ -42,7 +42,7 @@ erDiagram
     uuid id PK "not null, generated"
     instant createdAt "not null"
     string name
-    int revision "version"
+    int revision "not null, version"
     instant updatedAt
   }
   %% account: eu.wohlben.qits.cli.access.database.fixtures.model.Account (app)

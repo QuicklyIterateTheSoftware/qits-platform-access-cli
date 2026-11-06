@@ -373,7 +373,8 @@ final class JpaMapping {
     /**
      * A basic column: named by {@code @Column} or by {@code implicitName}, typed and constrained. In an
      * embeddable ({@code component}) a primitive does not make its column not null: the whole
-     * embedded value may be null, and Hibernate leaves such columns nullable.
+     * embedded value may be null, and Hibernate leaves such columns nullable. A {@code @Version} column
+     * is not null whatever its type, as Hibernate 7.4 (Quarkus 3.40) maps it.
      */
     private Col basic(Attribute attribute, AnnotationInstance column, String implicitName, boolean id,
                       boolean component) {
@@ -383,7 +384,8 @@ final class JpaMapping {
             col.length = column.value("length").asInt();
         }
         col.unique = column != null && bool(column, "unique", false);
-        boolean notNull = id || (attribute.primitive() && !component) || attribute.has(NOT_NULL)
+        boolean notNull = id || (attribute.primitive() && !component) || attribute.has(VERSION)
+                || attribute.has(NOT_NULL)
                 || (column != null && !bool(column, "nullable", true))
                 || (attribute.has(BASIC) && !bool(attribute.annotation(BASIC), "optional", true));
         col.nullable = !notNull;
