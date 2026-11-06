@@ -63,8 +63,6 @@ public final class ProjectsContract {
     static final String RELEASED_REQUESTS = "a repository with released release requests";
     static final String BUG_TICKET_IN_DETAIL = "a bug ticket in detail";
     static final String EPIC_WITH_A_SKETCH = "an epic with a sketch to inline";
-    static final String CAMPAIGN_IN_DETAIL = "a campaign in detail";
-    static final String CAMPAIGN_TO_EDIT = "a campaign with members to edit";
     static final String AWAITING_REQUEST = "a release request awaiting approval";
     static final String PENDING_REQUESTS = "a project with pending release requests";
     static final String HELD_BY_A_FAILED_AUTOMATION = "a release request held by a failed automation";
@@ -192,40 +190,25 @@ public final class ProjectsContract {
             "inspired[].title", "enables[].id", "enables[].status", "enables[].archived", "enables[].title");
 
     /**
-     * {@code qits milestones}, {@code qits work milestones}, {@code qits work members milestones}
-     * and the NEEDS of {@code qits work list} and {@code details} (epic qits-615): the provider
-     * records the milestone doors and the work reads' {@code milestones} in these three states.
-     * Pending until qits-maintenance bumps {@code qits.projects-golden-masters.version} to the
-     * qits-projects-service release that records them (its epic/qits-615 branch does); on that bump
+     * The needs of {@code qits work list} and {@code details} (epic qits-1899, task qits-1905): the
+     * provider records an item that needs another item at a status, not met yet, in this state
+     * (qits-1903, qits-projects-service 2026.1106.140436). Pending until qits-maintenance bumps
+     * {@code qits.projects-golden-masters.version} to that release or a later one; on that bump
      * write the pact again with {@code -Dgolden.update=true}.
      * <p>
-     * A milestone's {@code satisfiedAt} is bound only where every recorded element holds a date:
-     * null where it is unmet, and a pact must not demand the null the field exists to replace. The
-     * arrays a project and an item grow (milestones, groups, criteria, the items that need one) are
-     * matched with no length.
+     * Every {@code needs} array is matched with no length: an item gains and loses needs at every
+     * status, and a pinned length would break the provider the day its recording changes one.
      */
-    static final String UNMET_MILESTONE = "a ticket waiting on an unmet milestone";
-    static final String MET_MILESTONE = "a ticket waiting on a met milestone";
-    static final String MEMBER_MILESTONE = "a campaign member waiting on a milestone";
+    static final String NEEDS_ANOTHER = "a ticket that needs another";
 
-    /** One milestone as {@code qits milestones list} prints it: id, met, criteria, the items, the name. */
-    static final List<String> MILESTONE_ROW = List.of("id", "displayName", "met", "groups[].criteria[].id",
-            "entities[].qualifiedId");
+    /** One need as the NEEDS column and the details' needs rows print it. */
+    static final List<String> NEED = List.of("qualifiedId", "status", "currentStatus", "met");
 
-    /** One milestone as {@code details} and every write print it, where the recording holds a value. */
-    static final List<String> MILESTONE = List.of("id", "projectId", "displayName", "met", "createdAt",
-            "groups[].criteria[].id", "groups[].criteria[].kind", "entities[].qualifiedId", "entities[].archetype",
-            "entities[].status", "entities[].title");
-
-    /** What a met milestone adds: the dates it holds since, and the approval that made it hold. */
-    static final List<String> MILESTONE_HELD = List.of("satisfiedAt", "groups[].satisfiedAt",
-            "groups[].criteria[].satisfiedAt", "groups[].criteria[].approval.approvedBy",
-            "groups[].criteria[].approval.note");
-
-    /** {@link #MILESTONE}'s arrays, with no length. */
-    private static String[] openEndedMilestone(String prefix) {
-        return Stream.of("groups", "groups[].criteria", "entities").map(p -> prefix + p).toArray(String[]::new);
-    }
+    /**
+     * The tags a work schema offers: its length is left open, so the provider may add a tag
+     * (qits-1908 adds CONDITION) without breaking the pact.
+     */
+    static final String TAGS_ENUM = "properties.tags.items.enum";
 
     private static final CliPact BASE = CliPact.of("qits-projects-service", "qits-projects");
 
@@ -270,7 +253,7 @@ public final class ProjectsContract {
 
     /** One work item in full ({@code WorkEntities.printDetails}), and the project its closes are read in. */
     static final List<String> DETAILS = Stream.concat(ROW.stream(), Stream.of("blockReason", "blockedBy",
-            "ticketType", "impetus", "assignee", "parent", "position", "dependsOn", "repositoryId", "supersededBy",
+            "ticketType", "impetus", "assignee", "parent", "position", "repositoryId", "supersededBy",
             "implementedAt", "createdBy", "createdAt", "description", "acceptanceCriteria", "projectId", "inspiredBy"))
             .toList();
 
@@ -580,7 +563,7 @@ public final class ProjectsContract {
 
     private static final Call CHILDREN = (api, params, recorded) -> {
         List<JsonNode> children = WorkEntities.children(api.workChildren(params.get("qualifiedId")));
-        assertThat(children).isNotEmpty().hasSize(recorded(recorded, "children"));
+        assertThat(children).isNotEmpty();
         assertThat(children).allSatisfy(c -> assertThat(ProjectsApi.text(c, "qualifiedId")).isNotBlank());
     };
 
@@ -615,13 +598,19 @@ public final class ProjectsContract {
                 .isEqualTo(body(recorded).path(key).path("archetype").asText());
     };
 
-    /** {@code qits work status} reads the item's archetype's lifecycle and the moves open from a status. */
+    /**
+     * {@code qits work status} finds the item's archetype in the registry and reads its lifecycle.
+     * The mock answers the open-ended list with one entry, so the row finds that one by its name.
+     */
     private static final Call REGISTRY_READ = (api, params, recorded) -> {
-        JsonNode declared = WorkEntities.declared(api.archetypes(), "TICKET");
+        JsonNode registry = api.archetypes();
+        assertThat(registry.path("archetypes")).isNotEmpty();
+        String archetype = ProjectsApi.text(registry.path("archetypes").get(0), "archetype");
+        assertThat(archetype).isNotBlank();
+        JsonNode declared = WorkEntities.declared(registry, archetype);
         assertThat(declared).isNotNull();
         assertThat(declared.path("lifecycle").isArray()).isTrue();
         assertThat(declared.path("lifecycle")).isNotEmpty();
-        assertThat(declared.path("transitions").isObject()).isTrue();
     };
 
     private static final Call STATUS = (api, params, recorded) -> {
@@ -769,185 +758,23 @@ public final class ProjectsContract {
             assertThat(ProjectsApi.text(api.inlineWorkDossierAsset(params.get("qualifiedId"), body(recorded)),
                     "markdown")).isNotBlank();
 
-    /** A member row as `members` prints it. */
-    private static void member(JsonNode m) {
-        assertThat(ProjectsApi.text(m, "membershipId")).isNotBlank();
-        assertThat(m.path("position").isNumber()).isTrue();
-        assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
-        assertThat(ProjectsApi.text(m.path("entity"), "status")).isNotBlank();
-        assertThat(m.path("groups").isArray()).isTrue();
-    }
-
-    private static final Call MEMBERS = (api, params, recorded) -> {
-        JsonNode members = api.workMembers(params.get("qualifiedId")).path("members");
-        assertThat(members).isNotEmpty();
-        members.forEach(ProjectsContract::member);
-    };
-
-    /** A campaign's members as `work details` prints them: no membership id, but each criterion. */
-    private static final Call DETAILS_MEMBERS = (api, params, recorded) -> {
-        JsonNode members = api.workMembers(params.get("qualifiedId")).path("members");
-        assertThat(members).isNotEmpty();
-        members.forEach(m -> {
-            assertThat(m.path("position").isNumber()).isTrue();
-            assertThat(m.path("joinedRunning").isBoolean()).isTrue();
-            assertThat(ProjectsApi.text(m.path("entity"), "id")).isNotBlank();
-            assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
-            assertThat(ProjectsApi.text(m.path("entity"), "status")).isNotBlank();
-            m.path("groups").forEach(g -> g.path("criteria").forEach(c -> {
-                assertThat(ProjectsApi.text(c, "kind")).isNotBlank();
-                assertThat(c.path("predicate").isObject()).isTrue();
-            }));
-        });
-    };
-
-    private static final Call MEMBER_ADD = (api, params, recorded) ->
-            member(api.addWorkMember(params.get("qualifiedId"), body(recorded)).path("member"));
-
-    private static final Call MEMBER_MOVE = (api, params, recorded) ->
-            api.moveWorkMember(params.get("qualifiedId"), params.get("lastMembershipId"), body(recorded))
-                    .path("members").forEach(ProjectsContract::member);
-
-    private static final Call MEMBER_REMOVE = (api, params, recorded) ->
-            api.removeWorkMember(params.get("qualifiedId"), params.get("lastMembershipId"))
-                    .path("members").forEach(ProjectsContract::member);
-
-    private static final Call MEMBER_CONDITION = (api, params, recorded) -> {
-        JsonNode m = api.setWorkMemberCondition(params.get("qualifiedId"), params.get("firstMembershipId"),
-                body(recorded)).path("member");
-        member(m);
-        assertThat(m.path("groups")).isNotEmpty();
-    };
-
-    // --- milestones (epic qits-615) ---
-
-    /** A milestone as a row of the list prints it: its id, name and whether met, and how many criteria. */
-    private static void milestoneRow(JsonNode m) {
-        assertThat(ProjectsApi.text(m, "id")).isNotBlank();
-        assertThat(ProjectsApi.text(m, "displayName")).isNotBlank();
-        assertThat(m.path("met").isBoolean()).isTrue();
-        m.path("groups").forEach(g -> g.path("criteria").forEach(c ->
-                assertThat(ProjectsApi.text(c, "id")).isNotBlank()));
-    }
-
-    /** A milestone in full: the row, and each criterion's kind beside its id. */
-    private static void milestone(JsonNode m) {
-        milestoneRow(m);
-        m.path("groups").forEach(g -> g.path("criteria").forEach(c ->
-                assertThat(ProjectsApi.text(c, "kind")).isNotBlank()));
-    }
-
-    /** {@code qits milestones list --project <id>}: the project as given, no {@code met} filter. */
-    private static final Call LIST_MILESTONES = (api, params, recorded) -> {
-        JsonNode milestones = api.projectMilestones(params.get("projectId"), null).path("milestones");
-        assertThat(milestones).isNotEmpty().allSatisfy(ProjectsContract::milestoneRow);
-    };
-
-    /** {@code qits milestones details}: the milestone, with what holds and the items that need it. */
-    private static final Call GET_MILESTONE = (api, params, recorded) -> {
-        JsonNode m = api.milestone(params.get("milestoneId")).path("milestone");
-        milestone(m);
-        assertThat(ProjectsApi.text(m, "id")).isEqualTo(params.get("milestoneId"));
-        assertThat(m.path("entities")).isNotEmpty().allSatisfy(e ->
-                assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank());
-    };
-
-    /** {@code details} of a milestone a campaign member needs: the memberships it gates. */
-    private static final Call GET_GATING_MILESTONE = (api, params, recorded) -> {
-        JsonNode m = api.milestone(params.get("milestoneId")).path("milestone");
-        milestone(m);
-        assertThat(m.path("memberships")).isNotEmpty().allSatisfy(g -> {
-            assertThat(ProjectsApi.text(g, "campaignQualifiedId")).isNotBlank();
-            assertThat(ProjectsApi.text(g, "entityQualifiedId")).isNotBlank();
-            assertThat(ProjectsApi.text(g, "membershipId")).isNotBlank();
-        });
-    };
-
-    private static final Call CREATE_MILESTONE = (api, params, recorded) ->
-            milestone(api.createMilestone(params.get("projectId"), body(recorded)).path("milestone"));
-
-    private static final Call RENAME_MILESTONE = (api, params, recorded) -> {
-        String name = body(recorded).path("displayName").asText();
-        JsonNode m = api.renameMilestone(params.get("milestoneId"), name).path("milestone");
-        milestone(m);
-        assertThat(ProjectsApi.text(m, "displayName")).isEqualTo(name);
-    };
-
-    private static final Call SET_MILESTONE_GROUPS = (api, params, recorded) -> {
-        JsonNode m = api.setMilestoneGroups(params.get("milestoneId"), body(recorded)).path("milestone");
-        milestone(m);
-        assertThat(m.path("groups")).isNotEmpty();
-    };
-
-    /** {@code qits milestones approve --note}: the recorded note; the milestone is met by it. */
-    private static final Call APPROVE_MILESTONE = (api, params, recorded) -> {
-        JsonNode m = api.approveMilestoneCriterion(params.get("milestoneId"), params.get("criterionId"),
-                body(recorded).path("note").asText()).path("milestone");
-        milestone(m);
-        assertThat(MilestonesCommand.met(m)).isTrue();
-    };
-
-    /** An item's milestones in brief: id and name of each. */
-    private static void briefMilestones(JsonNode answer) {
-        assertThat(answer.path("milestones")).isNotEmpty().allSatisfy(m -> {
-            assertThat(ProjectsApi.text(m, "id")).isNotBlank();
-            assertThat(ProjectsApi.text(m, "displayName")).isNotBlank();
-        });
-    }
-
-    private static final Call WORK_MILESTONES = (api, params, recorded) ->
-            briefMilestones(api.workMilestones(params.get("qualifiedId")));
-
-    private static final Call ATTACH_MILESTONE = (api, params, recorded) ->
-            briefMilestones(api.attachWorkMilestone(params.get("qualifiedId"), params.get("otherMilestoneId")));
-
-    /** What is left after a detach is printed as it comes; the recording's is nothing, so the row binds none. */
-    private static final Call DETACH_MILESTONE = (api, params, recorded) ->
-            assertThat(api.detachWorkMilestone(params.get("qualifiedId"), params.get("milestoneId"))).isNotNull();
-
-    /** {@code qits work members milestones --milestone A --milestone B}: the recorded list, in order. */
-    private static final Call MEMBER_MILESTONES = (api, params, recorded) -> {
-        JsonNode m = api.setWorkMemberMilestones(params.get("qualifiedId"), params.get("membershipId"),
-                body(recorded)).path("member");
-        assertThat(ProjectsApi.text(m, "membershipId")).isEqualTo(params.get("membershipId"));
-        assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
-        briefMilestones(m);
-        assertThat(MilestonesCommand.unmet(m)).isNotEmpty();
-    };
-
-    /** A campaign's members with the milestones each still needs, as list and details print them. */
-    private static final Call MEMBERS_NEEDING = (api, params, recorded) -> {
-        JsonNode members = api.workMembers(params.get("qualifiedId")).path("members");
-        assertThat(members).isNotEmpty().allSatisfy(m -> {
-            assertThat(ProjectsApi.text(m, "membershipId")).isNotBlank();
-            assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
-        });
-        assertThat(members).anySatisfy(m -> assertThat(MilestonesCommand.unmet(m)).isNotEmpty());
-    };
-
-    /** {@code qits work list}'s NEEDS: some item names the milestone it still needs. */
+    /** {@code qits work list}'s NEEDS: some item names another it needs, at a status not met yet. */
     private static final Call LIST_NEEDING = (api, params, recorded) -> {
         List<JsonNode> listed = WorkEntities.list(api.projectWork(params.get("projectId"), null, null, null));
         assertThat(listed).isNotEmpty().allSatisfy(e -> assertThat(ProjectsApi.text(e, "qualifiedId")).isNotBlank());
         assertThat(listed).anySatisfy(e -> {
             assertThat(WorkEntities.needsSomething(e)).isTrue();
-            assertThat(WorkEntities.needsCell(e)).isNotEqualTo("-");
+            assertThat(WorkEntities.needsCell(e)).contains("@");
         });
     };
 
-    /** {@code qits work details}' needs: the milestones the item still needs, by name. */
+    /** {@code qits work details}' needs: each item it needs, the status, and where that item stands now. */
     private static final Call GET_NEEDING = (api, params, recorded) -> {
         JsonNode item = api.work(params.get("qualifiedId"));
         assertThat(ProjectsApi.text(item, "qualifiedId")).isEqualTo(params.get("qualifiedId"));
-        assertThat(MilestonesCommand.unmet(item)).isNotEmpty();
-        assertThat(item.path("unmetMilestones").asInt()).isPositive();
-    };
-
-    /** {@code qits work details}' milestones met: a met one is named there and not as needed. */
-    private static final Call GET_MET = (api, params, recorded) -> {
-        JsonNode item = api.work(params.get("qualifiedId"));
-        assertThat(MilestonesCommand.metNames(item)).isNotEmpty();
-        assertThat(MilestonesCommand.unmet(item)).isEmpty();
+        assertThat(WorkEntities.needs(item, false)).isNotEmpty().allSatisfy(n ->
+                assertThat(WorkEntities.needLine(n)).contains(" at ").contains("(now "));
+        assertThat(item.path("unmetNeeds").asInt()).isPositive();
     };
 
     /**
@@ -1142,17 +969,6 @@ public final class ProjectsContract {
         assertThat(ProjectsApi.text(dispatch, "phase")).isNotBlank();
         assertThat(ProjectsApi.text(dispatch, "branch")).isNotBlank();
         assertThat(ProjectsApi.text(dispatch, "assignee")).isNotBlank();
-    };
-
-    private static final Call PROGRESS = (api, params, recorded) -> {
-        JsonNode progress = api.workProgress(params.get("qualifiedId")).path("progress");
-        assertThat(ProjectsApi.text(progress.path("campaign"), "qualifiedId")).isEqualTo(params.get("qualifiedId"));
-        assertThat(progress.path("evaluator").path("connected").isBoolean()).isTrue();
-        assertThat(progress.path("members")).allSatisfy(m -> {
-            assertThat(ProjectsApi.text(m, "state")).isNotBlank();
-            assertThat(m.path("waitsFor").isArray()).isTrue();
-            assertThat(ProjectsApi.text(m.path("entity"), "qualifiedId")).isNotBlank();
-        });
     };
 
     /** {@code qits work unblock}: the flag as the write left it. */
@@ -1622,27 +1438,26 @@ public final class ProjectsContract {
                 .consumes(held(EPIC_IN_DETAIL, "getWork", DETAILS)));
         rows.add(row("qits work details", EPIC_IN_DETAIL, "listWorkComments", "workComments", COMMENTS)
                 .consumes("entries[].comment.createdAt", "entries[].comment.author", "entries[].comment.body"));
+        // Open-ended: qits-1908 takes the campaign and the dependsOn edges out of the seed these
+        // states share, which shortens the lists.
         rows.add(row("qits work details", EPIC_IN_DETAIL, "listWorkChildren", "workChildren", CHILDREN)
-                .consumes(held(EPIC_IN_DETAIL, "listWorkChildren", prefixed("children[].", ROW))));
+                .consumes(held(EPIC_IN_DETAIL, "listWorkChildren", prefixed("children[].", ROW)))
+                .anyLength("children"));
         rows.add(row("qits work details", SUPERSEDED_ITEMS, "listProjectWork", "projectWork", CLOSES)
                 .consumes(held(SUPERSEDED_ITEMS, "listProjectWork",
                         prefixed("entities[].", Stream.concat(ROW.stream(), Stream.of("supersededBy")).toList())))
+                .anyLength("entities")
                 .request("GET /projects/api/projects/{projectId}/work?supersededBy={entityId}"));
-        // A campaign's details also read its members, and each criterion the conditions print.
-        rows.add(row("qits work details", CAMPAIGN_TO_EDIT, "listWorkMembers", "workMembers", DETAILS_MEMBERS)
-                .consumes(held(CAMPAIGN_TO_EDIT, "listWorkMembers", prefixed("members[].", List.of("position",
-                        "joinedRunning", "entity.id", "entity.qualifiedId", "entity.archetype", "entity.status",
-                        "entity.title", "groups", "groups[].criteria[].kind", "groups[].criteria[].predicate",
-                        "groups[].criteria[].satisfiedAt")))));
         rows.add(row("qits work create", NO_WORK, "createWork", "createWork", CREATE)
                 .consumes(held(NO_WORK, "createWork", ROW)));
+        // The tags enum grows (qits-1908 adds CONDITION), so its length is left open.
         rows.add(row("qits work create", REGISTRY, "getWorkArchetypeSchema", "archetypeSchema", schema("create"))
-                .consumes("properties", "required"));
+                .consumes("properties", "required").anyLength(TAGS_ENUM));
         rows.add(row("qits work update", REPORTED_TICKET, "patchWork", "patchWork", PATCH)
                 .consumes(held(REPORTED_TICKET, "patchWork", ROW)).header("Content-Type", ProjectsApi.MERGE_PATCH));
         rows.add(row("qits work update", TICKET_WITH_A_COMMENT, "getWork", "work", GET_ARCHETYPE).consumes("archetype"));
         rows.add(row("qits work update", UPDATE_SCHEMA, "getWorkArchetypeSchema", "archetypeSchema", schema("update"))
-                .consumes("properties", "required"));
+                .consumes("properties", "required").anyLength(TAGS_ENUM));
         rows.add(row("qits work transition", TICKET_WITH_A_COMMENT, "getWork", "work", GET_FOR_TRANSITION)
                 .consumes(held(TICKET_WITH_A_COMMENT, "getWork", CARRIED)));
         rows.add(row("qits work transition", TRANSITION_SCHEMA, "getWorkArchetypeSchema", "archetypeSchema",
@@ -1652,28 +1467,15 @@ public final class ProjectsContract {
         rows.add(row("qits work status", IMPLEMENTED_TICKET, "getWork", "work", GET)
                 .consumes("archetype", "qualifiedId", "status"));
         rows.add(row("qits work status", REGISTRY, "listWorkArchetypes", "archetypes", REGISTRY_READ)
-                // The command reads only each move's `to` (WorkCommand#execute), never `kind` or
-                // `gates`, so consuming just that field per status drops `gates` from the projected
-                // body and the REFINED/REPORTED disagreement over carrying it disappears with it:
-                // every status's moves now share one shape, and every status array is free to grow,
-                // so the provider may add a move (such as a CLOSE to DONE) to any of them without
-                // breaking this pact (qits-1757). DONE keeps its path in `consumes` (every status's
-                // key stays in the projected body) but not in `anyLength`: it is recorded empty in
-                // every archetype, so there is no element anywhere to take an open-ended template
-                // from, and it stays matched as the empty array it always is.
-                .consumes("archetypes[].archetype", "archetypes[].lifecycle",
-                        "archetypes[].transitions.REPORTED[].to", "archetypes[].transitions.REFINED[].to",
-                        "archetypes[].transitions.READY_FOR_DEV[].to", "archetypes[].transitions.IMPLEMENTING[].to",
-                        "archetypes[].transitions.IMPLEMENTED[].to", "archetypes[].transitions.VERIFYING[].to",
-                        "archetypes[].transitions.VERIFIED[].to", "archetypes[].transitions.DONE[].to",
-                        "archetypes[].transitions.DROPPED[].to",
-                        // An issue's own statuses (qits-1819). Only OPEN has moves.
-                        "archetypes[].transitions.OPEN[].to", "archetypes[].transitions.RESOLVED[].to",
-                        "archetypes[].transitions.OBSOLETE[].to")
-                .anyLength("archetypes[].transitions.REPORTED", "archetypes[].transitions.REFINED",
-                        "archetypes[].transitions.READY_FOR_DEV", "archetypes[].transitions.IMPLEMENTING",
-                        "archetypes[].transitions.IMPLEMENTED", "archetypes[].transitions.VERIFYING",
-                        "archetypes[].transitions.VERIFIED", "archetypes[].transitions.DROPPED"));
+                // The list is open-ended, so qits-1908 can delete the CAMPAIGN entry (epic qits-1899).
+                // One template stands for every entry then, so the row binds only what every entry
+                // carries: its name and its lifecycle. The moves stay unbound, though the command
+                // reads the ones open from the item's status: each archetype keys them by its own
+                // statuses (an issue by OPEN, RESOLVED and OBSOLETE), and an array whose entries
+                // disagree on a key can only be pinned entry by entry, its length and its CAMPAIGN
+                // entry with it.
+                .consumes("archetypes[].archetype", "archetypes[].lifecycle")
+                .anyLength("archetypes"));
         rows.add(row("qits work status", REPORTED_TICKET, "setWorkStatus", "setWorkStatus", STATUS)
                 .consumes(held(REPORTED_TICKET, "setWorkStatus", ROW)));
         rows.add(row("qits work comment create", TICKET_WITH_A_COMMENT, "addWorkComment", "addWorkComment", COMMENT)
@@ -1686,9 +1488,6 @@ public final class ProjectsContract {
         rows.add(row("qits work unblock", BUG_TICKET_IN_DETAIL, "setWorkBlocked", "setWorkBlocked", UNBLOCK)
                 .consumes("block.blocked", "block.archetype", "block.status"));
         rows.add(row("qits work delete", REPORTED_TICKET, "deleteWork", "deleteWork", DELETE).consumes("success"));
-        rows.add(row("qits work progress", CAMPAIGN_IN_DETAIL, "getWorkProgress", "workProgress", PROGRESS)
-                .consumes("progress.campaign.qualifiedId", "progress.evaluator.connected", "progress.members[].state",
-                        "progress.members[].waitsFor", "progress.members[].entity.qualifiedId"));
         rows.add(row("qits work dispatch", READY_FOR_DEV_TICKET, "dispatchWork", "dispatchWork", DISPATCH)
                 .consumes("dispatch.mode", "dispatch.phase", "dispatch.branch", "dispatch.assignee"));
         rows.add(row("qits work dossier list", BUG_TICKET_IN_DETAIL, "listWorkDossier", "workDossier", DOSSIER)
@@ -1705,17 +1504,6 @@ public final class ProjectsContract {
                 "deleteWorkDossierPage", DOSSIER_DELETE).consumes("success"));
         rows.add(row("qits work dossier inline", EPIC_WITH_A_SKETCH, "inlineWorkDossierAsset",
                 "inlineWorkDossierAsset", INLINE).consumes("markdown"));
-        List<String> member = List.of("membershipId", "position", "entity.qualifiedId", "entity.status", "groups");
-        rows.add(row("qits work members list", CAMPAIGN_TO_EDIT, "listWorkMembers", "workMembers", MEMBERS)
-                .consumes(prefixed("members[].", member)));
-        rows.add(row("qits work members add", CAMPAIGN_TO_EDIT, "addWorkMember", "addWorkMember", MEMBER_ADD)
-                .consumes(prefixed("member.", member)));
-        rows.add(row("qits work members move", CAMPAIGN_TO_EDIT, "moveWorkMember", "moveWorkMember", MEMBER_MOVE)
-                .consumes(prefixed("members[].", member)));
-        rows.add(row("qits work members remove", CAMPAIGN_TO_EDIT, "removeWorkMember", "removeWorkMember",
-                MEMBER_REMOVE).consumes(prefixed("members[].", member)));
-        rows.add(row("qits work members condition", CAMPAIGN_TO_EDIT, "setWorkMemberCondition",
-                "setWorkMemberCondition", MEMBER_CONDITION).consumes(prefixed("member.", member)));
         List<String> design = List.of("id", "title", "version", "htmlBytes", "inUse", "updatedAt");
         rows.add(row("qits work design list", REPORTED_TICKET, "getWorkRefinement", "workRefinement", NO_REFINEMENT)
                 .consumes("refinement"));
@@ -1791,87 +1579,17 @@ public final class ProjectsContract {
         rows.add(row("qits ideas spawn", NO_WORK, "createWork", "createWork", CREATE)
                 .consumes(held(NO_WORK, "createWork", ROW)));
 
-        // qits milestones, qits work milestones and the NEEDS of work list and details (epic qits-615):
-        // pending until the pinned golden masters carry the milestone states
-        rows.add(row("qits milestones list", UNMET_MILESTONE, "listProjectMilestones", "projectMilestones",
-                LIST_MILESTONES)
-                .consumes(held(UNMET_MILESTONE, "listProjectMilestones", prefixed("milestones[].", MILESTONE_ROW)))
-                .anyLength(concat(List.of("milestones"), List.of(openEndedMilestone("milestones[]."))).toArray(String[]::new))
-                .request("GET /projects/api/projects/{projectId}/milestones"));
-        rows.add(row("qits milestones details", MET_MILESTONE, "getMilestone", "milestone", GET_MILESTONE)
-                .consumes(held(MET_MILESTONE, "getMilestone", prefixed("milestone.", concat(MILESTONE, MILESTONE_HELD))))
-                .anyLength(openEndedMilestone("milestone."))
-                .request("GET /projects/api/milestones/{milestoneId}"));
-        rows.add(row("qits milestones details", MEMBER_MILESTONE, "getMilestone", "milestone", GET_GATING_MILESTONE)
-                .consumes(held(MEMBER_MILESTONE, "getMilestone", prefixed("milestone.", concat(MILESTONE,
-                        List.of("memberships[].membershipId", "memberships[].campaignQualifiedId",
-                                "memberships[].campaignTitle", "memberships[].entityQualifiedId")))))
-                .anyLength(concat(List.of(openEndedMilestone("milestone.")), List.of("milestone.memberships"))
-                        .toArray(String[]::new))
-                .request("GET /projects/api/milestones/{milestoneId}"));
-        rows.add(row("qits milestones create", UNMET_MILESTONE, "createMilestone", "createMilestone", CREATE_MILESTONE)
-                .consumes(held(UNMET_MILESTONE, "createMilestone", prefixed("milestone.", MILESTONE)))
-                .anyLength(openEndedMilestone("milestone."))
-                .request("POST /projects/api/projects/{projectId}/milestones"));
-        rows.add(row("qits milestones rename", UNMET_MILESTONE, "renameMilestone", "renameMilestone", RENAME_MILESTONE)
-                .consumes(held(UNMET_MILESTONE, "renameMilestone", prefixed("milestone.", MILESTONE)))
-                .anyLength(openEndedMilestone("milestone."))
-                .request("PATCH /projects/api/milestones/{milestoneId}"));
-        rows.add(row("qits milestones criteria", UNMET_MILESTONE, "setMilestoneGroups", "setMilestoneGroups",
-                SET_MILESTONE_GROUPS)
-                .consumes(held(UNMET_MILESTONE, "setMilestoneGroups", prefixed("milestone.", MILESTONE)))
-                .anyLength(openEndedMilestone("milestone."))
-                .request("PUT /projects/api/milestones/{milestoneId}/groups"));
-        rows.add(CliRow.of("qits milestones approve", UNMET_MILESTONE, "approveMilestoneCriterion",
-                "ProjectsApi#approveMilestoneCriterion", asThePerson(APPROVE_MILESTONE))
-                .consumes(held(UNMET_MILESTONE, "approveMilestoneCriterion", prefixed("milestone.",
-                        concat(MILESTONE, MILESTONE_HELD))))
-                .anyLength(openEndedMilestone("milestone."))
-                .request("POST /projects/api/milestones/{milestoneId}/criteria/{criterionId}/approve")
-                .header("Authorization", "{authorization}"));
-        rows.add(row("qits work milestones list", MET_MILESTONE, "listWorkMilestones", "workMilestones",
-                WORK_MILESTONES)
-                .consumes(held(MET_MILESTONE, "listWorkMilestones", List.of("milestones[].id",
-                        "milestones[].displayName", "milestones[].satisfiedAt")))
-                .anyLength("milestones")
-                .request("GET /projects/api/work/{qualifiedId}/milestones"));
-        rows.add(row("qits work milestones attach", UNMET_MILESTONE, "attachWorkMilestone", "attachWorkMilestone",
-                ATTACH_MILESTONE)
-                .consumes(held(UNMET_MILESTONE, "attachWorkMilestone", List.of("milestones[].id",
-                        "milestones[].displayName")))
-                .anyLength("milestones")
-                .request("PUT /projects/api/work/{qualifiedId}/milestones/{otherMilestoneId}"));
-        rows.add(row("qits work milestones detach", UNMET_MILESTONE, "detachWorkMilestone", "detachWorkMilestone",
-                DETACH_MILESTONE)
-                .request("DELETE /projects/api/work/{qualifiedId}/milestones/{milestoneId}"));
-        rows.add(row("qits work members milestones", MEMBER_MILESTONE, "setWorkMemberMilestones",
-                "setWorkMemberMilestones", MEMBER_MILESTONES)
-                .consumes(held(MEMBER_MILESTONE, "setWorkMemberMilestones", prefixed("member.", List.of(
-                        "membershipId", "position", "entity.qualifiedId", "entity.status", "milestones[].id",
-                        "milestones[].displayName"))))
-                .anyLength("member.milestones")
-                .request("PUT /projects/api/work/{qualifiedId}/members/{membershipId}/milestones"));
-        for (String command : List.of("qits work members list", "qits work details")) {
-            rows.add(row(command, MEMBER_MILESTONE, "listWorkMembers", "workMembers", MEMBERS_NEEDING)
-                    .consumes(held(MEMBER_MILESTONE, "listWorkMembers", prefixed("members[].", List.of(
-                            "membershipId", "entity.qualifiedId", "milestones[].displayName"))))
-                    .anyLength("members", "members[].milestones")
-                    .request("GET /projects/api/work/{qualifiedId}/members"));
-        }
-        rows.add(row("qits work list", UNMET_MILESTONE, "listProjectWork", "projectWork", LIST_NEEDING)
-                .consumes(held(UNMET_MILESTONE, "listProjectWork", prefixed("entities[].", List.of("qualifiedId",
-                        "milestones[].displayName", "unmetMilestones"))))
-                .anyLength("entities", "entities[].milestones")
+        // the NEEDS of work list and details (epic qits-1899): pending until the pinned golden masters
+        // carry the needs
+        rows.add(row("qits work list", NEEDS_ANOTHER, "listProjectWork", "projectWork", LIST_NEEDING)
+                .consumes(held(NEEDS_ANOTHER, "listProjectWork", prefixed("entities[].", concat(List.of("qualifiedId",
+                        "unmetNeeds"), prefixed("needs[].", NEED)))))
+                .anyLength("entities", "entities[].needs")
                 .request("GET /projects/api/projects/{projectId}/work"));
-        rows.add(row("qits work details", UNMET_MILESTONE, "getWork", "work", GET_NEEDING)
-                .consumes(held(UNMET_MILESTONE, "getWork", List.of("qualifiedId", "milestones[].displayName",
-                        "unmetMilestones")))
-                .anyLength("milestones")
-                .request("GET /projects/api/work/{qualifiedId}"));
-        rows.add(row("qits work details", MET_MILESTONE, "getWork", "work", GET_MET)
-                .consumes(held(MET_MILESTONE, "getWork", List.of("milestones[].displayName",
-                        "milestones[].satisfiedAt")))
-                .anyLength("milestones")
+        rows.add(row("qits work details", NEEDS_ANOTHER, "getWork", "work", GET_NEEDING)
+                .consumes(held(NEEDS_ANOTHER, "getWork", concat(List.of("qualifiedId", "unmetNeeds"),
+                        prefixed("needs[].", NEED))))
+                .anyLength("needs")
                 .request("GET /projects/api/work/{qualifiedId}"));
 
         // a work item named by its qualified id outside qits work
