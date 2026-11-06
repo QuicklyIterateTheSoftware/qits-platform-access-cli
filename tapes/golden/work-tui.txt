@@ -535,11 +535,11 @@
  │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
  │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
  │   repositories        The repositories of one project: list shows them, create stands a new one │
- │   work                Work items of every archetype - epics, tickets, features, tasks, campaign │
- │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
- │   milestones          A project's milestones: named, foreseeable conditions an item needs met b │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and issue │
+ │   ideas               A project's ideas: short, titled notes that an epic or a ticket names as  │
  │   release-request     Release requests: the one way to release a repository. list shows them (o │
  │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits
@@ -566,11 +566,11 @@
  │   checkout-daemon     Hold a local checkout at what a repository released, and keep it there. I │
  │   projects            The platform's projects: list shows them, delivery shows one's delivery d │
  │   repositories        The repositories of one project: list shows them, create stands a new one │
- │   work                Work items of every archetype - epics, tickets, features, tasks, campaign │
- │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
- │   milestones          A project's milestones: named, foreseeable conditions an item needs met b │
+ │   work                Work items of every archetype - epics, tickets, features, tasks and issue │
+ │   ideas               A project's ideas: short, titled notes that an epic or a ticket names as  │
  │   release-request     Release requests: the one way to release a repository. list shows them (o │
  │   ci                  The builds of qits-ci: runs lists a repository's runs, run shows one run  │
+ │   deployments         The deployer, qits-deployments. `settings` reads and writes the values it │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits
@@ -592,8 +592,8 @@
 ────────────────────────────────────────────────────────────────────────────────
  qits tui · qits.example.test · agent (qits:agent) via token tapes
  ┌ qits ─────────────────────────────────────────────────────────────────────────────────── /work  ┐
- │   work              ▸ Work items of every archetype - epics, tickets, features, tasks, campaign │
- │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   work              ▸ Work items of every archetype - epics, tickets, features, tasks and issue │
+ │   ideas               A project's ideas: short, titled notes that an epic or a ticket names as  │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
@@ -623,8 +623,8 @@
 ────────────────────────────────────────────────────────────────────────────────
  qits tui · qits.example.test · agent (qits:agent) via token tapes
  ┌ qits ─────────────────────────────────────────────────────────────────────────────────── /work  ┐
- │   work              ▸ Work items of every archetype - epics, tickets, features, tasks, campaign │
- │   ideas               A project's ideas: short, titled notes that an epic, a ticket or a campai │
+ │   work              ▸ Work items of every archetype - epics, tickets, features, tasks and issue │
+ │   ideas               A project's ideas: short, titled notes that an epic or a ticket names as  │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
@@ -660,10 +660,10 @@
  │   update              Edit a work item's fields.                                                │
  │   transition          Reshape a work item into another archetype (a ticket into an epic, a feat │
  │   status              Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, I │
- │   block               Block a ticket, an epic or a campaign: say that the phase its status star │
- │   unblock             Unblock a ticket, an epic or a campaign: say that what was in the way is  │
+ │   block               Block a ticket or an epic: say that the phase its status started cannot g │
+ │   unblock             Unblock a ticket or an epic: say that what was in the way is gone and its │
  │   delete              Delete a work item, its children and their comment threads. The audit log │
- │   progress            How a campaign is doing: each member in order with its state (DROPPED, DO │
+ │   dispatch            Put an agent on an epic or a ticket: the Dispatch and Run the next phase  │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits work
@@ -691,10 +691,10 @@
  │   update              Edit a work item's fields.                                                │
  │   transition          Reshape a work item into another archetype (a ticket into an epic, a feat │
  │   status              Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, I │
- │   block               Block a ticket, an epic or a campaign: say that the phase its status star │
- │   unblock             Unblock a ticket, an epic or a campaign: say that what was in the way is  │
+ │   block               Block a ticket or an epic: say that the phase its status started cannot g │
+ │   unblock             Unblock a ticket or an epic: say that what was in the way is gone and its │
  │   delete              Delete a work item, its children and their comment threads. The audit log │
- │   progress            How a campaign is doing: each member in order with its state (DROPPED, DO │
+ │   dispatch            Put an agent on an epic or a ticket: the Dispatch and Run the next phase  │
  │ ↑↓ move · ⏎ choose · ␛ back · / search · ⌃R run · q quit                                        │
  └─────────────────────────────────────────────────────────────────────────────────────────────────┘
  $ qits work
@@ -718,8 +718,8 @@
  ┌ work ─────────────────────────────────────────────────────────────────────────────────── /list  ┐
  │   list              ▸ A project's work items, every archetype, in the service's order: id (qual │
  │   dossier             The dossier of an epic or a ticket: Markdown pages in reading order, for  │
- │   members             The members of a campaign: the epics and tickets it runs, in order, each  │
  │   design              The HTML designs of an epic's or a ticket's refinement: the documents a p │
+ │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
@@ -749,8 +749,8 @@
  ┌ work ─────────────────────────────────────────────────────────────────────────────────── /list  ┐
  │   list              ▸ A project's work items, every archetype, in the service's order: id (qual │
  │   dossier             The dossier of an epic or a ticket: Markdown pages in reading order, for  │
- │   members             The members of a campaign: the epics and tickets it runs, in order, each  │
  │   design              The HTML designs of an epic's or a ticket's refinement: the documents a p │
+ │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
  │                                                                                                 │
