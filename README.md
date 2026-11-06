@@ -639,14 +639,6 @@ Installing it is not part of this version.
     qits ideas --entity <idea id> archive --reason <text>
     qits ideas --entity <idea id> unarchive
     <payload> | qits ideas --entity <idea id> spawn --archetype EPIC|TICKET
-    qits work --entity <id or qualified id> milestones list|attach|detach [--milestone <id>]
-    qits work --entity <campaign> members milestones --member <membership> --milestone <id>...|--none
-    qits milestones list --project <project> [--met true|false]
-    qits milestones --milestone <id> details
-    <payload> | qits milestones create --project <project>
-    qits milestones --milestone <id> rename --name <text>
-    <payload> | qits milestones --milestone <id> criteria
-    qits milestones --milestone <id> approve --criterion <id> [--note <text>]
     qits release-request --project <project> [--repository <repository>] list \
         [--state <STATE|all>] [--limit <n>]
     qits release-request --project <project> --repository <repository> create \
@@ -866,24 +858,19 @@ and the reason.
 ### qits work
 
 `qits work` is every work item of a project, whatever its archetype: `EPIC`, `TICKET`, `FEATURE`,
-`TASK` or `CAMPAIGN`. One item is named once with `--entity`: its id or its qualified id
+`TASK` or `ISSUE`. One item is named once with `--entity`: its id or its qualified id
 (`qits-100`), which the service resolves. The group carries no route per archetype and no field of
 any: it calls the service's archetype-agnostic doors, and every payload schema it shows is served by
 the service per archetype and door, built from the same table the service validates against.
 
 Every archetype walks one lifecycle: `REPORTED` (somebody said what is wrong or could be
 better), `REFINED` (it says what to do), `IMPLEMENTING` (an epic, ticket, feature or task is being
-worked; campaigns never enter it), `IMPLEMENTED` (released and deployed, not merely merged),
-`VERIFYING` (the platform's own verify dispatch was pressed; campaigns never enter it either),
+worked), `IMPLEMENTED` (released and deployed, not merely merged),
+`VERIFYING` (the platform's own verify dispatch was pressed),
 `VERIFIED` (somebody checked the platform) and `DONE` (a person's call), with `DROPPED` as the exit
 for work a decision was taken not to do, carrying an `outcome` that says why (see `status` below). A SKIP transition lets `REFINED` move straight to
 `IMPLEMENTED`, bypassing `IMPLEMENTING`, and `IMPLEMENTED` move straight to `VERIFIED`, bypassing
-`VERIFYING`. Features and tasks walk the same eight words as epics and tickets. A campaign never
-walks this by hand at all: the service derives its status from its members instead (the lowest
-one still open wins, `IMPLEMENTING` counting as `READY_FOR_DEV` and `VERIFYING` as `IMPLEMENTED`;
-no members is `REPORTED`; every member `DROPPED` is `DROPPED`; once `DONE` or `DROPPED` it stays),
-and its own manual moves are only DROP and REOPEN (`DROPPED` back to `REPORTED`); `work progress`
-and a campaign's own read both carry `heldBy`, the members currently holding its status. A ticket
+`VERIFYING`. Features and tasks walk the same eight words as epics and tickets. A ticket
 is also blocked or not: the phase its status belongs to cannot proceed.
 
 Reading takes `qits:admin` or `qits:agent`, and so does writing, an agent in its own project only.
@@ -906,25 +893,21 @@ beside a dropped item's status, and its `supersededBy` labelled `duplicate of`, 
 an epic's features, a feature's tasks) and what it closes: the items naming it as their
 `supersededBy`, read from `GET /projects/api/projects/{projectId}/work?supersededBy={id}` and
 filtered again for the same reason. When that read is refused, stderr says so and the item is still
-printed. A campaign also shows its members (`…/members`, a relation of their own, not its children),
-in position order, each with the condition it waits on: `waits on nothing`, or each group (`waits
-on:`, then `or:` for the next) with its criteria under it, `[x]` for one that has held and `[ ]` for
-one that has not; an `ENTITY_STATUS` criterion names the member by its qualified id, and a member that
-needs a milestone not met yet has a `needs:` line naming it. No other archetype asks for members.
+printed. `-o json` prints `{"entity": …, "comments": […], "children": […], "supersedes": […]}`.
 
-**What an item needs** (epic qits-615). A work read carries the item's `milestones` (`id`,
-`displayName`, `satisfiedAt`) and `unmetMilestones`, the count of those not met. `list` adds a
-`NEEDS` column when some item needs a milestone that is not met yet, naming those milestones (`-`
-for an item that needs none; only the count when an answer names none), and `details` a `needs` line
-with the unmet ones and a `milestones met` line with the rest. The word is "needs" on purpose:
-"waiting" and "waiting on" are an agent's (the `AGENT_WAITING` block, a declared `qits wait`). `work
-milestones list|attach|detach --entity <item> [--milestone <id>]` reads and edits what one item needs
-(`GET`, `PUT` and `DELETE /projects/api/work/{entity}/milestones[/{milestone}]`, each answering the
-list as it now stands), and `work members milestones --member <membership> --milestone <id>...` (or
-`--none`) sets, whole, what a campaign member needs before it is dispatched (`PUT
-/projects/api/work/{entity}/members/{membershipId}/milestones`, `{"milestoneIds":[…]}`). The
-milestones themselves are `qits milestones`. `-o json` prints `{"entity": …, "comments": […], "children": […],
-"supersedes": […]}`, and a campaign's adds `"members": […]` as `members list` reads it.
+**What an item needs** (epic qits-1899). An epic, a ticket, a feature or a task can need other items
+of its project, each at a status: `needs` on a work read is a list of `{id, qualifiedId, title,
+archetype, status, currentStatus, met}`, and `unmetNeeds` counts the ones not met. A need is met once
+the needed item is at or past the status on the walk; `DROPPED` meets only a need for `DROPPED`.
+`list` adds a `NEEDS` column when some item has an unmet need, naming each as `<qualified
+id>@<status>` (`qits-1897@VERIFIED`; `-` for an item whose needs are all met, only the count when an
+answer names none), and `details` a `needs` line per unmet need, `qits-1897 at VERIFIED (now
+REFINED)`, and a `needs met` line per met one. The word is "needs" on purpose: "waiting" and
+"waiting on" are an agent's (the `AGENT_WAITING` block, a declared `qits wait`). `create` and
+`update` write the whole list, `{"needs":[{"item":"qits-1897","status":"VERIFIED"}]}` (the item by
+qualified id or id; `[]` or `null` clears it); `dependsOn` is retired, and the service answers a
+write of it with HTTP 400. The service holds an item with an unmet need at `REFINED` and
+`READY_FOR_DEV`: dispatch refuses it with HTTP 409.
 
 **Writes read a JSON payload on stdin.** A payload that is not one JSON object is a usage error
 (exit code 2), and nothing is sent. With nothing put in - stdin a terminal, or empty, as with
@@ -942,12 +925,13 @@ bare schema.
 - `transition --archetype <B>` reshapes the item into another archetype. The door (`POST
   /projects/api/work/transition`) is full-state: what the request leaves out is cleared. So the
   command starts from the item as it stands (`title`, `description`, `status`, `outcome`, `ticketType`,
-  `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementingAt`, `implementedAt`, `dependsOn`, and
+  `impetus`, `assignee`, `supersededBy`, `repositoryId`, `implementingAt`, `implementedAt`, and
   `membership {parent, position}` when it has a parent), merges the payload over it (RFC 7396),
   sets `archetype`, and drops every property B's `transition` schema has no slot for, naming them
   on stderr (`impetus, ticketType have no slot on EPIC and are not carried.`). `{}` carries the item
   over as it is. The request is keyed by `--entity` as it was given, and so is the service's answer;
-  `membership.parent`, `supersededBy` and `dependsOn` take a qualified id as well. With nothing put in, it prints B's schema and names the required properties the
+  `membership.parent` and `supersededBy` take a qualified id as well; `needs`, like `tags`, is no
+  part of this door. With nothing put in, it prints B's schema and names the required properties the
   item does not carry yet (`membership.parent` for a ticket becoming a feature) and the ones that
   would be dropped.
 - `status` sends `{"target": "<STATUS>"}` unchanged to `POST /projects/api/work/{entity}/status`.
@@ -992,7 +976,7 @@ form takes terminal control characters out of every value, and `-o json` writes 
 ### qits ideas
 
 `qits ideas` is a project's ideas (epic qits-888), on the service's `/projects/api/ideas` doors: short,
-titled notes that an epic, a ticket or a campaign names as its `inspiredBy`. An idea is not a work
+titled notes that an epic or a ticket names as its `inspiredBy`. An idea is not a work
 archetype: it has no lifecycle a caller moves, no thread, no children and no delete. Its `status`
 (`PLANNED`, `QUEUED`, `DONE`) is derived by the service from the work naming it, and it is archived
 with a reason instead of deleted (`archive --reason`, `unarchive`). `list` leaves the archived ones
@@ -1011,38 +995,6 @@ in, what is still missing and the archetype's create schema. `qits work create` 
     qits ideas --entity <idea id> details
     qits ideas --entity <idea id> archive --reason 'Folded into the cache epic.'
     echo '{}' | qits ideas --entity <idea id> spawn --archetype epic
-
-### qits milestones
-
-`qits milestones` is a project's milestones (epic qits-615): named, foreseeable conditions that work
-needs met before it can go on ("bootstrap test node"), each shared by any number of items. A
-milestone has no lifecycle: it holds or it does not. Its condition is the DNF a campaign member used
-to carry alone, groups OR'd of criteria AND'd, and each criterion, each group and the milestone keep
-the date they came to hold. `ENTITY_STATUS` (a work item of the same project reaching a status)
-latches from the current state, so an item already there meets it at once (evidence
-`CURRENT_STATE`); `DEPLOYMENT_ACTIVE` and `SCM_RELEASE` latch only on events after the criterion was
-made; `APPROVAL` is a person's yes, `approve`. Editing a criterion clears its latch, so a met
-milestone can become unmet again (`MilestoneUnmet`; `MilestoneMet` when it holds).
-
-- `list --project <p> [--met true|false]` (`GET /projects/api/projects/{p}/milestones`): id, met,
-  since when, how many criteria hold of how many, the items that need it, the name.
-- `details --milestone <id>` (`GET /projects/api/milestones/{id}`): the condition, each criterion
-  with its id (what `approve` and a restated criterion take), its date and its evidence or
-  approval; the items that need it and the campaign memberships it gates.
-- `create --project <p>` and `--milestone <id> criteria` read `{"displayName","groups":[…]}` and
-  `{"groups":[…]}` on stdin and send them unchanged (`POST …/projects/{p}/milestones`, `PUT
-  …/milestones/{id}/groups`); with nothing put in they print the request body's schema from the
-  service's OpenAPI document, as `qits work` does. `criteria` is whole: a criterion restated with its
-  id, kind and predicate keeps its latch, a left-out one is deleted.
-- `rename --name <text>` (`PATCH …/milestones/{id}`, `{"displayName"}`) and `approve --criterion <id>
-  [--note <text>]` (`POST …/milestones/{id}/criteria/{criterion}/approve`, a person's or the
-  project's delivery desk's; an agent is answered HTTP 403).
-
-    qits milestones list --project qits --met false
-    echo '{"displayName":"bootstrap test node","groups":[{"criteria":[{"kind":"APPROVAL","predicate":{}}]}]}' \
-        | qits milestones create --project qits
-    qits work --entity qits-102 milestones attach --milestone <milestone id>
-    qits milestones --milestone <milestone id> approve --criterion <criterion id> --note 'Node 7 is up.'
 
 ### qits release-request
 

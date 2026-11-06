@@ -5,7 +5,7 @@
 The `qits` command: access to the qits platform from a Linux or WSL workstation. A Quarkus
 command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `qits login`
 (browser sign-in, session stored in `$XDG_CONFIG_HOME/qits/t.json`), `qits session-daemon` (keeps
-that session fresh), `qits projects|repositories|work|ideas|milestones|release-request` (the projects service;
+that session fresh), `qits projects|repositories|work|ideas|release-request` (the projects service;
 `work` is every work item, of every archetype), `qits ci runs|run|retry|cancel|report` (qits-ci's runs, a
 run's step logs, a retry, a cancel, a run's release reports), `qits database diagram` (a repository's entity
 diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
@@ -165,7 +165,7 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                the HTTP client and its error messages, which address a service has (PlatformUrls),
                the aligned table (Table), and the --since/--until/--limit window both query
                commands share (QueryWindow, a picocli mixin)
-    projects/  qits projects, repositories, work, ideas, milestones and release-request. `qits work` is one group for
+    projects/  qits projects, repositories, work, ideas and release-request. `qits work` is one group for
                every archetype (WorkCommand; WorkEntities holds the transition's full-state merge
                and the tables). Its writes take a JSON payload on stdin and, with none, print the
                usage and the schema the service serves per archetype and door (entity doors) or
@@ -183,13 +183,11 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                same shape: --entity is the idea's id, the writes' schemas come from the OpenAPI
                document through WorkPayload, and `spawn` files work through createWork with the
                idea's project, title, description and inspiredBy filled in
-               `qits milestones` (MilestonesCommand, epic qits-615) is a project's milestones on
-               /projects/api/projects/{p}/milestones and /projects/api/milestones/{id}: --milestone is
-               the id, create and criteria take their payload through WorkPayload. What an item needs
-               is `qits work milestones` (WorkMilestonesCommand) and `work members milestones`; the
-               NEEDS column and the details' needs line read the work reads' `milestones` and
-               `unmetMilestones` (WorkEntities.needsCell). The word is "needs", never "waiting":
-               that is an agent's wait
+               What an item needs (epic qits-1899) is its `needs`, written whole by create and
+               update; the NEEDS column and the details' needs lines read the work reads' `needs`
+               and `unmetNeeds` (WorkEntities.needs, needsCell, needLine). Campaigns, their members
+               and progress, milestones and dependsOn are gone (qits-1905). The word is "needs",
+               never "waiting": that is an agent's wait
     ci/        qits ci: runs, run (with the step logs), retry and cancel, on qits-ci's run API
     report/    qits ci report: release reports. The framework (ReportKind, ReportParser,
                StepContext, Highlight, TestCaseLocator, ChangedLines), the one registry of kinds
@@ -590,10 +588,8 @@ reported ticket` (null) and `a ticket with a design`; `discard`'s `getWorkRefine
 release-request approve` / `decline` (qits-1287): the project's door that finds a request by its
 logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
 the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build
-runs`, `declineReleaseRequest` in `a release request awaiting approval`); the milestone doors of `qits milestones` and `qits work milestones`, `qits work members milestones`
-and the needs of `qits work list` / `details` (epic qits-615) in `a ticket waiting on an unmet
-milestone`, `a ticket waiting on a met milestone` and `a campaign member waiting on a milestone`,
-pending until the pin reaches the qits-projects-service release of epic qits-615; and `qits projects desk prompt` /
+runs`, `declineReleaseRequest` in `a release request awaiting approval`); the needs of `qits work list` / `details` (epic qits-1899): `listProjectWork` and `getWork` in `a ticket
+that needs another`, pending until the pin reaches qits-projects-service 2026.1106.140436; and `qits projects desk prompt` /
 `answer` (qits-1572): `promptFrontDesk` and `getFrontDeskLastAnswer` in `a project whose front desk
 is running`, both pending until a golden-masters pin records that state. A path the recorder froze
 under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole UUID in some
