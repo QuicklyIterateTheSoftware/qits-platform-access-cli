@@ -192,9 +192,8 @@ public final class ProjectsContract {
     /**
      * The needs of {@code qits work list} and {@code details} (epic qits-1899, task qits-1905): the
      * provider records an item that needs another item at a status, not met yet, in this state
-     * (qits-1903, qits-projects-service 2026.1106.140436). Pending until qits-maintenance bumps
-     * {@code qits.projects-golden-masters.version} to that release or a later one; on that bump
-     * write the pact again with {@code -Dgolden.update=true}.
+     * (qits-1903, qits-projects-service 2026.1106.140436), which the golden masters pinned in the
+     * root pom carry.
      * <p>
      * Every {@code needs} array is matched with no length: an item gains and loses needs at every
      * status, and a pinned length would break the provider the day its recording changes one.
@@ -1579,8 +1578,7 @@ public final class ProjectsContract {
         rows.add(row("qits ideas spawn", NO_WORK, "createWork", "createWork", CREATE)
                 .consumes(held(NO_WORK, "createWork", ROW)));
 
-        // the NEEDS of work list and details (epic qits-1899): pending until the pinned golden masters
-        // carry the needs
+        // the NEEDS of work list and details (epic qits-1899)
         rows.add(row("qits work list", NEEDS_ANOTHER, "listProjectWork", "projectWork", LIST_NEEDING)
                 .consumes(held(NEEDS_ANOTHER, "listProjectWork", prefixed("entities[].", concat(List.of("qualifiedId",
                         "unmetNeeds"), prefixed("needs[].", NEED)))))

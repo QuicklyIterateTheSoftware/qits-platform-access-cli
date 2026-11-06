@@ -589,7 +589,7 @@ release-request approve` / `decline` (qits-1287): the project's door that finds 
 logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
 the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build
 runs`, `declineReleaseRequest` in `a release request awaiting approval`); the needs of `qits work list` / `details` (epic qits-1899): `listProjectWork` and `getWork` in `a ticket
-that needs another`, pending until the pin reaches qits-projects-service 2026.1106.140436; `qits repositories
+that needs another`, recorded since the pin reached qits-projects-service 2026.1106.140436; `qits repositories
 backup reset` (qits-1885): `backupResetRepository` in `a repository whose backup twin holds unrelated
 history`, as the person that state names (its `authorization` bearer), pending until a golden-masters
 pin records that state; and `qits projects desk prompt` /

@@ -589,7 +589,7 @@ release-request approve` / `decline` (qits-1287): the project's door that finds 
 logical id (`getProjectReleaseRequest`, state `a project with release requests in every state`) and
 the two decisions (`approveReleaseRequest` in `a release request awaiting approval while its build
 runs`, `declineReleaseRequest` in `a release request awaiting approval`); the needs of `qits work list` / `details` (epic qits-1899): `listProjectWork` and `getWork` in `a ticket
-that needs another`, pending until the pin reaches qits-projects-service 2026.1106.140436; and `qits projects desk prompt` /
+that needs another`, recorded since the pin reached qits-projects-service 2026.1106.140436; and `qits projects desk prompt` /
 `answer` (qits-1572): `promptFrontDesk` and `getFrontDeskLastAnswer` in `a project whose front desk
 is running`, both pending until a golden-masters pin records that state. A path the recorder froze
 under both `ids` and `strings` (`qualityGates[*].checks[*].runId`) holds a whole UUID in some
