@@ -352,7 +352,7 @@ public final class ProjectsApi {
      * {@code {<key>: item}}, keyed exactly as the request was. The body is {@code {<key>: full
      * state}}, each key a qualified id or an id: the door is full-state, so a property the state
      * leaves out is cleared. Every id inside a state ({@code membership.parent}, {@code
-     * supersededBy}, {@code dependsOn}) may be a qualified id too.
+     * supersededBy}) may be a qualified id too.
      */
     public JsonNode transitionWork(JsonNode body) throws CliFailure, InterruptedException {
         return client.post(uri(WORK + "/transition"), body);
@@ -374,8 +374,7 @@ public final class ProjectsApi {
     }
 
     /**
-     * {@code {"dispatch":{…}}}: the agent a press put on an epic or a ticket, or {@code
-     * {"progress":{…}}} for a campaign, which the press starts. The body is {@code {mode[, rule]}}:
+     * {@code {"dispatch":{…}}}: the agent a press put on an epic or a ticket. The body is {@code {mode[, rule]}}:
      * a rule only when one is given, because only the delivery desk names one and the service
      * ignores it for anyone else.
      */
@@ -390,7 +389,7 @@ public final class ProjectsApi {
 
     // --- ideas (epic qits-888) ---
 
-    /** The ideas' root: a project's short notes that epics, tickets and campaigns name as {@code inspiredBy}. */
+    /** The ideas' root: a project's short notes that epics and tickets name as {@code inspiredBy}. */
     public static final String IDEAS = "/projects/api/ideas";
 
     static String ideaPath(String idea) {
@@ -495,126 +494,6 @@ public final class ProjectsApi {
 
     static String dossierPagePath(String entity, String page) {
         return workPath(entity) + "/dossier/" + segment(page);
-    }
-
-    // --- campaign members ---
-
-    /** {@code {"members":[…]}}, in campaign order. */
-    public JsonNode workMembers(String entity) throws CliFailure, InterruptedException {
-        return client.get(uri(workPath(entity) + "/members"));
-    }
-
-    /** {@code {"member":{…}}}. The body is {@code {"entityId", "position"?, "inFlight"?}}. */
-    public JsonNode addWorkMember(String entity, JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri(workPath(entity) + "/members"), body);
-    }
-
-    /** {@code {"members":[…]}} in the new order. The body is {@code {"position"}}. */
-    public JsonNode moveWorkMember(String entity, String membershipId, JsonNode body)
-            throws CliFailure, InterruptedException {
-        return client.put(uri(memberPath(entity, membershipId) + "/position"), body);
-    }
-
-    /** {@code {"members":[…]}}: the ones that remain. */
-    public JsonNode removeWorkMember(String entity, String membershipId) throws CliFailure, InterruptedException {
-        return client.delete(uri(memberPath(entity, membershipId)));
-    }
-
-    /** {@code {"member":{…}}}. The body is the whole condition, {@code {"groups":[…]}}. */
-    public JsonNode setWorkMemberCondition(String entity, String membershipId, JsonNode body)
-            throws CliFailure, InterruptedException {
-        return client.put(uri(memberPath(entity, membershipId) + "/condition"), body);
-    }
-
-    /** {@code {"progress":{campaign, evaluator, members}}}: derived on every call. */
-    public JsonNode workProgress(String entity) throws CliFailure, InterruptedException {
-        return client.get(uri(workPath(entity) + "/progress"));
-    }
-
-    private static String memberPath(String entity, String membershipId) {
-        return workPath(entity) + "/members/" + segment(membershipId);
-    }
-
-    /**
-     * {@code {"member":{…}}}, its {@code milestones} as set. The body is {@code {"milestoneIds":[…]}},
-     * the whole list the membership waits on (epic qits-615).
-     */
-    public JsonNode setWorkMemberMilestones(String entity, String membershipId, JsonNode body)
-            throws CliFailure, InterruptedException {
-        return client.put(uri(memberPath(entity, membershipId) + "/milestones"), body);
-    }
-
-    // --- milestones (epic qits-615) ---
-
-    /** The milestones' root: a project's foreseeable "needs to be met", shared by any number of work items. */
-    public static final String MILESTONES = "/projects/api/milestones";
-
-    /** Where a project's milestones are listed and created: {@code /projects/api/projects/{project}/milestones}. */
-    public static final String PROJECT_MILESTONES = "/projects/api/projects/{project}/milestones";
-
-    static String milestonePath(String milestone) {
-        return MILESTONES + "/" + segment(milestone);
-    }
-
-    /**
-     * {@code {"milestones":[…]}}, oldest first, each whole. {@code project} is its id or its slug;
-     * {@code met} narrows to the met ({@code true}) or the unmet ({@code false}) ones, and is left
-     * out when null.
-     */
-    public JsonNode projectMilestones(String project, Boolean met) throws CliFailure, InterruptedException {
-        List<String> query = new ArrayList<>();
-        addQuery(query, "met", met == null ? null : met.toString());
-        return client.get(uri("/projects/api/projects/" + segment(project) + "/milestones" + query(query)));
-    }
-
-    /** {@code {"milestone":{…}}}: new. The body is {@code {"displayName","groups":[…]}}, sent as it was written. */
-    public JsonNode createMilestone(String project, JsonNode body) throws CliFailure, InterruptedException {
-        return client.post(uri("/projects/api/projects/" + segment(project) + "/milestones"), body);
-    }
-
-    /** {@code {"milestone":{…}}}: one milestone, its groups and criteria, and what waits on it. */
-    public JsonNode milestone(String milestone) throws CliFailure, InterruptedException {
-        return client.get(uri(milestonePath(milestone)));
-    }
-
-    /** {@code {"milestone":{…}}}, renamed. The body is {@code {"displayName"}}, sent as plain JSON. */
-    public JsonNode renameMilestone(String milestone, String displayName) throws CliFailure, InterruptedException {
-        ObjectNode body = JSON.createObjectNode();
-        body.put("displayName", displayName);
-        return client.patch(uri(milestonePath(milestone)), body, "application/json");
-    }
-
-    /** {@code {"milestone":{…}}} as the edit left it. The body is the whole condition, {@code {"groups":[…]}}. */
-    public JsonNode setMilestoneGroups(String milestone, JsonNode body) throws CliFailure, InterruptedException {
-        return client.put(uri(milestonePath(milestone) + "/groups"), body);
-    }
-
-    /**
-     * {@code {"milestone":{…}}}, with the APPROVAL criterion approved. The body is {@code {"note"}},
-     * or {@code {}} when none is given. The door is a person's or the project's delivery desk's.
-     */
-    public JsonNode approveMilestoneCriterion(String milestone, String criterion, String note)
-            throws CliFailure, InterruptedException {
-        ObjectNode body = JSON.createObjectNode();
-        if (note != null && !note.isBlank()) {
-            body.put("note", note.strip());
-        }
-        return client.post(uri(milestonePath(milestone) + "/criteria/" + segment(criterion) + "/approve"), body);
-    }
-
-    /** {@code {"milestones":[{id, displayName, satisfiedAt}]}}: what a work item waits on, in the order attached. */
-    public JsonNode workMilestones(String entity) throws CliFailure, InterruptedException {
-        return client.get(uri(workPath(entity) + "/milestones"));
-    }
-
-    /** {@code {"milestones":[…]}}: what the item waits on now, the milestone among them. No body; idempotent. */
-    public JsonNode attachWorkMilestone(String entity, String milestone) throws CliFailure, InterruptedException {
-        return client.put(uri(workPath(entity) + "/milestones/" + segment(milestone)));
-    }
-
-    /** {@code {"milestones":[…]}}: what the item waits on now, the milestone no longer among them. */
-    public JsonNode detachWorkMilestone(String entity, String milestone) throws CliFailure, InterruptedException {
-        return client.delete(uri(workPath(entity) + "/milestones/" + segment(milestone)));
     }
 
     // --- the refinement room, and its designs ---

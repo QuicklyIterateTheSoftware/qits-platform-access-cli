@@ -59,13 +59,13 @@ class WorkCommandsTest {
             {"id":"%s","archetype":"TICKET","projectId":"%s","number":548,"qualifiedId":"qits-548",
              "title":"One group \\u001b[2Jfor work","slug":"one-group","description":"The brief.","status":"REPORTED",
              "ticketType":"IMPROVEMENT","impetus":"The CLI drifted.","assignee":"alice","createdBy":"bob",
-             "supersededBy":null,"repositoryId":null,"implementedAt":null,"dependsOn":null,"parent":null,
+             "supersededBy":null,"repositoryId":null,"implementedAt":null,"parent":null,
              "position":null,"createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","blocked":true}
             """.formatted(TICKET, PROJECT);
 
     private static final String FEATURE_ROW = """
             {"id":"%s","archetype":"FEATURE","projectId":"%s","number":601,"qualifiedId":"qits-601",
-             "title":"Retry","description":"d","status":"REFINED","dependsOn":null,"parent":"%s","position":2,
+             "title":"Retry","description":"d","status":"REFINED","parent":"%s","position":2,
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
             """.formatted(FEATURE, PROJECT, EPIC);
 
@@ -82,12 +82,6 @@ class WorkCommandsTest {
              "acceptanceCriteria":["Loads under 200ms","Shows an empty state when there is nothing"],
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
             """.formatted(EPIC, PROJECT);
-
-    private static final String CAMPAIGN_ROW = """
-            {"id":"c1c1c1c1-0000-4000-8000-00000000000c","archetype":"CAMPAIGN","projectId":"%s","number":130,
-             "qualifiedId":"qits-130","title":"Spring release","description":"d","status":"REPORTED",
-             "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z"}
-            """.formatted(PROJECT);
 
     // --- blockSource (qits-895): a ticket blocked by an idle agent session, an explicit block with and
     // without its reason and who, both at once, and one sent not blocked at all. ---
@@ -148,23 +142,25 @@ class WorkCommandsTest {
              "createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[]}
             """.formatted(UNTAGGED_TICKET, PROJECT);
 
-    // --- milestones (epic qits-615): a ticket needing one unmet and one met milestone, and one an
+    // --- needs (epic qits-1899): a ticket needing two items, one not at its status yet, and one an
     // answer gives only the count of. ---
 
     private static final String NEEDING_ROW = """
             {"id":"f0f0f0f0-0000-4000-8000-00000000000f","archetype":"TICKET","projectId":"%s","number":760,
              "qualifiedId":"qits-760","title":"Bootstrap a fresh node","description":"d","status":"REPORTED",
              "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[],
-             "milestones":[{"id":"m1","displayName":"bootstrap \\u001b[2Jtest node","satisfiedAt":null},
-               {"id":"m2","displayName":"arm64 runner","satisfiedAt":"2026-09-29T08:30:00Z"}],
-             "unmetMilestones":1}
+             "needs":[{"id":"n1","qualifiedId":"qits-1897","title":"Shared \\u001b[2Jrenderer","archetype":"TICKET",
+                "status":"VERIFIED","currentStatus":"REFINED","met":false},
+               {"id":"n2","qualifiedId":"qits-1890","title":"Or groups","archetype":"TICKET",
+                "status":"IMPLEMENTED","currentStatus":"DONE","met":true}],
+             "unmetNeeds":1}
             """.formatted(PROJECT);
 
     private static final String COUNTED_ROW = """
             {"id":"f1f1f1f1-0000-4000-8000-00000000000f","archetype":"TICKET","projectId":"%s","number":761,
              "qualifiedId":"qits-761","title":"Counted only","description":"d","status":"REPORTED",
              "createdBy":"bob","createdAt":"2026-09-29T08:00:00Z","updatedAt":"2026-09-29T09:00:00Z","tags":[],
-             "unmetMilestones":2}
+             "unmetNeeds":2}
             """.formatted(PROJECT);
 
     // --- outcome (qits-248): a ticket dropped as qits-548's duplicate, one dropped as obsolete, and an
@@ -217,7 +213,7 @@ class WorkCommandsTest {
 
     private static final String FEATURE_TRANSITION = """
             {"title":"FEATURE transition","type":"object","additionalProperties":false,"required":["title","membership"],
-             "properties":{"title":{"type":"string"},"description":{"type":"string"},"dependsOn":{"type":"string"},
+             "properties":{"title":{"type":"string"},"description":{"type":"string"},
                "membership":{"type":"object","required":["parent"],
                  "properties":{"parent":{"type":"string"},"position":{"type":"integer"}}}}}
             """;
@@ -786,7 +782,7 @@ class WorkCommandsTest {
     }
 
     @Test
-    void listShowsANeedsColumnNamingTheUnmetMilestonesOnlyWhenSomeItemHasOne() {
+    void listShowsANeedsColumnNamingTheUnmetNeedsOnlyWhenSomeItemHasOne() {
         platform.answer("GET", LIST, "{\"entities\":[" + NEEDING_ROW + "," + COUNTED_ROW + ","
                 + UNTAGGED_TICKET_ROW + "]}");
 
@@ -796,14 +792,14 @@ class WorkCommandsTest {
         List<String> lines = r.out().lines().toList();
         assertThat(lines.getFirst()).contains("NEEDS").doesNotContain("WAITING");
         // ID, ARCHETYPE, STATUS, NEEDS, TITLE, UPDATED: no BLOCKED and no TAGS column here.
-        assertThat(lines.get(1).strip().split("\\s{2,}")[3]).isEqualTo("bootstrap test node");
-        assertThat(lines.get(2).strip().split("\\s{2,}")[3]).isEqualTo("2 milestones");
+        assertThat(lines.get(1).strip().split("\\s{2,}")[3]).isEqualTo("qits-1897@VERIFIED");
+        assertThat(lines.get(2).strip().split("\\s{2,}")[3]).isEqualTo("2 unmet");
         assertThat(lines.get(3).strip().split("\\s{2,}")[3]).isEqualTo("-");
-        assertThat(r.out()).doesNotContain("arm64 runner").doesNotContain(String.valueOf((char) 0x1B));
+        assertThat(r.out()).doesNotContain("qits-1890").doesNotContain(String.valueOf((char) 0x1B));
     }
 
     @Test
-    void listWithNoItemNeedingAMilestoneShowsNoNeedsColumn() {
+    void listWithNoItemNeedingAnotherShowsNoNeedsColumn() {
         Result r = run("work", "list", "--project", "qits", "--archetype", "ticket", "--status", "reported");
 
         assertThat(r.exit()).as(r.err()).isZero();
@@ -811,12 +807,13 @@ class WorkCommandsTest {
     }
 
     @Test
-    void detailsNamesWhatTheItemNeedsAndTheMilestonesAlreadyMet() {
+    void detailsNamesWhatTheItemNeedsAndTheNeedsAlreadyMet() {
         Result r = detailsOf("qits-760", NEEDING_ROW);
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).containsPattern("(?m)^\\s+needs\\s+bootstrap test node$")
-                .containsPattern("(?m)^\\s+milestones met\\s+arm64 runner$");
+        assertThat(r.out()).containsPattern("(?m)^\\s+needs\\s+qits-1897 at VERIFIED \\(now REFINED\\)$")
+                .containsPattern("(?m)^\\s+needs met\\s+qits-1890 at IMPLEMENTED \\(now DONE\\)$")
+                .doesNotContain("depends on");
     }
 
     @Test
@@ -824,7 +821,7 @@ class WorkCommandsTest {
         Result r = detailsOf("qits-751", UNTAGGED_TICKET_ROW);
 
         assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).doesNotContain("needs").doesNotContain("milestones met");
+        assertThat(r.out()).doesNotContain("needs");
     }
 
     @Test
@@ -915,62 +912,8 @@ class WorkCommandsTest {
         assertThat(all.path("comments").get(0).path("author").asText()).isEqualTo("carol");
         assertThat(all.path("children").get(0).path("qualifiedId").asText()).isEqualTo("qits-601");
         assertThat(all.has("members")).isFalse();
-        // Members are a campaign's: a ticket's details never ask for them.
+        // Campaigns and their members are gone (epic qits-1899): details never asks for them.
         assertThat(platform.requests.stream().filter(q -> q.path().endsWith("/members")).toList()).isEmpty();
-    }
-
-    @Test
-    void detailsShowsACampaignsMembersInOrderWithTheirConditions() throws Exception {
-        // Sent out of order: details puts them in position order.
-        platform.answer("GET", WORK + "/qits-130/members", """
-                {"members":[
-                  {"membershipId":"m2","position":1,"joinedRunning":false,
-                   "entity":{"id":"e-102","archetype":"EPIC","qualifiedId":"qits-102","title":"Second \\u001b[2Jone",
-                             "status":"REFINED","blocked":false},
-                   "groups":[
-                     {"id":"g1","criteria":[
-                       {"id":"c1","kind":"ENTITY_STATUS","predicate":{"entityId":"e-101","status":"VERIFIED"},
-                        "seeded":true,"satisfiedAt":"2026-09-29T09:00:00Z","evidence":null,"approval":null},
-                       {"id":"c2","kind":"APPROVAL","predicate":{},"seeded":false,"satisfiedAt":null,
-                        "evidence":null,"approval":null}]},
-                     {"id":"g2","criteria":[
-                       {"id":"c3","kind":"SCM_RELEASE","predicate":{"repositoryName":"qits-ci-service",
-                        "projectId":null,"minimumVersion":"2026.1001.1"},"seeded":false,"satisfiedAt":null,
-                        "evidence":null,"approval":null}]}]},
-                  {"membershipId":"m1","position":0,"joinedRunning":true,
-                   "entity":{"id":"e-101","archetype":"TICKET","qualifiedId":"qits-101","title":"First one",
-                             "status":"VERIFIED","blocked":false},
-                   "groups":[]}]}
-                """);
-
-        Result r = detailsOf("qits-130", CAMPAIGN_ROW);
-
-        assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(platform.requests("GET", WORK + "/qits-130/members")).hasSize(1);
-        String members = r.out().substring(r.out().indexOf("Members (2):"), r.out().indexOf("Closes"));
-        assertThat(members).contains("qits-101").contains("qits-102").doesNotContain(String.valueOf(ESC));
-        assertThat(members.indexOf("qits-101")).isLessThan(members.indexOf("qits-102"));
-        List<String> lines = members.lines().map(String::strip).toList();
-        assertThat(lines.get(1)).startsWith("0  qits-101  TICKET  VERIFIED  First one").endsWith("joined in flight");
-        assertThat(lines.get(2)).isEqualTo("waits on nothing");
-        assertThat(lines.get(3)).startsWith("1  qits-102  EPIC  REFINED").doesNotContain("joined in flight");
-        assertThat(lines.subList(4, lines.size())).containsExactly("waits on:", "[x] ENTITY_STATUS qits-101 VERIFIED",
-                "[ ] APPROVAL", "or:", "[ ] SCM_RELEASE repositoryName=qits-ci-service minimumVersion=2026.1001.1");
-
-        Result json = run("work", "--entity", "qits-130", "details", "-o", "json");
-        JsonNode all = JSON.readTree(json.out());
-        assertThat(all.path("members")).hasSize(2);
-        assertThat(all.path("members").get(0).path("membershipId").asText()).isEqualTo("m2");
-    }
-
-    @Test
-    void detailsOfACampaignWithNoMembersSaysSo() {
-        platform.answer("GET", WORK + "/qits-130/members", "{\"members\":[]}");
-
-        Result r = detailsOf("qits-130", CAMPAIGN_ROW);
-
-        assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).contains("Members: none.");
     }
 
     @Test

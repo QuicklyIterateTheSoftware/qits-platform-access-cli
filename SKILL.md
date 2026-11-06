@@ -1,6 +1,6 @@
 ---
 name: qits
-description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment threads, ideas, milestones, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
+description: "Use for any work on the qits platform from a terminal: signing in, projects and repositories, work items of every archetype (epics, tickets, features, tasks, issues) and their comment threads, ideas, release requests, CI runs and their logs, domain events, live telemetry, waiting on the platform, workspaces and their agents, execution targets and their leases, Git pushes to the platform's git host, and publishing release artifacts from a CI step."
 ---
 
 # qits
@@ -690,25 +690,27 @@ qits repositories backup reset --project qits --repository qits-ci-service --rea
 
 ## qits work
 
-Work items of every archetype - epics, tickets, features, tasks, campaigns and issues - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its thread.
+Work items of every archetype - epics, tickets, features, tasks and issues - and their comment threads. list shows a project's items, details shows one with its comments and children, create files one, update edits its fields, transition reshapes it into another archetype, status moves it along its lifecycle, block and unblock flag that its phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its thread.
 
-An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, progress), the milestones an item needs (milestones; the milestones themselves are `qits milestones`), its refinement room itself (refinement: open, show, discard) and the HTML designs of a refinement (design) are here too.
+An epic's or a ticket's dossier (dossier), its refinement room itself (refinement: open, show, discard) and the HTML designs of a refinement (design) are here too.
+
+An item can need other items: "needs" names each one and the status it must reach, such as qits-1897 at VERIFIED. An item whose needs are not all met is not dispatched from REFINED or READY_FOR_DEV. create and update write the whole list, like tags.
 
 A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, served by the service for that archetype.
 
-Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an outcome saying why (status names them). Features and tasks walk the same nine words as epics and tickets. A campaign's status is derived from its members instead - never IMPLEMENTING or VERIFYING - and by hand it is only DROP and REOPEN (DROPPED back to REPORTED); `qits work progress` shows which members hold it there. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
+Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an outcome saying why (status names them). Features and tasks walk the same nine words as epics and tickets. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. `status` names the moves open from where an item stands.
 
 ### Notes
 
 - --entity, --output and --projects-url may come before or after the command.
-- --entity is the item's qualified id (qits-100) or its id, sent to the service as it is; the service resolves either. So is every id inside a payload (parent, membership.parent, supersededBy, dependsOn).
+- --entity is the item's qualified id (qits-100) or its id, sent to the service as it is; the service resolves either. So is every id inside a payload (parent, membership.parent, supersededBy, and needs[].item, as in {"needs":[{"item":"qits-90","status":"VERIFIED"}]}).
 - Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which takes qits:admin. An agent writes only in its own project.
 - REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; an agent credential is refused (HTTP 409, or HTTP 403 for an epic).
 - An issue is one thing the delivery desk cannot resolve. Only the desk creates one; a person resolves it (see create and status). Open ones: qits work list --project <project> --archetype ISSUE --status OPEN. Comment with qits work comment create.
 
 ## qits work list
 
-A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked. NEEDS appears when some item needs a milestone that is not met yet, naming those milestones, and - for an item that needs none. TAGS appears when some item carries one, as its display text (RESERVED_FOR_HUMAN shows as reserved for human), and - for an item with none. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).
+A project's work items, every archetype, in the service's order: id (qualified), archetype, status, title and when it last changed. BLOCKED appears when a ticket is: yes for an explicit block, waiting when the only reason is an agent session sitting idle, and - when it is not blocked. NEEDS appears when some item needs another item that is not at its status yet, naming each as <id>@<status> (qits-1897@VERIFIED), and - for an item whose needs are all met. TAGS appears when some item carries one, as its display text (RESERVED_FOR_HUMAN shows as reserved for human), and - for an item with none. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).
 
 Each filter narrows the list; without one it shows everything.
 
@@ -718,7 +720,7 @@ qits work list [--archetype <archetype>] [--entity <entity>] [--outcome <outcome
 
 | Name | What it does |
 |---|---|
-| `--archetype <archetype>` | Only items of this archetype: EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE. |
+| `--archetype <archetype>` | Only items of this archetype: EPIC, TICKET, FEATURE, TASK or ISSUE. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--outcome <outcome>` | Only DROPPED items dropped with this outcome: DUPLICATE, RESOLVED_ELSEWHERE, SUPERSEDED, OBSOLETE, INVALID or WONT_DO. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
@@ -748,7 +750,7 @@ qits work list --project qits --tag reserved-for-human
 
 ## qits work details
 
-One work item: its fields, its description, its comment thread, its children, and what it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by it, or superseded by it). A DROPPED item shows its outcome beside the status, and its supersededBy as duplicate of, resolved by or superseded by. needs names the milestones it needs that are not met yet, and milestones met the ones that are (`qits work milestones`). A campaign also shows its members, in order, each with the condition it waits on and the milestones it still needs.
+One work item: its fields, its description, its comment thread, its children, and what it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by it, or superseded by it). A DROPPED item shows its outcome beside the status, and its supersededBy as duplicate of, resolved by or superseded by. needs names, one a line, each item it needs that is not at its status yet, with where that item stands now (qits-1897 at VERIFIED (now REFINED)), and needs met the ones that are.
 
 ```
 qits work details [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -767,8 +769,7 @@ qits work --entity qits-100 details
 qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json
 ```
 
-- -o json prints one object: the item as the service answers it, its comments, its children and supersedes, the items it closes, and for a campaign its members as `qits work members list` reads them. Control characters are written as escapes.
-- A member's condition is its groups, the second and later introduced by or, each with its criteria under it: [x] has held, [ ] has not yet.
+- -o json prints one object: the item as the service answers it, its comments, its children and supersedes, the items it closes. Control characters are written as escapes.
 
 ### Exit codes
 
@@ -790,7 +791,7 @@ qits work create [--archetype <archetype>] [--entity <entity>] [--output table|j
 
 | Name | What it does |
 |---|---|
-| `--archetype <archetype>` | The new item's archetype (required): EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE. Case-insensitive. |
+| `--archetype <archetype>` | The new item's archetype (required): EPIC, TICKET, FEATURE, TASK or ISSUE. Case-insensitive. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
 | `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
@@ -840,7 +841,10 @@ qits work update [--entity <entity>] [--output table|json] [--projects-url <url>
 qits work --entity qits-100 update </dev/null
 echo '{"title":"The log view stops at 64 KiB"}' | qits work --entity qits-100 update
 echo '{"assignee":null}' | qits work update --entity qits-100 -o json
+echo '{"needs":[{"item":"qits-90","status":"VERIFIED"}]}' | qits work --entity qits-100 update
 ```
+
+- needs is the whole list: it replaces what the item needed, and [] or null clears it.
 
 ### Exit codes
 
@@ -852,7 +856,7 @@ echo '{"assignee":null}' | qits work update --entity qits-100 -o json
 
 Reshape a work item into another archetype (a ticket into an epic, a feature into a task, ...), keeping its id, its number and its thread.
 
-The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, outcome, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/work/transition, keyed by --entity as it was given.
+The door is full-state: what the request leaves out is cleared. So the command starts from the item as it stands (title, description, status, outcome, ticketType, impetus, assignee, supersededBy, repositoryId, implementingAt, implementedAt, and membership {parent, position} if it has a parent), merges the JSON object on stdin over it as a merge patch (null clears), sets "archetype", and drops every property the target archetype's schema has no slot for, naming them on stderr. It sends the result to POST /projects/api/work/transition, keyed by --entity as it was given.
 
 With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage and the target's JSON schema, served at GET /projects/api/work/archetypes/{archetype}/schemas/transition, names the required properties the item does not carry yet and the ones that would be dropped, and exits with 0.
 
@@ -864,7 +868,7 @@ qits work transition [--archetype <archetype>] [--entity <entity>] [--map] [--ou
 
 | Name | What it does |
 |---|---|
-| `--archetype <archetype>` | The archetype to turn the item into (required without --map): EPIC, TICKET, FEATURE, TASK or CAMPAIGN. Case-insensitive. |
+| `--archetype <archetype>` | The archetype to turn the item into (required without --map): EPIC, TICKET, FEATURE or TASK. Case-insensitive. |
 | `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
 | `--map` | Send the payload as it is: a map of entity to full state, for several items at once. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
@@ -879,7 +883,7 @@ echo '{"membership":{"parent":"qits-120"}}' | qits work --entity qits-100 transi
 jq -n '{"qits-101":{archetype:"EPIC",title:"Export",status:"REPORTED"},"qits-102":{archetype:"FEATURE",title:"CSV",status:"REPORTED",membership:{parent:"qits-101"}}}' | qits work transition --map
 ```
 
-- {} carries the item over as it stands. membership.parent, supersededBy and dependsOn take a qualified id or an id.
+- {} carries the item over as it stands. membership.parent and supersededBy take a qualified id or an id. needs is no part of this door, as tags are not: write it with update, as in echo '{"needs":[{"item":"qits-90","status":"VERIFIED"}]}' | qits work --entity qits-100 update.
 - --map with nothing on stdin prints the request's schema from the service's OpenAPI document.
 
 ### Exit codes
@@ -890,7 +894,7 @@ jq -n '{"qits-101":{archetype:"EPIC",title:"Export",status:"REPORTED"},"qits-102
 
 ## qits work status
 
-Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Epics, tickets, features and tasks walk it by hand. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. A campaign never walks this by hand: the service derives its status from its members (the lowest one still open wins, IMPLEMENTING counting as READY_FOR_DEV and VERIFYING as IMPLEMENTED; no members is REPORTED; every member DROPPED is DROPPED; once DONE or DROPPED it is not recomputed), so this command refuses every target on a campaign but DROP and REOPEN (DROPPED back to REPORTED, which also clears outcome and supersededBy). `qits work progress` names the members holding its status (heldBy).
+Move a work item along its lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, VERIFYING, VERIFIED, DONE, or DROPPED. Epics, tickets, features and tasks walk it by hand. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own `qits` CLI sign-in, or the browser; an agent credential is refused.
 
 Reads {"target":"<STATUS>"} on stdin and sends it unchanged to POST /projects/api/work/{entity}/status. The service refuses a move its lifecycle does not allow (HTTP 409).
 
@@ -900,7 +904,7 @@ With nothing on stdin (a terminal, or empty) it sends nothing, prints this usage
 
 An issue has its own lifecycle: OPEN, then RESOLVED or OBSOLETE, and both are final. A person (qits:admin, signed in) moves it to RESOLVED with the answer in an optional "reason"; the delivery desk does too, with a one-line "reason" saying why: answered, or made redundant by other work (HTTP 400 without one). Anyone else gets HTTP 403. The delivery desk or a person moves it to OBSOLETE, with a one-line "reason" (HTTP 400 without one). The reason lands on its thread. An issue is never dispatched and is not reshaped by transition.
 
-An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by a person or the delivery desk (a CLOSE move). A campaign is never closed this way: it reaches DONE on its own once every member does (see the derivation above).
+An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by a person or the delivery desk (a CLOSE move).
 
 ```
 qits work status [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -934,7 +938,7 @@ echo '{"target":"OBSOLETE","reason":"The lease ended."}' | qits work --entity qi
 
 ## qits work block
 
-Block a ticket, an epic or a campaign: say that the phase its status started cannot go on, and why. Use it when you stop and cannot take the work further.
+Block a ticket or an epic: say that the phase its status started cannot go on, and why. Use it when you stop and cannot take the work further.
 
 Sends {"blocked":true,"reason":"..."} to POST /projects/api/work/{entity}/blocked. The status does not move: it is the phase to resume, and the next status move clears the block. The reason lands on the item's comment thread, so write what is in the way concretely enough for somebody else to act on it.
 
@@ -965,9 +969,9 @@ qits work --entity qits-100 block --reason 'The database team must confirm the n
 
 ## qits work unblock
 
-Unblock a ticket, an epic or a campaign: say that what was in the way is gone and its phase can go on. Do it as soon as you know, whoever blocked it.
+Unblock a ticket or an epic: say that what was in the way is gone and its phase can go on. Do it as soon as you know, whoever blocked it.
 
-Sends {"blocked":false} to POST /projects/api/work/{entity}/blocked, with the reason when one is given. No status moves. A blocked campaign starts no new member until it is unblocked.
+Sends {"blocked":false} to POST /projects/api/work/{entity}/blocked, with the reason when one is given. No status moves.
 
 ```
 qits work unblock [--entity <entity>] [--output table|json] [--projects-url <url>] [--reason <text>]
@@ -997,7 +1001,7 @@ qits work --entity qits-100 unblock --reason 'The limit is confirmed.' -o json
 
 Delete a work item, its children and their comment threads. The audit log keeps them.
 
-Sends DELETE /projects/api/work/{entity}. An agent may delete a feature or a task of its own project while the epic is REPORTED; deleting an epic or a ticket takes qits:admin. A campaign is never deleted: move its status to DROPPED.
+Sends DELETE /projects/api/work/{entity}. An agent may delete a feature or a task of its own project while the epic is REPORTED; deleting an epic or a ticket takes qits:admin.
 
 ```
 qits work delete [--entity <entity>] [--output table|json] [--projects-url <url>]
@@ -1018,45 +1022,16 @@ qits work --entity qits-104 delete
 ### Exit codes
 
 - `0` The item is gone.
-- `1` The platform refused (for example an epic or a ticket for an agent, or another project, HTTP 403, an item it does not know, HTTP 404, or a campaign or an epic past REPORTED, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
-
-## qits work progress
-
-How a campaign is doing: each member in order with its state (DROPPED, DONE, DISPATCH_FAILED, JOINED_RUNNING, RUNNING, REFUSED, READY or WAITING) and the items it waits for.
-
-Reads GET /projects/api/work/{entity}/progress, worked out fresh on every call. -o json adds each criterion of each member's condition, judged: whether it holds, the evidence, and what would make it hold. It also says whether the criteria evaluator is listening (evaluator: connected, stalled, consumerFailing with lastError), which tells a campaign that waits correctly from one that nothing listens for.
-
-```
-qits work progress [--entity <entity>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-130 progress
-qits work --entity qits-130 progress -o json
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example an item that is not a campaign, HTTP 404), or cannot be reached.
+- `1` The platform refused (for example an epic or a ticket for an agent, or another project, HTTP 403, an item it does not know, HTTP 404, or an epic past REPORTED, HTTP 409), or cannot be reached.
 - `2` Used wrongly (for example no --entity), not signed in, or the session ended.
 
 ## qits work dispatch
 
-Put an agent on an epic or a ticket, or start a campaign: the Dispatch and Run the next phase buttons of the item's page.
+Put an agent on an epic or a ticket: the Dispatch and Run the next phase buttons of the item's page.
 
 --mode FLOW runs the phase the item's status starts and every phase after it, until a status starts none. --mode PHASE runs that one phase, then stops. A machine at REFINED waits for a person to move it to READY_FOR_DEV, unless the project's delivery desk may start refined items (qits projects delivery shows whether it may).
 
-Sends {"mode":"FLOW"} or {"mode":"PHASE"}, with "rule" when --rule is given, to POST /projects/api/work/{entity}/dispatch, and prints the item, the mode, the phase started, the agent's branch and the assignee. A campaign answers its progress instead; qits work progress shows it.
+Sends {"mode":"FLOW"} or {"mode":"PHASE"}, with "rule" when --rule is given, to POST /projects/api/work/{entity}/dispatch, and prints the item, the mode, the phase started, the agent's branch and the assignee.
 
 ```
 qits work dispatch [--entity <entity>] [--mode <mode>] [--output table|json] [--projects-url <url>] [--rule <rule>]
@@ -1079,11 +1054,11 @@ qits work --entity qits-100 dispatch --mode FLOW --rule backlog-newest-first
 ```
 
 - Pressing takes qits:admin, or the project's delivery desk, which names the rule it presses under; a plain agent is answered HTTP 403.
-- The service refuses a status that starts no phase, a feature or a task, a blocked item or a project with no wrapper (HTTP 409), and the command prints its sentence as it came.
+- The service refuses a status that starts no phase, a feature or a task, a blocked item, an item at REFINED or READY_FOR_DEV whose needs are not all met, or a project with no wrapper (HTTP 409), and the command prints its sentence as it came.
 
 ### Exit codes
 
-- `0` The agent is dispatched, or the campaign started.
+- `0` The agent is dispatched.
 - `1` The platform refused (for example a mode it does not know, HTTP 400, your roles, HTTP 403, an item it does not know, HTTP 404, or an item no phase can start from, HTTP 409), or cannot be reached.
 - `2` Used wrongly (for example no --entity, or a --mode that is neither FLOW nor PHASE), not signed in, or the session ended.
 
@@ -1369,310 +1344,6 @@ qits work --entity qits-100 dossier inline --source 6f1c0e2a-... --kind design
 - `1` The platform refused (for example another project, HTTP 403, or an item that is not an epic or no such figure in its refinement, HTTP 404), or cannot be reached.
 - `2` Used wrongly (for example no --entity, --source or --kind), not signed in, or the session ended.
 
-## qits work members
-
-The members of a campaign: the epics and tickets it runs, in order, each with the condition it waits on. list shows them, add gathers one, move reorders, remove takes one out, and condition replaces what one waits on. `qits work progress` shows how they are doing.
-
-A condition is groups OR'd of criteria AND'd: a member waits until every criterion of at least one group holds.
-
-milestones sets the milestones a member needs (`qits milestones`): it is dispatched once all of them are met, and once claimed, a milestone that becomes unmet again changes nothing for it.
-
-### Notes
-
-- --entity is the campaign. --member is a membership's id, as list prints it, not the member item's id.
-- Members and conditions change only while the campaign is neither DONE nor DROPPED.
-- Starting a campaign and approving an APPROVAL criterion are a person's to do.
-
-## qits work members list
-
-List a campaign's members in order: membership id, position, the member's qualified id, archetype, status and title, whether it holds the campaign's status (HOLDS), and whether it waits on a condition.
-
-Reads GET /projects/api/work/{entity}/members. -o json adds each member's condition (groups of criteria with their latches) and its dispatch record.
-
-```
-qits work members list [--entity <entity>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-130 members list
-qits work --entity qits-130 members list -o json
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example no campaign with this id, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
-
-## qits work members add
-
-Gather an epic or a ticket into a campaign.
-
-Reads {"entityId":"<qualified id or id>","position"?:<n>,"inFlight"?:true|false} on stdin and sends it unchanged to POST /projects/api/work/{entity}/members. Without position it goes at the end. When the member before it is not yet VERIFIED or DONE, the new member is made to wait for that one to reach VERIFIED, so the order states the dependency; change it with `members condition`. Without inFlight the service decides: a member already IMPLEMENTING or later, or with an ACTIVE workspace on its branch, joins running.
-
-With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
-
-```
-qits work members add [--entity <entity>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-echo '{"entityId":"qits-101"}' | qits work --entity qits-130 members add
-echo '{"entityId":"qits-102","position":0}' | qits work --entity qits-130 members add
-qits work --entity qits-130 members add </dev/null
-```
-
-### Exit codes
-
-- `0` The member is added, or nothing was put in and the schema is printed.
-- `1` The platform refused (for example no entityId, HTTP 400, another project, HTTP 403, no such campaign or item, HTTP 404, or one that cannot join - a member already, a feature or a task, a closed campaign - HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity, or a payload that is not a JSON object), not signed in, or the session ended.
-
-## qits work members move
-
-Move a member to a position in the campaign, counted from 0; past the end is the last place. The members between shift.
-
-Sends {"position":<n>} to PUT /projects/api/work/{entity}/members/{membershipId}/position and prints the members in their new order. It changes no condition: what a member waits on is its criteria, not its place.
-
-```
-qits work members move [--entity <entity>] [--member <membership>] [--output table|json] [--position <n>] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `--member <membership>` | The membership to move (required): its id, as list prints it. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--position <n>` | Where it goes (required), counted from 0. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-130 members move --member 5f2c0a9e-... --position 0
-```
-
-### Exit codes
-
-- `0` The member is moved.
-- `1` The platform refused (for example another project, HTTP 403, or no such campaign or membership, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --entity, --member or --position), not signed in, or the session ended.
-
-## qits work members remove
-
-Take a member out of a campaign, with its condition.
-
-Sends DELETE /projects/api/work/{entity}/members/{membershipId} and prints the members that remain. Refused once the member is claimed (its run record would be lost), and while another member's condition still names it: change that condition first.
-
-```
-qits work members remove [--entity <entity>] [--member <membership>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `--member <membership>` | The membership to remove (required): its id, as list prints it. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-130 members remove --member 5f2c0a9e-...
-```
-
-### Exit codes
-
-- `0` The member is removed.
-- `1` The platform refused (for example another project, HTTP 403, no such campaign or membership, HTTP 404, or a claimed member or one another member waits on, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity or no --member), not signed in, or the session ended.
-
-## qits work members condition
-
-Replace what a campaign member waits on, whole.
-
-Reads {"groups":[{"criteria":[{"id"?,"kind","predicate"}]}]} on stdin and sends it unchanged to PUT /projects/api/work/{entity}/members/{membershipId}/condition. What you state is the whole condition afterwards; what you leave out is deleted. Groups are OR'd, criteria in a group AND'd. {"groups":[]} makes the member wait on nothing; an empty group is refused. Restate a criterion with its id to keep whether it already held; one without an id is new.
-
-Kinds and their predicates: ENTITY_STATUS {entityId, status} - another member of this campaign (qualified id or id) reaches that status. DEPLOYMENT_ACTIVE {applicationName, environmentName?, minimumVersion?} - that application goes live. SCM_RELEASE {repositoryName, projectId?, minimumVersion?} - that repository releases. APPROVAL {} - a person says yes.
-
-With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
-
-```
-qits work members condition [--entity <entity>] [--member <membership>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `--member <membership>` | The membership whose condition to replace (required unless nothing is put in): its id, as list prints it. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-echo '{"groups":[{"criteria":[{"kind":"ENTITY_STATUS","predicate":{"entityId":"qits-101","status":"VERIFIED"}}]}]}' | qits work --entity qits-130 members condition --member 5f2c0a9e-...
-echo '{"groups":[]}' | qits work --entity qits-130 members condition --member 5f2c0a9e-...
-```
-
-- Refused once the member is claimed: its condition is settled.
-
-### Exit codes
-
-- `0` The condition is replaced, or nothing was put in and the schema is printed.
-- `1` The platform refused (for example a criterion it cannot read, HTTP 400, another project, HTTP 403, no such campaign or membership, HTTP 404, or a claimed member, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity or no --member, or a payload that is not a JSON object), not signed in, or the session ended.
-
-## qits work members milestones
-
-Set the milestones a campaign member needs, whole: it is dispatched once every one of them is met.
-
-Sends {"milestoneIds":[...]} to PUT /projects/api/work/{entity}/members/{membershipId}/milestones and prints the member. What you name is the whole list afterwards; --none needs nothing. Each must be a milestone of the campaign's project, and the member item is attached to each, so `qits work details` shows it. A milestone left off stays attached to the item, except the member's generated condition, which is deleted once nothing needs it.
-
-```
-qits work members milestones [--entity <entity>] [--member <membership>] [--milestone <milestone>...] [--none] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `--member <membership>` | The membership (required): its id, as list prints it. |
-| `--milestone <milestone>...` | A milestone the member needs: its id. Repeat it for each. |
-| `--none` | The member needs no milestone. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-130 members milestones --member 5f2c0a9e-... --milestone 45a14f8e-... --milestone 7b0e11d2-...
-qits work --entity qits-130 members milestones --member 5f2c0a9e-... --none
-```
-
-- Refused once the member is claimed, and on a DROPPED campaign.
-
-### Exit codes
-
-- `0` The member's milestones are set.
-- `1` The platform refused (for example another project, HTTP 403, no such campaign, membership or milestone, HTTP 404, or a claimed member, a DROPPED campaign or a milestone of another project, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity or no --member, or neither --milestone nor --none), not signed in, or the session ended.
-
-## qits work milestones
-
-The milestones a work item needs, attached and taken off one at a time.
-
-list shows them, attach adds one, detach takes one off. An item needs every milestone attached to it; `qits work list` and `qits work details` show the unmet ones as what it still needs.
-
-The milestones themselves - their names and criteria - are `qits milestones`.
-
-### Notes
-
-- --entity is the item: its qualified id (qits-100) or its id. --milestone is the milestone's id, as `qits milestones list` prints it.
-- A milestone and the item must be of the same project. Detaching leaves the milestone as it is.
-
-## qits work milestones list
-
-List the milestones a work item needs, in the order attached: id, whether it is met and since when, and its name.
-
-Reads GET /projects/api/work/{entity}/milestones.
-
-```
-qits work milestones list [--entity <entity>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-100 milestones list
-qits work --entity qits-100 milestones list -o json
-```
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --entity), not signed in, or the session ended.
-
-## qits work milestones attach
-
-Make a work item need a milestone of its project.
-
-Sends PUT /projects/api/work/{entity}/milestones/{milestone} and prints what the item needs now. Attaching one it already needs changes nothing.
-
-```
-qits work milestones attach [--entity <entity>] [--milestone <milestone>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `--milestone <milestone>` | The milestone (required): its id. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-100 milestones attach --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3
-```
-
-### Exit codes
-
-- `0` The item needs the milestone.
-- `1` The platform refused (for example an agent in another project, HTTP 403, no such item or milestone, HTTP 404, or a milestone of another project, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --entity or no --milestone), not signed in, or the session ended.
-
-## qits work milestones detach
-
-Make a work item no longer need a milestone.
-
-Sends DELETE /projects/api/work/{entity}/milestones/{milestone} and prints what the item needs now. The milestone stays, and so does every other item's and campaign member's need of it.
-
-```
-qits work milestones detach [--entity <entity>] [--milestone <milestone>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--entity <entity>` | The work entity: its id or its qualified id (qits-100), passed to the service as it is. |
-| `--milestone <milestone>` | The milestone (required): its id. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits work --entity qits-100 milestones detach --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3
-```
-
-### Exit codes
-
-- `0` The item no longer needs the milestone.
-- `1` The platform refused (for example an agent in another project, HTTP 403, or no such item, or one that does not need this milestone, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --entity or no --milestone), not signed in, or the session ended.
-
 ## qits work refinement
 
 An epic's or a ticket's refinement room: the workspace with its own container and its own refining/<slug> branch where the item's scope is worked out, and where its designs live. open opens the room and brings its container up, show shows it, discard tears it down.
@@ -1878,7 +1549,7 @@ qits work --entity qits-100 design put </dev/null
 
 ## qits ideas
 
-A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its inspiration ("inspiredBy"). list shows a project's ideas, details shows one with the work it inspired and the ideas it enables, create writes one, update edits it, archive and unarchive hide it from the list and bring it back, rank moves it above or below another, and spawn files an epic or a ticket from it.
+A project's ideas: short, titled notes that an epic or a ticket names as its inspiration ("inspiredBy"). list shows a project's ideas, details shows one with the work it inspired and the ideas it enables, create writes one, update edits it, archive and unarchive hide it from the list and bring it back, rank moves it above or below another, and spawn files an epic or a ticket from it.
 
 An idea is not a work item: it has no lifecycle you move, no comment thread, no children and no delete. Its status is derived from the work naming it: PLANNED (no counted work names it), QUEUED (some does, not all DONE) or DONE (every counted item DONE); DROPPED work is not counted. One idea may name another of its project as "enabledBy".
 
@@ -2144,224 +1815,6 @@ echo '{"ticketType":"IMPROVEMENT","impetus":"Builds wait on downloads."}' | qits
 - `0` The item is filed, or nothing was put in and the schema is printed.
 - `1` The platform refused (for example an idea it does not know, HTTP 404, a payload it does not take, HTTP 400, or an agent, or the desk in another project, HTTP 403), or cannot be reached.
 - `2` Used wrongly (for example no --entity, an --archetype that is neither EPIC nor TICKET, or a payload that is not a JSON object), not signed in, or the session ended.
-
-## qits milestones
-
-A project's milestones: named, foreseeable conditions an item needs met before it can go on ("bootstrap test node"), shared by any number of items.
-
-list shows a project's milestones, details shows one with its criteria and the items that need it, create writes one, rename renames it, criteria replaces its condition, and approve says yes to an APPROVAL criterion.
-
-A milestone's condition is groups OR'd of criteria AND'd: it is met while every criterion of at least one group holds. Each criterion, each group and the milestone keep the date they came to hold. Editing a criterion clears its latch, so a met milestone can become unmet again; the platform then sends MilestoneUnmet, and MilestoneMet when it holds again.
-
-Any work item can need any number of milestones of its project (`qits work milestones attach`), and a campaign member is dispatched only once all of its milestones are met (`qits work members milestones`). `qits work list` and `qits work details` show what an item still needs. A milestone is not a block: a block is a problem found during work; a milestone is known in advance.
-
-Kinds and their predicates: ENTITY_STATUS {entityId, status} - a work item of the same project (qualified id or id) reaches that status; it latches from the current state, so an item already there meets it at once. DEPLOYMENT_ACTIVE {applicationName, environmentName?, minimumVersion?} - that application goes live. SCM_RELEASE {repositoryName, projectId?, minimumVersion?} - that repository releases. DEPLOYMENT_ACTIVE and SCM_RELEASE latch only on events after the criterion was made: a deployment or a release from before it never meets it. APPROVAL {} - a person says yes (approve).
-
-A write that takes a condition reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or empty) it sends nothing and prints its usage and the payload's JSON schema instead, from the service's OpenAPI document.
-
-### Notes
-
-- --milestone, --output and --projects-url may come before or after the command.
-- --milestone is the milestone's id, as list and create print it.
-- Reading takes qits:admin or qits:agent; so does writing, in the agent's own project, except approve, which takes a person (qits:admin) or the project's delivery desk.
-
-## qits milestones list
-
-A project's milestones, oldest first: id, whether it is met and since when, its criteria (how many hold of how many), the items that need it, and its name.
-
-Reads GET /projects/api/projects/{project}/milestones. -o json prints each milestone whole: its groups and criteria with their dates, evidence and approval, the items and the campaign memberships that need it.
-
-```
-qits milestones list [--met true|false] [--milestone <milestone>] [--output table|json] [--project <project>] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--met true\|false` | Only the met (true) or the unmet (false) milestones. |
-| `--milestone <milestone>` | The milestone: its id, passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project (required): its id or its slug. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits milestones list --project qits
-qits milestones list --project qits --met false
-qits milestones list --project qits -o json
-```
-
-- --met false lists the unmet ones only, what work still needs; --met true the met ones.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example a project it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --project, or --met neither true nor false), not signed in, or the session ended.
-
-## qits milestones details
-
-One milestone: its name, whether it is met and since when, its condition (each group and criterion with its id and the date it came to hold, a criterion's evidence or approval), the work items that need it and the campaign memberships it gates.
-
-Reads GET /projects/api/milestones/{milestone}.
-
-```
-qits milestones details [--milestone <milestone>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--milestone <milestone>` | The milestone: its id, passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits milestones details --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3
-qits milestones --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3 details -o json
-```
-
-- A group's criteria are marked [x] while they hold and [ ] while they do not. The criterion ids are what approve and a restated criterion take.
-
-### Exit codes
-
-- `0` Done.
-- `1` The platform refused (for example a milestone it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --milestone), not signed in, or the session ended.
-
-## qits milestones create
-
-Write a new milestone of a project: its name and its whole condition.
-
-Reads {"displayName":"...","groups":[{"criteria":[{"kind","predicate"}]}]} on stdin and sends it unchanged to POST /projects/api/projects/{project}/milestones. Groups are OR'd, criteria in a group AND'd; at least one group, and no empty group. The milestone is latched from the current state at once, and the command prints it with its id and its criteria's ids.
-
-Kinds and their predicates: ENTITY_STATUS {entityId, status} - a work item of the same project (qualified id or id) reaches that status; it latches from the current state, so an item already there meets it at once. DEPLOYMENT_ACTIVE {applicationName, environmentName?, minimumVersion?} - that application goes live. SCM_RELEASE {repositoryName, projectId?, minimumVersion?} - that repository releases. DEPLOYMENT_ACTIVE and SCM_RELEASE latch only on events after the criterion was made: a deployment or a release from before it never meets it. APPROVAL {} - a person says yes (approve).
-
-With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
-
-```
-qits milestones create [--milestone <milestone>] [--output table|json] [--project <project>] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--milestone <milestone>` | The milestone: its id, passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--project <project>` | The project (required unless nothing is put in): its id or its slug. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits milestones create --project qits </dev/null
-echo '{"displayName":"bootstrap test node","groups":[{"criteria":[{"kind":"APPROVAL","predicate":{}}]}]}' | qits milestones create --project qits
-echo '{"displayName":"export shipped","groups":[{"criteria":[{"kind":"ENTITY_STATUS","predicate":{"entityId":"qits-101","status":"DONE"}}]}]}' | qits milestones create --project qits -o json
-```
-
-- Then attach it to the items that need it: qits work --entity qits-102 milestones attach --milestone <id>.
-
-### Exit codes
-
-- `0` The milestone is written, or nothing was put in and the schema is printed.
-- `1` The platform refused (for example no name, no groups, an empty group, a predicate it cannot read or an ENTITY_STATUS item of another project, HTTP 400, an agent in another project, HTTP 403, or a project it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --project, or a payload that is not a JSON object), not signed in, or the session ended.
-
-## qits milestones rename
-
-Give a milestone another name.
-
-Sends {"displayName":"..."} to PATCH /projects/api/milestones/{milestone}. No criterion, latch or date moves, and no event is sent.
-
-```
-qits milestones rename [--milestone <milestone>] [--name <text>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--milestone <milestone>` | The milestone: its id, passed to the service as it is. |
-| `--name <text>` | The new name (required). |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits milestones --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3 rename --name 'bootstrap test node (arm64)'
-```
-
-### Exit codes
-
-- `0` The milestone is renamed.
-- `1` The platform refused (for example an agent in another project, HTTP 403, or a milestone it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --milestone or no --name), not signed in, or the session ended.
-
-## qits milestones criteria
-
-Replace a milestone's condition, whole.
-
-Reads {"groups":[{"criteria":[{"id"?,"kind","predicate"}]}]} on stdin and sends it unchanged to PUT /projects/api/milestones/{milestone}/groups. What you state is the whole condition afterwards; what you leave out is deleted. Restate a criterion with its id, kind and predicate unchanged to keep whether it already held; a changed or new one starts unlatched from now (an ENTITY_STATUS one is latched from the current state at once). A met milestone that stops holding becomes unmet (MilestoneUnmet); one that comes to hold becomes met (MilestoneMet).
-
-Kinds and their predicates: ENTITY_STATUS {entityId, status} - a work item of the same project (qualified id or id) reaches that status; it latches from the current state, so an item already there meets it at once. DEPLOYMENT_ACTIVE {applicationName, environmentName?, minimumVersion?} - that application goes live. SCM_RELEASE {repositoryName, projectId?, minimumVersion?} - that repository releases. DEPLOYMENT_ACTIVE and SCM_RELEASE latch only on events after the criterion was made: a deployment or a release from before it never meets it. APPROVAL {} - a person says yes (approve).
-
-With nothing on stdin (a terminal, or empty) it sends nothing, prints the payload's JSON schema from the service's OpenAPI document (/projects/q/openapi) and exits with 0.
-
-```
-qits milestones criteria [--milestone <milestone>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--milestone <milestone>` | The milestone: its id, passed to the service as it is. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits milestones criteria </dev/null
-echo '{"groups":[{"criteria":[{"id":"<criterion id>","kind":"APPROVAL","predicate":{}}]},{"criteria":[{"kind":"ENTITY_STATUS","predicate":{"entityId":"qits-101","status":"DONE"}}]}]}' | qits milestones --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3 criteria
-```
-
-- qits milestones details shows the criterion ids to restate.
-
-### Exit codes
-
-- `0` The condition is replaced, or nothing was put in and the schema is printed.
-- `1` The platform refused (for example no groups, an empty group, a predicate it cannot read, a criterion id of another milestone or an ENTITY_STATUS item of another project, HTTP 400, an agent in another project, HTTP 403, or a milestone it does not know, HTTP 404), or cannot be reached.
-- `2` Used wrongly (for example no --milestone, or a payload that is not a JSON object), not signed in, or the session ended.
-
-## qits milestones approve
-
-Say yes to a milestone's APPROVAL criterion.
-
-Sends {"note":"..."} ({} without --note) to POST /projects/api/milestones/{milestone}/criteria/{criterion}/approve and prints the milestone. When the approval makes the milestone hold, it is met and the platform sends MilestoneMet.
-
-```
-qits milestones approve [--criterion <criterion>] [--milestone <milestone>] [--note <text>] [--output table|json] [--projects-url <url>]
-```
-
-| Name | What it does |
-|---|---|
-| `--criterion <criterion>` | The APPROVAL criterion (required): its id, as details prints it. |
-| `--milestone <milestone>` | The milestone: its id, passed to the service as it is. |
-| `--note <text>` | Why yes. Optional. |
-| `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed. |
-| `--projects-url <url>` | The projects service's base URL, without /projects. Default: QITS_PROJECTS_URL, else the session's idp address with `idp` swapped for `projects` (https://idp.qits.<QITS_DOMAIN>/idp gives https://projects.qits.<QITS_DOMAIN>). |
-
-### Examples
-
-```
-qits milestones --milestone 45a14f8e-f550-45bb-a117-6b34d8c472e3 approve --criterion 5f2c0a9e-... --note 'Node 7 is up.'
-```
-
-- A person's to do (qits:admin, signed in), or the project's delivery desk's; an agent is answered HTTP 403.
-
-### Exit codes
-
-- `0` The criterion is approved.
-- `1` The platform refused (for example an agent, HTTP 403, no such milestone or criterion, HTTP 404, or a criterion that is not APPROVAL or is approved already, HTTP 409), or cannot be reached.
-- `2` Used wrongly (for example no --milestone or no --criterion), not signed in, or the session ended.
 
 ## qits release-request
 

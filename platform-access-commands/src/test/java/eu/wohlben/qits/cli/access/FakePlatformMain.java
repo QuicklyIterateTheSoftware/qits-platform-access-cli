@@ -55,9 +55,6 @@ public final class FakePlatformMain {
     /** {@code Faster builds}, the first idea of {@code a project with ideas}. */
     static final String IDEA = "00000000-0000-4000-8000-000000000003";
     static final String RUN = "00000000-0000-4000-8000-000000000004";
-    /** {@code bootstrap test node} and its APPROVAL criterion, in {@code tapes/milestones.json}. */
-    static final String MILESTONE = "00000000-0000-4000-8000-000000000002";
-    static final String MILESTONE_CRITERION = "00000000-0000-4000-8000-000000000007";
     /** The agent {@code qits wait} acts for: {@code QITS_AGENT_ID} in {@code tapes/prepare.sh}. */
     static final String AGENT = "00000000-0000-4000-8000-0000000000a1";
     /** The version the artifacts store's golden master names as the newest {@code qits}. */
@@ -100,7 +97,6 @@ public final class FakePlatformMain {
         repositories();
         work();
         ideas();
-        milestones();
         agentMcp();
         releaseRequests();
         ci();
@@ -143,18 +139,6 @@ public final class FakePlatformMain {
     private void ideas() {
         platform.answer("GET", "/projects/api/ideas", projects("a project with ideas", "listIdeas"));
         refuse("POST", "/projects/api/ideas/" + IDEA + "/archive");
-    }
-
-    /**
-     * No recording in the pinned golden masters yet (the milestone rows of ProjectsContract are
-     * pending): a fixture, shaped as qits-projects-service records {@code listProjectMilestones}.
-     * Once a pin records {@code a ticket waiting on a met milestone}, answer from it instead.
-     */
-    private void milestones() {
-        String milestones = fixture("milestones.json");
-        platform.answer("GET", "/projects/api/projects/" + PROJECT + "/milestones", milestones);
-        platform.answer("GET", "/projects/api/projects/" + PROJECT_SLUG + "/milestones", milestones);
-        refuse("POST", "/projects/api/milestones/" + MILESTONE + "/criteria/" + MILESTONE_CRITERION + "/approve");
     }
 
     /** No recording yet (AgentMcpContract's rows are pending): a fixture. */

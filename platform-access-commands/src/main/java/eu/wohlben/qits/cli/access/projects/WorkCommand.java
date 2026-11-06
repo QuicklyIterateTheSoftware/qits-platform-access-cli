@@ -25,7 +25,7 @@ import java.util.Locale;
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 /**
- * {@code qits work}: any work entity — ticket, epic, feature, task or campaign — named once with
+ * {@code qits work}: any work entity — ticket, epic, feature, task or issue — named once with
  * {@code --entity}, whatever its kind. One group for every archetype: the service serves the
  * archetype-agnostic doors and, per archetype and door, the payload's schema, so nothing here knows a
  * route per kind or a field of any kind.
@@ -40,28 +40,26 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {WorkCommand.ListCommand.class, WorkCommand.DetailsCommand.class, WorkCommand.CreateCommand.class,
                 WorkCommand.UpdateCommand.class, WorkCommand.TransitionCommand.class, WorkCommand.StatusCommand.class,
                 WorkCommand.BlockCommand.class, WorkCommand.UnblockCommand.class, WorkCommand.DeleteCommand.class,
-                WorkCommand.ProgressCommand.class, WorkCommand.DispatchCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
-                WorkMembersCommand.class, WorkMilestonesCommand.class, WorkRefinementCommand.class, WorkDesignCommand.class},
-        description = {"Work items of every archetype - epics, tickets, features, tasks, campaigns and issues - and their "
+                WorkCommand.DispatchCommand.class, WorkCommentCommand.class, WorkDossierCommand.class,
+                WorkRefinementCommand.class, WorkDesignCommand.class},
+        description = {"Work items of every archetype - epics, tickets, features, tasks and issues - and their "
                         + "comment threads. list shows a project's items, details shows one with its comments and "
                         + "children, create files one, update edits its fields, transition reshapes it into "
                         + "another archetype, status moves it along its lifecycle, block and unblock flag that its "
                         + "phase cannot go on, delete removes it, dispatch puts an agent on it, and comment writes to its "
                         + "thread.",
-                "An epic's or a ticket's dossier (dossier), a campaign's members and progress (members, "
-                        + "progress), the milestones an item needs (milestones; the milestones themselves are `qits "
-                        + "milestones`), its refinement room itself (refinement: open, show, discard) and the HTML "
-                        + "designs of a refinement (design) are here too.",
+                "An epic's or a ticket's dossier (dossier), its refinement room itself (refinement: open, show, "
+                        + "discard) and the HTML designs of a refinement (design) are here too.",
+                "An item can need other items: \"needs\" names each one and the status it must reach, such as "
+                        + "qits-1897 at VERIFIED. An item whose needs are not all met is not dispatched from REFINED "
+                        + "or READY_FOR_DEV. create and update write the whole list, like tags.",
                 "A write reads its payload, a JSON document, on stdin. With nothing on stdin (a terminal, or "
                         + "empty) it sends nothing and prints its usage and the payload's JSON schema instead, "
                         + "served by the service for that archetype.",
                 "Every archetype has a lifecycle: REPORTED, REFINED, READY_FOR_DEV, IMPLEMENTING, IMPLEMENTED, "
                         + "VERIFYING, VERIFIED, DONE, and DROPPED for work a decision was taken not to do, with an "
                         + "outcome saying why (status names them). "
-                        + "Features and tasks walk the same nine words as epics and tickets. A campaign's status "
-                        + "is derived from its members instead - never IMPLEMENTING or VERIFYING - and by hand it "
-                        + "is only DROP and REOPEN (DROPPED back to REPORTED); `qits work progress` shows which "
-                        + "members hold it there. A SKIP transition lets "
+                        + "Features and tasks walk the same nine words as epics and tickets. A SKIP transition lets "
                         + "READY_FOR_DEV move straight to IMPLEMENTED, bypassing IMPLEMENTING, and IMPLEMENTED "
                         + "move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING only moves forward or "
                         + "drops; it never moves back. REFINED to READY_FOR_DEV needs a person - a person's own "
@@ -72,7 +70,8 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
                 "- --entity, --output and --projects-url may come before or after the command.",
                 "- --entity is the item's qualified id (qits-100) or its id, sent to the service as it is; the "
                         + "service resolves either. So is every id inside a payload (parent, membership.parent, "
-                        + "supersededBy, dependsOn).",
+                        + "supersededBy, and needs[].item, as in {\"needs\":[{\"item\":\"qits-90\",\"status\":"
+                        + "\"VERIFIED\"}]}).",
                 "- Reading takes qits:admin or qits:agent; so does writing, except an epic's status move, which "
                         + "takes qits:admin. An agent writes only in its own project.",
                 "- REFINED to READY_FOR_DEV takes a person signed in with their own `qits` CLI or the browser; "
@@ -83,7 +82,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 public class WorkCommand implements Runnable {
 
     static final String NAME_THE_ENTITY = "Name the entity: --entity <id or qualified id, like qits-100>.";
-    static final String NAME_THE_ARCHETYPE = "Name the archetype: --archetype <EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE>.";
+    static final String NAME_THE_ARCHETYPE = "Name the archetype: --archetype <EPIC, TICKET, FEATURE, TASK or ISSUE>.";
 
     @CommandLine.Mixin
     ProjectsOptions options;
@@ -147,8 +146,9 @@ public class WorkCommand implements Runnable {
             description = {"A project's work items, every archetype, in the service's order: id (qualified), "
                     + "archetype, status, title and when it last changed. BLOCKED appears when a ticket is: "
                     + "yes for an explicit block, waiting when the only reason is an agent session sitting "
-                    + "idle, and - when it is not blocked. NEEDS appears when some item needs a milestone that "
-                    + "is not met yet, naming those milestones, and - for an item that needs none. TAGS appears "
+                    + "idle, and - when it is not blocked. NEEDS appears when some item needs another item that is "
+                    + "not at its status yet, naming each as <id>@<status> (qits-1897@VERIFIED), and - for an item "
+                    + "whose needs are all met. TAGS appears "
                     + "when some item carries one, as its "
                     + "display text (RESERVED_FOR_HUMAN shows as reserved for human), and - for an item with "
                     + "none. A DROPPED item shows its outcome beside the status: DROPPED (DUPLICATE).",
@@ -181,7 +181,7 @@ public class WorkCommand implements Runnable {
         String project;
 
         @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
-                description = "Only items of this archetype: EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE.")
+                description = "Only items of this archetype: EPIC, TICKET, FEATURE, TASK or ISSUE.")
         String archetype;
 
         @CommandLine.Option(names = "--status", paramLabel = "<status>",
@@ -247,20 +247,17 @@ public class WorkCommand implements Runnable {
             description = {"One work item: its fields, its description, its comment thread, its children, and what "
                     + "it closes: the items naming it as their supersededBy (dropped as its duplicate, resolved by "
                     + "it, or superseded by it). A DROPPED item shows its outcome beside the status, and its "
-                    + "supersededBy as duplicate of, resolved by or superseded by. needs names the milestones it "
-                    + "needs that are not met yet, and milestones met the ones that are (`qits work milestones`). "
-                    + "A campaign also shows its members, in order, each with the condition it waits on and the "
-                    + "milestones it still needs."},
+                    + "supersededBy as duplicate of, resolved by or superseded by. needs names, one a line, each "
+                    + "item it needs that is not at its status yet, with where that item stands now (qits-1897 at "
+                    + "VERIFIED (now REFINED)), and needs met the ones that are."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 details",
                     "  qits work details --entity 45a14f8e-f550-45bb-a117-6b34d8c472e3 -o json",
                     "",
                     "- -o json prints one object: the item as the service answers it, its comments, its "
-                            + "children and supersedes, the items it closes, and for a campaign its members as "
-                            + "`qits work members list` reads them. Control characters are written as escapes.",
-                    "- A member's condition is its groups, the second and later introduced by or, each with its "
-                            + "criteria under it: [x] has held, [ ] has not yet."},
+                            + "children and supersedes, the items it closes. Control characters are written as "
+                            + "escapes."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {HelpText.DONE,
                     "1:The platform refused (for example an item it does not know, HTTP 404), or cannot be reached.",
@@ -280,8 +277,6 @@ public class WorkCommand implements Runnable {
             List<JsonNode> comments = ProjectsApi.entries(api.workComments(wanted), "comment");
             List<JsonNode> children = WorkEntities.children(api.workChildren(wanted));
             List<JsonNode> closes = closes(context, api, entity);
-            // Members are a campaign's own relation, not its children: only a campaign has the door.
-            JsonNode members = "CAMPAIGN".equals(upper(text(entity, "archetype"))) ? api.workMembers(wanted) : null;
             if (json) {
                 ObjectNode all = JsonNodeFactory.instance.objectNode();
                 all.set("entity", entity);
@@ -293,15 +288,10 @@ public class WorkCommand implements Runnable {
                     ArrayNode supersedes = all.putArray("supersedes");
                     closes.forEach(supersedes::add);
                 }
-                if (members != null) {
-                    JsonNode list = members.path("members");
-                    all.set("members", list.isArray() ? list : JsonNodeFactory.instance.arrayNode());
-                }
                 SafeJson.print(context.out(), all);
                 return 0;
             }
-            WorkEntities.printDetails(context.out(), entity, comments, children,
-                    members == null ? null : WorkMembersCommand.members(members), closes);
+            WorkEntities.printDetails(context.out(), entity, comments, children, closes);
             return 0;
         }
 
@@ -378,7 +368,7 @@ public class WorkCommand implements Runnable {
         CommandLine.Model.CommandSpec spec;
 
         @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
-                description = "The new item's archetype (required): EPIC, TICKET, FEATURE, TASK, CAMPAIGN or ISSUE. "
+                description = "The new item's archetype (required): EPIC, TICKET, FEATURE, TASK or ISSUE. "
                         + "Case-insensitive.")
         String archetype;
 
@@ -420,7 +410,10 @@ public class WorkCommand implements Runnable {
             footer = {
                     "  qits work --entity qits-100 update </dev/null",
                     "  echo '{\"title\":\"The log view stops at 64 KiB\"}' | qits work --entity qits-100 update",
-                    "  echo '{\"assignee\":null}' | qits work update --entity qits-100 -o json"},
+                    "  echo '{\"assignee\":null}' | qits work update --entity qits-100 -o json",
+                    "  echo '{\"needs\":[{\"item\":\"qits-90\",\"status\":\"VERIFIED\"}]}' | qits work --entity qits-100 update",
+                    "",
+                    "- needs is the whole list: it replaces what the item needed, and [] or null clears it."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item is edited, or nothing was put in and the schema is printed.",
                     "1:The platform refused (for example a patch it does not take, HTTP 400, your roles or another "
@@ -460,7 +453,7 @@ public class WorkCommand implements Runnable {
                     + "task, ...), keeping its id, its number and its thread.",
                     "The door is full-state: what the request leaves out is cleared. So the command starts from the "
                             + "item as it stands (title, description, status, outcome, ticketType, impetus, assignee, "
-                            + "supersededBy, repositoryId, implementingAt, implementedAt, dependsOn, and membership {parent, "
+                            + "supersededBy, repositoryId, implementingAt, implementedAt, and membership {parent, "
                             + "position} if it has a parent), merges the JSON object on stdin over it as a merge "
                             + "patch (null clears), sets \"archetype\", and drops every property the target "
                             + "archetype's schema has no slot for, naming them on stderr. It sends the result to "
@@ -488,8 +481,10 @@ public class WorkCommand implements Runnable {
                             + "\"qits-102\":{archetype:\"FEATURE\",title:\"CSV\",status:\"REPORTED\","
                             + "membership:{parent:\"qits-101\"}}}' | qits work transition --map",
                     "",
-                    "- {} carries the item over as it stands. membership.parent, supersededBy and dependsOn take a "
-                            + "qualified id or an id.",
+                    "- {} carries the item over as it stands. membership.parent and supersededBy take a "
+                            + "qualified id or an id. needs is no part of this door, as tags are not: write it with "
+                            + "update, as in echo '{\"needs\":[{\"item\":\"qits-90\",\"status\":\"VERIFIED\"}]}' "
+                            + "| qits work --entity qits-100 update.",
                     "- --map with nothing on stdin prints the request's schema from the service's OpenAPI document."},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The items are reshaped, or nothing was put in and the schema is printed.",
@@ -509,7 +504,7 @@ public class WorkCommand implements Runnable {
 
         @CommandLine.Option(names = "--archetype", paramLabel = "<archetype>",
                 description = "The archetype to turn the item into (required without --map): EPIC, TICKET, "
-                        + "FEATURE, TASK or CAMPAIGN. Case-insensitive.")
+                        + "FEATURE or TASK. Case-insensitive.")
         String archetype;
 
         @CommandLine.Option(names = "--map",
@@ -592,13 +587,7 @@ public class WorkCommand implements Runnable {
                     + "it by hand. A SKIP transition lets READY_FOR_DEV move straight to IMPLEMENTED, bypassing "
                     + "IMPLEMENTING, and IMPLEMENTED move straight to VERIFIED, bypassing VERIFYING. IMPLEMENTING "
                     + "only moves forward or drops; it never moves back. REFINED to READY_FOR_DEV needs a person "
-                    + "- a person's own `qits` CLI sign-in, or the browser; an agent credential is refused. "
-                    + "A campaign never walks this by hand: the service derives its status from its members "
-                    + "(the lowest one still open wins, IMPLEMENTING counting as READY_FOR_DEV and VERIFYING as "
-                    + "IMPLEMENTED; no members is REPORTED; every member DROPPED is DROPPED; once DONE or DROPPED "
-                    + "it is not recomputed), so this command refuses every target on a campaign but DROP and "
-                    + "REOPEN (DROPPED back to REPORTED, which also clears outcome and supersededBy). "
-                    + "`qits work progress` names the members holding its status (heldBy).",
+                    + "- a person's own `qits` CLI sign-in, or the browser; an agent credential is refused.",
                     "Reads {\"target\":\"<STATUS>\"} on stdin and sends it unchanged to POST "
                             + "/projects/api/work/{entity}/status. The service refuses a move its lifecycle does not "
                             + "allow (HTTP 409).",
@@ -622,8 +611,7 @@ public class WorkCommand implements Runnable {
                             + "\"reason\" (HTTP 400 without one). The reason lands on its thread. An issue is never "
                             + "dispatched and is not reshaped by transition.",
                     "An epic or a feature whose children are all DONE or DROPPED can be closed straight to DONE by "
-                            + "a person or the delivery desk (a CLOSE move). A campaign is never closed this way: "
-                            + "it reaches DONE on its own once every member does (see the derivation above)."},
+                            + "a person or the delivery desk (a CLOSE move)."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 status </dev/null",
@@ -755,7 +743,7 @@ public class WorkCommand implements Runnable {
     // --- block and unblock ---
 
     @CommandLine.Command(name = "block", mixinStandardHelpOptions = true,
-            description = {"Block a ticket, an epic or a campaign: say that the phase its status started cannot "
+            description = {"Block a ticket or an epic: say that the phase its status started cannot "
                     + "go on, and why. Use it when you stop and cannot take the work further.",
                     "Sends {\"blocked\":true,\"reason\":\"...\"} to POST /projects/api/work/{entity}/blocked. "
                             + "The status does not move: it is the phase to resume, and the next status move "
@@ -796,11 +784,10 @@ public class WorkCommand implements Runnable {
     }
 
     @CommandLine.Command(name = "unblock", mixinStandardHelpOptions = true,
-            description = {"Unblock a ticket, an epic or a campaign: say that what was in the way is gone and its "
+            description = {"Unblock a ticket or an epic: say that what was in the way is gone and its "
                     + "phase can go on. Do it as soon as you know, whoever blocked it.",
                     "Sends {\"blocked\":false} to POST /projects/api/work/{entity}/blocked, with the reason when "
-                            + "one is given. No status moves. A blocked campaign starts no new member until it is "
-                            + "unblocked."},
+                            + "one is given. No status moves."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 unblock",
@@ -851,15 +838,14 @@ public class WorkCommand implements Runnable {
     @CommandLine.Command(name = "delete", mixinStandardHelpOptions = true,
             description = {"Delete a work item, its children and their comment threads. The audit log keeps them.",
                     "Sends DELETE /projects/api/work/{entity}. An agent may delete a feature or a task of its own "
-                            + "project while the epic is REPORTED; deleting an epic or a ticket takes qits:admin. A "
-                            + "campaign is never deleted: move its status to DROPPED."},
+                            + "project while the epic is REPORTED; deleting an epic or a ticket takes qits:admin."},
             footerHeading = HelpText.EXAMPLES,
             footer = {"  qits work --entity qits-104 delete"},
             exitCodeListHeading = HelpText.EXIT_CODES,
             exitCodeList = {"0:The item is gone.",
                     "1:The platform refused (for example an epic or a ticket for an agent, or another project, HTTP "
-                            + "403, an item it does not know, HTTP 404, or a campaign or an epic past REPORTED, "
-                            + "HTTP 409), or cannot be reached.",
+                            + "403, an item it does not know, HTTP 404, or an epic past REPORTED, HTTP 409), or "
+                            + "cannot be reached.",
                     "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
     public static class DeleteCommand extends PlatformCommand {
 
@@ -883,16 +869,15 @@ public class WorkCommand implements Runnable {
     // --- dispatch ---
 
     @CommandLine.Command(name = "dispatch", mixinStandardHelpOptions = true,
-            description = {"Put an agent on an epic or a ticket, or start a campaign: the Dispatch and Run the next "
-                    + "phase buttons of the item's page.",
+            description = {"Put an agent on an epic or a ticket: the Dispatch and Run the next phase buttons of the "
+                    + "item's page.",
                     "--mode FLOW runs the phase the item's status starts and every phase after it, until a status "
                             + "starts none. --mode PHASE runs that one phase, then stops. A machine at REFINED waits "
                             + "for a person to move it to READY_FOR_DEV, unless the project's delivery desk may "
                             + "start refined items (qits projects delivery shows whether it may).",
                     "Sends {\"mode\":\"FLOW\"} or {\"mode\":\"PHASE\"}, with \"rule\" when --rule is given, to "
                             + "POST /projects/api/work/{entity}/dispatch, and prints the item, the mode, the phase "
-                            + "started, the agent's branch and the assignee. A campaign answers its progress instead; "
-                            + "qits work progress shows it."},
+                            + "started, the agent's branch and the assignee."},
             footerHeading = HelpText.EXAMPLES,
             footer = {
                     "  qits work --entity qits-100 dispatch --mode flow",
@@ -901,10 +886,11 @@ public class WorkCommand implements Runnable {
                     "",
                     "- Pressing takes qits:admin, or the project's delivery desk, which names the rule it presses "
                             + "under; a plain agent is answered HTTP 403.",
-                    "- The service refuses a status that starts no phase, a feature or a task, a blocked item or a "
-                            + "project with no wrapper (HTTP 409), and the command prints its sentence as it came."},
+                    "- The service refuses a status that starts no phase, a feature or a task, a blocked item, an "
+                            + "item at REFINED or READY_FOR_DEV whose needs are not all met, or a project with no "
+                            + "wrapper (HTTP 409), and the command prints its sentence as it came."},
             exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {"0:The agent is dispatched, or the campaign started.",
+            exitCodeList = {"0:The agent is dispatched.",
                     "1:The platform refused (for example a mode it does not know, HTTP 400, your roles, HTTP 403, an "
                             + "item it does not know, HTTP 404, or an item no phase can start from, HTTP 409), or "
                             + "cannot be reached.",
@@ -941,83 +927,11 @@ public class WorkCommand implements Runnable {
                 SafeJson.print(context.out(), answer);
                 return 0;
             }
-            if (answer.has("progress")) {
-                JsonNode campaign = answer.path("progress").path("campaign");
-                context.out().println("Started campaign " + SafeText.line(text(campaign, "qualifiedId").isEmpty()
-                        ? wanted : text(campaign, "qualifiedId")) + ", now " + SafeText.line(text(campaign, "status"))
-                        + ". `qits work progress` shows its members.");
-                return 0;
-            }
             JsonNode d = answer.path("dispatch");
             Table.print(context.out(), "", List.of("ENTITY", "MODE", "PHASE", "BRANCH", "ASSIGNEE"),
                     List.of(List.of(WorkEntities.cell(wanted, 40), WorkEntities.cell(text(d, "mode"), 5),
                             WorkEntities.cell(text(d, "phase"), 12), WorkEntities.cell(text(d, "branch"), 60),
                             WorkEntities.cell(text(d, "assignee"), 40))));
-            return 0;
-        }
-    }
-
-    // --- progress ---
-
-    @CommandLine.Command(name = "progress", mixinStandardHelpOptions = true,
-            description = {"How a campaign is doing: each member in order with its state (DROPPED, DONE, "
-                    + "DISPATCH_FAILED, JOINED_RUNNING, RUNNING, REFUSED, READY or WAITING) and the items it "
-                    + "waits for.",
-                    "Reads GET /projects/api/work/{entity}/progress, worked out fresh on every call. -o json adds "
-                            + "each criterion of each member's condition, judged: whether it holds, the evidence, "
-                            + "and what would make it hold. It also says whether the criteria evaluator is "
-                            + "listening (evaluator: connected, stalled, consumerFailing with lastError), which "
-                            + "tells a campaign that waits correctly from one that nothing listens for."},
-            footerHeading = HelpText.EXAMPLES,
-            footer = {"  qits work --entity qits-130 progress", "  qits work --entity qits-130 progress -o json"},
-            exitCodeListHeading = HelpText.EXIT_CODES,
-            exitCodeList = {HelpText.DONE,
-                    "1:The platform refused (for example an item that is not a campaign, HTTP 404), or cannot be "
-                            + "reached.",
-                    "2:Used wrongly (for example no --entity), not signed in, or the session ended."})
-    @TuiCommand(effect = Effect.READ)
-    public static class ProgressCommand extends PlatformCommand {
-
-        @CommandLine.ParentCommand
-        WorkCommand work;
-
-        @Override
-        protected int execute(CliContext context) throws CliFailure, InterruptedException {
-            boolean json = json(work.options.output);
-            JsonNode answer = work.api(context).workProgress(work.entity());
-            if (json) {
-                SafeJson.print(context.out(), answer);
-                return 0;
-            }
-            PrintStream out = context.out();
-            JsonNode progress = answer.path("progress");
-            JsonNode campaign = progress.path("campaign");
-            JsonNode evaluator = progress.path("evaluator");
-            out.println("CAMPAIGN " + SafeText.line(text(campaign, "qualifiedId")) + "  "
-                    + SafeText.line(text(campaign, "status")) + "  " + SafeText.line(text(campaign, "title")));
-            JsonNode heldBy = campaign.path("heldBy");
-            if (heldBy.isArray() && !heldBy.isEmpty()) {
-                out.println("held at " + SafeText.line(text(campaign, "status")) + " by "
-                        + String.join(", ", WorkEntities.texts(heldBy)));
-            }
-            out.println("evaluator: " + (evaluator.path("connected").asBoolean() ? "connected" : "not connected")
-                    + (evaluator.path("stalled").asBoolean() ? ", stalled" : "")
-                    + (evaluator.path("consumerFailing").asBoolean()
-                            ? ", failing: " + SafeText.line(text(evaluator, "lastError")) : ""));
-            List<List<String>> rows = new ArrayList<>();
-            for (JsonNode m : progress.path("members")) {
-                JsonNode e = m.path("entity");
-                rows.add(List.of(m.path("position").asText(), WorkEntities.cell(text(e, "qualifiedId"), 40),
-                        WorkEntities.cell(text(e, "status"), 11), WorkEntities.cell(text(m, "state"), 15),
-                        WorkEntities.cell(String.join(", ", WorkEntities.texts(m.path("waitsFor"))), 60),
-                        WorkEntities.cell(text(e, "title"), 60)));
-            }
-            if (rows.isEmpty()) {
-                out.println("No members.");
-                return 0;
-            }
-            out.println();
-            Table.print(out, "", List.of("POS", "ID", "STATUS", "STATE", "WAITS FOR", "TITLE"), rows);
             return 0;
         }
     }

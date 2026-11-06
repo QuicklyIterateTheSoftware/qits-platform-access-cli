@@ -23,8 +23,8 @@ import java.util.List;
 import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
 
 /**
- * {@code qits ideas}: a project's ideas (epic qits-888), the short notes an epic, a ticket or a
- * campaign names as its {@code inspiredBy}. An idea is not a work archetype: no lifecycle a caller
+ * {@code qits ideas}: a project's ideas (epic qits-888), the short notes an epic or a ticket names
+ * as its {@code inspiredBy}. An idea is not a work archetype: no lifecycle a caller
  * moves, no thread, no children, no delete. Its status is derived by the service from the work
  * naming it, and an idea is archived with a reason instead of deleted.
  * <p>
@@ -39,7 +39,7 @@ import static eu.wohlben.qits.cli.access.projects.ProjectsApi.text;
         subcommands = {IdeasCommand.ListCommand.class, IdeasCommand.DetailsCommand.class,
                 IdeasCommand.CreateCommand.class, IdeasCommand.UpdateCommand.class, IdeasCommand.ArchiveCommand.class,
                 IdeasCommand.UnarchiveCommand.class, IdeasCommand.RankCommand.class, IdeasCommand.SpawnCommand.class},
-        description = {"A project's ideas: short, titled notes that an epic, a ticket or a campaign names as its "
+        description = {"A project's ideas: short, titled notes that an epic or a ticket names as its "
                         + "inspiration (\"inspiredBy\"). list shows a project's ideas, details shows one with the "
                         + "work it inspired and the ideas it enables, create writes one, update edits it, archive "
                         + "and unarchive hide it from the list and bring it back, rank moves it above or below "
@@ -63,7 +63,7 @@ public class IdeasCommand implements Runnable {
 
     static final String NAME_THE_IDEA = "Name the idea: --entity <id>.";
 
-    /** The archetypes spawn files: the work kinds an idea inspires, less a campaign's own set-up. */
+    /** The archetypes spawn files: the work kinds an idea inspires. */
     static final List<String> SPAWNS = List.of("EPIC", "TICKET");
 
     @CommandLine.Mixin

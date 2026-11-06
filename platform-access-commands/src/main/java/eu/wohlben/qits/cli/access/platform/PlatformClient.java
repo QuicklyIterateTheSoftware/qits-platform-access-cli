@@ -112,7 +112,7 @@ public final class PlatformClient {
         return send("DELETE", uri, HttpRequest.newBuilder(uri).DELETE());
     }
 
-    /** A PUT whose address says it all (attach a milestone to an item), with no body. */
+    /** A PUT whose address says it all, with no body. */
     public JsonNode put(URI uri) throws CliFailure, InterruptedException {
         return send("PUT", uri, HttpRequest.newBuilder(uri).PUT(HttpRequest.BodyPublishers.noBody()));
     }

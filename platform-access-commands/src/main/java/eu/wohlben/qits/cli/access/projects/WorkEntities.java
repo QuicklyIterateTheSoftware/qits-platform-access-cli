@@ -35,7 +35,7 @@ final class WorkEntities {
      * full-state merge.
      */
     static final List<String> CARRIED = List.of("title", "description", "status", "outcome", "ticketType", "impetus",
-            "assignee", "supersededBy", "repositoryId", "implementingAt", "implementedAt", "dependsOn", "acceptanceCriteria");
+            "assignee", "supersededBy", "repositoryId", "implementingAt", "implementedAt", "acceptanceCriteria");
 
     /**
      * Why a DROPPED item was dropped (qits-248), in the service's order. The first three name the
@@ -249,8 +249,8 @@ final class WorkEntities {
     }
 
     /**
-     * ID (qualified), ARCHETYPE, STATUS, BLOCKED when one is, NEEDS when one needs an unmet milestone
-     * (epic qits-615), TAGS when one carries any, TITLE, UPDATED.
+     * ID (qualified), ARCHETYPE, STATUS, BLOCKED when one is, NEEDS when one needs another item that
+     * is not at its status yet (epic qits-1899), TAGS when one carries any, TITLE, UPDATED.
      */
     static void printRows(PrintStream out, String indent, List<JsonNode> entities) {
         boolean anyBlocked = entities.stream().anyMatch(WorkEntities::blocked);
@@ -289,12 +289,11 @@ final class WorkEntities {
     }
 
     /**
-     * One item in full: its fields, its description, its thread, its children, a campaign's members
-     * in position order (null for any other archetype, and nothing is printed for them) and what it
-     * closes (the items naming it as their {@code supersededBy}; null when that could not be read).
+     * One item in full: its fields, its description, its thread, its children and what it closes
+     * (the items naming it as their {@code supersededBy}; null when that could not be read).
      */
     static void printDetails(PrintStream out, JsonNode e, List<JsonNode> comments, List<JsonNode> children,
-            List<JsonNode> members, List<JsonNode> closes) {
+            List<JsonNode> closes) {
         out.println(SafeText.line(text(e, "archetype")) + " " + SafeText.line(label(e)) + "  ("
                 + SafeText.line(text(e, "id")) + ")");
         List<List<String>> rows = new ArrayList<>();
@@ -303,14 +302,13 @@ final class WorkEntities {
         if (e.has("blocked") && !e.get("blocked").isNull()) {
             rows.add(row("blocked", blockedDetail(e)));
         }
-        if (needsSomething(e)) {
-            List<String> needs = MilestonesCommand.unmet(e);
-            rows.add(row("needs", needs.isEmpty() ? needsCell(e) : String.join(", ", needs)));
+        List<JsonNode> unmet = needs(e, false);
+        if (!unmet.isEmpty()) {
+            needRows(rows, "needs", unmet);
+        } else if (needsSomething(e)) {
+            rows.add(row("needs", needsCell(e)));
         }
-        List<String> met = MilestonesCommand.metNames(e);
-        if (!met.isEmpty()) {
-            rows.add(row("milestones met", String.join(", ", met)));
-        }
+        needRows(rows, "needs met", needs(e, true));
         String tagsText = tagsText(e);
         if (!tagsText.isEmpty()) {
             rows.add(row("tags", tagsText));
@@ -320,7 +318,6 @@ final class WorkEntities {
         optional(rows, e, "assignee", "assignee");
         optional(rows, e, "parent", "parent");
         optional(rows, e, "position", "position");
-        optional(rows, e, "depends on", "dependsOn");
         optional(rows, e, "repository", "repositoryId");
         optional(rows, e, "inspired by", "inspiredBy");
         optional(rows, e, supersededByLabel(e), "supersededBy");
@@ -355,9 +352,6 @@ final class WorkEntities {
             out.println("Children (" + children.size() + "):");
             printRows(out, "  ", children);
         }
-        if (members != null) {
-            printMembers(out, members);
-        }
         if (closes == null) {
             out.println("Closes: could not be read.");
         } else if (closes.isEmpty()) {
@@ -365,28 +359,6 @@ final class WorkEntities {
         } else {
             out.println("Closes (" + closes.size() + "), the items naming this one as their supersededBy:");
             printRows(out, "  ", closes);
-        }
-    }
-
-    /** A member a line, with what it waits on under it. */
-    private static void printMembers(PrintStream out, List<JsonNode> members) {
-        if (members.isEmpty()) {
-            out.println("Members: none.");
-            return;
-        }
-        out.println("Members (" + members.size() + "):");
-        Map<String, String> qualifiedIds = WorkMembersCommand.qualifiedIds(members);
-        for (JsonNode m : members) {
-            JsonNode member = m.path("entity");
-            out.println("  " + m.path("position").asText() + "  " + cell(label(member), 40) + "  "
-                    + cell(text(member, "archetype"), 9) + "  " + cell(text(member, "status"), 30) + "  "
-                    + cell(text(member, "title"), 70) + (m.path("joinedRunning").asBoolean(false)
-                    ? "  joined in flight" : ""));
-            WorkMembersCommand.condition(m, qualifiedIds).forEach(line -> out.println("    " + line));
-            List<String> needs = MilestonesCommand.unmet(m);
-            if (!needs.isEmpty()) {
-                out.println("    needs: " + cell(String.join(", ", needs), 200));
-            }
         }
     }
 
@@ -474,22 +446,50 @@ final class WorkEntities {
         return explicit.toString();
     }
 
-    /** Whether the item needs a milestone that is not met (epic qits-615). */
+    /**
+     * The item's needs (epic qits-1899) that are met ({@code met}) or not: each names another item,
+     * the status it must reach, and where it stands now. Empty when the service sends none.
+     */
+    static List<JsonNode> needs(JsonNode e, boolean met) {
+        List<JsonNode> all = new ArrayList<>();
+        for (JsonNode need : e.path("needs")) {
+            if (need.isObject() && need.path("met").asBoolean(false) == met) {
+                all.add(need);
+            }
+        }
+        return all;
+    }
+
+    /** Whether the item needs another item that is not at its status yet. */
     static boolean needsSomething(JsonNode e) {
-        return !MilestonesCommand.unmet(e).isEmpty() || e.path("unmetMilestones").asInt(0) > 0;
+        return !needs(e, false).isEmpty() || e.path("unmetNeeds").asInt(0) > 0;
     }
 
     /**
-     * The NEEDS column: the names of the item's unmet milestones, comma-joined, or - when it needs
-     * nothing. An answer that carries only the count ({@code unmetMilestones}) gets the count.
+     * The NEEDS column: each unmet need as {@code <qualifiedId>@<status>}, comma-joined, or - when it
+     * needs nothing. An answer that carries only the count ({@code unmetNeeds}) gets the count.
      */
     static String needsCell(JsonNode e) {
-        List<String> names = MilestonesCommand.unmet(e);
-        if (!names.isEmpty()) {
-            return cell(String.join(", ", names), 40);
+        List<String> unmet = new ArrayList<>();
+        needs(e, false).forEach(n -> unmet.add(text(n, "qualifiedId") + "@" + text(n, "status")));
+        if (!unmet.isEmpty()) {
+            return cell(String.join(", ", unmet), 60);
         }
-        int count = e.path("unmetMilestones").asInt(0);
-        return count > 0 ? count + (count == 1 ? " milestone" : " milestones") : "-";
+        int count = e.path("unmetNeeds").asInt(0);
+        return count > 0 ? count + " unmet" : "-";
+    }
+
+    /** One need as details prints it: {@code qits-1897 at VERIFIED (now REFINED)}. */
+    static String needLine(JsonNode need) {
+        String now = text(need, "currentStatus");
+        return text(need, "qualifiedId") + " at " + text(need, "status") + (now.isEmpty() ? "" : " (now " + now + ")");
+    }
+
+    /** A details row per need, the label on the first one only. */
+    private static void needRows(List<List<String>> rows, String label, List<JsonNode> needs) {
+        for (int i = 0; i < needs.size(); i++) {
+            rows.add(row(i == 0 ? label : "", needLine(needs.get(i))));
+        }
     }
 
     /** The text a line at a time, each line cleaned on its own and indented. */

@@ -19,7 +19,6 @@ import eu.wohlben.qits.cli.access.login.LoginCommand;
 import eu.wohlben.qits.cli.access.observe.ObserveCommand;
 import eu.wohlben.qits.cli.access.platform.HelpText;
 import eu.wohlben.qits.cli.access.projects.IdeasCommand;
-import eu.wohlben.qits.cli.access.projects.MilestonesCommand;
 import eu.wohlben.qits.cli.access.projects.ProjectsCommand;
 import eu.wohlben.qits.cli.access.projects.ReleaseRequestCommand;
 import eu.wohlben.qits.cli.access.projects.RepositoriesCommand;
@@ -48,7 +47,7 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true,
         versionProvider = QitsVersion.Provider.class,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
-                RepositoriesCommand.class, WorkCommand.class, IdeasCommand.class, MilestonesCommand.class,
+                RepositoriesCommand.class, WorkCommand.class, IdeasCommand.class,
                 ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, DeploymentsCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
                 ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class, RegistryLoginCommand.class,
@@ -56,8 +55,8 @@ import picocli.CommandLine;
                 HelpCommand.class},
         description = {
                 "Use for any work on the qits platform from a terminal: signing in, projects and repositories, "
-                        + "work items of every archetype (epics, tickets, features, tasks, campaigns) and their comment "
-                        + "threads, ideas, milestones, release requests, CI runs and their logs, "
+                        + "work items of every archetype (epics, tickets, features, tasks, issues) and their comment "
+                        + "threads, ideas, release requests, CI runs and their logs, "
                         + "domain events, live telemetry, waiting on the platform, workspaces and their agents, "
                         + "execution targets and their leases, Git pushes to the platform's git host, and "
                         + "publishing release artifacts from a CI step.",

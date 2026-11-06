@@ -32,8 +32,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The {@code qits work} commands that took over the old MCP tools: block, unblock, delete, progress,
- * transition --map, and the dossier, members and design groups. Run as a person types them, in this
+ * The {@code qits work} commands that took over the old MCP tools: block, unblock, delete,
+ * transition --map, and the dossier and design groups. Run as a person types them, in this
  * process, against a fake platform and a fake idp.
  */
 class WorkSubresourceCommandsTest {
@@ -127,7 +127,7 @@ class WorkSubresourceCommandsTest {
         return JSON.readTree(platform.requests(method, path).getFirst().body());
     }
 
-    // --- block, unblock, delete, progress ---
+    // --- block, unblock, delete ---
 
     @Test
     void blockSendsTheFlagAndTheReason() throws Exception {
@@ -172,52 +172,6 @@ class WorkSubresourceCommandsTest {
         assertThat(r.exit()).as(r.err()).isZero();
         assertThat(platform.requests("DELETE", WORK)).hasSize(1);
         assertThat(r.out()).contains("Deleted qits-100.");
-    }
-
-    @Test
-    void progressPrintsEachMemberWithItsState() {
-        platform.answer("GET", WORK + "/progress", """
-                {"progress":{"campaign":{"qualifiedId":"qits-100","title":"Q4","status":"REFINED"},
-                  "evaluator":{"connected":true,"stalled":false,"consumerFailing":false},
-                  "members":[{"position":0,"state":"WAITING","waitsFor":["qits-101"],
-                    "entity":{"qualifiedId":"qits-102","status":"REFINED","title":"Export"}}]}}
-                """);
-
-        Result r = run("work", "--entity", ITEM, "progress");
-
-        assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).contains("evaluator: connected").contains("qits-102").contains("WAITING")
-                .contains("qits-101")
-                .as("an older service sends no heldBy: nothing extra is printed").doesNotContain("held at");
-    }
-
-    @Test
-    void progressPrintsHeldByWhenPresent() {
-        platform.answer("GET", WORK + "/progress", """
-                {"progress":{"campaign":{"qualifiedId":"qits-100","title":"Q4","status":"REFINED",
-                    "heldBy":["qits-752","qits-753"]},
-                  "evaluator":{"connected":true,"stalled":false,"consumerFailing":false},
-                  "members":[]}}
-                """);
-
-        Result r = run("work", "--entity", ITEM, "progress");
-
-        assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).contains("held at REFINED by qits-752, qits-753");
-    }
-
-    @Test
-    void progressPrintsNothingExtraWhenHeldByIsEmpty() {
-        platform.answer("GET", WORK + "/progress", """
-                {"progress":{"campaign":{"qualifiedId":"qits-100","title":"Q4","status":"REFINED","heldBy":[]},
-                  "evaluator":{"connected":true,"stalled":false,"consumerFailing":false},
-                  "members":[]}}
-                """);
-
-        Result r = run("work", "--entity", ITEM, "progress");
-
-        assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).doesNotContain("held at");
     }
 
     // --- transition --map ---
@@ -341,68 +295,6 @@ class WorkSubresourceCommandsTest {
         assertThat(sent("POST", WORK + "/dossier-assets"))
                 .isEqualTo(JSON.readTree("{\"sourceId\":\"s1\",\"kind\":\"DESIGN\"}"));
         assertThat(r.out().strip()).isEqualTo("![Board](/x)");
-    }
-
-    // --- members ---
-
-    private static final String MEMBER = """
-            {"membershipId":"m1","position":0,"groups":[{"criteria":[]}],
-             "entity":{"qualifiedId":"qits-101","archetype":"TICKET","status":"REFINED","title":"Export"}}
-            """;
-
-    @Test
-    void membersListAddMoveRemoveAndCondition() throws Exception {
-        platform.answer("GET", WORK + "/members", "{\"members\":[" + MEMBER + "]}");
-        platform.answer("POST", WORK + "/members", 201, "{\"member\":" + MEMBER + "}");
-        platform.answer("PUT", WORK + "/members/m1/position", "{\"members\":[" + MEMBER + "]}");
-        platform.answer("DELETE", WORK + "/members/m1", "{\"members\":[]}");
-        platform.answer("PUT", WORK + "/members/m1/condition", "{\"member\":" + MEMBER + "}");
-
-        Result list = run("work", "--entity", ITEM, "members", "list");
-        Result add = runWithInput("{\"entityId\":\"qits-101\"}", "work", "--entity", ITEM, "members", "add");
-        Result move = run("work", "--entity", ITEM, "members", "move", "--member", "m1", "--position", "0");
-        Result remove = run("work", "--entity", ITEM, "members", "remove", "--member", "m1");
-        Result condition = runWithInput("{\"groups\":[]}", "work", "--entity", ITEM, "members", "condition",
-                "--member", "m1");
-
-        assertThat(list.exit()).as(list.err()).isZero();
-        assertThat(list.out()).contains("MEMBERSHIP").contains("m1").contains("qits-101").contains("1 group");
-        assertThat(add.exit()).as(add.err()).isZero();
-        assertThat(sent("POST", WORK + "/members")).isEqualTo(JSON.readTree("{\"entityId\":\"qits-101\"}"));
-        assertThat(move.exit()).as(move.err()).isZero();
-        assertThat(sent("PUT", WORK + "/members/m1/position")).isEqualTo(JSON.readTree("{\"position\":0}"));
-        assertThat(remove.exit()).as(remove.err()).isZero();
-        assertThat(remove.out()).contains("no members");
-        assertThat(condition.exit()).as(condition.err()).isZero();
-        assertThat(sent("PUT", WORK + "/members/m1/condition")).isEqualTo(JSON.readTree("{\"groups\":[]}"));
-    }
-
-    @Test
-    void membersListMarksHoldsStatusYesAndDashWhenAbsent() throws Exception {
-        String holding = """
-                {"membershipId":"m2","position":1,"groups":[],
-                 "entity":{"qualifiedId":"qits-102","archetype":"EPIC","status":"REFINED","title":"Tax"},
-                 "holdsStatus":true}
-                """;
-        platform.answer("GET", WORK + "/members", "{\"members\":[" + MEMBER + "," + holding + "]}");
-
-        Result r = run("work", "--entity", ITEM, "members", "list");
-
-        assertThat(r.exit()).as(r.err()).isZero();
-        assertThat(r.out()).contains("HOLDS");
-        assertThat(r.out().lines().filter(l -> l.contains("m1")).findFirst().orElseThrow())
-                .as("an older service, or a member that does not hold it, sends no holdsStatus: a dash")
-                .doesNotContain("yes");
-        assertThat(r.out().lines().filter(l -> l.contains("m2")).findFirst().orElseThrow()).contains("yes");
-    }
-
-    @Test
-    void membersConditionWithoutAMemberSendsNothing() {
-        Result r = runWithInput("{\"groups\":[]}", "work", "--entity", ITEM, "members", "condition");
-
-        assertThat(r.exit()).isEqualTo(2);
-        assertThat(r.err()).contains("--member");
-        assertThat(platform.requests.stream().filter(q -> !q.method().equals("GET"))).isEmpty();
     }
 
     // --- design ---
