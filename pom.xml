@@ -107,7 +107,7 @@
         <!-- The estate's golden-master reader and pact row builder (qits-integrations), test scope:
              it reads every provider's recordings off the classpath and binds only what a command
              reads. -->
-        <qits.pact-consumer.version>2026.1019.82625</qits.pact-consumer.version>
+        <qits.pact-consumer.version>2026.1106.507</qits.pact-consumer.version>
         <!-- pact-jvm, test scope only: the consumer half of the qits-projects contract. An external
              library, so it moves by hand, not by a maintenance bump; the same version as the
              provider's verifier and every other consumer on the estate. -->
