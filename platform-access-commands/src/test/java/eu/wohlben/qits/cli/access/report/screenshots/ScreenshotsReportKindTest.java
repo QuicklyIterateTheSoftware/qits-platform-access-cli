@@ -363,7 +363,7 @@ class ScreenshotsReportKindTest {
     void theKindIsRegisteredWithoutAParser() {
         ReportKinds kinds = ReportKinds.standard(warnings::add);
 
-        assertThat(kinds.kinds()).extracting(ReportKind::id).endsWith("screenshots");
+        assertThat(kinds.kinds()).extracting(ReportKind::id).contains("screenshots");
         assertThat(kinds.parsersOf("screenshots")).isEmpty();
         assertThat(kind().version()).isEqualTo(1);
         assertThat(kind().payloadType()).isEqualTo(ScreenshotsReport.class);

@@ -84,6 +84,11 @@ import java.util.function.Consumer;
                         + "not reported (not rendered in this step)`, and `(no screenshot baselines)` when neither "
                         + "side holds one. QITS_CI_REPO_ID names the repository for the images. Without a "
                         + "baseline every image is NEW.",
+                "- stale-outputs reads the file QITS_CI_STALE_OUTPUTS names (relative to --root), which qits-ci's "
+                        + "output check writes: one line per stale check-outputs kind, `<kind>\\t<regenerate "
+                        + "command>`; a line without a tab is skipped with a warning. Without the variable, the "
+                        + "file or a line in it, `stale-outputs: not reported (no stale outputs)`. Never compared "
+                        + "with the baseline.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN, and without QITS_DOMAIN the command refuses (exit 2); no variable and no "

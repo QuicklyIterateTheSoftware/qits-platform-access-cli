@@ -95,7 +95,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN
                 + ", release request qits-ci-service-rr-1)");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path())
@@ -150,7 +151,8 @@ class SubmitCommandTest {
                 + "coverage: submitted (13 lines, 30.8% covered)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -200,7 +202,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: submitted (5 pacts, 16 interactions, 0 states)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
         assertThat(body.path("payload").path("pacts")).hasSize(5);
@@ -239,7 +242,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: submitted (1 unit, 1 changed)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -269,7 +273,8 @@ class SubmitCommandTest {
 
         assertThat(second.exit()).as(second.err()).isZero();
         assertThat(second.out()).endsWith("entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path()).filteredOn(r -> r.startsWith("PUT"))
                 .containsExactly("PUT " + put);
     }
@@ -356,7 +361,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(result.err()).contains("HTTP 403").contains("this token belongs to another run")
                 .doesNotContain(TOKEN);
     }
@@ -372,7 +378,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
     }
 
     @Test
@@ -384,7 +391,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(ci.requests("PUT", PUT)).isEmpty();
     }
 
@@ -400,7 +408,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(result.err()).contains("WARN: baseline: could not be read, so none");
     }
 
@@ -489,7 +498,8 @@ class SubmitCommandTest {
                 + "coverage: not reported (no inputs)\n"
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
-                + "screenshots: not reported (not rendered in this step)\n");
+                + "screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(ci.requests).isEmpty();
     }
 
@@ -549,7 +559,8 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(result.out()).endsWith("entity-changes: not reported (no inputs)\n"
-                + "screenshots: submitted (1 new, 1 changed, 1 removed)\n");
+                + "screenshots: submitted (1 new, 1 changed, 1 removed)\n"
+                + "stale-outputs: not reported (no stale outputs)\n");
         assertThat(result.err()).doesNotContain("WARN");
         FakePlatform.Request request = ci.requests("PUT", put).getFirst();
         JsonNode body = JSON.readTree(request.body());
@@ -570,6 +581,29 @@ class SubmitCommandTest {
         assertThat(sent).doesNotContain(java.util.Base64.getEncoder().encodeToString(shell))
                 .doesNotContain(java.util.Base64.getEncoder().encodeToString(wider))
                 .doesNotContainPattern("[A-Za-z0-9+/]{48,}={0,2}");
+    }
+
+    @Test
+    void staleOutputsGoFromTheComposersFileWithOneBadHighlightPerKind() throws Exception {
+        String regenerate = "qits release-request regenerate --project p --repository r --kind cli-tapes";
+        Files.createDirectories(work.resolve(".qits-ci"));
+        Files.writeString(work.resolve(".qits-ci/stale-outputs.tsv"), "cli-tapes\t" + regenerate + "\n");
+        env.put("QITS_CI_STALE_OUTPUTS", ".qits-ci/stale-outputs.tsv");
+        String put = "/ci/api/runs/" + RUN + "/steps/2/reports/stale-outputs";
+        ci.answer("PUT", put, 204, "");
+
+        Result result = submit("--exit-code", "1", "--root", work.toString());
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.out()).endsWith("screenshots: not reported (not rendered in this step)\n"
+                + "stale-outputs: submitted (1 stale: cli-tapes)\n");
+        JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
+        assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
+        assertThat(body.path("payload")).isEqualTo(JSON.readTree("""
+                {"kinds":[{"kind":"cli-tapes","regenerate":"%s"}]}""".formatted(regenerate)));
+        assertThat(body.path("highlights").get(0).path("severity").asText()).isEqualTo("bad");
+        assertThat(body.path("highlights").get(0).path("text").asText())
+                .startsWith("stale outputs: cli-tapes — regenerate with: qits release-request regenerate");
     }
 
     private Result submit(String... args) {

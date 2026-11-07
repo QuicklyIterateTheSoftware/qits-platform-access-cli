@@ -1209,7 +1209,10 @@ FK][, UK][, <length>]"`, then `lob`, `version`, `generated`), the relations adde
 Mermaid text before (changed and removed units) and after. Above 1 MiB the `after` text of unchanged
 units goes first, then that of current ones, and `truncated` says so. Its highlights count the tables
 added, changed and removed, and the columns removed or narrowed (not null gained, another type, a
-shorter length).
+shorter length). And `stale-outputs` (qits-1920): the `check-outputs:` kinds the step found stale, read from
+the file `QITS_CI_STALE_OUTPUTS` names (one `<kind>\t<regenerate command>` line each, as qits-ci's
+output check writes it), with one `bad` highlight per kind naming its regenerate command; no file, or
+no line in it, is not reported, and there is no baseline comparison.
 
 `report submit` is what the hook qits-ci composes after every QA step runs, whatever the step's
 script exited with (`--exit-code`). It reads the step's files (`**/target/surefire-reports`,

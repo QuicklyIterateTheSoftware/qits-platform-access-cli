@@ -37,7 +37,8 @@ import java.util.List;
                         + "Mermaid text before and after; for screenshots, the payload: the githost repository id, "
                         + "the fold's and the baseline's commits, the totals, the renderer record's changed keys, "
                         + "and each NEW, CHANGED or REMOVED baseline image with its path, spec, name, browser, "
-                        + "blob ids, sizes and any exact move."},
+                        + "blob ids, sizes and any exact move; for stale-outputs, each stale check-outputs kind with "
+                        + "the command that regenerates it."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17",
                 "  qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results",
@@ -71,7 +72,7 @@ public class ShowCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--kind", paramLabel = "<kind>",
             description = "Only this kind of report (test-results, coverage, contracts, entity-changes, "
-                    + "screenshots), "
+                    + "screenshots, stale-outputs), "
                     + "and print the whole of it.")
     String kind;
 
