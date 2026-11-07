@@ -20510,32 +20510,30 @@
         }
       },
       "description": "qits work details: getWork",
-      "key": "21581120",
+      "key": "7c1c0208",
       "pending": false,
       "providerStates": [
         {
           "name": "an epic in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-2",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-1",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -20548,7 +20546,7 @@
           }
         },
         "method": "GET",
-        "path": "/projects/api/work/contract-00000001-2"
+        "path": "/projects/api/work/contract-00000001-1"
       },
       "response": {
         "body": {
@@ -20562,14 +20560,14 @@
             "createdAt": "2026-01-01T00:00:00Z",
             "createdBy": null,
             "description": "## Why\nAccounting copies every invoice into their tool by hand, about 400 a quarter.\n\n## What\n- a **CSV export** of a date range, in the column order the tool imports\n- a **PDF export** of one invoice, for the audit folder\n\n## Example\n```\nGET /billing/api/invoices/export?from=2026-10-01&to=2026-12-31&format=csv\n```\n",
-            "id": "00000000-0000-4000-8000-000000000006",
+            "id": "00000000-0000-4000-8000-000000000005",
             "impetus": null,
             "implementedAt": null,
             "outcome": null,
             "parent": null,
             "position": null,
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-2",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-1",
             "repositoryId": null,
             "status": "IMPLEMENTING",
             "supersededBy": null,
@@ -20900,32 +20898,30 @@
         }
       },
       "description": "qits work details: listWorkChildren",
-      "key": "bbf3fdf9",
+      "key": "16b7eee1",
       "pending": false,
       "providerStates": [
         {
           "name": "an epic in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-2",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-1",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -20938,7 +20934,7 @@
           }
         },
         "method": "GET",
-        "path": "/projects/api/work/contract-00000001-2/children"
+        "path": "/projects/api/work/contract-00000001-1/children"
       },
       "response": {
         "body": {
@@ -20946,9 +20942,9 @@
             "children": [
               {
                 "archetype": "FEATURE",
-                "id": "00000000-0000-4000-8000-000000000004",
+                "id": "00000000-0000-4000-8000-000000000003",
                 "outcome": null,
-                "qualifiedId": "contract-00000001-3",
+                "qualifiedId": "contract-00000001-2",
                 "status": "IMPLEMENTED",
                 "tags": [],
                 "title": "CSV export",
@@ -21057,32 +21053,30 @@
         }
       },
       "description": "qits work details: listWorkComments",
-      "key": "f0e87d80",
+      "key": "4bac6e68",
       "pending": false,
       "providerStates": [
         {
           "name": "an epic in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-2",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-1",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -21095,7 +21089,7 @@
           }
         },
         "method": "GET",
-        "path": "/projects/api/work/contract-00000001-2/comments"
+        "path": "/projects/api/work/contract-00000001-1/comments"
       },
       "response": {
         "body": {
@@ -21320,32 +21314,30 @@
         }
       },
       "description": "qits work dossier delete: deleteWorkDossierPage",
-      "key": "1142c8e1",
+      "key": "8f2f97c0",
       "pending": false,
       "providerStates": [
         {
           "name": "a bug ticket in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-10",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-9",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -21358,7 +21350,7 @@
           }
         },
         "method": "DELETE",
-        "path": "/projects/api/work/contract-00000001-10/dossier/affected-invoices"
+        "path": "/projects/api/work/contract-00000001-9/dossier/affected-invoices"
       },
       "response": {
         "body": {
@@ -21415,32 +21407,30 @@
         }
       },
       "description": "qits work dossier get: getWorkDossierPage",
-      "key": "26e277e5",
+      "key": "81a668cd",
       "pending": false,
       "providerStates": [
         {
           "name": "an epic in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-2",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-1",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -21453,12 +21443,12 @@
           }
         },
         "method": "GET",
-        "path": "/projects/api/work/contract-00000001-2/dossier/data-flow"
+        "path": "/projects/api/work/contract-00000001-1/dossier/data-flow"
       },
       "response": {
         "body": {
           "content": {
-            "body": "The export reads the invoices once and streams them out:\n\n![Export data flow](/epics/00000000-0000-4000-8000-000000000006/dossier-assets/00000000-0000-4000-8000-000000000008/content)\n\n1. the list sends its filter\n2. the service streams the rows\n3. the browser saves the file\n",
+            "body": "The export reads the invoices once and streams them out:\n\n![Export data flow](/epics/00000000-0000-4000-8000-000000000005/dossier-assets/00000000-0000-4000-8000-000000000007/content)\n\n1. the list sends its filter\n2. the service streams the rows\n3. the browser saves the file\n",
             "position": 1,
             "slug": "data-flow",
             "title": "Data flow",
@@ -21657,32 +21647,30 @@
         }
       },
       "description": "qits work dossier list: listWorkDossier",
-      "key": "f4a0cf3a",
+      "key": "728d9e19",
       "pending": false,
       "providerStates": [
         {
           "name": "a bug ticket in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-10",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-9",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -21695,7 +21683,7 @@
           }
         },
         "method": "GET",
-        "path": "/projects/api/work/contract-00000001-10/dossier"
+        "path": "/projects/api/work/contract-00000001-9/dossier"
       },
       "response": {
         "body": {
@@ -21799,32 +21787,30 @@
         }
       },
       "description": "qits work dossier move: moveWorkDossierPage",
-      "key": "b763bb5d",
+      "key": "35508a3c",
       "pending": false,
       "providerStates": [
         {
           "name": "a bug ticket in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-10",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-9",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -21849,7 +21835,7 @@
           ]
         },
         "method": "POST",
-        "path": "/projects/api/work/contract-00000001-10/dossier/affected-invoices/move"
+        "path": "/projects/api/work/contract-00000001-9/dossier/affected-invoices/move"
       },
       "response": {
         "body": {
@@ -21933,32 +21919,30 @@
         }
       },
       "description": "qits work dossier put: createWorkDossierPage",
-      "key": "21f8e0ac",
+      "key": "9fe5af8b",
       "pending": false,
       "providerStates": [
         {
           "name": "a bug ticket in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-10",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-9",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -21984,7 +21968,7 @@
           ]
         },
         "method": "POST",
-        "path": "/projects/api/work/contract-00000001-10/dossier"
+        "path": "/projects/api/work/contract-00000001-9/dossier"
       },
       "response": {
         "body": {
@@ -22068,32 +22052,30 @@
         }
       },
       "description": "qits work dossier put: putWorkDossierPage",
-      "key": "ffdd1877",
+      "key": "7dc9e756",
       "pending": false,
       "providerStates": [
         {
           "name": "a bug ticket in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-10",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-9",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -22119,7 +22101,7 @@
           ]
         },
         "method": "PUT",
-        "path": "/projects/api/work/contract-00000001-10/dossier/reproduction"
+        "path": "/projects/api/work/contract-00000001-9/dossier/reproduction"
       },
       "response": {
         "body": {
@@ -25567,32 +25549,30 @@
         }
       },
       "description": "qits work unblock: setWorkBlocked",
-      "key": "a6dc7f8a",
+      "key": "24c94e69",
       "pending": false,
       "providerStates": [
         {
           "name": "a bug ticket in detail",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "campaignId": "00000000-0000-4000-8000-000000000002",
-            "campaignQualifiedId": "contract-00000001-1",
-            "creditNoteTicketId": "00000000-0000-4000-8000-000000000003",
-            "csvFeatureId": "00000000-0000-4000-8000-000000000004",
-            "csvTaskId": "00000000-0000-4000-8000-000000000005",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "figureAssetId": "00000000-0000-4000-8000-000000000008",
-            "figurePageId": "00000000-0000-4000-8000-000000000009",
-            "frontendRepositoryId": "00000000-0000-4000-8000-00000000000a",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000c",
-            "pdfTaskId": "00000000-0000-4000-8000-00000000000d",
-            "previewTaskId": "00000000-0000-4000-8000-00000000000e",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
-            "qualifiedId": "contract-00000001-10",
-            "serviceRepositoryId": "00000000-0000-4000-8000-000000000010",
-            "taskId": "00000000-0000-4000-8000-000000000011",
-            "taxesEpicId": "00000000-0000-4000-8000-000000000012"
+            "creditNoteTicketId": "00000000-0000-4000-8000-000000000002",
+            "csvFeatureId": "00000000-0000-4000-8000-000000000003",
+            "csvTaskId": "00000000-0000-4000-8000-000000000004",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "figureAssetId": "00000000-0000-4000-8000-000000000007",
+            "figurePageId": "00000000-0000-4000-8000-000000000008",
+            "frontendRepositoryId": "00000000-0000-4000-8000-000000000009",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "maintenanceTicketId": "00000000-0000-4000-8000-00000000000b",
+            "pdfTaskId": "00000000-0000-4000-8000-00000000000c",
+            "previewTaskId": "00000000-0000-4000-8000-00000000000d",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
+            "qualifiedId": "contract-00000001-9",
+            "serviceRepositoryId": "00000000-0000-4000-8000-00000000000f",
+            "taskId": "00000000-0000-4000-8000-000000000010",
+            "taxesEpicId": "00000000-0000-4000-8000-000000000011"
           }
         }
       ],
@@ -25618,7 +25598,7 @@
           ]
         },
         "method": "POST",
-        "path": "/projects/api/work/contract-00000001-10/blocked"
+        "path": "/projects/api/work/contract-00000001-9/blocked"
       },
       "response": {
         "body": {
@@ -25869,7 +25849,7 @@
                 ]
               },
               "priority": {
-                "description": "The ranking among siblings (a project's roots, campaigns excluded, or the children of one parent): higher sorts first, null after every number, then by number. Editable at every status but DONE and DROPPED, which answer 409; null clears it.",
+                "description": "The ranking among siblings (a project's roots, issues excluded, or the children of one parent): higher sorts first, null after every number, then by number. Editable at every status but DONE and DROPPED, which answer 409; null clears it.",
                 "type": [
                   "integer",
                   "integer"
