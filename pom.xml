@@ -49,7 +49,7 @@
          commands jar the program is built from. -->
     <groupId>eu.wohlben</groupId>
     <artifactId>qits</artifactId>
-    <version>2026.1107.175724</version>
+    <version>2026.1107.191140</version>
     <packaging>pom</packaging>
     <name>qits-platform-access-cli</name>
 
@@ -98,7 +98,7 @@
         <qits.idp-golden-masters.version>2026.1027.165632</qits.idp-golden-masters.version>
         <qits.events-golden-masters.version>2026.1031.124054</qits.events-golden-masters.version>
         <qits.maintenance-golden-masters.version>2026.1106.221716</qits.maintenance-golden-masters.version>
-        <qits.observability-golden-masters.version>2026.1018.155850</qits.observability-golden-masters.version>
+        <qits.observability-golden-masters.version>2026.1107.172205</qits.observability-golden-masters.version>
         <!-- qits-system's recordings, for the targets the VHS tapes' fake platform answers with
              (FakePlatformMain, epic qits-881); no consumer pact reads them yet. Bumped by
              qits-maintenance like the others. -->
