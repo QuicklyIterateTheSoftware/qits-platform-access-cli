@@ -174,9 +174,14 @@ public class MaintenanceCommand implements Runnable {
                             cell(text(a, "state"), 12),
                             cell(shortId(foldSha), 8),
                             cell(shortId(newestRun(a)), 8),
-                            cell(text(a, "detail"), 60))).toList());
+                            // The last column, so a long sentence costs no alignment: a DEFERRED kind's
+                            // detail says how to regenerate it, and 60 cut that off (qits-1920).
+                            cell(text(a, "detail"), DETAIL_WIDTH))).toList());
             return 0;
         }
+
+        /** How much of an automation's sentence the table shows (qits-1920). */
+        static final int DETAIL_WIDTH = 200;
 
         /** The newest of a kind's runs: the one whose outcome the state reflects. */
         private static String newestRun(JsonNode automation) {
