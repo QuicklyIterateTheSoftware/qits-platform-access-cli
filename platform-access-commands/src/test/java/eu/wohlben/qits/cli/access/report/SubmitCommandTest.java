@@ -601,9 +601,9 @@ class SubmitCommandTest {
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
         assertThat(body.path("payload")).isEqualTo(JSON.readTree("""
                 {"kinds":[{"kind":"cli-tapes","regenerate":"%s"}]}""".formatted(regenerate)));
-        assertThat(body.path("highlights").get(0).path("severity").asText()).isEqualTo("bad");
-        assertThat(body.path("highlights").get(0).path("text").asText())
-                .startsWith("stale outputs: cli-tapes — regenerate with: qits release-request regenerate");
+        assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
+                [{"severity":"bad","text":"stale outputs: cli-tapes","metric":null,"value":null,"delta":null}]
+                """));
     }
 
     private Result submit(String... args) {

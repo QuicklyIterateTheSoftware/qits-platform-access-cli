@@ -125,26 +125,15 @@ class StaleOutputsReportKindTest {
     // --- highlights ------------------------------------------------------------------------------
 
     @Test
-    void eachKindIsOneBadHighlightNamingItsCommand() {
-        StaleOutputs report = new StaleOutputs(List.of(new StaleOutputs.Kind("cli-tapes", "regen tapes"),
-                new StaleOutputs.Kind("entity-diagram", "regen diagram")));
+    void eachKindIsOneBadHighlightNamingOnlyTheKind() {
+        StaleOutputs report = new StaleOutputs(List.of(new StaleOutputs.Kind("cli-tapes", TAPES),
+                new StaleOutputs.Kind("entity-diagram", DIAGRAM)));
 
         List<Highlight> highlights = kind.highlight(report, Optional.empty(), Fixtures.step(root));
 
         assertThat(highlights).containsExactly(
-                new Highlight(Highlight.BAD, "stale outputs: cli-tapes — regenerate with: regen tapes", null, null, null),
-                new Highlight(Highlight.BAD, "stale outputs: entity-diagram — regenerate with: regen diagram", null,
-                        null, null));
-    }
-
-    @Test
-    void aLongCommandIsCutToTheHighlightLimit() {
-        StaleOutputs report = new StaleOutputs(List.of(new StaleOutputs.Kind("cli-tapes", TAPES)));
-
-        Highlight highlight = kind.highlight(report, Optional.empty(), Fixtures.step(root)).getFirst();
-
-        assertThat(highlight.text()).hasSize(Highlight.MAX_TEXT)
-                .startsWith("stale outputs: cli-tapes — regenerate with: qits release-request").endsWith("…");
+                new Highlight(Highlight.BAD, "stale outputs: cli-tapes", null, null, null),
+                new Highlight(Highlight.BAD, "stale outputs: entity-diagram", null, null, null));
     }
 
     @Test
@@ -155,7 +144,7 @@ class StaleOutputsReportKindTest {
         List<Highlight> highlights = kind.highlight(report, Optional.empty(), Fixtures.step(root));
 
         assertThat(highlights).hasSize(Highlight.MAX_PER_REPORT);
-        assertThat(highlights.getLast().text()).isEqualTo("stale outputs: kind-9 — regenerate with: regen 9");
+        assertThat(highlights.getLast().text()).isEqualTo("stale outputs: kind-9");
         assertThat(kind.describe(report)).startsWith("12 stale: kind-0, kind-1");
     }
 }

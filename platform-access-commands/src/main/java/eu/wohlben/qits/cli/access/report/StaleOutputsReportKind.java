@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
  * {@value #FILE}, one line per stale kind, {@code <kind>\t<regenerate command>}. Without the variable,
  * the file, or a non-blank line in it, nothing is reported: an older composer is harmless. A line
  * without a tab is skipped with a warning. No baseline comparison: a stale output is about this fold.
+ *
+ * <p>A highlight names only the kind: a regenerate command does not fit {@link Highlight#MAX_TEXT}, so
+ * it is the payload's {@code regenerate} that carries it.
  */
 public final class StaleOutputsReportKind implements ReportKind<StaleOutputs> {
 
@@ -93,8 +96,7 @@ public final class StaleOutputsReportKind implements ReportKind<StaleOutputs> {
     @Override
     public List<Highlight> highlight(StaleOutputs report, Optional<StaleOutputs> baseline, StepContext step) {
         return report.kinds().stream().limit(Highlight.MAX_PER_REPORT)
-                .map(k -> new Highlight(Highlight.BAD,
-                        "stale outputs: " + k.kind() + " — regenerate with: " + k.regenerate(), null, null, null))
+                .map(k -> new Highlight(Highlight.BAD, "stale outputs: " + k.kind(), null, null, null))
                 .toList();
     }
 
