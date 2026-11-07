@@ -18,14 +18,14 @@
         }
       },
       "description": "qits agents discard: discardAgent",
-      "key": "2f6f02c9",
+      "key": "2f6f02c6",
       "pending": false,
       "providerStates": [
         {
           "name": "an agent waiting for a workspace slot",
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a5",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b"
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a"
           }
         }
       ],
@@ -489,7 +489,7 @@
             "agents": [
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a1",
-                "entityId": "contract-00000001-10",
+                "entityId": "contract-00000001-9",
                 "entityTitle": "Invoice totals are off by one cent",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -607,21 +607,21 @@
         }
       },
       "description": "qits agents list: listAgents",
-      "key": "226de064",
+      "key": "7108a58",
       "pending": false,
       "providerStates": [
         {
           "name": "a project with agents needing attention",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -639,7 +639,7 @@
         "path": "/workspaces/api/agents",
         "query": {
           "projectId": [
-            "00000000-0000-4000-8000-00000000000f"
+            "00000000-0000-4000-8000-00000000000e"
           ],
           "state": [
             "ACTIVE"
@@ -655,7 +655,7 @@
                 "attention": {
                   "reason": "Waits on contract-qits-rr-368 to end; it is FINALIZED since 10:42"
                 },
-                "entityId": "contract-00000001-10",
+                "entityId": "contract-00000001-9",
                 "entityTitle": "Invoice totals are off by one cent",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -677,7 +677,7 @@
                 "attention": {
                   "reason": "Blocked 50 min by contract-person, no @desk comment since"
                 },
-                "entityId": "contract-00000001-2",
+                "entityId": "contract-00000001-1",
                 "entityTitle": "Export invoices for the accountants",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -691,7 +691,7 @@
                 "attention": {
                   "reason": "Idle 42 min with no wait and no block"
                 },
-                "entityId": "contract-00000001-6",
+                "entityId": "contract-00000001-5",
                 "entityTitle": "PDF export",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -705,7 +705,7 @@
                 "attention": {
                   "reason": "Run 00000000 RUNNING for 1 h 40 min, expected about 35 min"
                 },
-                "entityId": "contract-00000001-5",
+                "entityId": "contract-00000001-4",
                 "entityTitle": "Download button on the invoice list",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -725,25 +725,25 @@
               {
                 "agentId": "00000000-0000-4000-8000-0000000000aa",
                 "attention": null,
-                "entityId": "contract-00000001-11",
+                "entityId": "contract-00000001-10",
                 "entityTitle": "Remember the last export format",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
                 "state": "ACTIVE",
-                "waitingOn": "work contract-00000001-5 VERIFIED; a comment on contract-00000001-5",
+                "waitingOn": "work contract-00000001-4 VERIFIED; a comment on contract-00000001-4",
                 "waits": [
                   {
-                    "label": "work contract-00000001-5 VERIFIED",
+                    "label": "work contract-00000001-4 VERIFIED",
                     "subjectKind": "WORK_ITEM",
-                    "subjectQualifiedId": "contract-00000001-5",
-                    "subjectRef": "00000000-0000-4000-8000-000000000011",
+                    "subjectQualifiedId": "contract-00000001-4",
+                    "subjectRef": "00000000-0000-4000-8000-000000000010",
                     "subjectState": "IMPLEMENTING"
                   },
                   {
-                    "label": "work contract-00000001-5 VERIFIED",
+                    "label": "work contract-00000001-4 VERIFIED",
                     "subjectKind": "WORK_ITEM",
-                    "subjectQualifiedId": "contract-00000001-5",
-                    "subjectRef": "00000000-0000-4000-8000-000000000011",
+                    "subjectQualifiedId": "contract-00000001-4",
+                    "subjectRef": "00000000-0000-4000-8000-000000000010",
                     "subjectState": "IMPLEMENTING"
                   }
                 ],
@@ -1285,7 +1285,7 @@
         }
       },
       "description": "qits agents list: listAgents",
-      "key": "32f21334",
+      "key": "1794bd28",
       "pending": false,
       "providerStates": [
         {
@@ -1293,15 +1293,15 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -1315,7 +1315,7 @@
             "agents": [
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a5",
-                "entityId": "contract-00000001-11",
+                "entityId": "contract-00000001-10",
                 "entityTitle": "Remember the last export format",
                 "harness": "CLAUDE",
                 "runState": "QUEUED",
@@ -1325,7 +1325,7 @@
               },
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a5",
-                "entityId": "contract-00000001-11",
+                "entityId": "contract-00000001-10",
                 "entityTitle": "Remember the last export format",
                 "harness": "CLAUDE",
                 "runState": "QUEUED",
@@ -1335,7 +1335,7 @@
               },
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a5",
-                "entityId": "contract-00000001-11",
+                "entityId": "contract-00000001-10",
                 "entityTitle": "Remember the last export format",
                 "harness": "CLAUDE",
                 "runState": "QUEUED",
@@ -1467,7 +1467,7 @@
         }
       },
       "description": "qits agents list: listAgents",
-      "key": "cc1f6687",
+      "key": "b0c2107b",
       "pending": false,
       "providerStates": [
         {
@@ -1475,15 +1475,15 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011",
+            "taskId": "00000000-0000-4000-8000-000000000010",
             "workspaceId": "1"
           }
         }
@@ -1512,7 +1512,7 @@
             "agents": [
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a1",
-                "entityId": "contract-00000001-10",
+                "entityId": "contract-00000001-9",
                 "entityTitle": "Invoice totals are off by one cent",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -1522,7 +1522,7 @@
               },
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a1",
-                "entityId": "contract-00000001-10",
+                "entityId": "contract-00000001-9",
                 "entityTitle": "Invoice totals are off by one cent",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -1652,7 +1652,7 @@
         }
       },
       "description": "qits agents list: listAgents",
-      "key": "2edc4901",
+      "key": "137ef2f9",
       "pending": false,
       "providerStates": [
         {
@@ -1660,7 +1660,7 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
+            "bugTicketQualifiedId": "contract-00000001-9",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
@@ -1691,7 +1691,7 @@
             "agents": [
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a1",
-                "entityId": "contract-00000001-10",
+                "entityId": "contract-00000001-9",
                 "entityTitle": "Invoice totals are off by one cent",
                 "harness": "CLAUDE",
                 "runState": "RUNNING",
@@ -2293,7 +2293,7 @@
           "content": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "createdAt": "2026-01-01T00:00:00Z",
-            "entityId": "contract-00000001-10",
+            "entityId": "contract-00000001-9",
             "entityStatus": "IMPLEMENTING",
             "entityTitle": "Invoice totals are off by one cent",
             "harness": "CLAUDE",
@@ -2304,7 +2304,7 @@
             "state": "ACTIVE",
             "waitingOn": null,
             "workspaceRowId": 1,
-            "wrapperBranch": "ticket/contract-00000001-10"
+            "wrapperBranch": "ticket/contract-00000001-9"
           },
           "contentType": "application/json",
           "encoded": false
@@ -2619,8 +2619,8 @@
         "body": {
           "content": {
             "lines": [
-              "{\"type\":\"user\",\"gitBranch\":\"ticket/contract-00000001-10\",\"timestamp\":\"2026-01-01T00:05:00Z\",\"message\":{\"content\":\"Fix the rounding in the invoice totals.\"}}",
-              "{\"type\":\"user\",\"gitBranch\":\"ticket/contract-00000001-10\",\"timestamp\":\"2026-01-01T00:05:00Z\",\"message\":{\"content\":\"Fix the rounding in the invoice totals.\"}}"
+              "{\"type\":\"user\",\"gitBranch\":\"ticket/contract-00000001-9\",\"timestamp\":\"2026-01-01T00:05:00Z\",\"message\":{\"content\":\"Fix the rounding in the invoice totals.\"}}",
+              "{\"type\":\"user\",\"gitBranch\":\"ticket/contract-00000001-9\",\"timestamp\":\"2026-01-01T00:05:00Z\",\"message\":{\"content\":\"Fix the rounding in the invoice totals.\"}}"
             ]
           },
           "contentType": "application/json",
@@ -3597,7 +3597,7 @@
       "request": {
         "body": {
           "content": {
-            "label": "work contract-00000001-10 VERIFIED",
+            "label": "work contract-00000001-9 VERIFIED",
             "selection": {
               "event": "EntityTransitioned",
               "when": [
@@ -3642,7 +3642,7 @@
             "createdAt": "2026-01-01T00:00:00Z",
             "expiresAt": "2026-01-01T00:00:00Z",
             "id": "00000000-0000-4000-8000-000000000100",
-            "label": "work contract-00000001-10 VERIFIED",
+            "label": "work contract-00000001-9 VERIFIED",
             "matchedEventId": null,
             "selection": {
               "event": "EntityTransitioned"
@@ -3742,7 +3742,7 @@
         }
       },
       "description": "qits workspaces active-process: getWorkspaceActiveProcess",
-      "key": "43304935",
+      "key": "27d2f329",
       "pending": false,
       "providerStates": [
         {
@@ -3750,15 +3750,15 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011",
+            "taskId": "00000000-0000-4000-8000-000000000010",
             "workspaceId": "1"
           }
         }
@@ -3819,7 +3819,7 @@
         }
       },
       "description": "qits workspaces active-process: getWorkspaceActiveProcess",
-      "key": "a5ed2baf",
+      "key": "8a8fd5a7",
       "pending": false,
       "providerStates": [
         {
@@ -3827,7 +3827,7 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
+            "bugTicketQualifiedId": "contract-00000001-9",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
@@ -3901,21 +3901,21 @@
         }
       },
       "description": "qits workspaces history: listWorkItemWorkspaces",
-      "key": "32f2182",
+      "key": "e7d1cb76",
       "pending": false,
       "providerStates": [
         {
           "name": "a project with workspaces bound to work items",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -4060,21 +4060,21 @@
         }
       },
       "description": "qits workspaces history: listWorkItemWorkspaces",
-      "key": "1ec763a8",
+      "key": "36a0d9c",
       "pending": false,
       "providerStates": [
         {
           "name": "a work item with no workspaces",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -4087,7 +4087,7 @@
           }
         },
         "method": "GET",
-        "path": "/workspaces/api/work/00000000-0000-4000-8000-00000000000b/workspaces"
+        "path": "/workspaces/api/work/00000000-0000-4000-8000-00000000000a/workspaces"
       },
       "response": {
         "body": {
@@ -4134,21 +4134,21 @@
         }
       },
       "description": "qits workspaces items: listOpenWorkspaces",
-      "key": "f6187768",
+      "key": "dabb215c",
       "pending": false,
       "providerStates": [
         {
           "name": "a project with workspaces bound to work items",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -4164,28 +4164,28 @@
                 "workspace": {
                   "branch": "epic/export-invoices-for-the-accountants",
                   "id": 3,
-                  "workId": "00000000-0000-4000-8000-000000000006"
+                  "workId": "00000000-0000-4000-8000-000000000005"
                 }
               },
               {
                 "workspace": {
                   "branch": "epic/export-invoices-for-the-accountants",
                   "id": 3,
-                  "workId": "00000000-0000-4000-8000-000000000006"
+                  "workId": "00000000-0000-4000-8000-000000000005"
                 }
               },
               {
                 "workspace": {
                   "branch": "epic/export-invoices-for-the-accountants",
                   "id": 3,
-                  "workId": "00000000-0000-4000-8000-000000000006"
+                  "workId": "00000000-0000-4000-8000-000000000005"
                 }
               },
               {
                 "workspace": {
                   "branch": "epic/export-invoices-for-the-accountants",
                   "id": 3,
-                  "workId": "00000000-0000-4000-8000-000000000006"
+                  "workId": "00000000-0000-4000-8000-000000000005"
                 }
               }
             ]
@@ -4266,21 +4266,21 @@
         }
       },
       "description": "qits workspaces items: listOpenWorkspaces",
-      "key": "ecddefff",
+      "key": "d18099f3",
       "pending": false,
       "providerStates": [
         {
           "name": "no work item has an open workspace",
           "params": {
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -4333,7 +4333,7 @@
         }
       },
       "description": "qits workspaces list: listWorkspaces",
-      "key": "dbef1a34",
+      "key": "c091c428",
       "pending": false,
       "providerStates": [
         {
@@ -4341,15 +4341,15 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011"
+            "taskId": "00000000-0000-4000-8000-000000000010"
           }
         }
       ],
@@ -4508,7 +4508,7 @@
       "response": {
         "body": {
           "content": {
-            "message": "Cannot recreate workspace 'ws-contract': its daemon cannot be asked whether the worktrees of agent 00000000-0000-4000-8000-0000000000a1 (work item contract-00000001-10) (the daemon is not connected) hold unpushed work. Wait for the daemon to connect, or discard the agent, first."
+            "message": "Cannot recreate workspace 'ws-contract': its daemon cannot be asked whether the worktrees of agent 00000000-0000-4000-8000-0000000000a1 (work item contract-00000001-9) (the daemon is not connected) hold unpushed work. Wait for the daemon to connect, or discard the agent, first."
           },
           "contentType": "application/json",
           "encoded": false
@@ -4560,7 +4560,7 @@
         }
       },
       "description": "qits workspaces show: getWorkspace",
-      "key": "f053041d",
+      "key": "d4f5ae11",
       "pending": false,
       "providerStates": [
         {
@@ -4568,15 +4568,15 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011",
+            "taskId": "00000000-0000-4000-8000-000000000010",
             "workspaceId": "1"
           }
         }
@@ -4690,7 +4690,7 @@
         }
       },
       "description": "qits workspaces show: getWorkspace",
-      "key": "530fe697",
+      "key": "37b2908f",
       "pending": false,
       "providerStates": [
         {
@@ -4698,7 +4698,7 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
+            "bugTicketQualifiedId": "contract-00000001-9",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
             "workspaceId": "1"
@@ -4814,7 +4814,7 @@
         }
       },
       "description": "qits workspaces show: listWorkspaceAgents",
-      "key": "6dd84417",
+      "key": "527aee0b",
       "pending": false,
       "providerStates": [
         {
@@ -4822,15 +4822,15 @@
           "params": {
             "agentId": "00000000-0000-4000-8000-0000000000a1",
             "bugTicketId": "00000000-0000-4000-8000-000000000001",
-            "bugTicketQualifiedId": "contract-00000001-10",
-            "epicId": "00000000-0000-4000-8000-000000000006",
-            "featureId": "00000000-0000-4000-8000-000000000007",
-            "improvementTicketId": "00000000-0000-4000-8000-00000000000b",
-            "improvementTicketQualifiedId": "contract-00000001-11",
-            "projectId": "00000000-0000-4000-8000-00000000000f",
+            "bugTicketQualifiedId": "contract-00000001-9",
+            "epicId": "00000000-0000-4000-8000-000000000005",
+            "featureId": "00000000-0000-4000-8000-000000000006",
+            "improvementTicketId": "00000000-0000-4000-8000-00000000000a",
+            "improvementTicketQualifiedId": "contract-00000001-10",
+            "projectId": "00000000-0000-4000-8000-00000000000e",
             "repositoryId": "00000000-0000-4000-8000-000000000013",
             "targetId": "00000000-0000-4000-8000-000000000020",
-            "taskId": "00000000-0000-4000-8000-000000000011",
+            "taskId": "00000000-0000-4000-8000-000000000010",
             "workspaceId": "1"
           }
         }
@@ -4852,7 +4852,7 @@
             "agents": [
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a4",
-                "entityId": "contract-00000001-2",
+                "entityId": "contract-00000001-1",
                 "entityTitle": "Export invoices for the accountants",
                 "harness": "CLAUDE",
                 "runState": "YIELDED",
@@ -4871,7 +4871,7 @@
               },
               {
                 "agentId": "00000000-0000-4000-8000-0000000000a4",
-                "entityId": "contract-00000001-2",
+                "entityId": "contract-00000001-1",
                 "entityTitle": "Export invoices for the accountants",
                 "harness": "CLAUDE",
                 "runState": "YIELDED",
