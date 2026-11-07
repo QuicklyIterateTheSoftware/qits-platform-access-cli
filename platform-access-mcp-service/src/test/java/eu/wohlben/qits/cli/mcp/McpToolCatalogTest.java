@@ -212,6 +212,18 @@ class McpToolCatalogTest {
         assertThat(required(tool("ci_report_show"))).containsExactly("run-id");
     }
 
+    /** qits-1940: it reads a checkout's OpenAPI document and golden-master index, which this service has none of. */
+    @Test
+    void theContractsCoverageIsCiOnlyAndNoTool() {
+        Map<String, ToolCatalog.Exclusion> byCommand = new HashMap<>();
+        catalog.excluded().forEach(e -> byCommand.put(e.command(), e));
+
+        assertThat(byCommand.get("qits contracts coverage")).isNotNull();
+        assertThat(byCommand.get("qits contracts coverage").reason()).isEqualTo("CI-step only, reads local files");
+        assertThat(catalog.tool("contracts_coverage")).isEmpty();
+        assertThat(catalog.tool("contracts")).isEmpty();
+    }
+
     @Test
     void theQueriesAreToolsUnderTheirStreamsAndTheLocalCommandsAreNot() {
         assertThat(catalog.tool("events_query")).isPresent();

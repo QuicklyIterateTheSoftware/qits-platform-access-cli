@@ -38,7 +38,8 @@ import java.util.List;
                         + "the fold's and the baseline's commits, the totals, the renderer record's changed keys, "
                         + "and each NEW, CHANGED or REMOVED baseline image with its path, spec, name, browser, "
                         + "blob ids, sizes and any exact move; for stale-outputs, each stale check-outputs kind with "
-                        + "the command that regenerates it."},
+                        + "the command that regenerates it; for golden-master-coverage, each uncovered operation "
+                        + "with its name, method and path."},
         footerHeading = HelpText.EXAMPLES,
         footer = {"  qits ci report show 5f2c0a9e-1b7d-4c2e-9a41-3d8e6f0b2c17",
                 "  qits ci report show 5f2c0a9e --project qits --repository qits-ci-service --kind test-results",
@@ -72,7 +73,7 @@ public class ShowCommand extends PlatformCommand {
 
     @CommandLine.Option(names = "--kind", paramLabel = "<kind>",
             description = "Only this kind of report (test-results, coverage, contracts, entity-changes, "
-                    + "screenshots, stale-outputs), "
+                    + "screenshots, stale-outputs, golden-master-coverage), "
                     + "and print the whole of it.")
     String kind;
 

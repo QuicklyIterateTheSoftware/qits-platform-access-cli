@@ -31,10 +31,10 @@ class StaleOutputsReportKindTest {
     private final StaleOutputsReportKind kind = new StaleOutputsReportKind(warnings::add, env::get);
 
     @Test
-    void theRegistryListsTheKindLast() {
+    void theRegistryListsTheKindWithoutAParser() {
         ReportKinds kinds = ReportKinds.standard(warnings::add, env::get, root.resolve("no-provenance"));
-        assertThat(kinds.kinds().getLast()).isInstanceOf(StaleOutputsReportKind.class);
-        assertThat(kinds.kinds().getLast().id()).isEqualTo("stale-outputs");
+        assertThat(kinds.kinds()).filteredOn(k -> k.id().equals("stale-outputs")).singleElement()
+                .isInstanceOf(StaleOutputsReportKind.class);
         assertThat(kinds.parsersOf("stale-outputs")).isEmpty();
         assertThat(kind.version()).isEqualTo(1);
         assertThat(kind.payloadType()).isEqualTo(StaleOutputs.class);

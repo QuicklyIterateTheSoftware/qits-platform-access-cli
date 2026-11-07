@@ -6,6 +6,7 @@ import eu.wohlben.qits.cli.access.artifacts.ArtifactsCommand;
 import eu.wohlben.qits.cli.access.changelog.ChangelogGroup;
 import eu.wohlben.qits.cli.access.checkout.CheckoutDaemonCommand;
 import eu.wohlben.qits.cli.access.ci.CiCommand;
+import eu.wohlben.qits.cli.access.contracts.ContractsCommand;
 import eu.wohlben.qits.cli.access.maintenance.MaintenanceCommand;
 import eu.wohlben.qits.cli.access.daemon.SessionDaemonCommand;
 import eu.wohlben.qits.cli.access.database.DatabaseCommand;
@@ -48,7 +49,7 @@ import picocli.CommandLine;
         versionProvider = QitsVersion.Provider.class,
         subcommands = {LoginCommand.class, SessionDaemonCommand.class, CheckoutDaemonCommand.class, ProjectsCommand.class,
                 RepositoriesCommand.class, WorkCommand.class, IdeasCommand.class,
-                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, DeploymentsCommand.class, MaintenanceCommand.class, UsersCommand.class,
+                ReleaseRequestCommand.class, CiCommand.class, DatabaseCommand.class, ContractsCommand.class, DeploymentsCommand.class, MaintenanceCommand.class, UsersCommand.class,
                 EventsCommand.class,
                 ObserveCommand.class, WaitCommand.class, WorkspacesCommand.class, TargetsCommand.class, GitLoginCommand.class, GitCredentialCommand.class, RegistryLoginCommand.class,
                 ArtifactsCommand.class, ChangelogGroup.class, AgentsCommand.class, AgentMcpCommand.class, UpdateCommand.class,

@@ -1213,7 +1213,14 @@ shorter length). And `stale-outputs` (qits-1920): the `check-outputs:` kinds the
 the file `QITS_CI_STALE_OUTPUTS` names (one `<kind>\t<regenerate command>` line each, as qits-ci's
 output check writes it), with one `bad` highlight per kind (`stale outputs: <kind>`; the regenerate
 command is in the payload, too long for a highlight); no file, or
-no line in it, is not reported, and there is no baseline comparison.
+no line in it, is not reported, and there is no baseline comparison. And `golden-master-coverage`
+(qits-1940): the operations of a java service's OpenAPI document that no golden master records, read
+from the file `QITS_CI_UNCOVERED_OPERATIONS` names (one `<name>\t<METHOD>\t<path>` line each, as `qits
+contracts coverage --out` writes it); the payload is `{"uncovered": [{name, method, path}]}`. Unlike
+stale-outputs, an empty file IS reported, with nothing uncovered: the command writes the file on every
+run it completes, so empty is a clean pass. No variable or no file is not reported. qits-projects
+reads only the highlights, so their texts are fixed: `uncovered operations: <n>` first (`bad`, or
+`good` at 0), then `uncovered: <name>` (`bad`) for each of the first nine, ten in all at most.
 
 `report submit` is what the hook qits-ci composes after every QA step runs, whatever the step's
 script exited with (`--exit-code`). It reads the step's files (`**/target/surefire-reports`,
@@ -1284,6 +1291,37 @@ and that it did not write this time; a hand-written file there is left alone. On
 nothing and exits 1 when anything would change). Nothing compiled is exit 2 (`compile first: no
 target/classes under <root>`); no entity at all is `no JPA entities found` and exit 0. The output
 holds no version, time or absolute path, so two runs write the same bytes.
+
+### qits contracts coverage
+
+    qits contracts coverage [--openapi docs/openapi.yml] [--index golden-masters/index.json]
+                            [--out <tsv file>] [--no-golden-masters]
+
+The platform's rule for a java service (qits-1940): every HTTP operation its exported OpenAPI
+document declares (`docs/openapi.yml`, which the service's suite rewrites) has at least one golden
+master in `golden-masters/index.json`. qits-ci composes this command into the QA step of every
+java-service release, after the repository's own script and in its checkout, with `--out` for the
+`golden-master-coverage` release report and `--no-golden-masters` when `release.yml` declares no
+`contracts.golden-masters`. It reports only; gating is a qits-ci switch for later.
+
+An operation is every `paths.<path>.<method>` for the eight HTTP methods, in document order. It is
+covered when a call the index records has its operationId, or its method (any case) and a path,
+query left off, that is one of the document's `servers[].url` (absent, or `/`, is no prefix; a scheme
+and host are dropped) followed by the operation's path. A `{name}` in the server url or the path
+stands for one non-empty segment, or the part of one it takes up; everything else is literal,
+including a template in the recorded path. One trailing `/` is ignored on either side. Only the
+document's own servers are prefixes: a recorded `/foo` never reached `/api/foo`. `GoldenMasterMatch`
+holds the rule. An uncovered operation is named by its operationId, else `METHOD /path`.
+
+Stdout is one `uncovered: <name>` line per uncovered operation (with `(<METHOD> <path>)` after an
+operationId), then `golden-master coverage: <covered>/<total> operations covered`, or `... all <n>
+operations covered`. `--out` writes `<name>\t<METHOD>\t<path>` per uncovered operation, and an empty
+file when there is none. Exit 0 when every operation is covered (a document with none included), 3
+when one is not, 1 when an input is missing (`no exported OpenAPI at <path>`, `no golden-master index
+at <path>`) or does not parse; on exit 1 `--out` is not written and one already there is removed, so
+the report says "not reported" rather than a clean pass. The document is YAML (jackson-dataformat-yaml,
+read as a tree) or, named `*.json`, JSON; only OpenAPI 3 and index `formatVersion` 1 are read. It
+reads local files only: no sign-in, no service, and it is no MCP tool.
 
 ### qits maintenance
 

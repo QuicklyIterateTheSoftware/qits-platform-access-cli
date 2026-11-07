@@ -8,7 +8,8 @@ command-mode CLI with picocli, built as a GraalVM native binary. Its commands: `
 that session fresh), `qits projects|repositories|work|ideas|release-request` (the projects service;
 `work` is every work item, of every archetype), `qits ci runs|run|retry|cancel|report` (qits-ci's runs, a
 run's step logs, a retry, a cancel, a run's release reports), `qits database diagram` (a repository's entity
-diagram, generated from its compiled classes), `qits users` (the idp's users: invite, register, list,
+diagram, generated from its compiled classes), `qits contracts coverage` (the OpenAPI operations no
+golden master records), `qits users` (the idp's users: invite, register, list,
 delete), `qits events` (the live event
 stream), `qits wait` (an agent's declared waits in qits-workspaces), `qits workspaces` (every action
 of the landing app's workspace pages, on the same qits-workspaces doors), `qits targets` (execution
@@ -233,6 +234,12 @@ The commands' sources, under `platform-access-commands/src/main/java/eu/wohlben/
                JpaMappingConformanceTest holds JpaMapping against Hibernate's Metadata over the
                fixtures under database/fixtures; Hibernate is a test dependency only. The golden
                files are rewritten with -Dgolden.update=true, as the pact file is.
+    contracts/ qits contracts coverage (qits-1940): the operations of a service's docs/openapi.yml
+               (OpenApiDocument, YAML or JSON read as a tree) that golden-masters/index.json records no
+               call for (GoldenMasterMatch; the index read by report/contracts/GoldenMasterIndexParser
+               .operations). CI-step only; its --out TSV feeds the golden-master-coverage report kind
+               (report/GoldenMasterCoverageReportKind). The test package of the same name is the
+               consumer pacts' harness, a different thing
     events/    qits events: the SSE parser and the reconnecting stream; `query` under it pages the
                events log over a window (EventsQueryCommand)
     checkout/  qits checkout-daemon: the Git side of one checkout (Checkout) and the reconcile-and-

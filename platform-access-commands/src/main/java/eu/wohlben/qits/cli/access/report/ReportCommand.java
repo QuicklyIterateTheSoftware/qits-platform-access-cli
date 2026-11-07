@@ -21,9 +21,10 @@ import picocli.CommandLine;
                         + "(the generated entity diagrams under docs/database/, with the tables, columns and "
                         + "relations added, removed or changed since the baseline), screenshots (the committed "
                         + "screenshot baselines added, changed or removed since the baseline, by path and blob, "
-                        + "for the release request to show before and after) and stale-outputs (the "
-                        + "check-outputs kinds the step found stale, each with its regenerate command). A kind or "
-                        + "a run with "
+                        + "for the release request to show before and after), stale-outputs (the "
+                        + "check-outputs kinds the step found stale, each with its regenerate command) and "
+                        + "golden-master-coverage (the operations of a java service's OpenAPI document that no "
+                        + "golden master records). A kind or a run with "
                         + "nothing to report shows nothing; a report never fails or holds a release."},
         footerHeading = "%nNotes:%n",
         footer = {"- Each kind and its highlights are computed by the CLI that submitted them; qits-ci keeps them as "

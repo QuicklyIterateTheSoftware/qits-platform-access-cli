@@ -33,6 +33,7 @@ class TapesCoverageTest {
             "agents", "the platform's agents are driven by agents; `agents claude` is Claude Code's hook and "
                     + "status line, run by Claude Code rather than typed",
             "database", "a CI step's entity diagram, generated from a repository's compiled classes",
+            "contracts", "a CI step's golden-master coverage, read from a repository's own files",
             "help", "the help, which every tape's commands already show; `help guide` is the platform's guide text");
 
     /** Integrations with a CLI tape only, and why there is no screen to show. */

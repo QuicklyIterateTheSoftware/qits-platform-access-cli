@@ -65,7 +65,8 @@ public final class ReportKinds {
      * @param warnings           where a kind says it skipped something; one line each
      * @param env                the step's environment, for what {@link StepContext} does not carry
      *                           ({@code screenshots} reads {@code QITS_CI_REPO_ID}, {@code stale-outputs}
-     *                           {@code QITS_CI_STALE_OUTPUTS})
+     *                           {@code QITS_CI_STALE_OUTPUTS}, {@code golden-master-coverage}
+     *                           {@code QITS_CI_UNCOVERED_OPERATIONS})
      * @param rendererProvenance the renderer image's provenance record; its presence says the step
      *                           rendered screenshots
      */
@@ -81,7 +82,7 @@ public final class ReportKinds {
                 List.of(new TestResultsKind(warnings), new CoverageKind(warnings),
                         new ContractsReportKind(warnings, testResults), new EntityChangesReportKind(warnings),
                         new ScreenshotsReportKind(warnings, env, ScreenshotConventions.standard(rendererProvenance)),
-                        new StaleOutputsReportKind(warnings, env)),
+                        new StaleOutputsReportKind(warnings, env), new GoldenMasterCoverageReportKind(warnings, env)),
                 parsers);
     }
 

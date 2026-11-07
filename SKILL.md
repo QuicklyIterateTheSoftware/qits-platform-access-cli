@@ -2390,7 +2390,7 @@ qits ci cancel 5f2c0a9e --project qits --repository qits-ci-service --reason 'su
 
 Release reports: what a release request's QA run found, beside its verdict. show lists a run's reports with their highlights, and prints one kind's whole report. submit is what every QA step runs after its script: it collects the reports from the step's files and uploads them.
 
-Kinds today: test-results (every test run, and each failing test with its class, name, file and message), coverage (line coverage of the whole tree, its change against the baseline, and the coverage of the lines the change touched), contracts (the pacts the repository holds as consumer or verifies as provider, and the provider states it declares, with the pacts, interactions and states added or removed since the baseline), entity-changes (the generated entity diagrams under docs/database/, with the tables, columns and relations added, removed or changed since the baseline), screenshots (the committed screenshot baselines added, changed or removed since the baseline, by path and blob, for the release request to show before and after) and stale-outputs (the check-outputs kinds the step found stale, each with its regenerate command). A kind or a run with nothing to report shows nothing; a report never fails or holds a release.
+Kinds today: test-results (every test run, and each failing test with its class, name, file and message), coverage (line coverage of the whole tree, its change against the baseline, and the coverage of the lines the change touched), contracts (the pacts the repository holds as consumer or verifies as provider, and the provider states it declares, with the pacts, interactions and states added or removed since the baseline), entity-changes (the generated entity diagrams under docs/database/, with the tables, columns and relations added, removed or changed since the baseline), screenshots (the committed screenshot baselines added, changed or removed since the baseline, by path and blob, for the release request to show before and after), stale-outputs (the check-outputs kinds the step found stale, each with its regenerate command) and golden-master-coverage (the operations of a java service's OpenAPI document that no golden master records). A kind or a run with nothing to report shows nothing; a report never fails or holds a release.
 
 ### Notes
 
@@ -2426,6 +2426,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 - entity-changes reads the generated docs/database/*.md (the files `qits database diagram` wrote; a hand-written file there is ignored), only in step 0, and compares them with the same files at the baseline's tag, fetched as for coverage. Without a baseline, or at a baseline from before the diagrams, every unit is CURRENT: the diagram is new.
 - screenshots reads the committed screenshot baselines (vitest browser mode's **/__screenshots__/<spec file>/<name>-<browser>-<platform>.png) from `git ls-tree` at HEAD and at the baseline's tag, fetched as for coverage, and lists the NEW, CHANGED and REMOVED ones by path and blob id, never their bytes, with the keys of **/testing/browser/renderer.txt that changed. Only in a step that rendered them: one on the renderer image (/etc/qits-renderer-provenance) or with @qits/angular's run record (node_modules/.cache/@qits/angular/screenshot-references.json); otherwise `screenshots: not reported (not rendered in this step)`, and `(no screenshot baselines)` when neither side holds one. QITS_CI_REPO_ID names the repository for the images. Without a baseline every image is NEW.
 - stale-outputs reads the file QITS_CI_STALE_OUTPUTS names (relative to --root), which qits-ci's output check writes: one line per stale check-outputs kind, `<kind>\t<regenerate command>`; a line without a tab is skipped with a warning. Without the variable, the file or a line in it, `stale-outputs: not reported (no stale outputs)`. Never compared with the baseline.
+- golden-master-coverage reads the file QITS_CI_UNCOVERED_OPERATIONS names (relative to --root), which `qits contracts coverage --out` writes: one line per uncovered operation, `<name>\t<METHOD>\t<path>`; a line that is not three fields is skipped with a warning. An empty file is a report with none uncovered. Its highlights are `uncovered operations: <n>`, then `uncovered: <name>` for the first nine. Without the variable or the file, `golden-master-coverage: not reported (no coverage check in this step)`. Never compared with the baseline.
 - The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is https://ci.qits.$QITS_DOMAIN, and without QITS_DOMAIN the command refuses (exit 2); no variable and no option names another address.
 - The bearer comes from QITS_PUBLISH_TOKEN_COMMAND or QITS_PUBLISH_TOKEN, the first that is set, as for `qits artifacts publish`. qits-ci takes only the run's own ci-run token, while the run is running.
 - No baseline (a first release, or qits-ci cannot say) is not an error: the report is sent without the comparison.
@@ -2443,7 +2444,7 @@ qits ci report submit --exit-code 1 --root /workspace/checkout
 
 Show a CI run's release reports: each kind, its version, the step that submitted it, and its highlights ("3 tests failed").
 
---kind also prints that kind's whole report as JSON: for test-results, the totals, the suites, and each failing test with its file, class, name, shape and message; for coverage, the total, the baseline's total, the changed lines' coverage with the uncovered ones, and a line per file; for contracts, the pacts by role (CONSUMER, PROVIDER) and pair with their interactions, and the provider states with their operations; for entity-changes, each diagram's unit with its status, the tables, columns and relations that changed, and its Mermaid text before and after; for screenshots, the payload: the githost repository id, the fold's and the baseline's commits, the totals, the renderer record's changed keys, and each NEW, CHANGED or REMOVED baseline image with its path, spec, name, browser, blob ids, sizes and any exact move; for stale-outputs, each stale check-outputs kind with the command that regenerates it.
+--kind also prints that kind's whole report as JSON: for test-results, the totals, the suites, and each failing test with its file, class, name, shape and message; for coverage, the total, the baseline's total, the changed lines' coverage with the uncovered ones, and a line per file; for contracts, the pacts by role (CONSUMER, PROVIDER) and pair with their interactions, and the provider states with their operations; for entity-changes, each diagram's unit with its status, the tables, columns and relations that changed, and its Mermaid text before and after; for screenshots, the payload: the githost repository id, the fold's and the baseline's commits, the totals, the renderer record's changed keys, and each NEW, CHANGED or REMOVED baseline image with its path, spec, name, browser, blob ids, sizes and any exact move; for stale-outputs, each stale check-outputs kind with the command that regenerates it; for golden-master-coverage, each uncovered operation with its name, method and path.
 
 ```
 qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--project <project>] [--projects-url <url>] [--repository <repository>] <run id>
@@ -2453,7 +2454,7 @@ qits ci report show [--ci-url <url>] [--kind <kind>] [--output table|json] [--pr
 |---|---|
 | `<run id>` | The run: its id, or its start when --project and --repository name its repository. |
 | `--ci-url <url>` | The ci service's base URL, without /ci. Default: QITS_CI_URL, else the session's idp address with `idp` swapped for `ci` (https://idp.qits.<QITS_DOMAIN>/idp gives https://ci.qits.<QITS_DOMAIN>). |
-| `--kind <kind>` | Only this kind of report (test-results, coverage, contracts, entity-changes, screenshots, stale-outputs), and print the whole of it. |
+| `--kind <kind>` | Only this kind of report (test-results, coverage, contracts, entity-changes, screenshots, stale-outputs, golden-master-coverage), and print the whole of it. |
 | `-o, --output table\|json` | table (the default): aligned columns. json: the service's answer, pretty-printed, with control characters written as escapes. |
 | `--project <project>` | The project: its id, slug or name. |
 | `--projects-url <url>` | The projects service's base URL, without /projects, where --project and --repository are looked up. Default: QITS_PROJECTS_URL, else derived from the idp address like --ci-url. |
@@ -2522,6 +2523,47 @@ qits database diagram --root . --out docs/database --check
 - `0` Done, or nothing to draw (`no JPA entities found`).
 - `1` With --check: a file would be written or deleted. Otherwise: a file could not be read or written.
 - `2` Used wrongly: --root is not a directory, or nothing is compiled under it (`compile first: no target/classes under <root>`).
+
+## qits contracts
+
+A repository's contracts, read from its own files: `qits contracts coverage` names every operation of its OpenAPI document that no golden master records.
+
+## qits contracts coverage
+
+Name every operation of a service's exported OpenAPI document that no golden master records: the platform's rule is at least one golden master per operation.
+
+An operation is covered when a call in the golden-master index has its operationId, or its method and a path that is one of the document's server urls followed by the operation's path. A {name} in either stands for one non-empty segment; the call's query and one trailing slash are ignored. Prints one `uncovered:` line per operation that is not, in document order, then `golden-master coverage: <covered>/<total> operations covered`.
+
+```
+qits contracts coverage [--index <file>] [--no-golden-masters] [--openapi <file>] [--out <file>]
+```
+
+| Name | What it does |
+|---|---|
+| `--index <file>` | The golden-master index, relative to the working directory. Default: golden-masters/index.json. |
+| `--no-golden-masters` | The repository declares no golden masters: every operation is uncovered, and no index is read. |
+| `--openapi <file>` | The service's exported OpenAPI document, relative to the working directory. Default: docs/openapi.yml. |
+| `--out <file>` | Also write the uncovered operations here as TSV, replacing the file. |
+
+### Examples
+
+```
+qits contracts coverage
+qits contracts coverage --out .qits-ci/uncovered-operations.tsv
+qits contracts coverage --no-golden-masters
+```
+
+- An operation is named by its operationId, or `METHOD /path` (the document's path template) when it has none.
+- --out writes one line per uncovered operation, `<name>\t<METHOD>\t<path>`, and an empty file when every operation is covered. The golden-master-coverage release report reads it through QITS_CI_UNCOVERED_OPERATIONS.
+- The document is YAML, or JSON when its name ends in .json; only OpenAPI 3 is read. Only formatVersion 1 of the index is read.
+- Reads local files only: it needs no sign-in and calls no service.
+
+### Exit codes
+
+- `0` Every operation is covered, or the document declares none.
+- `1` An input is missing (`no exported OpenAPI at <path>`, `no golden-master index at <path>`) or does not parse, or --out could not be written. --out is then not written at all.
+- `2` Used wrongly.
+- `3` At least one operation has no golden master; each is named on stdout.
 
 ## qits deployments
 

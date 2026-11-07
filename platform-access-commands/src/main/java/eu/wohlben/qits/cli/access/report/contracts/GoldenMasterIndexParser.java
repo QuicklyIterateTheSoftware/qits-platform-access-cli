@@ -46,19 +46,8 @@ public final class GoldenMasterIndexParser implements ReportParser<ContractFile>
 
     @Override
     public ContractFile parse(Path file, StepContext step) throws IOException {
-        JsonNode index = ReportJson.MAPPER.readTree(file.toFile());
-        if (index == null || !index.isObject()) {
-            throw new IOException("not a golden-master index: not a JSON object");
-        }
-        JsonNode version = index.path("formatVersion");
-        if (!version.canConvertToInt() || version.asInt() != FORMAT_VERSION) {
-            throw new IOException("golden-master index formatVersion " + (version.isMissingNode() ? "missing"
-                    : version.asText()) + ", only " + FORMAT_VERSION + " is read");
-        }
+        JsonNode index = read(file);
         JsonNode provider = index.path("provider");
-        if (!provider.isTextual() || provider.asText().isBlank()) {
-            throw new IOException("not a golden-master index: no provider");
-        }
         List<ProviderStateEntry> states = new ArrayList<>();
         for (JsonNode state : index.path("states")) {
             JsonNode name = state.path("name");
@@ -78,5 +67,45 @@ public final class GoldenMasterIndexParser implements ReportParser<ContractFile>
         return new ContractFile(new ContractSource(language(), tool(), step.relative(file),
                 "golden-master-index-v" + FORMAT_VERSION), ContractFile.PROVIDER_STATES, List.of(),
                 new ProviderStatesInventory(provider.asText(), states));
+    }
+
+    /**
+     * Every call the index records, state by state in file order, duplicates kept: what {@code qits
+     * contracts coverage} holds a provider's OpenAPI document against (qits-1940). A member that is not
+     * a string is null.
+     *
+     * @throws IOException when the file does not parse or is not a {@code formatVersion: 1} index
+     */
+    public static List<RecordedOperation> operations(Path file) throws IOException {
+        List<RecordedOperation> operations = new ArrayList<>();
+        for (JsonNode state : read(file).path("states")) {
+            for (JsonNode operation : state.path("operations")) {
+                operations.add(new RecordedOperation(text(operation.path("operationId")),
+                        text(operation.path("method")), text(operation.path("path"))));
+            }
+        }
+        return operations;
+    }
+
+    /** The index as a tree, once it is known to be one this parser reads. */
+    private static JsonNode read(Path file) throws IOException {
+        JsonNode index = ReportJson.MAPPER.readTree(file.toFile());
+        if (index == null || !index.isObject()) {
+            throw new IOException("not a golden-master index: not a JSON object");
+        }
+        JsonNode version = index.path("formatVersion");
+        if (!version.canConvertToInt() || version.asInt() != FORMAT_VERSION) {
+            throw new IOException("golden-master index formatVersion " + (version.isMissingNode() ? "missing"
+                    : version.asText()) + ", only " + FORMAT_VERSION + " is read");
+        }
+        JsonNode provider = index.path("provider");
+        if (!provider.isTextual() || provider.asText().isBlank()) {
+            throw new IOException("not a golden-master index: no provider");
+        }
+        return index;
+    }
+
+    private static String text(JsonNode node) {
+        return node.isTextual() ? node.asText() : null;
     }
 }

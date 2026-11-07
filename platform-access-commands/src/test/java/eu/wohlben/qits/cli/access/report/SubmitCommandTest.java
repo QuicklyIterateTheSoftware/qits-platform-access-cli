@@ -96,7 +96,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(result.err()).contains("baseline: 2026.1003.52637 (run " + BASE_RUN
                 + ", release request qits-ci-service-rr-1)");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path())
@@ -152,7 +153,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -203,7 +205,8 @@ class SubmitCommandTest {
                 + "contracts: submitted (5 pacts, 16 interactions, 0 states)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
         assertThat(body.path("payload").path("pacts")).hasSize(5);
@@ -243,7 +246,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: submitted (1 unit, 1 changed)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(result.err()).doesNotContain("WARN");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
@@ -274,7 +278,8 @@ class SubmitCommandTest {
         assertThat(second.exit()).as(second.err()).isZero();
         assertThat(second.out()).endsWith("entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(ci.requests).extracting(r -> r.method() + " " + r.path()).filteredOn(r -> r.startsWith("PUT"))
                 .containsExactly("PUT " + put);
     }
@@ -362,7 +367,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(result.err()).contains("HTTP 403").contains("this token belongs to another run")
                 .doesNotContain(TOKEN);
     }
@@ -379,7 +385,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
     }
 
     @Test
@@ -392,7 +399,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(ci.requests("PUT", PUT)).isEmpty();
     }
 
@@ -409,7 +417,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(result.err()).contains("WARN: baseline: could not be read, so none");
     }
 
@@ -499,7 +508,8 @@ class SubmitCommandTest {
                 + "contracts: not reported (no inputs)\n"
                 + "entity-changes: not reported (no inputs)\n"
                 + "screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(ci.requests).isEmpty();
     }
 
@@ -560,7 +570,8 @@ class SubmitCommandTest {
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(result.out()).endsWith("entity-changes: not reported (no inputs)\n"
                 + "screenshots: submitted (1 new, 1 changed, 1 removed)\n"
-                + "stale-outputs: not reported (no stale outputs)\n");
+                + "stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         assertThat(result.err()).doesNotContain("WARN");
         FakePlatform.Request request = ci.requests("PUT", put).getFirst();
         JsonNode body = JSON.readTree(request.body());
@@ -596,13 +607,41 @@ class SubmitCommandTest {
 
         assertThat(result.exit()).as(result.err()).isZero();
         assertThat(result.out()).endsWith("screenshots: not reported (not rendered in this step)\n"
-                + "stale-outputs: submitted (1 stale: cli-tapes)\n");
+                + "stale-outputs: submitted (1 stale: cli-tapes)\n"
+                + "golden-master-coverage: not reported (no coverage check in this step)\n");
         JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
         assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
         assertThat(body.path("payload")).isEqualTo(JSON.readTree("""
                 {"kinds":[{"kind":"cli-tapes","regenerate":"%s"}]}""".formatted(regenerate)));
         assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
                 [{"severity":"bad","text":"stale outputs: cli-tapes","metric":null,"value":null,"delta":null}]
+                """));
+    }
+
+    @Test
+    void uncoveredOperationsGoFromTheCoverageFileWithTheCountFirst() throws Exception {
+        Files.createDirectories(work.resolve(".qits-ci"));
+        Files.writeString(work.resolve(".qits-ci/uncovered-operations.tsv"),
+                "listCommands\tGET\t/commands\nDELETE /commands/{id}\tDELETE\t/commands/{id}\n");
+        env.put("QITS_CI_UNCOVERED_OPERATIONS", ".qits-ci/uncovered-operations.tsv");
+        String put = "/ci/api/runs/" + RUN + "/steps/2/reports/golden-master-coverage";
+        ci.answer("PUT", put, 204, "");
+
+        Result result = submit("--exit-code", "0", "--root", work.toString());
+
+        assertThat(result.exit()).as(result.err()).isZero();
+        assertThat(result.out()).endsWith("stale-outputs: not reported (no stale outputs)\n"
+                + "golden-master-coverage: submitted (2 uncovered: listCommands, DELETE /commands/{id})\n");
+        JsonNode body = JSON.readTree(ci.requests("PUT", put).getFirst().body());
+        assertThat(body.path("kindVersion").asInt()).isEqualTo(1);
+        assertThat(body.path("payload")).isEqualTo(JSON.readTree("""
+                {"uncovered":[{"name":"listCommands","method":"GET","path":"/commands"},
+                 {"name":"DELETE /commands/{id}","method":"DELETE","path":"/commands/{id}"}]}"""));
+        assertThat(body.path("highlights")).isEqualTo(JSON.readTree("""
+                [{"severity":"bad","text":"uncovered operations: 2","metric":"operations.uncovered","value":2.0,
+                  "delta":null},
+                 {"severity":"bad","text":"uncovered: listCommands","metric":null,"value":null,"delta":null},
+                 {"severity":"bad","text":"uncovered: DELETE /commands/{id}","metric":null,"value":null,"delta":null}]
                 """));
     }
 

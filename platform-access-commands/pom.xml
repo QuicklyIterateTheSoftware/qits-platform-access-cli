@@ -72,6 +72,14 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
+            <!-- `qits contracts coverage` reads a service's docs/openapi.yml (qits-1940). The version
+                 quarkus-bom's jackson-bom manages. Read into a JsonNode tree only, which goes through
+                 SnakeYAML's event parser and never its reflective Constructor, so the native image
+                 needs no reflection config for it. -->
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
             <!-- @ApplicationScoped, @Singleton and @RegisterForReflection; see the header. -->
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>

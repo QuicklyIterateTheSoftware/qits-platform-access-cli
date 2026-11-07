@@ -89,6 +89,13 @@ import java.util.function.Consumer;
                         + "command>`; a line without a tab is skipped with a warning. Without the variable, the "
                         + "file or a line in it, `stale-outputs: not reported (no stale outputs)`. Never compared "
                         + "with the baseline.",
+                "- golden-master-coverage reads the file QITS_CI_UNCOVERED_OPERATIONS names (relative to --root), "
+                        + "which `qits contracts coverage --out` writes: one line per uncovered operation, "
+                        + "`<name>\\t<METHOD>\\t<path>`; a line that is not three fields is skipped with a warning. "
+                        + "An empty file is a report with none uncovered. Its highlights are `uncovered operations: "
+                        + "<n>`, then `uncovered: <name>` for the first nine. Without the variable or the file, "
+                        + "`golden-master-coverage: not reported (no coverage check in this step)`. Never compared "
+                        + "with the baseline.",
                 "- The step's environment says which run and step: QITS_CI_RUN_ID, QITS_CI_STEP_INDEX, QITS_CI_SHA, "
                         + "QITS_CI_REPO_NAME and QITS_CI_PROJECT_ID, all required. qits-ci is "
                         + "https://ci.qits.$QITS_DOMAIN, and without QITS_DOMAIN the command refuses (exit 2); no variable and no "
